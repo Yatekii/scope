@@ -42,28 +42,9 @@ function draw(scope) {
   if(scope) {
     scope.draw();
     if(freqCanvas)
-      drawFreqBars(scope.analyser,freqCanvas.context);
+      drawFreqBars(scope.analyzer,freqCanvas.context);
   }
   rafID = requestAnimationFrame(function(){draw(scope);});
-}
-
-function createScope(container, source) {
-    var scopeCanvas = document.createElement('canvas');
-    scopeCanvas.style.width = '100%'; 
-    scopeCanvas.style.height = '256px'; 
-    scopeCanvas.id = 'scope';
-
-    if(container) {
-      container.appendChild(scopeCanvas);
-    } else {
-      document.body.appendChild(scopeCanvas);
-    }
-
-    analyzer = audioContext.createAnalyser();
-    analyzer.fftSize = 2048;
-    osc.output.connect(analyzer);
-
-    return new Oscilloscope(scopeCanvas, analyzer);
 }
 
 function setupCanvases(container) {

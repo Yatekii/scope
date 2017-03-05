@@ -21,9 +21,24 @@ function createSine(freq) {
 	source.start = start;
 	source.stop = stop;
 
-	output.gain.value = 0.5;  // purely for debugging.
+	output.gain.value = 1;  // purely for debugging.
 
 	return source;
+}
+
+function createNetworkSource(){
+	/*
+	var request = new XMLHttpRequest();
+	request.open("GET", "sounds/techno.wav", true);
+	request.responseType = "arraybuffer";
+	request.onload = function() {
+	  audioContext.decodeAudioData( request.response, function(buffer) { 
+	    	myBuffer = buffer;
+	    	appendOutput( "Sound ready." );
+		} );
+	}
+	request.send();
+*/
 }
 
 /*
@@ -46,18 +61,4 @@ function getAudioContext() {
 	}
 	audioContext = new AudioContext();
 	return audioContext;
-
-
-/*
-	var request = new XMLHttpRequest();
-	request.open("GET", "sounds/techno.wav", true);
-	request.responseType = "arraybuffer";
-	request.onload = function() {
-	  audioContext.decodeAudioData( request.response, function(buffer) { 
-	    	myBuffer = buffer;
-	    	appendOutput( "Sound ready." );
-		} );
-	}
-	request.send();
-*/
 }
