@@ -1,16 +1,16 @@
 function Oscilloscope(canvas, analyser) {
-	this.analyser = analyser;
+    this.analyser = analyser;
     this.canvas = canvas;
-	this.data = new Uint8Array(analyser.frequencyBinCount);
+    this.data = new Uint8Array(analyser.frequencyBinCount);
 }
 
 Oscilloscope.prototype.draw = function () {
 	var data = this.data;
-    var width = this.canvas.clientWidth;
-    var height = this.canvas.clientHeight;
+	var width = this.canvas.clientWidth;
+	var height = this.canvas.clientHeight;
 	var quarterHeight = height / 4;
 	var scaling = height / 256;
-    var context = this.canvas.getContext('2d');
+	var context = this.canvas.getContext('2d');
 
 	this.analyser.getByteTimeDomainData(data);
 	context.strokeStyle = "red";

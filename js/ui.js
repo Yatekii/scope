@@ -44,7 +44,7 @@ function draw(scope) {
     if(freqCanvas)
       drawFreqBars(scope.analyser,freqCanvas.context);
   }
-  rafID = requestAnimationFrame(draw);
+  rafID = requestAnimationFrame(function(){draw(scope);});
 }
 
 function createScope(container, source) {
