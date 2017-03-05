@@ -67,7 +67,8 @@ Oscilloscope.prototype.draw = function () {
 	context.strokeStyle = "#E8830C";
 	context.beginPath();
 
-	var zeroCross = findFirstPositiveZeroCrossing(data, width);
+	var zeroCross = findFirstPositiveZeroCrossing(data, width, this.triggerLevel);
+    console.log(zeroCross)
 
 	context.moveTo(0, (256 - data[0]) * scaling);
 	for (var i=zeroCross, j=0; (j < width) && (i < data.length); i++, j++){
@@ -78,40 +79,11 @@ Oscilloscope.prototype.draw = function () {
 
 var MINVAL = 234;  // 128 == zero.  MINVAL is the "minimum detected signal" level.
 
-function findFirstPositiveZeroCrossing(buf, buflen) {
-  var i = 0;
-  var last_zero = -1;
-  var t;
-  // advance until we're zero or negative
-  while (i < buflen && (buf[i] < 128 + this.triggerLevel)){
-      console.log('KEK')
-      i++;
-  }
-
-  if (i>=buflen)
-    return 0;
-
-  // advance until we're above MINVAL, keeping track of last zero.
-  while (i<buflen && ((t=buf[i]) < MINVAL + this.triggerLevel)) {
-    if (t <= 128 + this.triggerLevel) {
-      if (last_zero == -1)
-        last_zero = i;
-    } else
-      last_zero = -1;
-    i++;
-  }
-
-  // we may have jumped over MINVAL in one sample.
-  if (last_zero == -1)
-    last_zero = i;
-
-  if (i==buflen)  // We didn't find any positive zero crossings
-    return 0;
-
-  // The first sample might be a zero.  If so, return it.
-  if (last_zero == 0)
-    return 0;
-
-  return last_zero;
+function findFirstPositiveZeroCrossing(buf, buflen, triggerLevel) {
+    for(var i=1; i< buflen; i++){
+        if(buf[i] > triggerLevel && buf[i - 1] < triggerLevel){
+            return i;
+        }
+    }
 }
 
