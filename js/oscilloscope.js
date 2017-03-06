@@ -1,9 +1,10 @@
 function Oscilloscope(container, width, height, source) {
     // Create analyzer which is needed to properly get data from the source
     this.analyzer = getAudioContext().createAnalyser();
+    this.analyzer.fftSize = 4096;
     // Connect the source output to the analyzer
     source.output.connect(this.analyzer);
-    // Read first data from the data stream
+    // Create the data buffer
     this.data = new Uint8Array(this.analyzer.frequencyBinCount);
 
     // Create a new canvas to draw the scope onto
@@ -30,7 +31,6 @@ Oscilloscope.prototype.draw = function () {
 	var scaling = height / 256;
 	var context = this.canvas.getContext('2d');
     context.strokeWidth = 1;
-    this.analyzer.fftSize = Math.pow(2, Math.ceil(Math.log2(width)));
 
     // Get new data
 	this.analyzer.getByteTimeDomainData(data);
@@ -67,8 +67,7 @@ Oscilloscope.prototype.draw = function () {
 	context.strokeStyle = "#E8830C";
 	context.beginPath();
 
-	var zeroCross = findFirstPositiveZeroCrossing(data, width, this.triggerLevel);
-    console.log(zeroCross)
+	var zeroCross = getTriggerLocation(data, width, this.triggerLevel, 'falling');
 
 	context.moveTo(0, (256 - data[0]) * scaling);
 	for (var i=zeroCross, j=0; (j < width) && (i < data.length); i++, j++){
@@ -79,11 +78,28 @@ Oscilloscope.prototype.draw = function () {
 
 var MINVAL = 234;  // 128 == zero.  MINVAL is the "minimum detected signal" level.
 
-function findFirstPositiveZeroCrossing(buf, buflen, triggerLevel) {
+function getTriggerLocation(buf, buflen, triggerLevel, type){
+    switch(type){
+        case 'rising':
+        default:
+            return risingEdgeTrigger(buf, buflen, triggerLevel);
+        case 'falling':
+            return fallingEdgeTrigger(buf, buflen, triggerLevel);
+    }
+}
+
+function risingEdgeTrigger(buf, buflen, triggerLevel) {
     for(var i=1; i< buflen; i++){
-        if(buf[i] > triggerLevel && buf[i - 1] < triggerLevel){
+        if(buf[i] > 128 + triggerLevel && buf[i - 1] < 128 + triggerLevel){
             return i;
         }
     }
 }
 
+function fallingEdgeTrigger(buf, buflen, triggerLevel) {
+    for(var i=1; i< buflen; i++){
+        if(buf[i] < 128 + triggerLevel && buf[i - 1] > 128 + triggerLevel){
+            return i;
+        }
+    }
+}
