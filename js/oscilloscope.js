@@ -10,10 +10,11 @@ function Oscilloscope(container, width, height, sources) {
     } else {
       document.body.appendChild(this.canvas);
     }
-    this.triggerLevel = 40;
+    this.triggerLevel = 50;
     this.trace1 = new Trace(this, sources[0]);
     this.trace2 = new Trace(this, sources[1]);
     this.trace2.color = '#E85D55';
+    this.auto_triggering = true;
 }
 
 Oscilloscope.prototype.draw = function () {
@@ -57,6 +58,9 @@ Oscilloscope.prototype.draw = function () {
 
     this.trace1.fetch();
 	var triggerLocation = getTriggerLocation(this.trace1.data, width, this.triggerLevel, 'rising');
+    if(triggerLocation === undefined && this.auto_triggering){
+        triggerLocation = 0;
+    }
 
 	this.trace1.draw(triggerLocation);
     this.trace2.draw(triggerLocation);
