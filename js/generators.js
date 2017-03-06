@@ -21,7 +21,7 @@ function createSine(freq) {
 	source.start = start;
 	source.stop = stop;
 
-	output.gain.value = 1;  // purely for debugging.
+	output.gain.value = 0.6;  // purely for debugging.
 
 	return source;
 }

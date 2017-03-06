@@ -1,12 +1,4 @@
-function Oscilloscope(container, width, height, source) {
-    // Create analyzer which is needed to properly get data from the source
-    this.analyzer = getAudioContext().createAnalyser();
-    this.analyzer.fftSize = 4096;
-    // Connect the source output to the analyzer
-    source.output.connect(this.analyzer);
-    // Create the data buffer
-    this.data = new Uint8Array(this.analyzer.frequencyBinCount);
-
+function Oscilloscope(container, width, height, sources) {
     // Create a new canvas to draw the scope onto
     this.canvas = document.createElement('canvas');
     this.canvas.style.width = width; 
@@ -18,22 +10,22 @@ function Oscilloscope(container, width, height, source) {
     } else {
       document.body.appendChild(this.canvas);
     }
-    this.triggerLevel = 50;
+    this.triggerLevel = 40;
+    this.trace1 = new Trace(this, sources[0]);
+    this.trace2 = new Trace(this, sources[1]);
+    this.trace2.color = '#E85D55';
 }
 
 Oscilloscope.prototype.draw = function () {
     // Make life easier with shorter variables
-	var data = this.data;
 	var width = this.canvas.clientWidth;
 	var height = this.canvas.clientHeight;
     this.canvas.height = height;
     this.canvas.width = width;
-	var scaling = height / 256;
+    this.scaling = height / 256;
+	var scaling = this.scaling;
 	var context = this.canvas.getContext('2d');
     context.strokeWidth = 1;
-
-    // Get new data
-	this.analyzer.getByteTimeDomainData(data);
 
     // Draw background
 	context.fillStyle="#222222";
@@ -56,24 +48,18 @@ Oscilloscope.prototype.draw = function () {
     // Undo dashed stroke
     context.restore();
 
-    // Draw markers
+    // Draw trigger level
 	context.strokeStyle = "#278BFF";
 	context.beginPath();
 	context.moveTo(0, 128 - this.triggerLevel);
 	context.lineTo(width, 128 - this.triggerLevel);
 	context.stroke();
 
-    // Draw trace
-	context.strokeStyle = "#E8830C";
-	context.beginPath();
+    this.trace1.fetch();
+	var triggerLocation = getTriggerLocation(this.trace1.data, width, this.triggerLevel, 'rising');
 
-	var zeroCross = getTriggerLocation(data, width, this.triggerLevel, 'falling');
-
-	context.moveTo(0, (256 - data[0]) * scaling);
-	for (var i=zeroCross, j=0; (j < width) && (i < data.length); i++, j++){
-		context.lineTo(j, (256 - data[i]) * scaling);
-    }
-	context.stroke();
+	this.trace1.draw(triggerLocation);
+    this.trace2.draw(triggerLocation);
 }
 
 var MINVAL = 234;  // 128 == zero.  MINVAL is the "minimum detected signal" level.

@@ -4,7 +4,8 @@ window.requestAnimationFrame = window.requestAnimationFrame       ||
   window.webkitRequestAnimationFrame;
 
 function pushme() {
-  osc.stop(0);
+  osc1.stop(0);
+  osc2.stop(0);
   //window.cancelAnimationFrame(rafID);
 }
 var rafID;
@@ -42,7 +43,7 @@ function draw(scope) {
   if(scope) {
     scope.draw();
     if(freqCanvas)
-      drawFreqBars(scope.analyzer,freqCanvas.context);
+      drawFreqBars(scope.trace1.analyzer,freqCanvas.context);
   }
   rafID = requestAnimationFrame(function(){draw(scope);});
 }
