@@ -12,9 +12,11 @@ function Oscilloscope(container, width, height, sources) {
     }
     this.triggerLevel = 50;
     this.traces = [];
+    trace = new NormalTrace(this, sources[0]);
     this.traces.push(
-        new Trace(this, sources[0]),
-        new Trace(this, sources[1])
+        trace,
+        new NormalTrace(this, sources[1]),
+        new FFTrace(this, trace.analyzer)
     );
     this.traces[1].color = '#E85D55';
     this.auto_triggering = true;

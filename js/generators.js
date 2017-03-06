@@ -22,14 +22,12 @@ function createSine(freq) {
 	source.start = startOsc;
 	source.stop = stopOsc;
 
-	output.gain.value = 0.6;  // purely for debugging.
+	output.gain.value = 0.6;
 
 	return source;
 }
 
 function createMic(stream){
-	// Create a MediaStreamAudioSourceNode
-	// Feed the HTMLMediaElement into it
 	var audioContext = getAudioContext();
 	var mic = audioContext.createMediaStreamSource(stream);
 	var output = audioContext.createGain();
