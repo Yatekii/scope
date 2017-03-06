@@ -43,7 +43,8 @@ function draw(scope) {
   if(scope) {
     scope.draw();
     if(freqCanvas)
-      drawFreqBars(scope.trace1.analyzer,freqCanvas.context);
+      if(scope.traces[2] !== undefined)
+        drawFreqBars(scope.traces[2].analyzer,freqCanvas.context);
   }
   rafID = requestAnimationFrame(function(){draw(scope);});
 }
@@ -64,4 +65,8 @@ function setupCanvases(container) {
 
 function dutycyclechange() {
   pwmOsc.setDutyCycle(1-parseFloat(document.getElementById("dutycycle").value));
+}
+
+function triggerLevelChange(scope) {
+  scope.triggerLevel = parseInt(document.getElementById('trigger-level').value);
 }

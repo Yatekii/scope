@@ -11,9 +11,12 @@ function Oscilloscope(container, width, height, sources) {
       document.body.appendChild(this.canvas);
     }
     this.triggerLevel = 50;
-    this.trace1 = new Trace(this, sources[0]);
-    this.trace2 = new Trace(this, sources[1]);
-    this.trace2.color = '#E85D55';
+    this.traces = [];
+    this.traces.push(
+        new Trace(this, sources[0]),
+        new Trace(this, sources[1])
+    );
+    this.traces[1].color = '#E85D55';
     this.auto_triggering = true;
 }
 
@@ -56,14 +59,19 @@ Oscilloscope.prototype.draw = function () {
 	context.lineTo(width, 128 - this.triggerLevel);
 	context.stroke();
 
-    this.trace1.fetch();
-	var triggerLocation = getTriggerLocation(this.trace1.data, width, this.triggerLevel, 'rising');
+    this.traces[0].fetch();
+	var triggerLocation = getTriggerLocation(this.traces[0].data, width, this.triggerLevel, 'rising');
     if(triggerLocation === undefined && this.auto_triggering){
         triggerLocation = 0;
     }
 
-	this.trace1.draw(triggerLocation);
-    this.trace2.draw(triggerLocation);
+    this.traces.forEach(function(trace) {
+        trace.draw(triggerLocation);
+    });
+}
+
+Oscilloscope.prototype.addTrace = function(trace) {
+    this.traces.push(trace);
 }
 
 var MINVAL = 234;  // 128 == zero.  MINVAL is the "minimum detected signal" level.

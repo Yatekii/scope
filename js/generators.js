@@ -1,9 +1,10 @@
 var audioContext = null;
 
-function start(time) {
+function startOsc(time) {
 	this.osc.start(time);
 }
-function stop(time) {
+
+function stopOsc(time) {
 	this.osc.stop(time);
 }
 
@@ -18,10 +19,29 @@ function createSine(freq) {
 	source = new Object();
 	source.osc = osc;
 	source.output = output;
-	source.start = start;
-	source.stop = stop;
+	source.start = startOsc;
+	source.stop = stopOsc;
 
 	output.gain.value = 0.6;  // purely for debugging.
+
+	return source;
+}
+
+function createMic(stream){
+	// Create a MediaStreamAudioSourceNode
+	// Feed the HTMLMediaElement into it
+	var audioContext = getAudioContext();
+	var mic = audioContext.createMediaStreamSource(stream);
+	var output = audioContext.createGain();
+
+	mic.connect(output);
+	output.connect(audioContext.destination);
+
+	source = new Object();
+	source.mic = mic;
+	source.output = output;
+
+	output.gain.value = 600;  // purely for debugging.
 
 	return source;
 }
@@ -47,6 +67,9 @@ function createNetworkSource(){
  */
 function createSource(config) {
 	switch(config.type){
+		case 'mic':
+			return createMic(config.data.stream);
+			break;
 		case 'sine':
 		default:
 			return createSine(config.data.freq);
