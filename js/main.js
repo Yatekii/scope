@@ -8,7 +8,6 @@ function init() {
     scope = new Oscilloscope(null, '100%', '256px', [osc1, osc2]);
     osc1.start(audioContext.currentTime+0.05);
     osc2.start(audioContext.currentTime+0.05);
-    setupCanvases();
     draw(scope);
     if (navigator.mediaDevices) {
     	console.log('getUserMedia supported.');
@@ -23,8 +22,24 @@ function init() {
 		console.log('getUserMedia not supported on your browser!');
 	}
     triggerLevel = document.getElementById('trigger-level');
-    triggerLevel.onchange = function(){triggerLevelChange(scope);};
-    triggerLevel.oninput = function(){triggerLevelChange(scope);};
+    triggerLevel.onchange = function(){
+        triggerLevelChange(scope);
+        document.getElementById('trigger-level-bar').value = document.getElementById('trigger-level').value
+    };
+    triggerLevel.oninput = function(){
+        triggerLevelChange(scope);
+        document.getElementById('trigger-level-bar').value = document.getElementById('trigger-level').value
+    };
+
+    triggerLevel = document.getElementById('trigger-level-bar');
+    triggerLevel.onchange = function(){
+        triggerLevelChange(scope);
+        document.getElementById('trigger-level').value = document.getElementById('trigger-level-bar').value
+    };
+    triggerLevel.oninput = function(){
+        triggerLevelChange(scope);
+        document.getElementById('trigger-level').value = document.getElementById('trigger-level-bar').value
+    };
 }
 
 window.addEventListener("load", init);
