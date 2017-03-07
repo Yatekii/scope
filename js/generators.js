@@ -1,4 +1,47 @@
 var audioContext = null;
+var micOutput = null
+
+function gotStream(stream) {
+	console.log("Found a stream.");
+    inputPoint = audioContext.createGain();
+
+    // Create an AudioNode from the stream.
+    realAudioInput = audioContext.createMediaStreamSource(stream);
+    audioInput = realAudioInput;
+    audioInput.connect(inputPoint);
+
+//    audioInput = convertToMono( input );
+
+    zeroGain = audioContext.createGain();
+    zeroGain.gain.value = 0.0;
+    inputPoint.connect( zeroGain );
+    zeroGain.connect( audioContext.destination );
+    t = new NormalTrace(scope, {output: inputPoint});
+    scope.addTrace(t);
+
+	source = new Object();
+	
+	source.zeroGain = zeroGain;
+	source.input = audioInput;
+	source.output = inputPoint;
+}
+
+function initAudio() {
+    navigator.getUserMedia({
+        "audio": {
+            "mandatory": {
+                "googEchoCancellation": "false",
+                "googAutoGainControl": "false",
+                "googNoiseSuppression": "false",
+                "googHighpassFilter": "false"
+            },
+            "optional": []
+        },
+    }, gotStream, function(e) {
+        alert('Error getting audio!');
+        console.log(e);
+    });
+}
 
 function startOsc(time) {
 	this.osc.start(time);
@@ -28,20 +71,9 @@ function createSine(freq) {
 }
 
 function createMic(stream){
-	var webkitAudioContext = window.AudioContext || window.webkitAudioContext;
-	var mic = webkitAudioContext.createMediaStreamSource(stream);
-	var output = webkitAudioContext.createGain();
-
-	mic.connect(output);
-	output.connect(audioContext.destination);
-	
-	source = new Object();
-	source.mic = mic;
-	source.output = output;
-
-	output.gain.value = 600;  // purely for debugging.
-
-	return source;
+	initAudio();
+	micOutput = { mic: null };
+	return micOutput;
 }
 
 function createNetworkSource(){
@@ -66,7 +98,7 @@ function createNetworkSource(){
 function createSource(config) {
 	switch(config.type){
 		case 'mic':
-			return createMic(config.data.stream);
+			return createMic();
 			break;
 		case 'sine':
 		default:
