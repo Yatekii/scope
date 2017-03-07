@@ -4,23 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Oscilloscope and Pulse-Width control</title>
-    <style>
-      body { margin: 1em;}
-      p { margin: 1em 0;}
-      #output {
-        width: 512px;
-        height: 256px;
-      }
-      #scope {
-        background: teal;
-      }
-      #freqbars {
-        background: black;
-        display: block;
-        margin-top: 1cm;        
-      }
-    </style>
-    <script src="js/AudioContextMonkeyPatch.js"></script>
+    <link rel="stylesheet" href="css/scope.css" />
+    <link rel="stylesheet" href="external/materialize/css/materialize.min.css" />
+    <link rel="stylesheet" href="external/dragula/css/dragula.min.css" />
+    <script src="external/js/AudioContextMonkeyPatch.js"></script>
+    <script src="external/dragula/js/dragula.min.js"></script>
+    <script src="js/marker.js"></script>
     <script src="js/trace.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/generators.js"></script>
@@ -28,9 +17,24 @@
     <script src="js/main.js"></script>
   </head>
   <body>
-  <p>This demo shows two things - an "oscilloscope control", complete with zero-triggered sweep built in, and an attempt to provide a controlled-duty-cycle pulse width modulation by mixing two sawtooth waves with a controlled delay (and a dc offset correction).</p>
+    <div class="container">
+      <div class="row" style="margin-top:30px;">
+        <div class="col s11">
+          <div id="scope-container">
+          </div>
+        </div>
+        <div class="col s1">
+        </div>
+          <input id="trigger-level-bar" type="range" value="64" min="-128" max="127">
+      </div>
+    </div>
     <p><button onclick="pushme();">Be quiet!</button></p>
-    <p>Trigger Level: <input id="trigger-level-bar" type="range" value="64" min="-128" max="127"></p>
+    <p>Trigger Level: </p>
     <p>Trigger Level: <input id="trigger-level" type="number" value="64" min="-128" max="127" /></p>
+    <div class="card-panel teal">
+      <span class="white-text">I am a very simple card. I am good at containing small bits of information.
+      I am convenient because I require little markup to use effectively. I am similar to what is called a panel in other frameworks.
+      </span>
+    </div>
   </body>
 </html>

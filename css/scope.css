@@ -1,0 +1,22 @@
+body { margin: 1em;}
+p { margin: 1em 0;}
+#output {
+    width: 512px;
+    height: 256px;
+}
+#scope {
+    background: teal;
+}
+#freqbars {
+    background: black;
+    display: block;
+    margin-top: 1cm;        
+}
+
+#trigger-level-bar {
+    transform: rotate(270deg);
+    width: 268px;
+    margin-top: 126px;
+    margin-left: -200px;
+    padding:0;
+}

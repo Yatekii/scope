@@ -16,8 +16,10 @@ function gotStream(stream) {
     zeroGain.gain.value = 0.0;
     inputPoint.connect( zeroGain );
     zeroGain.connect( audioContext.destination );
-    t = new NormalTrace(scope, {output: inputPoint});
+    var t = new NormalTrace(scope, {output: inputPoint});
+	var f = new FFTrace(scope, t.analyzer)
     scope.addTrace(t);
+	scope.addTrace(f);
 
 	source = new Object();
 	

@@ -81,5 +81,5 @@ FFTrace.prototype.draw = function (triggerLocation) {
         context.fillStyle = "hsl(" + Math.round((i*360)/numBars) + ", 100%, 50%)";
         context.fillRect(i * SPACING, this.scope.canvas.height, BAR_WIDTH, -magnitude);
     }
-    this.fetched = true;
+    this.fetched = false;
 }

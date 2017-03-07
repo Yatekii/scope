@@ -11,7 +11,3 @@ function draw(scope) {
   }
   rafID = requestAnimationFrame(function(){draw(scope);});
 }
-
-function triggerLevelChange(scope) {
-  scope.triggerLevel = parseInt(document.getElementById('trigger-level').value);
-}
