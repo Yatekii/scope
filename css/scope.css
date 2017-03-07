@@ -20,3 +20,15 @@ p { margin: 1em 0;}
     margin-left: -200px;
     padding:0;
 }
+
+.source {
+    margin-right: 0.5em !important;
+}
+
+#active-sources {
+    margin-bottom: 2em !important;
+}
+
+#available-sources {
+    margin-bottom: 2em !important;
+}

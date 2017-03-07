@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="external/dragula/css/dragula.min.css" />
     <script src="external/js/AudioContextMonkeyPatch.js"></script>
     <script src="external/dragula/js/dragula.min.js"></script>
+    <script src="js/source.js"></script>
     <script src="js/marker.js"></script>
     <script src="js/trace.js"></script>
     <script src="js/ui.js"></script>
@@ -18,23 +19,38 @@
   </head>
   <body>
     <div class="container">
-      <div class="row" style="margin-top:30px;">
-        <div class="col s11">
+      <div class="row">
+        <div class="col s12">
           <div id="scope-container">
           </div>
         </div>
-        <div class="col s1">
-        </div>
-          <input id="trigger-level-bar" type="range" value="64" min="-128" max="127">
+      </div>
+      <div id="active-sources" class="row">
+      </div>
+      <div id="available-sources" class="row">
+      </div>
+      <div id="trace-list" class="row">
+      </div>
+      <div id="marker-list" class="row">
       </div>
     </div>
     <p><button onclick="pushme();">Be quiet!</button></p>
-    <p>Trigger Level: </p>
-    <p>Trigger Level: <input id="trigger-level" type="number" value="64" min="-128" max="127" /></p>
-    <div class="card-panel teal">
-      <span class="white-text">I am a very simple card. I am good at containing small bits of information.
-      I am convenient because I require little markup to use effectively. I am similar to what is called a panel in other frameworks.
-      </span>
+    <div class="card blue-grey darken-1">
+      <div class="card-content white-text">
+        <span class="card-title">Card Title</span>
+        <p>I am a very simple card. I am good at containing small bits of information.
+        I am convenient because I require little markup to use effectively.</p>
+      </div>
+      <div class="card-action">
+        <div class="switch">
+          <label>
+            Off
+            <input type="checkbox">
+            <span class="lever"></span>
+            On
+          </label>
+        </div>
+      </div>
     </div>
   </body>
 </html>

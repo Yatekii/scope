@@ -36,13 +36,6 @@ function Oscilloscope(container, width, height, sources) {
     this.triggerTrace = 0;
     this.triggerType = 'rising'
     triggerLevel = document.getElementById('trigger-level');
-    var me = this;
-    triggerLevel.onchange = function(){
-        triggerLevelChange(me);
-    };
-    triggerLevel.oninput = function(){
-        triggerLevelChange(me);
-    };
 }
 
 Oscilloscope.prototype.draw = function () {
