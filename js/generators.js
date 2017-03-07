@@ -28,13 +28,13 @@ function createSine(freq) {
 }
 
 function createMic(stream){
-	var audioContext = getAudioContext();
-	var mic = audioContext.createMediaStreamSource(stream);
-	var output = audioContext.createGain();
+	var webkitAudioContext = window.AudioContext || window.webkitAudioContext;
+	var mic = webkitAudioContext.createMediaStreamSource(stream);
+	var output = webkitAudioContext.createGain();
 
 	mic.connect(output);
 	output.connect(audioContext.destination);
-
+	
 	source = new Object();
 	source.mic = mic;
 	source.output = output;
