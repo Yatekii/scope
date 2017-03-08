@@ -1,45 +1,19 @@
-var traceRepresentation = '<div class="card blue-grey darken-1 col s2 source">\
-    <div class="card-content white-text">\
-        <span class="card-title">Trace <input class="jscolor"></span>\
-    </div>\
-    <div class="card-action">\
-        <div class="switch">\
-            <label>\
-                Off\
-                <input type="checkbox" class="trace-on-off">\
-                <span class="lever"></span>\
-                On\
-            </label>\
-        </div>\
-    </div>\
-</div>';
-
-var FFTRepresentation = '<div class="card blue-grey darken-1 col s2 source">\
-    <div class="card-content white-text">\
-        <span class="card-title">FFT</span>\
-    </div>\
-    <div class="card-action">\
-        <div class="switch">\
-            <label>\
-                Off\
-                <input type="checkbox" class="trace-on-off">\
-                <span class="lever"></span>\
-                On\
-            </label>\
-        </div>\
-    </div>\
-</div>';
-
-function NormalTrace(scope, source, repr, defaultOn) {
+function NormalTrace(scope, source, defaultOn) {
     this.scope = scope;
     this.source = source;
     this.color = '#E8830C';
     this.fetched = false;
-    this.repr = repr;
     this.on = defaultOn;
     this.colorpicker = null;
-    this.title = null
+    this.title = null;
+    this.icon = null;
 
+    // Create HTML representation
+    var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length)
+    var repr = initRepr(tr, document.getElementById('trace-list'));
+    this.repr = repr;
+
+    // Find on-off switch and store it
     var potentialButtons = document.getElementsByClassName('trace-on-off');
     for(i = 0; i < potentialButtons.length; i++){
         var x = potentialButtons[i];
@@ -48,11 +22,13 @@ function NormalTrace(scope, source, repr, defaultOn) {
                 var me = this;
                 potentialButtons[i].onchange = function(event) { me.onSwitch(me, event); };
                 potentialButtons[i].checked = true;
+                componentHandler.upgradeElement(potentialButtons[i].parentElement);
                 break;
             }
         }
     }
 
+    // Find color storage and store it
     var potentialInputs = document.getElementsByClassName('jscolor');
     for(i = 0; i < potentialInputs.length; i++){
         var x = potentialInputs[i];
@@ -70,18 +46,33 @@ function NormalTrace(scope, source, repr, defaultOn) {
         }
     }
 
+    // Find repr title and store it
     var potentialTitles = document.getElementsByClassName('card-title');
     for(i = 0; i < potentialTitles.length; i++){
         var x = potentialTitles[i];
         while (x = x.parentElement) { 
             if (x == repr){
                 this.title = potentialTitles[i];
-                potentialTitles[i].style.color =  this.color;
+                potentialTitles[i].style.color = this.color;
+                componentHandler.upgradeElement(potentialTitles[i].parentElement);
                 break;
             }
         }
     }
-    this.title.onclick = this.colorpicker.show;
+
+    // Find repr icon and store it
+    var potentialIcons = document.getElementsByClassName('material-icons');
+    for(i = 0; i < potentialIcons.length; i++){
+        var x = potentialIcons[i];
+        while (x = x.parentElement) { 
+            if (x == repr){
+                this.icon = potentialIcons[i];
+                potentialIcons[i].style.color = this.color;
+                break;
+            }
+        }
+    }
+    this.icon.onclick = this.colorpicker.show;
 
     if(source.output){
         // Create the analyzer node to be able to read sample output
@@ -95,9 +86,27 @@ function NormalTrace(scope, source, repr, defaultOn) {
     }
 }
 
+NormalTrace.prototype.createTraceRepr = function(title_id, switch_id) {
+    return `<li class="mdl-list__item">
+        <div class="mdl-card mdl-shadow--2dp trace-card">
+            <div class="mdl-card__title">
+                <i class="material-icons trace-card-icon">timeline</i>&nbsp;
+                <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
+                    <label class="mdl-textfield__label" for="${ title_id }">Trace</label>
+                </div><input class="jscolor">
+                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="${ switch_id }">
+                    <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
+                </label>
+            </div>
+        </div>
+    </li>`;
+}
+
 NormalTrace.prototype.setColor = function(color) {
     this.colorpicker.fromString(color)
     this.color = color;
+    this.icon.style.color = this.color;
     this.title.style.color = this.color;
 }
 
@@ -130,10 +139,15 @@ NormalTrace.prototype.draw = function (triggerLocation) {
     this.fetched = false;
 }
 
-function FFTrace(scope, analyzer, repr) {
+function FFTrace(scope, analyzer) {
     this.scope = scope;
     this.analyzer = analyzer;
     this.color = '#E8830C';
+
+    // Create HTML representation
+    var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length)
+    var repr = initRepr(tr, document.getElementById('trace-list'));
+    componentHandler.upgradeElement(repr);
     this.repr = repr;
     
     // Create the data buffer
@@ -148,10 +162,42 @@ function FFTrace(scope, analyzer, repr) {
                 var me = this;
                 potentialButtons[i].onchange = function(event) { me.onSwitch(me, event); };
                 potentialButtons[i].checked = true;
+                componentHandler.upgradeElement(potentialButtons[i].parentElement);
                 break;
             }
         }
     }
+
+    // Find repr title and store it
+    var potentialTitles = document.getElementsByClassName('card-title');
+    for(i = 0; i < potentialTitles.length; i++){
+        var x = potentialTitles[i];
+        while (x = x.parentElement) { 
+            if (x == repr){
+                this.title = potentialTitles[i];
+                potentialTitles[i].style.color = this.color;
+                componentHandler.upgradeElement(potentialTitles[i].parentElement);
+                break;
+            }
+        }
+    }
+}
+
+FFTrace.prototype.createTraceRepr = function(title_id, switch_id) {
+    return `<li class="mdl-list__item">
+        <div class="mdl-card mdl-shadow--2dp trace-card">
+            <div class="mdl-card__title">
+                <i class="material-icons trace-card-icon">equalizer</i>&nbsp;
+                <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
+                    <label class="mdl-textfield__label" for="${ title_id }">FFT</label>
+                </div>
+                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="${ switch_id }">
+                    <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
+                </label>
+            </div>
+        </div>
+    </li>`;
 }
 
 FFTrace.prototype.setColor = function(color) {

@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Oscilloscope and Pulse-Width control</title>
     <link rel="stylesheet" href="css/scope.css" />
-    <link rel="stylesheet" href="external/materialize/css/materialize.min.css" />
+    <link rel="stylesheet" href="external/mdl/css/material.min.css" />
     <link rel="stylesheet" href="external/dragula/css/dragula.min.css" />
     <script src="external/js/AudioContextMonkeyPatch.js"></script>
     <script src="external/js/jscolor.min.js"></script>
     <script src="external/dragula/js/dragula.min.js"></script>
+    <script src="external/mdl/js/material.min.js"></script>
     <script src="js/source.js"></script>
     <script src="js/marker.js"></script>
     <script src="js/trace.js"></script>
@@ -19,18 +20,25 @@
     <script src="js/main.js"></script>
   </head>
   <body>
-    <div class="container">
-      <div class="row">
-        <div class="col s12 m12 l12" id="scope-container">
+    <div class="mdl-grid">
+      <div class="mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet" id="scope-container"></div>
+    </div>
+    <div class="mdl-grid">
+      <div class="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet">
+        <ul id="trace-list" class="mdl-list">
+        </ul>
+      </div>
+      <div class="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet">
+        <ul id="active-sources" class="mdl-list">
+        </ul>
+      </div>
+      <div class="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet">
+        <ul id="available-sources" class="mdl-list">
+        </ul>
+      </div>
+      <div class="mdl-cell mdl-cell--3-col mdl-cell--3-col-tablet">
+        <div id="marker-list" class="row">
         </div>
-      </div>
-      <div id="active-sources" class="row">
-      </div>
-      <div id="available-sources" class="row">
-      </div>
-      <div id="trace-list" class="row">
-      </div>
-      <div id="marker-list" class="row">
       </div>
     </div>
   </body>

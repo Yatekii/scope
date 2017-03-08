@@ -14,25 +14,22 @@ function init() {
     // osc1.output.connect(audioContext.destination);
     // osc2.output.connect(audioContext.destination);
     scope = new Oscilloscope(document.getElementById('scope-container'), '100%', '256px');
-    // new Generator(document.getElementById('active-sources'), scope, {}, true);
-    // new Microphone(document.getElementById('active-sources'), scope, {}, true);
-    // new Generator(document.getElementById('available-sources'), scope, {}, true);
-    // new Microphone(document.getElementById('available-sources'), scope, {}, true);
+    new Generator(document.getElementById('active-sources'), scope, {}, true);
+    new Microphone(document.getElementById('active-sources'), scope, {}, true);
+    new Generator(document.getElementById('available-sources'), scope, {}, true);
+    new Microphone(document.getElementById('available-sources'), scope, {}, true);
 
     scope.addTrace(new NormalTrace(
         scope, osc1,
-        initRepr(traceRepresentation, document.getElementById('trace-list')),
         true
     ));
     scope.addTrace(new NormalTrace(
         scope, osc2,
-        initRepr(traceRepresentation, document.getElementById('trace-list')),
         true
     ));
     scope.traces[1].setColor('#E85D55');
     micTrace = new NormalTrace(
         scope, mic,
-        initRepr(traceRepresentation, document.getElementById('trace-list')),
         false
     );
     scope.addTrace(micTrace);

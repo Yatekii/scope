@@ -1,36 +1,27 @@
-var generatorRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
-    <div class="card-content white-text">\
-        <span class="card-title">Waveform</span>\
-        <p></p>\
-    </div>\
-    <div class="card-action">\
-        <div class="switch">\
-        <label>\
-            Off\
-            <input type="checkbox" class="source-on-off">\
-            <span class="lever"></span>\
-            On\
-        </label>\
-        </div>\
-    </div>\
-</div>';
+var generatorRepresentation = `<li class="mdl-list__item source">
+    <span class="mdl-list__item-primary-content">
+      <i class="material-icons  mdl-list__item-avatar">person</i>
+      <span class="card-title">Waveform</span>
+    </span>
+    <span class="mdl-list__item-secondary-action">
+      <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="list-switch-1">
+        <input type="checkbox" id="list-switch-1" class="mdl-switch__input source-on-off"/>
+      </label>
+    </span>
+  </li>`;
 
-var microphoneRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
-    <div class="card-content white-text">\
-        <span class="card-title">Microphone</span>\
-        <p></p>\
-    </div>\
-    <div class="card-action">\
-        <div class="switch">\
-        <label>\
-            Off\
-            <input type="checkbox" class="source-on-off">\
-            <span class="lever"></span>\
-            On\
-        </label>\
-        </div>\
-    </div>\
-</div>';
+var microphoneRepresentation = `<li class="mdl-list__item source">
+    <span class="mdl-list__item-primary-content">
+      <i class="material-icons  mdl-list__item-avatar">person</i>
+      <span class="card-title">Microphone</span>
+    </span>
+    <span class="mdl-list__item-secondary-action">
+      <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="list-switch-1">
+        <input type="checkbox" id="list-switch-1" class="mdl-switch__input source-on-off"/>
+      </label>
+    </span>
+  </li>`;
+
 
 function htmlToElement(html) {
     var template = document.createElement('template');

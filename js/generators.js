@@ -30,8 +30,7 @@ function gotStream(stream) {
 	// Create the data buffer
     micTrace.data = new Uint8Array(micTrace.analyzer.frequencyBinCount);
 	micTrace.on = true;
-	var fft = initRepr(FFTRepresentation, document.getElementById('trace-list'));
-	var f = new FFTrace(scope, micTrace.analyzer, fft);
+	var f = new FFTrace(scope, micTrace.analyzer);
 	scope.addTrace(f);
 }
 

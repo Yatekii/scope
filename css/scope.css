@@ -1,3 +1,15 @@
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(../external/mdl/fonts/MaterialIcons-Regular.eot); /* For IE6-8 */
+  src: local('Material Icons'),
+       local('MaterialIcons-Regular'),
+       url(../external/mdl/fonts/MaterialIcons-Regular.woff2) format('woff2'),
+       url(../external/mdl/fonts/MaterialIcons-Regular.woff) format('woff'),
+       url(../external/mdl/fonts/MaterialIcons-Regular.ttf) format('truetype');
+}
+
 body { margin: 1em;}
 p { margin: 1em 0;}
 #output {
@@ -36,4 +48,24 @@ p { margin: 1em 0;}
 
 #scope-container {
     padding: 0;
+}
+
+#trace-list {
+    overflow: scroll;
+}
+
+.trace-card {
+    min-height: 0 !important;
+    padding: 0.2em;
+    margin: 0.2em;
+}
+
+/*.trace-card div {
+    min-height: 100px !important;
+    padding: 0.2em !important;
+    margin: 0em !important;
+}*/
+
+.trace-card-icon {
+
 }
