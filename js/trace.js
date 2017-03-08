@@ -1,6 +1,6 @@
-var traceRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
+var traceRepresentation = '<div class="card blue-grey darken-1 col s2 source">\
     <div class="card-content white-text">\
-        <span class="card-title">Trace</span><input class="jscolor" value="ab2567">\
+        <span class="card-title">Trace <input class="jscolor"></span>\
     </div>\
     <div class="card-action">\
         <div class="switch">\
@@ -14,11 +14,9 @@ var traceRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
     </div>\
 </div>';
 
-var FFTRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
+var FFTRepresentation = '<div class="card blue-grey darken-1 col s2 source">\
     <div class="card-content white-text">\
-        <span class="card-title">FFT</span><input class="jscolor" value="ab2567">\
-		Pick text color\
-	</button>\
+        <span class="card-title">FFT</span>\
     </div>\
     <div class="card-action">\
         <div class="switch">\
@@ -40,6 +38,7 @@ function NormalTrace(scope, source, repr, defaultOn) {
     this.repr = repr;
     this.on = defaultOn;
     this.colorpicker = null;
+    this.title = null
 
     var potentialButtons = document.getElementsByClassName('trace-on-off');
     for(i = 0; i < potentialButtons.length; i++){
@@ -60,13 +59,29 @@ function NormalTrace(scope, source, repr, defaultOn) {
         while (x = x.parentElement) { 
             if (x == repr){
                 var me = this;
-                this.colorpicker = new jscolor(potentialInputs[i],{'value': this.color, 'hash': true});
+                this.colorpicker = new jscolor(potentialInputs[i],{
+                    'value': this.color,
+                    'hash': true
+                });
                 potentialInputs[i].value = this.color;
                 potentialInputs[i].onchange = function(event) { me.setColor(event.target.value);  };
                 break;
             }
         }
     }
+
+    var potentialTitles = document.getElementsByClassName('card-title');
+    for(i = 0; i < potentialTitles.length; i++){
+        var x = potentialTitles[i];
+        while (x = x.parentElement) { 
+            if (x == repr){
+                this.title = potentialTitles[i];
+                potentialTitles[i].style.color =  this.color;
+                break;
+            }
+        }
+    }
+    this.title.onclick = this.colorpicker.show;
 
     if(source.output){
         // Create the analyzer node to be able to read sample output
@@ -83,6 +98,7 @@ function NormalTrace(scope, source, repr, defaultOn) {
 NormalTrace.prototype.setColor = function(color) {
     this.colorpicker.fromString(color)
     this.color = color;
+    this.title.style.color = this.color;
 }
 
 NormalTrace.prototype.onSwitch = function(trace, event) {
@@ -114,14 +130,37 @@ NormalTrace.prototype.draw = function (triggerLocation) {
     this.fetched = false;
 }
 
-function FFTrace(scope, analyzer) {
+function FFTrace(scope, analyzer, repr) {
     this.scope = scope;
     this.analyzer = analyzer;
     this.color = '#E8830C';
+    this.repr = repr;
     
     // Create the data buffer
     this.data = new Uint8Array(this.analyzer.frequencyBinCount);
     this.on = true;
+
+    var potentialButtons = document.getElementsByClassName('trace-on-off');
+    for(i = 0; i < potentialButtons.length; i++){
+        var x = potentialButtons[i];
+        while (x = x.parentElement) { 
+            if (x == repr){
+                var me = this;
+                potentialButtons[i].onchange = function(event) { me.onSwitch(me, event); };
+                potentialButtons[i].checked = true;
+                break;
+            }
+        }
+    }
+}
+
+FFTrace.prototype.setColor = function(color) {
+    this.colorpicker.fromString(color)
+    this.color = color;
+}
+
+FFTrace.prototype.onSwitch = function(trace, event) {
+    trace.on = event.target.checked;
 }
 
 FFTrace.prototype.fetch = function () {

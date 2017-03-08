@@ -19,8 +19,6 @@ function init() {
     // new Generator(document.getElementById('available-sources'), scope, {}, true);
     // new Microphone(document.getElementById('available-sources'), scope, {}, true);
 
-    initRepr(FFTRepresentation, document.getElementById('trace-list'));
-
     scope.addTrace(new NormalTrace(
         scope, osc1,
         initRepr(traceRepresentation, document.getElementById('trace-list')),

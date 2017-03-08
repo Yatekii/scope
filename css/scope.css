@@ -26,6 +26,14 @@ p { margin: 1em 0;}
 }
 
 .jscolor {
-    height: 2em !important;
-    width: 5em !important;
+    height: 0 !important;
+    width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    visibility: hidden;
+    position: absolute;
+}
+
+#scope-container {
+    padding: 0;
 }
