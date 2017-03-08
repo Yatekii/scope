@@ -1,7 +1,6 @@
 var traceRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
     <div class="card-content white-text">\
-        <span class="card-title">Trace</span>\
-        <p></p>\
+        <span class="card-title">Trace</span><input class="jscolor" value="ab2567">\
     </div>\
     <div class="card-action">\
         <div class="switch">\
@@ -17,8 +16,9 @@ var traceRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
 
 var FFTRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
     <div class="card-content white-text">\
-        <span class="card-title">FFT</span>\
-        <p></p>\
+        <span class="card-title">FFT</span><input class="jscolor" value="ab2567">\
+		Pick text color\
+	</button>\
     </div>\
     <div class="card-action">\
         <div class="switch">\
@@ -39,8 +39,9 @@ function NormalTrace(scope, source, repr, defaultOn) {
     this.fetched = false;
     this.repr = repr;
     this.on = defaultOn;
+    this.colorpicker = null;
 
-    potentialButtons = document.getElementsByClassName('trace-on-off');
+    var potentialButtons = document.getElementsByClassName('trace-on-off');
     for(i = 0; i < potentialButtons.length; i++){
         var x = potentialButtons[i];
         while (x = x.parentElement) { 
@@ -48,6 +49,20 @@ function NormalTrace(scope, source, repr, defaultOn) {
                 var me = this;
                 potentialButtons[i].onchange = function(event) { me.onSwitch(me, event); };
                 potentialButtons[i].checked = true;
+                break;
+            }
+        }
+    }
+
+    var potentialInputs = document.getElementsByClassName('jscolor');
+    for(i = 0; i < potentialInputs.length; i++){
+        var x = potentialInputs[i];
+        while (x = x.parentElement) { 
+            if (x == repr){
+                var me = this;
+                this.colorpicker = new jscolor(potentialInputs[i],{'value': this.color, 'hash': true});
+                potentialInputs[i].value = this.color;
+                potentialInputs[i].onchange = function(event) { me.setColor(event.target.value);  };
                 break;
             }
         }
@@ -63,6 +78,11 @@ function NormalTrace(scope, source, repr, defaultOn) {
         // Create the data buffer
         this.data = new Uint8Array(this.analyzer.frequencyBinCount);
     }
+}
+
+NormalTrace.prototype.setColor = function(color) {
+    this.colorpicker.fromString(color)
+    this.color = color;
 }
 
 NormalTrace.prototype.onSwitch = function(trace, event) {

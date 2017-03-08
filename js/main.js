@@ -31,7 +31,7 @@ function init() {
         initRepr(traceRepresentation, document.getElementById('trace-list')),
         true
     ));
-    scope.traces[1].color = '#E85D55';
+    scope.traces[1].setColor('#E85D55');
     micTrace = new NormalTrace(
         scope, mic,
         initRepr(traceRepresentation, document.getElementById('trace-list')),

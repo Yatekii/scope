@@ -30,7 +30,6 @@ function Oscilloscope(container, width, height) {
     this.triggerMoving = false;
     this.triggerTrace = 0;
     this.triggerType = 'rising'
-    triggerLevel = document.getElementById('trigger-level');
 }
 
 Oscilloscope.prototype.draw = function () {
@@ -90,10 +89,6 @@ function getTriggerLocation(buf, buflen, triggerLevel, type){
         case 'falling':
             return fallingEdgeTrigger(buf, buflen, triggerLevel);
     }
-}
-
-function triggerLevelChange(scope) {
-  scope.triggerLevel = parseInt(document.getElementById('trigger-level').value);
 }
 
 function risingEdgeTrigger(buf, buflen, triggerLevel) {
@@ -186,7 +181,6 @@ function onMouseMove(event, scope){
             triggerLevel = -128;
         }
         scope.triggerLevel = triggerLevel;
-        document.getElementById('trigger-level').value = scope.triggerLevel;
         return;
     }
 

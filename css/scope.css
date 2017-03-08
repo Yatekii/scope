@@ -13,14 +13,6 @@ p { margin: 1em 0;}
     margin-top: 1cm;        
 }
 
-#trigger-level-bar {
-    transform: rotate(270deg);
-    width: 268px;
-    margin-top: 126px;
-    margin-left: -200px;
-    padding:0;
-}
-
 .source {
     margin-right: 0.5em !important;
 }
@@ -31,4 +23,9 @@ p { margin: 1em 0;}
 
 #available-sources {
     margin-bottom: 0.5em !important;
+}
+
+.jscolor {
+    height: 2em !important;
+    width: 5em !important;
 }

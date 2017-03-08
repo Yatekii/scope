@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="external/materialize/css/materialize.min.css" />
     <link rel="stylesheet" href="external/dragula/css/dragula.min.css" />
     <script src="external/js/AudioContextMonkeyPatch.js"></script>
+    <script src="external/js/jscolor.min.js"></script>
     <script src="external/dragula/js/dragula.min.js"></script>
     <script src="js/source.js"></script>
     <script src="js/marker.js"></script>
@@ -35,6 +36,12 @@
       </div>
     </div>
     <p><button onclick="pushme();">Be quiet!</button></p>
+    <input class="jscolor" value="ab2567" onchange="update(this.jscolor)">
+    <script>
+function update(jscolor) {
+    console.log(jscolor);
+}
+</script>
     <div class="card blue-grey darken-1">
       <div class="card-content white-text">
         <span class="card-title">Card Title</span>
