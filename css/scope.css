@@ -26,9 +26,9 @@ p { margin: 1em 0;}
 }
 
 #active-sources {
-    margin-bottom: 2em !important;
+    margin-bottom: 0.5em !important;
 }
 
 #available-sources {
-    margin-bottom: 2em !important;
+    margin-bottom: 0.5em !important;
 }

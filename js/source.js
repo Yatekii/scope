@@ -1,4 +1,4 @@
-var generatorRepresentation = '<div class="card blue-grey darken-1 col s3 source">\
+var generatorRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
     <div class="card-content white-text">\
         <span class="card-title">Waveform</span>\
         <p></p>\
@@ -7,7 +7,7 @@ var generatorRepresentation = '<div class="card blue-grey darken-1 col s3 source
         <div class="switch">\
         <label>\
             Off\
-            <input type="checkbox">\
+            <input type="checkbox" class="source-on-off">\
             <span class="lever"></span>\
             On\
         </label>\
@@ -15,7 +15,7 @@ var generatorRepresentation = '<div class="card blue-grey darken-1 col s3 source
     </div>\
 </div>';
 
-var microphoneRepresentation = '<div class="card blue-grey darken-1 col s3 source">\
+var microphoneRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
     <div class="card-content white-text">\
         <span class="card-title">Microphone</span>\
         <p></p>\
@@ -24,7 +24,7 @@ var microphoneRepresentation = '<div class="card blue-grey darken-1 col s3 sourc
         <div class="switch">\
         <label>\
             Off\
-            <input type="checkbox">\
+            <input type="checkbox" class="source-on-off">\
             <span class="lever"></span>\
             On\
         </label>\
@@ -38,16 +38,27 @@ function htmlToElement(html) {
     return template.content.firstChild;
 }
 
+function initRepr(html, container) {
+    element = htmlToElement(html);
+    if(container) {
+      container.appendChild(element);
+    } else {
+      document.body.appendChild(element);
+    }
+    return element;
+}
+
 function Generator(container, scope, source, isSpawn) {
     this.scope = scope;
     this.source = source;
-    this.isSpawn = isSpawn;
+    
     element = htmlToElement(generatorRepresentation);
     if(container) {
       container.appendChild(element);
     } else {
       document.body.appendChild(element);
     }
+    this.on = element.getElementsByClassName('source-on-off');
     element.controller = this;
 }
 

@@ -1,17 +1,72 @@
-function NormalTrace(scope, source) {
+var traceRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
+    <div class="card-content white-text">\
+        <span class="card-title">Trace</span>\
+        <p></p>\
+    </div>\
+    <div class="card-action">\
+        <div class="switch">\
+            <label>\
+                Off\
+                <input type="checkbox" class="trace-on-off">\
+                <span class="lever"></span>\
+                On\
+            </label>\
+        </div>\
+    </div>\
+</div>';
+
+var FFTRepresentation = '<div class="card blue-grey darken-1 col b3 source">\
+    <div class="card-content white-text">\
+        <span class="card-title">FFT</span>\
+        <p></p>\
+    </div>\
+    <div class="card-action">\
+        <div class="switch">\
+            <label>\
+                Off\
+                <input type="checkbox" class="trace-on-off">\
+                <span class="lever"></span>\
+                On\
+            </label>\
+        </div>\
+    </div>\
+</div>';
+
+function NormalTrace(scope, source, repr, defaultOn) {
     this.scope = scope;
     this.source = source;
     this.color = '#E8830C';
     this.fetched = false;
+    this.repr = repr;
+    this.on = defaultOn;
 
-    // Create the analyzer node to be able to read sample output
-    this.analyzer = getAudioContext().createAnalyser();
-    this.analyzer.fftSize = 4096;
-    // Connect the source output to the analyzer
-    source.output.connect(this.analyzer);
+    potentialButtons = document.getElementsByClassName('trace-on-off');
+    for(i = 0; i < potentialButtons.length; i++){
+        var x = potentialButtons[i];
+        while (x = x.parentElement) { 
+            if (x == repr){
+                var me = this;
+                potentialButtons[i].onchange = function(event) { me.onSwitch(me, event); };
+                potentialButtons[i].checked = true;
+                break;
+            }
+        }
+    }
 
-    // Create the data buffer
-    this.data = new Uint8Array(this.analyzer.frequencyBinCount);
+    if(source.output){
+        // Create the analyzer node to be able to read sample output
+        this.analyzer = getAudioContext().createAnalyser();
+        this.analyzer.fftSize = 4096;
+        // Connect the source output to the analyzer
+        source.output.connect(this.analyzer);
+
+        // Create the data buffer
+        this.data = new Uint8Array(this.analyzer.frequencyBinCount);
+    }
+}
+
+NormalTrace.prototype.onSwitch = function(trace, event) {
+    trace.on = event.target.checked;
 }
 
 NormalTrace.prototype.fetch = function () {
@@ -30,8 +85,6 @@ NormalTrace.prototype.draw = function (triggerLocation) {
     // Draw trace
 	context.strokeStyle = this.color;
 	context.beginPath();
-    if(this.source.mic)
-        console.log('KEK');
 
 	context.moveTo(0, (256 - this.data[triggerLocation]) * this.scope.scaling);
 	for (var i=triggerLocation, j=0; (j < this.scope.canvas.width) && (i < this.data.length); i++, j++){
@@ -41,7 +94,6 @@ NormalTrace.prototype.draw = function (triggerLocation) {
     this.fetched = false;
 }
 
-
 function FFTrace(scope, analyzer) {
     this.scope = scope;
     this.analyzer = analyzer;
@@ -49,6 +101,7 @@ function FFTrace(scope, analyzer) {
     
     // Create the data buffer
     this.data = new Uint8Array(this.analyzer.frequencyBinCount);
+    this.on = true;
 }
 
 FFTrace.prototype.fetch = function () {

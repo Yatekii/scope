@@ -1,3 +1,4 @@
+var micTrace = null;
 function init() {
     if (!navigator.getUserMedia)
         navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
@@ -6,17 +7,37 @@ function init() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
-    osc1=createSource({type: 'sine', data: { freq: 220}});
-    osc2=createSource({type: 'sine', data: { freq: 440}});
-    mic = createSource({type: 'mic'}).mic;
+    osc1=createSource({type: 'sine', data: { freq: 220 }});
+    osc2=createSource({type: 'sine', data: { freq: 440 }});
+    mic = createSource({type: 'mic'});
     audioContext = getAudioContext();
     // osc1.output.connect(audioContext.destination);
     // osc2.output.connect(audioContext.destination);
-    scope = new Oscilloscope(document.getElementById('scope-container'), '100%', '256px', [osc1, osc2]);
-    new Generator(document.getElementById('active-sources'), scope, {}, true);
-    new Microphone(document.getElementById('active-sources'), scope, {}, true);
-    new Generator(document.getElementById('available-sources'), scope, {}, true);
-    new Microphone(document.getElementById('available-sources'), scope, {}, true);
+    scope = new Oscilloscope(document.getElementById('scope-container'), '100%', '256px');
+    // new Generator(document.getElementById('active-sources'), scope, {}, true);
+    // new Microphone(document.getElementById('active-sources'), scope, {}, true);
+    // new Generator(document.getElementById('available-sources'), scope, {}, true);
+    // new Microphone(document.getElementById('available-sources'), scope, {}, true);
+
+    initRepr(FFTRepresentation, document.getElementById('trace-list'));
+
+    scope.addTrace(new NormalTrace(
+        scope, osc1,
+        initRepr(traceRepresentation, document.getElementById('trace-list')),
+        true
+    ));
+    scope.addTrace(new NormalTrace(
+        scope, osc2,
+        initRepr(traceRepresentation, document.getElementById('trace-list')),
+        true
+    ));
+    scope.traces[1].color = '#E85D55';
+    micTrace = new NormalTrace(
+        scope, mic,
+        initRepr(traceRepresentation, document.getElementById('trace-list')),
+        false
+    );
+    scope.addTrace(micTrace);
 
     var sourcesDrake = dragula([document.getElementById('available-sources'), document.getElementById('active-sources')], {
         copy: function (el, source) {
@@ -32,8 +53,7 @@ function init() {
         draggedOriginal = original;
     });
     sourcesDrake.on('drop', function(el, target, source, sibling) {
-        console.log(draggedOriginal);
-        console.log('YEAH!');
+        
     });
     osc1.start(audioContext.currentTime+0.05);
     osc2.start(audioContext.currentTime+0.05);

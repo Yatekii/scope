@@ -16,16 +16,22 @@ function gotStream(stream) {
     zeroGain.gain.value = 0.0;
     inputPoint.connect( zeroGain );
     zeroGain.connect( audioContext.destination );
-    var t = new NormalTrace(scope, {output: inputPoint});
-	var f = new FFTrace(scope, t.analyzer)
-    scope.addTrace(t);
-	scope.addTrace(f);
 
 	source = new Object();
 	
 	source.zeroGain = zeroGain;
 	source.input = audioInput;
 	source.output = inputPoint;
+	// Create the analyzer node to be able to read sample output
+	micTrace.analyzer = getAudioContext().createAnalyser();
+	micTrace.analyzer.fftSize = 4096;
+	// Connect the source output to the analyzer
+	source.output.connect(micTrace.analyzer);
+	// Create the data buffer
+    micTrace.data = new Uint8Array(micTrace.analyzer.frequencyBinCount);
+	micTrace.on = true;
+	var f = new FFTrace(scope, micTrace.analyzer);
+	scope.addTrace(f);
 }
 
 function initAudio() {

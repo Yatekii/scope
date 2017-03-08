@@ -1,4 +1,4 @@
-function Oscilloscope(container, width, height, sources) {
+function Oscilloscope(container, width, height) {
     // Create a new canvas to draw the scope onto
     this.canvas = document.createElement('canvas');
     this.canvas.style.width = width; 
@@ -17,11 +17,6 @@ function Oscilloscope(container, width, height, sources) {
 
     this.triggerLevel = 50;
     this.traces = [];
-    this.traces.push(
-        trace = new NormalTrace(this, sources[0]),
-        new NormalTrace(this, sources[1])
-    );
-    this.traces[1].color = '#E85D55';
 
     this.markers = [];
     this.markers.push(
@@ -67,7 +62,9 @@ Oscilloscope.prototype.draw = function () {
     }
 
     this.traces.forEach(function(trace) {
-        trace.draw(triggerLocation);
+        if(trace.on){
+            trace.draw(triggerLocation);
+        }
     });
 
     this.markers.forEach(function(marker) {
