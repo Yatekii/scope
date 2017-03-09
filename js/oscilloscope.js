@@ -1,4 +1,6 @@
 function Oscilloscope(container, width, height) {
+    var me = this;
+
     // Create a new canvas to draw the scope onto
     this.canvas = document.createElement('canvas');
     this.canvas.style.width = width; 
@@ -10,7 +12,15 @@ function Oscilloscope(container, width, height) {
     } else {
       document.body.appendChild(this.canvas);
     }
-    var me = this;
+
+    // Create HTML representation
+    var tr = createOscilloscopeRepr('oscilloscope-title-' + 0, 'oscilloscope-switch-' + 0);
+    var repr = initRepr(tr, document.getElementById('node-tree-canvas')); // TODO: proper container selection
+    componentHandler.upgradeElement(repr);
+    this.repr = repr;
+    repr.controller = this;
+    this.repr.id = 'oscilloscope-' + 0;
+
     this.canvas.onmousedown = function(event){onMouseDown(event, me);};
     this.canvas.onmouseup = function(event){onMouseUp(event, me);};
     this.canvas.onmousemove = function(event){onMouseMove(event, me);};
@@ -83,6 +93,19 @@ Oscilloscope.prototype.addTrace = function(trace) {
 
 Oscilloscope.prototype.addMarker = function(marker) {
     this.markers.push(marker);
+}
+
+// Instantiates the GUI representation
+createOscilloscopeRepr = function(title_id, switch_id) {
+    return `<div class="mdl-shadow--2dp trace-card">
+        <div class="mdl-card__title">
+            <i class="material-icons trace-card-icon">keyboard_tab</i>&nbsp;
+            <div class="mdl-textfield mdl-js-textfield">
+                <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
+                <label class="mdl-textfield__label" for="${ title_id }">Oscilloscope</label>
+            </div>
+        </div>
+    </div>`;
 }
 
 function getTriggerLocation(buf, buflen, triggerLevel, type){
@@ -212,4 +235,3 @@ function onMouseMove(event, scope){
         }
     }
 }
-

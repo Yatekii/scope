@@ -45,6 +45,18 @@ function init() {
     jsPlumb.ready(function(){
         var i = 0;
 
+        scope.repr.style.top = (200 + (1 * 150)) + 'px';
+        scope.repr.style.left = '800px';
+        jsPlumb.draggable(scope.repr.id, {
+            containment:true,
+            grid:[50,50]
+        });
+
+        jsPlumb.addEndpoint(scope.repr.id, { 
+            anchor: ["Left", {shape: "Rectangle"}],
+            isTarget: true,
+        });
+
         // Make existing boxes draggable
         scope.traces.forEach(function(trace) {
             i++;
@@ -64,7 +76,7 @@ function init() {
 
             if(doneDraggables.indexOf(trace.repr.id) < 0){
                 trace.repr.style.top = (200 + (i * 150)) + 'px';
-                trace.repr.style.left = '500px';
+                trace.repr.style.left = '400px';
                 
                 jsPlumb.draggable(trace.repr.id, {
                     containment:true,
@@ -72,8 +84,9 @@ function init() {
                 });
 
                 jsPlumb.addEndpoint(trace.repr.id, {
-                    anchor: ["Left", {shape: "Rectangle"}],
+                    anchor: [["Left", {shape: "Rectangle"}],["Right", {shape: "Rectangle"}]],
                     isTarget: true,
+                    isSource: true
                 });
             }
             
@@ -83,6 +96,13 @@ function init() {
             jsPlumb.connect({
                 source: trace.source.repr.id,
                 target: trace.repr.id,
+                endpoint: "Dot",
+                anchors: [["Right", {shape:"Circle"}], ["Left", {shape:"Circle"}]]
+            });
+
+            jsPlumb.connect({
+                source: trace.repr.id,
+                target: scope.repr.id,
                 endpoint: "Dot",
                 anchors: [["Right", {shape:"Circle"}], ["Left", {shape:"Circle"}]]
             });
@@ -98,10 +118,11 @@ function init() {
             info.target.controller.source = null;
         });
     });
-}
-
-function drawUI() {
-
+    // TODO: Crosswindow stuff
+    // popup = window.open("http://fiddle.jshell.net");
+    // popup.console.log(1);
+    // popup.kek = 'KEK';
+    // popup.alert(popup.kek);
 }
 
 window.addEventListener("load", init);
