@@ -7,32 +7,35 @@ function init() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
-    osc1=createSource({type: 'sine', data: { freq: 220 }});
-    osc2=createSource({type: 'sine', data: { freq: 440 }});
-    mic = createSource({type: 'mic'});
     audioContext = getAudioContext();
     // osc1.output.connect(audioContext.destination);
     // osc2.output.connect(audioContext.destination);
     scope = new Oscilloscope(document.getElementById('scope-container'), '100%', '256px');
-    scope.addSource(new Waveform(document.getElementById('active-sources'), scope, {}, true));
-    scope.addSource(new Microphone(document.getElementById('active-sources'), scope, {}, true));
-    scope.addSource(new Waveform(document.getElementById('available-sources'), scope, {}, true));
-    scope.addSource(new Microphone(document.getElementById('available-sources'), scope, {}, true));
+
+    osc1 = new Waveform(document.getElementById('active-sources'), scope);
+    osc1.osc.frequency.value = 500;
+    osc2 = new Waveform(document.getElementById('active-sources'), scope);
+    mic = new Microphone(document.getElementById('active-sources'), scope);
 
     scope.addTrace(new NormalTrace(
-        scope, osc1,
-        true
+        scope, osc1
     ));
     scope.addTrace(new NormalTrace(
-        scope, osc2,
-        true
+        scope, osc2
     ));
     scope.traces[1].setColor('#E85D55');
-    micTrace = new NormalTrace(
-        scope, mic,
-        false
+    var micTrace = new NormalTrace(
+        scope, mic
     );
     scope.addTrace(micTrace);
+    var micFFT = new FFTrace(
+        scope, mic
+    );
+    scope.addTrace(micFFT);
+    mic.onactive = function onMicActive(source){
+        micTrace.setSource(source);
+        micFFT.setSource(source);
+    };
 
     var sourcesDrake = dragula([document.getElementById('available-sources'), document.getElementById('active-sources')], {
         copy: function (el, source) {

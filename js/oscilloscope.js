@@ -63,7 +63,8 @@ Oscilloscope.prototype.draw = function () {
     }
 
     this.traces.forEach(function(trace) {
-        if(trace.on){
+        console.log(trace.source, trace.on)
+        if(trace.on && trace.source !== null && trace.source.ready){
             trace.draw(triggerLocation);
         }
     });
@@ -84,8 +85,6 @@ Oscilloscope.prototype.addTrace = function(trace) {
 Oscilloscope.prototype.addMarker = function(marker) {
     this.markers.push(marker);
 }
-
-var MINVAL = 234;  // 128 == zero.  MINVAL is the "minimum detected signal" level.
 
 function getTriggerLocation(buf, buflen, triggerLevel, type){
     switch(type){
@@ -125,7 +124,6 @@ function onMouseDown(event, scope){
         if(scope.markers[i].x != null){
             if(event.offsetX < scope.markers[i].x + 3 && event.offsetX > scope.markers[i].x - 3){
                 scope.markerMoving = i;
-                console.log(i);
                 return;
             }
         } else {

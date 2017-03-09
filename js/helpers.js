@@ -27,3 +27,13 @@ function initRepr(html, container) {
     }
     return element;
 }
+
+var audioContext = null;
+function getAudioContext() {
+	window.AudioContext = window.AudioContext || window.webkitAudioContext;
+	if(audioContext){
+		return audioContext;
+	}
+	audioContext = new AudioContext();
+	return audioContext;
+}

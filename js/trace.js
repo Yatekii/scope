@@ -1,30 +1,28 @@
 // Creates a new trace
-function NormalTrace(scope, source, defaultOn) {
+function NormalTrace(scope, source) {
     var me = this;
 
     // Assign class variables
     this.scope = scope;
     this.source = source;
     this.color = '#E8830C';
-    this.fetched = false;
-    this.on = defaultOn;
+    this.on = source !== null;
     this.colorpicker = null;
     this.title = null;
     this.icon = null;
 
     // Create HTML representation
     var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length)
-    var repr = initRepr(tr, document.getElementById('trace-list'));
-    this.repr = repr;
+    this.repr = initRepr(tr, document.getElementById('trace-list'));
 
     // Find on-off switch
-    var on_off = repr.getElementsByClassName('trace-on-off')[0];
+    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
     on_off.onchange = function(event) { me.onSwitch(me, event); };
     on_off.checked = true;
     componentHandler.upgradeElement(on_off.parentElement);
 
     // Find color storage and store it
-    var input = repr.getElementsByClassName('jscolor')[0];
+    var input = this.repr.getElementsByClassName('jscolor')[0];
     this.colorpicker = new jscolor(input,{
         'value': this.color,
         'hash': true
@@ -33,25 +31,25 @@ function NormalTrace(scope, source, defaultOn) {
     input.onchange = function(event) { me.setColor(event.target.value);  };
 
     // Find repr title and store it
-    this.title = document.getElementsByClassName('card-title')[0];
+    this.title = this.repr.getElementsByClassName('card-title')[0];
     this.title.style.color = this.color;
     componentHandler.upgradeElement(this.title.parentElement);
 
     // Find repr icon and store it
-    this.icon = document.getElementsByClassName('material-icons')[0];
+    this.icon = this.repr.getElementsByClassName('material-icons')[0];
     this.icon.style.color = this.color;
     this.icon.onclick = this.colorpicker.show;
 
-    if(source.output){
-        // Create the analyzer node to be able to read sample output
-        this.analyzer = getAudioContext().createAnalyser();
-        this.analyzer.fftSize = 4096;
-        // Connect the source output to the analyzer
-        source.output.connect(this.analyzer);
-
-        // Create the data buffer
-        this.data = new Uint8Array(this.analyzer.frequencyBinCount);
+    // Create the data buffer
+    if(source && source.ready) {
+        this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
     }
+    this.fetched = false;
+}
+
+NormalTrace.prototype.setSource = function(source){
+    this.source = source;
+    this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
 }
 
 // Instantiates the GUI representation
@@ -87,8 +85,8 @@ NormalTrace.prototype.onSwitch = function(trace, event) {
 
 // Preemptively fetches a new sample set
 NormalTrace.prototype.fetch = function () {
-    if(!this.fetched){
-        this.analyzer.getByteTimeDomainData(this.data);
+    if(!this.fetched && this.source.ready){
+        this.source.analyzer.getByteTimeDomainData(this.data);
     }
     this.fetched = true;
 }
@@ -118,25 +116,25 @@ NormalTrace.prototype.draw = function (triggerLocation) {
 }
 
 // Creates a new source
-function FFTrace(scope, analyzer) {
+function FFTrace(scope, source) {
     this.scope = scope;
-    this.analyzer = analyzer;
+    this.source = source;
     this.color = '#E8830C';
+    this.on = source !== null;
 
     // Create HTML representation
     var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length)
-    var repr = initRepr(tr, document.getElementById('trace-list'));
-    componentHandler.upgradeElement(repr);
-    this.repr = repr;
+    this.repr = initRepr(tr, document.getElementById('trace-list'));
+    componentHandler.upgradeElement(this.repr);
 
     // Find on-off switch
-    var on_off = repr.getElementsByClassName('trace-on-off')[0];
+    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
     on_off.onchange = function(event) { me.onSwitch(me, event); };
     on_off.checked = true;
     componentHandler.upgradeElement(on_off.parentElement);
 
     // Find color storage and store it
-    var input = repr.getElementsByClassName('jscolor')[0];
+    var input = this.repr.getElementsByClassName('jscolor')[0];
     this.colorpicker = new jscolor(input,{
         'value': this.color,
         'hash': true
@@ -145,18 +143,25 @@ function FFTrace(scope, analyzer) {
     input.onchange = function(event) { me.setColor(event.target.value);  };
 
     // Find repr title and store it
-    this.title = document.getElementsByClassName('card-title')[0];
+    this.title = this.repr.getElementsByClassName('card-title')[0];
     this.title.style.color = this.color;
     componentHandler.upgradeElement(this.title.parentElement);
 
     // Find repr icon and store it
-    this.icon = document.getElementsByClassName('material-icons')[0];
+    this.icon = this.repr.getElementsByClassName('material-icons')[0];
     this.icon.style.color = this.color;
     this.icon.onclick = this.colorpicker.show;
     
     // Create the data buffer
-    this.data = new Uint8Array(this.analyzer.frequencyBinCount);
-    this.on = true;
+    if(source && source.ready) {
+        this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
+    }
+    this.fetched = false;
+}
+
+FFTrace.prototype.setSource = function(source){
+    this.source = source;
+    this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
 }
 
 // Instantiates the GUI representation
@@ -190,8 +195,8 @@ FFTrace.prototype.onSwitch = function(trace, event) {
 
 // Preemptively fetches a new sample set
 FFTrace.prototype.fetch = function () {
-    if(!this.fetched){
-        this.analyzer.getByteFrequencyData(this.data);
+    if(!this.fetched && this.source.ready){
+        this.source.analyzer.getByteFrequencyData(this.data);
     }
     this.fetched = true;
 }
@@ -201,7 +206,7 @@ FFTrace.prototype.draw = function (triggerLocation) {
     var SPACING = 1;
     var BAR_WIDTH = 1;
     var numBars = Math.round(this.scope.canvas.width / SPACING);
-    var multiplier = this.analyzer.frequencyBinCount / numBars;
+    var multiplier = this.source.analyzer.frequencyBinCount / numBars;
 
     var context = this.scope.canvas.getContext('2d');
     context.lineCap = 'round';
