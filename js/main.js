@@ -61,11 +61,19 @@ function init() {
         scope.traces.forEach(function(trace) {
             console.log(trace.source.repr.id);
             console.log(trace.repr.id)
+            jsPlumb.addEndpoint(trace.source.repr.id, { 
+                anchor: ["Left", {shape:"Circle"}],
+                isSource: true,
+            });
+            jsPlumb.addEndpoint(trace.repr.id, {
+                anchor: ["Right", {shape:"Circle"}],
+                isTarget: true,
+            });
             jsPlumb.connect({
                 source: trace.source.repr.id,
                 target: trace.repr.id,
-                endpoint:"Rectangle",
-                anchor: ["Left", "Right"]
+                endpoint: "Dot",
+                anchors: [["Left", {shape:"Circle"}], ["Right", {shape:"Circle"}]]
             });
         });
     });
