@@ -1,4 +1,8 @@
+// Creates a new trace
 function NormalTrace(scope, source, defaultOn) {
+    var me = this;
+
+    // Assign class variables
     this.scope = scope;
     this.source = source;
     this.color = '#E8830C';
@@ -15,55 +19,27 @@ function NormalTrace(scope, source, defaultOn) {
 
     // Find on-off switch
     var on_off = repr.getElementsByClassName('trace-on-off')[0];
-    var me = this;
     on_off.onchange = function(event) { me.onSwitch(me, event); };
     on_off.checked = true;
     componentHandler.upgradeElement(on_off.parentElement);
 
     // Find color storage and store it
-    var potentialInputs = document.getElementsByClassName('jscolor');
-    for(i = 0; i < potentialInputs.length; i++){
-        var x = potentialInputs[i];
-        while (x = x.parentElement) { 
-            if (x == repr){
-                var me = this;
-                this.colorpicker = new jscolor(potentialInputs[i],{
-                    'value': this.color,
-                    'hash': true
-                });
-                potentialInputs[i].value = this.color;
-                potentialInputs[i].onchange = function(event) { me.setColor(event.target.value);  };
-                break;
-            }
-        }
-    }
+    var input = repr.getElementsByClassName('jscolor')[0];
+    this.colorpicker = new jscolor(input,{
+        'value': this.color,
+        'hash': true
+    });
+    input.value = this.color;
+    input.onchange = function(event) { me.setColor(event.target.value);  };
 
     // Find repr title and store it
-    var potentialTitles = document.getElementsByClassName('card-title');
-    for(i = 0; i < potentialTitles.length; i++){
-        var x = potentialTitles[i];
-        while (x = x.parentElement) { 
-            if (x == repr){
-                this.title = potentialTitles[i];
-                potentialTitles[i].style.color = this.color;
-                componentHandler.upgradeElement(potentialTitles[i].parentElement);
-                break;
-            }
-        }
-    }
+    this.title = document.getElementsByClassName('card-title')[0];
+    this.title.style.color = this.color;
+    componentHandler.upgradeElement(this.title.parentElement);
 
     // Find repr icon and store it
-    var potentialIcons = document.getElementsByClassName('material-icons');
-    for(i = 0; i < potentialIcons.length; i++){
-        var x = potentialIcons[i];
-        while (x = x.parentElement) { 
-            if (x == repr){
-                this.icon = potentialIcons[i];
-                potentialIcons[i].style.color = this.color;
-                break;
-            }
-        }
-    }
+    this.icon = document.getElementsByClassName('material-icons')[0];
+    this.icon.style.color = this.color;
     this.icon.onclick = this.colorpicker.show;
 
     if(source.output){
@@ -78,6 +54,7 @@ function NormalTrace(scope, source, defaultOn) {
     }
 }
 
+// Instantiates the GUI representation
 NormalTrace.prototype.createTraceRepr = function(title_id, switch_id) {
     return `<li class="mdl-list__item">
         <div class="mdl-card mdl-shadow--2dp trace-card">
@@ -95,6 +72,7 @@ NormalTrace.prototype.createTraceRepr = function(title_id, switch_id) {
     </li>`;
 }
 
+// Sets a new color for the trace, both in the UI and on the scope canvas
 NormalTrace.prototype.setColor = function(color) {
     this.colorpicker.fromString(color)
     this.color = color;
@@ -102,10 +80,12 @@ NormalTrace.prototype.setColor = function(color) {
     this.title.style.color = this.color;
 }
 
+// Activates drawing of a trace on the scope
 NormalTrace.prototype.onSwitch = function(trace, event) {
     trace.on = event.target.checked;
 }
 
+// Preemptively fetches a new sample set
 NormalTrace.prototype.fetch = function () {
     if(!this.fetched){
         this.analyzer.getByteTimeDomainData(this.data);
@@ -113,24 +93,31 @@ NormalTrace.prototype.fetch = function () {
     this.fetched = true;
 }
 
+// Draws trace on the new frame
 NormalTrace.prototype.draw = function (triggerLocation) {
     // Make life easier with shorter variables
 	var context = this.scope.canvas.getContext('2d');
     context.strokeWidth = 1;
+
+    // Get a new dataset
     this.fetch();
 
     // Draw trace
 	context.strokeStyle = this.color;
 	context.beginPath();
-
+    // Draw samples
 	context.moveTo(0, (256 - this.data[triggerLocation]) * this.scope.scaling);
 	for (var i=triggerLocation, j=0; (j < this.scope.canvas.width) && (i < this.data.length); i++, j++){
 		context.lineTo(j, (256 - this.data[i]) * this.scope.scaling);
     }
+    // Fix drawing on canvas
 	context.stroke();
+
+    // Mark data as deprecated
     this.fetched = false;
 }
 
+// Creates a new source
 function FFTrace(scope, analyzer) {
     this.scope = scope;
     this.analyzer = analyzer;
@@ -141,41 +128,38 @@ function FFTrace(scope, analyzer) {
     var repr = initRepr(tr, document.getElementById('trace-list'));
     componentHandler.upgradeElement(repr);
     this.repr = repr;
+
+    // Find on-off switch
+    var on_off = repr.getElementsByClassName('trace-on-off')[0];
+    on_off.onchange = function(event) { me.onSwitch(me, event); };
+    on_off.checked = true;
+    componentHandler.upgradeElement(on_off.parentElement);
+
+    // Find color storage and store it
+    var input = repr.getElementsByClassName('jscolor')[0];
+    this.colorpicker = new jscolor(input,{
+        'value': this.color,
+        'hash': true
+    });
+    input.value = this.color;
+    input.onchange = function(event) { me.setColor(event.target.value);  };
+
+    // Find repr title and store it
+    this.title = document.getElementsByClassName('card-title')[0];
+    this.title.style.color = this.color;
+    componentHandler.upgradeElement(this.title.parentElement);
+
+    // Find repr icon and store it
+    this.icon = document.getElementsByClassName('material-icons')[0];
+    this.icon.style.color = this.color;
+    this.icon.onclick = this.colorpicker.show;
     
     // Create the data buffer
     this.data = new Uint8Array(this.analyzer.frequencyBinCount);
     this.on = true;
-
-    // Find on-off switch
-    var potentialButtons = document.getElementsByClassName('trace-on-off');
-    for(i = 0; i < potentialButtons.length; i++){
-        var x = potentialButtons[i];
-        while (x = x.parentElement) { 
-            if (x == repr){
-                var me = this;
-                potentialButtons[i].onchange = function(event) { me.onSwitch(me, event); };
-                potentialButtons[i].checked = true;
-                componentHandler.upgradeElement(potentialButtons[i].parentElement);
-                break;
-            }
-        }
-    }
-
-    // Find repr title and store it
-    var potentialTitles = document.getElementsByClassName('card-title');
-    for(i = 0; i < potentialTitles.length; i++){
-        var x = potentialTitles[i];
-        while (x = x.parentElement) { 
-            if (x == repr){
-                this.title = potentialTitles[i];
-                potentialTitles[i].style.color = this.color;
-                componentHandler.upgradeElement(potentialTitles[i].parentElement);
-                break;
-            }
-        }
-    }
 }
 
+// Instantiates the GUI representation
 FFTrace.prototype.createTraceRepr = function(title_id, switch_id) {
     return `<li class="mdl-list__item">
         <div class="mdl-card mdl-shadow--2dp trace-card">
@@ -184,7 +168,7 @@ FFTrace.prototype.createTraceRepr = function(title_id, switch_id) {
                 <div class="mdl-textfield mdl-js-textfield">
                     <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
                     <label class="mdl-textfield__label" for="${ title_id }">FFT</label>
-                </div>
+                </div><input class="jscolor">
                 <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="${ switch_id }">
                     <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
                 </label>
@@ -193,15 +177,18 @@ FFTrace.prototype.createTraceRepr = function(title_id, switch_id) {
     </li>`;
 }
 
+// Sets a new color for the trace, both in the UI and on the scope canvas
 FFTrace.prototype.setColor = function(color) {
     this.colorpicker.fromString(color)
     this.color = color;
 }
 
+// Activates drawing of a trace on the scope
 FFTrace.prototype.onSwitch = function(trace, event) {
     trace.on = event.target.checked;
 }
 
+// Preemptively fetches a new sample set
 FFTrace.prototype.fetch = function () {
     if(!this.fetched){
         this.analyzer.getByteFrequencyData(this.data);
@@ -209,6 +196,7 @@ FFTrace.prototype.fetch = function () {
     this.fetched = true;
 }
 
+// Draws trace on the new frame
 FFTrace.prototype.draw = function (triggerLocation) {
     var SPACING = 1;
     var BAR_WIDTH = 1;
@@ -218,9 +206,10 @@ FFTrace.prototype.draw = function (triggerLocation) {
     var context = this.scope.canvas.getContext('2d');
     context.lineCap = 'round';
 
+    // Get a new dataset
     this.fetch();
 
-    // Draw rectangle for each frequency bin.
+    // Draw rectangle for each frequency
     for (var i = 0; i < numBars; ++i) {
         var magnitude = 0;
         var offset = Math.floor(i * multiplier);
@@ -232,5 +221,7 @@ FFTrace.prototype.draw = function (triggerLocation) {
         context.fillStyle = "hsl(" + Math.round((i*360)/numBars) + ", 100%, 50%)";
         context.fillRect(i * SPACING, this.scope.canvas.height, BAR_WIDTH, -magnitude);
     }
+
+    // Mark data as deprecated
     this.fetched = false;
 }

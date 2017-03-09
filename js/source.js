@@ -1,3 +1,4 @@
+// Creates a new source
 function Waveform(container, scope, source, isSpawn) {
     var me = this;
 
@@ -6,7 +7,7 @@ function Waveform(container, scope, source, isSpawn) {
     this.source = source;
 
     // Create HTML representation
-    var tr = this.createTraceRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length)
+    var tr = this.createSourceRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length)
     this.repr = initRepr(tr, document.getElementById('sources-available'));
     componentHandler.upgradeElement(this.repr);
     this.repr.controller = this;
@@ -22,7 +23,8 @@ function Waveform(container, scope, source, isSpawn) {
     componentHandler.upgradeElement(title.parentElement);
 }
 
-Waveform.prototype.createTraceRepr = function(title_id, switch_id) {
+// Instantiates the GUI representation
+Waveform.prototype.createSourceRepr = function(title_id, switch_id) {
     return `<li class="mdl-list__item source">
         <div class="mdl-card mdl-shadow--2dp trace-card">
             <div class="mdl-card__title">
@@ -39,18 +41,22 @@ Waveform.prototype.createTraceRepr = function(title_id, switch_id) {
     </li>`;
 }
 
+// Activates the source on the scope
 Waveform.prototype.onSwitch = function(source, event) {
     console.log('Switch stub.')
     // source.on = event.target.checked;
 }
 
+// Creates a new source
 function Microphone(container, scope, source, isSpawn) {
+
+    // Assign class variables
     this.scope = scope;
     this.source = source;
     this.isSpawn = isSpawn;
 
     // Create HTML representation
-    var tr = this.createTraceRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length)
+    var tr = this.createSourceRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length)
     var repr = initRepr(tr, document.getElementById('sources-available'));
     componentHandler.upgradeElement(repr);
     this.repr = repr;
@@ -67,7 +73,8 @@ function Microphone(container, scope, source, isSpawn) {
     componentHandler.upgradeElement(title.parentElement);
 }
 
-Microphone.prototype.createTraceRepr = function(title_id, switch_id) {
+// Instantiates the GUI representation
+Microphone.prototype.createSourceRepr = function(title_id, switch_id) {
     return `<li class="mdl-list__item source">
         <div class="mdl-card mdl-shadow--2dp trace-card">
             <div class="mdl-card__title">
@@ -84,6 +91,7 @@ Microphone.prototype.createTraceRepr = function(title_id, switch_id) {
     </li>`;
 }
 
+// Activates the source on the scope
 Microphone.prototype.onSwitch = function(source, event) {
     console.log('Switch stub.')
     // source.on = event.target.checked;
