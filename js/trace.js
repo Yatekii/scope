@@ -13,20 +13,12 @@ function NormalTrace(scope, source, defaultOn) {
     var repr = initRepr(tr, document.getElementById('trace-list'));
     this.repr = repr;
 
-    // Find on-off switch and store it
-    var potentialButtons = document.getElementsByClassName('trace-on-off');
-    for(i = 0; i < potentialButtons.length; i++){
-        var x = potentialButtons[i];
-        while (x = x.parentElement) { 
-            if (x == repr){
-                var me = this;
-                potentialButtons[i].onchange = function(event) { me.onSwitch(me, event); };
-                potentialButtons[i].checked = true;
-                componentHandler.upgradeElement(potentialButtons[i].parentElement);
-                break;
-            }
-        }
-    }
+    // Find on-off switch
+    var on_off = repr.getElementsByClassName('trace-on-off')[0];
+    var me = this;
+    on_off.onchange = function(event) { me.onSwitch(me, event); };
+    on_off.checked = true;
+    componentHandler.upgradeElement(on_off.parentElement);
 
     // Find color storage and store it
     var potentialInputs = document.getElementsByClassName('jscolor');
@@ -154,6 +146,7 @@ function FFTrace(scope, analyzer) {
     this.data = new Uint8Array(this.analyzer.frequencyBinCount);
     this.on = true;
 
+    // Find on-off switch
     var potentialButtons = document.getElementsByClassName('trace-on-off');
     for(i = 0; i < potentialButtons.length; i++){
         var x = potentialButtons[i];

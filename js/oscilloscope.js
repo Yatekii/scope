@@ -18,6 +18,8 @@ function Oscilloscope(container, width, height) {
     this.triggerLevel = 50;
     this.traces = [];
 
+    this.sources = [];
+
     this.markers = [];
     this.markers.push(
         new Marker(this, 'horizontal', 80),
@@ -69,6 +71,10 @@ Oscilloscope.prototype.draw = function () {
     this.markers.forEach(function(marker) {
         marker.draw();
     });
+}
+
+Oscilloscope.prototype.addSource = function(source) {
+    this.sources.push(source);
 }
 
 Oscilloscope.prototype.addTrace = function(trace) {
