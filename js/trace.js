@@ -118,6 +118,9 @@ NormalTrace.prototype.draw = function (triggerLocation) {
 
 // Creates a new source
 function FFTrace(scope, source) {
+    var me = this;
+
+    // Assign class variables
     this.scope = scope;
     this.source = source;
     this.color = '#E8830C';
