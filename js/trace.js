@@ -1,5 +1,5 @@
 // Creates a new trace
-function NormalTrace(scope, source) {
+function NormalTrace(container, scope, source) {
     var me = this;
 
     // Assign class variables
@@ -13,8 +13,9 @@ function NormalTrace(scope, source) {
 
     // Create HTML representation
     var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length)
-    this.repr = initRepr(tr, document.getElementById('trace-list'));
+    this.repr = initRepr(tr, container);
     this.repr.id = 'trace-' + scope.traces.length;
+    this.repr.controller = this;
 
     // Find on-off switch
     var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
@@ -55,8 +56,7 @@ NormalTrace.prototype.setSource = function(source){
 
 // Instantiates the GUI representation
 NormalTrace.prototype.createTraceRepr = function(title_id, switch_id) {
-    return `<li class="mdl-list__item">
-        <div class="mdl-card mdl-shadow--2dp trace-card">
+    return `<div class="mdl-shadow--2dp trace-card">
             <div class="mdl-card__title">
                 <i class="material-icons trace-card-icon">timeline</i>&nbsp;
                 <div class="mdl-textfield mdl-js-textfield">
@@ -67,8 +67,7 @@ NormalTrace.prototype.createTraceRepr = function(title_id, switch_id) {
                     <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
                 </label>
             </div>
-        </div>
-    </li>`;
+        </div>`;
 }
 
 // Sets a new color for the trace, both in the UI and on the scope canvas
@@ -86,7 +85,7 @@ NormalTrace.prototype.onSwitch = function(trace, event) {
 
 // Preemptively fetches a new sample set
 NormalTrace.prototype.fetch = function () {
-    if(!this.fetched && this.source.ready){
+    if(!this.fetched && this.source && this.source.ready){
         this.source.analyzer.getByteTimeDomainData(this.data);
     }
     this.fetched = true;
@@ -117,7 +116,7 @@ NormalTrace.prototype.draw = function (triggerLocation) {
 }
 
 // Creates a new source
-function FFTrace(scope, source) {
+function FFTrace(container, scope, source) {
     var me = this;
 
     // Assign class variables
@@ -128,8 +127,9 @@ function FFTrace(scope, source) {
 
     // Create HTML representation
     var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length)
-    this.repr = initRepr(tr, document.getElementById('trace-list'));
+    this.repr = initRepr(tr, container);
     this.repr.id = 'trace-' + scope.traces.length;
+    this.repr.controller = this;
 
     // Find on-off switch
     var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
@@ -170,8 +170,7 @@ FFTrace.prototype.setSource = function(source){
 
 // Instantiates the GUI representation
 FFTrace.prototype.createTraceRepr = function(title_id, switch_id) {
-    return `<li class="mdl-list__item">
-        <div class="mdl-card mdl-shadow--2dp trace-card">
+    return `<div class="mdl-shadow--2dp trace-card">
             <div class="mdl-card__title">
                 <i class="material-icons trace-card-icon">equalizer</i>&nbsp;
                 <div class="mdl-textfield mdl-js-textfield">
@@ -182,8 +181,7 @@ FFTrace.prototype.createTraceRepr = function(title_id, switch_id) {
                     <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
                 </label>
             </div>
-        </div>
-    </li>`;
+        </div>`;
 }
 
 // Sets a new color for the trace, both in the UI and on the scope canvas
@@ -199,7 +197,7 @@ FFTrace.prototype.onSwitch = function(trace, event) {
 
 // Preemptively fetches a new sample set
 FFTrace.prototype.fetch = function () {
-    if(!this.fetched && this.source.ready){
+    if(!this.fetched && this.source && this.source.ready){
         this.source.analyzer.getByteFrequencyData(this.data);
     }
     this.fetched = true;

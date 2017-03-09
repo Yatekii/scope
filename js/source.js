@@ -8,16 +8,16 @@ function Waveform(container, scope) {
 
     // Create HTML representation
     var tr = createWaveformRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length)
-    this.repr = initRepr(tr, document.getElementById('sources-available'));
+    this.repr = initRepr(tr, container);
     componentHandler.upgradeElement(this.repr);
     this.repr.controller = this;
     this.repr.id = 'source-' + scope.sources.length;
 
     // Find on-off switch
-    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
-    on_off.onchange = function(event) { me.onSwitch(me, event); };
-    on_off.checked = true;
-    componentHandler.upgradeElement(on_off.parentElement);
+    this.on_off = this.repr.getElementsByClassName('trace-on-off')[0];
+    this.on_off.onchange = function(event) { me.onSwitch(me, event); };
+    this.on_off.checked = true;
+    componentHandler.upgradeElement(this.on_off.parentElement);
 
     // Find repr title
     var title = this.repr.getElementsByClassName('card-title')[0];
@@ -56,8 +56,7 @@ function stopOsc(time) {
 
 // Instantiates the GUI representation
 createWaveformRepr = function(title_id, switch_id) {
-    return `<li class="mdl-list__item source">
-        <div class="mdl-card mdl-shadow--2dp trace-card">
+    return `<div class="mdl-shadow--2dp trace-card">
             <div class="mdl-card__title">
                 <i class="material-icons trace-card-icon">keyboard_capslock</i>&nbsp;
                 <div class="mdl-textfield mdl-js-textfield">
@@ -68,14 +67,24 @@ createWaveformRepr = function(title_id, switch_id) {
                     <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
                 </label>
             </div>
-        </div>
-    </li>`;
+        </div>`;
 }
 
 // Activates the source on the scope
 Waveform.prototype.onSwitch = function(source, event) {
-    this.output.gain.value = (event.target.checked ? 1 : 0.0000001);
-    console.log(this.output.gain.value);
+    if(event.target.checked){
+        this.osc.type = this.previousType;
+	    this.osc.frequency.value = this.previousFrequency;
+    } else {
+        this.previousType = this.osc.type;
+	    this.previousFrequency = this.osc.frequency.value;
+        var real = new Float32Array(1);
+        var imag = new Float32Array(1);
+        real[0] = 0;
+        imag[0] = 0;
+        var wave = getAudioContext().createPeriodicWave(real, imag);
+        this.osc.setPeriodicWave(wave);
+    }
 }
 
 // Creates a new source
@@ -89,17 +98,17 @@ function Microphone(container, scope) {
 
     // Create HTML representation
     var tr = createMicrophoneRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length)
-    var repr = initRepr(tr, document.getElementById('sources-available'));
+    var repr = initRepr(tr, container);
     componentHandler.upgradeElement(repr);
     this.repr = repr;
     repr.controller = this;
     this.repr.id = 'source-' + scope.sources.length;
 
-     // Find on-off switch
-    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
-    on_off.onchange = function(event) { me.onSwitch(me, event); };
-    on_off.checked = false;
-    componentHandler.upgradeElement(on_off.parentElement);
+     // Find on-off switch and store it
+    this.on_off = this.repr.getElementsByClassName('trace-on-off')[0];
+    this.on_off.onchange = function(event) { me.onSwitch(me, event); };
+    this.on_off.checked = false;
+    componentHandler.upgradeElement(this.on_off.parentElement);
 
     // Find repr title
     var title = this.repr.getElementsByClassName('card-title')[0];
@@ -139,6 +148,7 @@ gotStream = function(source, stream) {
     source.data = new Uint8Array(source.analyzer.frequencyBinCount);
     source.onactive(source);
 	source.ready = true;
+    source.on_off.checked = true;
     
 }
 
@@ -166,8 +176,7 @@ Microphone.prototype.constructSource = function() {
 
 // Instantiates the GUI representation
 createMicrophoneRepr = function(title_id, switch_id) {
-    return `<li class="mdl-list__item source">
-        <div class="mdl-card mdl-shadow--2dp trace-card">
+    return `<div class="mdl-shadow--2dp trace-card">
             <div class="mdl-card__title">
                 <i class="material-icons trace-card-icon">keyboard_tab</i>&nbsp;
                 <div class="mdl-textfield mdl-js-textfield">
@@ -178,11 +187,15 @@ createMicrophoneRepr = function(title_id, switch_id) {
                     <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
                 </label>
             </div>
-        </div>
-    </li>`;
+        </div>`;
 }
 
 // Activates the source on the scope
 Microphone.prototype.onSwitch = function(source, event) {
-    this.traceGain.gain.value = (event.target.checked ? 1 : 0.0000001);
+    if(event.target.checked){
+        this.traceGain.gain.previousGain = this.previousGain;
+    } else {
+        this.previousGain = this.traceGain.gain.value;
+        this.traceGain.gain.value = 0.0000001;
+    }
 }
