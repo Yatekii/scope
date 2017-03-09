@@ -12,10 +12,10 @@ function init() {
     // osc2.output.connect(audioContext.destination);
     scope = new Oscilloscope(document.getElementById('scope-container'), '100%', '256px');
 
-    osc1 = new Waveform(document.getElementById('active-sources'), scope);
+    osc1 = new Waveform(document.getElementById('sources-active'), scope);
     osc1.osc.frequency.value = 500;
-    osc2 = new Waveform(document.getElementById('active-sources'), scope);
-    mic = new Microphone(document.getElementById('active-sources'), scope);
+    osc2 = new Waveform(document.getElementById('sources-active'), scope);
+    mic = new Microphone(document.getElementById('sources-active'), scope);
 
     scope.addTrace(new NormalTrace(
         scope, osc1
@@ -37,12 +37,12 @@ function init() {
         micFFT.setSource(source);
     };
 
-    var sourcesDrake = dragula([document.getElementById('available-sources'), document.getElementById('active-sources')], {
+    var sourcesDrake = dragula([document.getElementById('sources-available'), document.getElementById('sources-active')], {
         copy: function (el, source) {
-            return source === document.getElementById('available-sources');
+            return source === document.getElementById('sources-available');
         },
         accepts: function (el, target) {
-            return target !== document.getElementById('available-sources');
+            return target !== document.getElementById('sources-available');
         }
     });
 
@@ -56,6 +56,23 @@ function init() {
     osc1.start(audioContext.currentTime+0.05);
     osc2.start(audioContext.currentTime+0.05);
     draw(scope);
+
+    jsPlumb.ready(function(){
+        scope.traces.forEach(function(trace) {
+            console.log(trace.source.repr.id);
+            console.log(trace.repr.id)
+            jsPlumb.connect({
+                source: trace.source.repr.id,
+                target: trace.repr.id,
+                endpoint:"Rectangle",
+                anchor: ["Left", "Right"]
+            });
+        });
+    });
+}
+
+function drawUI() {
+
 }
 
 window.addEventListener("load", init);

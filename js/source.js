@@ -11,6 +11,7 @@ function Waveform(container, scope) {
     this.repr = initRepr(tr, document.getElementById('sources-available'));
     componentHandler.upgradeElement(this.repr);
     this.repr.controller = this;
+    this.repr.id = 'source-' + scope.sources.length;
 
     // Find on-off switch
     var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
@@ -19,7 +20,7 @@ function Waveform(container, scope) {
     componentHandler.upgradeElement(on_off.parentElement);
 
     // Find repr title
-    var title = document.getElementsByClassName('card-title')[0];
+    var title = this.repr.getElementsByClassName('card-title')[0];
     componentHandler.upgradeElement(title.parentElement);
 
     // Create source
@@ -40,6 +41,9 @@ function Waveform(container, scope) {
     // Connect the source output to the analyzer
     this.output.connect(this.analyzer);
     this.ready = true;
+
+    // Register with scope
+    scope.addSource(this);
 }
 
 function startOsc(time) {
@@ -70,12 +74,13 @@ createWaveformRepr = function(title_id, switch_id) {
 
 // Activates the source on the scope
 Waveform.prototype.onSwitch = function(source, event) {
-    console.log('Switch stub.')
-    this.output.gain.value = (event.target.checked ? 1 : 0);
+    this.output.gain.value = (event.target.checked ? 1 : 0.0000001);
+    console.log(this.output.gain.value);
 }
 
 // Creates a new source
 function Microphone(container, scope) {
+    var me = this;
 
     // Assign class variables
     this.scope = scope;
@@ -88,6 +93,7 @@ function Microphone(container, scope) {
     componentHandler.upgradeElement(repr);
     this.repr = repr;
     repr.controller = this;
+    this.repr.id = 'source-' + scope.sources.length;
 
      // Find on-off switch
     var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
@@ -96,11 +102,14 @@ function Microphone(container, scope) {
     componentHandler.upgradeElement(on_off.parentElement);
 
     // Find repr title
-    var title = document.getElementsByClassName('card-title')[0];
+    var title = this.repr.getElementsByClassName('card-title')[0];
     componentHandler.upgradeElement(title.parentElement);
 
     // Initialize audio
     initAudio(this);
+
+    // Register with scope
+    scope.addSource(this);
 }
 
 // Creates the actual audio source after a stream was found
@@ -175,6 +184,5 @@ createMicrophoneRepr = function(title_id, switch_id) {
 
 // Activates the source on the scope
 Microphone.prototype.onSwitch = function(source, event) {
-    console.log('Switch stub.')
-    this.output.gain.value = (event.target.checked ? 1 : 0);
+    this.traceGain.gain.value = (event.target.checked ? 1 : 0.0000001);
 }

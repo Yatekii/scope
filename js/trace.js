@@ -14,6 +14,7 @@ function NormalTrace(scope, source) {
     // Create HTML representation
     var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length)
     this.repr = initRepr(tr, document.getElementById('trace-list'));
+    this.repr.id = 'trace-' + scope.traces.length;
 
     // Find on-off switch
     var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
@@ -125,7 +126,7 @@ function FFTrace(scope, source) {
     // Create HTML representation
     var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length)
     this.repr = initRepr(tr, document.getElementById('trace-list'));
-    componentHandler.upgradeElement(this.repr);
+    this.repr.id = 'trace-' + scope.traces.length;
 
     // Find on-off switch
     var on_off = this.repr.getElementsByClassName('trace-on-off')[0];

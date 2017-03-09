@@ -63,7 +63,6 @@ Oscilloscope.prototype.draw = function () {
     }
 
     this.traces.forEach(function(trace) {
-        console.log(trace.source, trace.on)
         if(trace.on && trace.source !== null && trace.source.ready){
             trace.draw(triggerLocation);
         }
