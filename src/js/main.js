@@ -1,3 +1,10 @@
+import 'mithril';
+import './oscilloscope.js';
+import './source.js';
+import './helpers.js';
+import './marker.js';
+import './trace.js';
+
 var micTrace = null;
 function init() {
     if (!navigator.getUserMedia)

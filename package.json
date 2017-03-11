@@ -1,0 +1,25 @@
+{
+  "name": "scope",
+  "version": "0.1.0",
+  "description": "A JS based, hardware-accelerated oscilloscope supporting network, audio and generic sources and sinks",
+  "repository": "git@github.com:Yatekii/scope.git",
+  "author": "Noah Huesser <yatekii@yatekii.ch>",
+  "license": "MIT",
+  "main": "build/js/bundle.js",
+  "scripts": {
+    "build": "rm -rf build/js && mkdir build/js && DEPS=1 rollup -c ./scripts/rollup.umd.js && DEPS=1 rollup -c ./scripts/rollup.es.js",
+    "watch": "DEPS=1 PORT=8080 WATCH_DIR=./build/ rollup -c ./scripts/rollup.watch.js --watch",
+    "test": "jest src/**",
+    "test:watch": "jest src/** --watch"
+  },
+  "dependencies": {
+    "jsplumb": "^2.3.0",
+    "mithril": "^1.0.1",
+    "rollup-plugin-commonjs": "^8.0.0",
+    "rollup-plugin-eslint": "^3.0.0",
+    "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-plugin-pathmodify": "^1.0.1",
+    "rollup-plugin-uglify": "^1.0.1",
+    "spectre.css": "^0.2.8"
+  }
+}
