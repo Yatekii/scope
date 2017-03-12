@@ -2134,7 +2134,7 @@ destroyDraggable:function destroyDraggable(el,category){_getDragManager(this,cat
 // we want to adjust the UI position to account for the offsetParent's position relative to the Container
 // origin.
 var el=eventArgs[0].el;if(el.offsetParent==null){return null;}var finalPos=eventArgs[0].finalPos||eventArgs[0].pos;var p={left:finalPos[0],top:finalPos[1]};if(el._katavorioDrag&&el.offsetParent!==this.getContainer()){var oc=this.getOffset(el.offsetParent);p.left+=oc.left;p.top+=oc.top;}return p;},setDragFilter:function setDragFilter(el,filter,_exclude){if(el._katavorioDrag){el._katavorioDrag.setFilter(filter,_exclude);}},setElementDraggable:function setElementDraggable(el,draggable){el=_jp.getElement(el);if(el._katavorioDrag)el._katavorioDrag.setEnabled(draggable);},setDragScope:function setDragScope(el,scope){if(el._katavorioDrag)el._katavorioDrag.k.setDragScope(el,scope);},setDropScope:function setDropScope(el,scope){if(el._katavorioDrop&&el._katavorioDrop.length>0){el._katavorioDrop[0].k.setDropScope(el,scope);}},addToPosse:function addToPosse(el,spec){var specs=Array.prototype.slice.call(arguments,1);var dm=_getDragManager(this);_jp.each(el,function(_el){_el=[_jp.getElement(_el)];_el.push.apply(_el,specs);dm.addToPosse.apply(dm,_el);});},setPosse:function setPosse(el,spec){var specs=Array.prototype.slice.call(arguments,1);var dm=_getDragManager(this);_jp.each(el,function(_el){_el=[_jp.getElement(_el)];_el.push.apply(_el,specs);dm.setPosse.apply(dm,_el);});},removeFromPosse:function removeFromPosse(el,posseId){var specs=Array.prototype.slice.call(arguments,1);var dm=_getDragManager(this);_jp.each(el,function(_el){_el=[_jp.getElement(_el)];_el.push.apply(_el,specs);dm.removeFromPosse.apply(dm,_el);});},removeFromAllPosses:function removeFromAllPosses(el){var dm=_getDragManager(this);_jp.each(el,function(_el){dm.removeFromAllPosses(_jp.getElement(_el));});},setPosseState:function setPosseState(el,posseId,state){var dm=_getDragManager(this);_jp.each(el,function(_el){dm.setPosseState(_jp.getElement(_el),posseId,state);});},dragEvents:{'start':'start','stop':'stop','drag':'drag','step':'step','over':'over','out':'out','drop':'drop','complete':'complete','beforeStart':'beforeStart'},animEvents:{'step':"step",'complete':'complete'},stopDrag:function stopDrag(el){if(el._katavorioDrag)el._katavorioDrag.abort();},addToDragSelection:function addToDragSelection(spec){_getDragManager(this).select(spec);},removeFromDragSelection:function removeFromDragSelection(spec){_getDragManager(this).deselect(spec);},clearDragSelection:function clearDragSelection(){_getDragManager(this).deselectAll();},trigger:function trigger(el,event,originalEvent,payload){this.getEventManager().trigger(el,event,originalEvent,payload);},doReset:function doReset(){// look for katavorio instances and reset each one if found.
-for(var key in this){if(key.indexOf("_katavorio_")===0){this[key].reset();}}}});var ready=function ready(f){var _do=function _do(){if(/complete|loaded|interactive/.test(document.readyState)&&typeof document.body!="undefined"&&document.body!=null)f();else setTimeout(_do,9);};_do();};ready(_jp.init);}).call(typeof window!=='undefined'?window:commonjsGlobal);});
+for(var key in this){if(key.indexOf("_katavorio_")===0){this[key].reset();}}}});var ready=function ready(f){var _do=function _do(){if(/complete|loaded|interactive/.test(document.readyState)&&typeof document.body!="undefined"&&document.body!=null)f();else setTimeout(_do,9);};_do();};ready(_jp.init);}).call(typeof window!=='undefined'?window:commonjsGlobal);});var jsplumb_6=jsplumb.jsPlumb;
 
 window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
 
@@ -2868,17 +2868,17 @@ function init() {
     draw(scope);
 
     var doneDraggables = [];
-    jsplumb.ready(function () {
+    jsplumb_6.ready(function () {
         var i = 0;
 
         scope.repr.style.top = 200 + 1 * 150 + 'px';
         scope.repr.style.left = '800px';
-        jsplumb.draggable(scope.repr.id, {
+        jsplumb_6.draggable(scope.repr.id, {
             containment: true,
             grid: [50, 50]
         });
 
-        jsplumb.addEndpoint(scope.repr.id, {
+        jsplumb_6.addEndpoint(scope.repr.id, {
             anchor: ['Left', { shape: 'Rectangle' }],
             isTarget: true
         });
@@ -2889,12 +2889,12 @@ function init() {
 
             if (doneDraggables.indexOf(trace.source.repr.id) < 0) {
                 trace.source.repr.style.top = 200 + i * 150 + 'px';
-                jsplumb.draggable(trace.source.repr.id, {
+                jsplumb_6.draggable(trace.source.repr.id, {
                     containment: true,
                     grid: [50, 50]
                 });
 
-                jsplumb.addEndpoint(trace.source.repr.id, {
+                jsplumb_6.addEndpoint(trace.source.repr.id, {
                     anchor: ['Right', { shape: 'Rectangle' }],
                     isSource: true
                 });
@@ -2904,12 +2904,12 @@ function init() {
                 trace.repr.style.top = 200 + i * 150 + 'px';
                 trace.repr.style.left = '400px';
 
-                jsplumb.draggable(trace.repr.id, {
+                jsplumb_6.draggable(trace.repr.id, {
                     containment: true,
                     grid: [50, 50]
                 });
 
-                jsplumb.addEndpoint(trace.repr.id, {
+                jsplumb_6.addEndpoint(trace.repr.id, {
                     anchor: [['Left', { shape: 'Rectangle' }], ['Right', { shape: 'Rectangle' }]],
                     isTarget: true,
                     isSource: true
@@ -2919,14 +2919,14 @@ function init() {
             doneDraggables.push(trace.source.repr.id);
             doneDraggables.push(trace.repr.id);
 
-            jsplumb.connect({
+            jsplumb_6.connect({
                 source: trace.source.repr.id,
                 target: trace.repr.id,
                 endpoint: 'Dot',
                 anchors: [['Right', { shape: 'Circle' }], ['Left', { shape: 'Circle' }]]
             });
 
-            jsplumb.connect({
+            jsplumb_6.connect({
                 source: trace.repr.id,
                 target: scope.repr.id,
                 endpoint: 'Dot',
@@ -2935,12 +2935,12 @@ function init() {
         });
 
         // Bind connection event
-        jsplumb.bind('connection', function (info) {
+        jsplumb_6.bind('connection', function (info) {
             info.target.controller.source = info.source.controller;
         });
 
         // Bind connectionDetached event
-        jsplumb.bind('connectionDetached', function (info) {
+        jsplumb_6.bind('connectionDetached', function (info) {
             info.target.controller.source = null;
         });
     });

@@ -1,5 +1,5 @@
 //import 'mithril';
-import jsPlumb from 'jsplumb';
+import { jsPlumb } from 'jsplumb';
 import * as oscilloscope from './oscilloscope';
 import * as source from './source.js';
 import * as helpers from './helpers.js';
