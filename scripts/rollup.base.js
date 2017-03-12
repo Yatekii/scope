@@ -1,4 +1,5 @@
 import fs from "fs";
+import babel from "rollup-plugin-babel";
 import eslint from "rollup-plugin-eslint";
 import resolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
@@ -55,6 +56,8 @@ export const createConfig = ({ includeDepencies }) => ({
     eslint({
       cache: true
     }),
+
+    babel()
   ]
 });
 

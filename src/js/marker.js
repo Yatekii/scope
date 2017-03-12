@@ -1,4 +1,4 @@
-function Marker(scope, type, level) {
+export const Marker = function(scope, type, level) {
     this.scope = scope;
     if(type == 'vertical'){
         this.x = level;
@@ -7,15 +7,15 @@ function Marker(scope, type, level) {
         this.x = null;
         this.y = level;
     }
-}
+};
 
 Marker.prototype.draw = function () {
     // Make life easier with shorter variables
-	var context = this.scope.canvas.getContext('2d');
+    var context = this.scope.canvas.getContext('2d');
     context.strokeWidth = 1;
-	context.strokeStyle = "#006644";
-	if (context.setLineDash)
-		context.setLineDash([5]);
+    context.strokeStyle = '#006644';
+    if (context.setLineDash)
+        context.setLineDash([5]);
 
     if(this.x != null){
         context.beginPath();
@@ -28,4 +28,4 @@ Marker.prototype.draw = function () {
         context.lineTo(this.scope.canvas.width, 128 - this.y);
         context.stroke();
     }
-}
+};

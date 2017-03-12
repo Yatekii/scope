@@ -1,4 +1,7 @@
-function Oscilloscope(container, width, height) {
+import * as helpers from './helpers.js';
+import * as marker from './marker.js';
+
+export const Oscilloscope = function(container, width, height) {
     var me = this;
 
     // Create a new canvas to draw the scope onto
@@ -8,15 +11,14 @@ function Oscilloscope(container, width, height) {
     this.canvas.id = 'scope';
     // If a parent container was specified use it, otherwise just use the document body
     if(container) {
-      container.appendChild(this.canvas);
+        container.appendChild(this.canvas);
     } else {
-      document.body.appendChild(this.canvas);
+        document.body.appendChild(this.canvas);
     }
 
     // Create HTML representation
     var tr = createOscilloscopeRepr('oscilloscope-title-' + 0, 'oscilloscope-switch-' + 0);
-    var repr = initRepr(tr, document.getElementById('node-tree-canvas')); // TODO: proper container selection
-    componentHandler.upgradeElement(repr);
+    var repr = helpers.initRepr(tr, document.getElementById('node-tree-canvas')); // TODO: proper container selection
     this.repr = repr;
     repr.controller = this;
     this.repr.id = 'oscilloscope-' + 0;
@@ -32,8 +34,8 @@ function Oscilloscope(container, width, height) {
 
     this.markers = [];
     this.markers.push(
-        new Marker(this, 'horizontal', 80),
-        new Marker(this, 'vertical', 200)
+        new marker.Marker(this, 'horizontal', 80),
+        new marker.Marker(this, 'vertical', 200)
     );
 
     this.markerMoving = false;
@@ -41,33 +43,34 @@ function Oscilloscope(container, width, height) {
     this.autoTriggering = true;
     this.triggerMoving = false;
     this.triggerTrace = 0;
-    this.triggerType = 'rising'
-}
+    this.triggerType = 'rising';
+};
 
-Oscilloscope.prototype.draw = function () {
+Oscilloscope.prototype.draw = function() {
     // Make life easier with shorter variables
-	var width = this.canvas.clientWidth;
-	var height = this.canvas.clientHeight;
+    var width = this.canvas.clientWidth;
+    var height = this.canvas.clientHeight;
+    var context = this.canvas.getContext('2d');
+
+    // Assign new scope properties
     this.canvas.height = height;
     this.canvas.width = width;
     this.scaling = height / 256;
-	var scaling = this.scaling;
-	var context = this.canvas.getContext('2d');
     context.strokeWidth = 1;
 
     // Draw background
-	context.fillStyle="#222222";
-	context.fillRect(0, 0, width, height);
+    context.fillStyle='#222222';
+    context.fillRect(0, 0, width, height);
 
     // Draw trigger level
-	context.strokeStyle = "#278BFF";
-	context.beginPath();
-	context.moveTo(0, 128 - this.triggerLevel);
-	context.lineTo(width, 128 - this.triggerLevel);
-	context.stroke();
+    context.strokeStyle = '#278BFF';
+    context.beginPath();
+    context.moveTo(0, 128 - this.triggerLevel);
+    context.lineTo(width, 128 - this.triggerLevel);
+    context.stroke();
 
     this.traces[this.triggerTrace].fetch();
-	var triggerLocation = getTriggerLocation(this.traces[this.triggerTrace].data, width, this.triggerLevel, this.triggerType);
+    var triggerLocation = getTriggerLocation(this.traces[this.triggerTrace].data, width, this.triggerLevel, this.triggerType);
     if(triggerLocation === undefined && this.autoTriggering){
         triggerLocation = 0;
     }
@@ -81,22 +84,22 @@ Oscilloscope.prototype.draw = function () {
     this.markers.forEach(function(marker) {
         marker.draw();
     });
-}
+};
 
 Oscilloscope.prototype.addSource = function(source) {
     this.sources.push(source);
-}
+};
 
 Oscilloscope.prototype.addTrace = function(trace) {
     this.traces.push(trace);
-}
+};
 
 Oscilloscope.prototype.addMarker = function(marker) {
     this.markers.push(marker);
-}
+};
 
 // Instantiates the GUI representation
-createOscilloscopeRepr = function(title_id, switch_id) {
+function createOscilloscopeRepr(title_id) {
     return `<div class="mdl-shadow--2dp trace-card">
         <div class="mdl-card__title">
             <i class="material-icons trace-card-icon">keyboard_tab</i>&nbsp;
@@ -110,11 +113,11 @@ createOscilloscopeRepr = function(title_id, switch_id) {
 
 function getTriggerLocation(buf, buflen, triggerLevel, type){
     switch(type){
-        case 'rising':
-        default:
-            return risingEdgeTrigger(buf, buflen, triggerLevel);
-        case 'falling':
-            return fallingEdgeTrigger(buf, buflen, triggerLevel);
+    case 'rising':
+    default:
+        return risingEdgeTrigger(buf, buflen, triggerLevel);
+    case 'falling':
+        return fallingEdgeTrigger(buf, buflen, triggerLevel);
     }
 }
 
@@ -212,8 +215,9 @@ function onMouseMove(event, scope){
 
     // Move markers
     if(scope.markerMoving !== false){
+        var markerLevel = 0;
         if(scope.markers[scope.markerMoving].x != null){
-            var markerLevel = event.offsetX;
+            markerLevel = event.offsetX;
             if(markerLevel > scope.canvas.width){
                 markerLevel = scope.canvas.width;
             }
@@ -223,7 +227,7 @@ function onMouseMove(event, scope){
             scope.markers[scope.markerMoving].x = markerLevel;
             return;
         } else {
-            var markerLevel = 128 - event.offsetY;
+            markerLevel = 128 - event.offsetY;
             if(markerLevel > 127){
                 markerLevel = 127;
             }

@@ -1,11 +1,10 @@
-import 'mithril';
-import './oscilloscope.js';
-import './source.js';
-import './helpers.js';
-import './marker.js';
-import './trace.js';
+//import 'mithril';
+import jsPlumb from 'jsplumb';
+import * as oscilloscope from './oscilloscope';
+import * as source from './source.js';
+import * as helpers from './helpers.js';
+import * as trace from './trace.js';
 
-var micTrace = null;
 function init() {
     if (!navigator.getUserMedia)
         navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
@@ -14,28 +13,28 @@ function init() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
-    audioContext = getAudioContext();
+    var audioContext = helpers.getAudioContext();
     // osc1.output.connect(audioContext.destination);
     // osc2.output.connect(audioContext.destination);
-    scope = new Oscilloscope(document.getElementById('scope-container'), '100%', '256px');
+    var scope = new oscilloscope.Oscilloscope(document.getElementById('scope-container'), '100%', '256px');
 
-    osc1 = new Waveform(document.getElementById('node-tree-canvas'), scope);
+    var osc1 = new source.Waveform(document.getElementById('node-tree-canvas'), scope);
     osc1.osc.frequency.value = 500;
-    osc2 = new Waveform(document.getElementById('node-tree-canvas'), scope);
-    mic = new Microphone(document.getElementById('node-tree-canvas'), scope);
+    var osc2 = new source.Waveform(document.getElementById('node-tree-canvas'), scope);
+    var mic = new source.Microphone(document.getElementById('node-tree-canvas'), scope);
 
-    scope.addTrace(new NormalTrace(
+    scope.addTrace(new trace.NormalTrace(
         document.getElementById('node-tree-canvas'), scope, osc1
     ));
-    scope.addTrace(new NormalTrace(
+    scope.addTrace(new trace.NormalTrace(
         document.getElementById('node-tree-canvas'), scope, osc2
     ));
     scope.traces[1].setColor('#E85D55');
-    var micTrace = new NormalTrace(
+    var micTrace = new trace.NormalTrace(
         document.getElementById('node-tree-canvas'), scope, mic
     );
     scope.addTrace(micTrace);
-    var micFFT = new FFTrace(
+    var micFFT = new trace.FFTrace(
         document.getElementById('node-tree-canvas'), scope, mic
     );
     scope.addTrace(micFFT);
@@ -46,9 +45,9 @@ function init() {
 
     osc1.start(audioContext.currentTime+0.05);
     osc2.start(audioContext.currentTime+0.05);
-    draw(scope);
+    helpers.draw(scope);
 
-    var doneDraggables = []
+    var doneDraggables = [];
     jsPlumb.ready(function(){
         var i = 0;
 
@@ -60,7 +59,7 @@ function init() {
         });
 
         jsPlumb.addEndpoint(scope.repr.id, { 
-            anchor: ["Left", {shape: "Rectangle"}],
+            anchor: ['Left', {shape: 'Rectangle'}],
             isTarget: true,
         });
 
@@ -76,7 +75,7 @@ function init() {
                 });
 
                 jsPlumb.addEndpoint(trace.source.repr.id, { 
-                    anchor: ["Right", {shape: "Rectangle"}],
+                    anchor: ['Right', {shape: 'Rectangle'}],
                     isSource: true,
                 });
             }
@@ -91,7 +90,7 @@ function init() {
                 });
 
                 jsPlumb.addEndpoint(trace.repr.id, {
-                    anchor: [["Left", {shape: "Rectangle"}],["Right", {shape: "Rectangle"}]],
+                    anchor: [['Left', {shape: 'Rectangle'}],['Right', {shape: 'Rectangle'}]],
                     isTarget: true,
                     isSource: true
                 });
@@ -103,15 +102,15 @@ function init() {
             jsPlumb.connect({
                 source: trace.source.repr.id,
                 target: trace.repr.id,
-                endpoint: "Dot",
-                anchors: [["Right", {shape:"Circle"}], ["Left", {shape:"Circle"}]]
+                endpoint: 'Dot',
+                anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
             });
 
             jsPlumb.connect({
                 source: trace.repr.id,
                 target: scope.repr.id,
-                endpoint: "Dot",
-                anchors: [["Right", {shape:"Circle"}], ["Left", {shape:"Circle"}]]
+                endpoint: 'Dot',
+                anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
             });
         });
 
@@ -126,10 +125,10 @@ function init() {
         });
     });
     // TODO: Crosswindow stuff
-    // popup = window.open("http://fiddle.jshell.net");
+    // popup = window.open('http://fiddle.jshell.net');
     // popup.console.log(1);
     // popup.kek = 'KEK';
     // popup.alert(popup.kek);
 }
 
-window.addEventListener("load", init);
+window.addEventListener('load', init);
