@@ -1,5 +1,6 @@
 body {
-    margin: 1em;
+    margin: 0;
+    padding: 0;
     background-color: #E85D55;
 }
 
@@ -53,14 +54,12 @@ body {
     width: 200px;
 }
 
-/*.trace-card div {
-    min-height: 100px !important;
-    padding: 0.2em !important;
-    margin: 0em !important;
-}*/
+.node {
+    width: 14em;
+}
 
 #node-tree-canvas {
     width:100%;
     height:100%;
-    padding:50px;
+    /*padding:50px;*/
 }

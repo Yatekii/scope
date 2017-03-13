@@ -52,11 +52,23 @@ function init() {
     osc2.start(audioContext.currentTime+0.05);
     helpers.draw(scope);
 
-    console.log(app);
+    var appState = {
+        nodes: {
+            traces: [],
+            sources: [],
+            count: 0
+        }
+    };
+    app.state = appState;
     m.mount(document.getElementById(conf.nodeTreeCanvas), { view: () =>
-       m(app)
+       m(app, { state: appState })
     });
-    app.add();
+    scope.traces.forEach(function(trace){
+        app.addTrace(trace)
+    });
+    scope.sources.forEach(function(trace){
+        app.addSource(trace)
+    });
 
     // var doneDraggables = [];
     // jsPlumb.ready(function(){

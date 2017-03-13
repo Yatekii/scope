@@ -2,7 +2,7 @@
 import fs from "fs";
 
 // Rollup plugins
-import babel from "rollup-plugin-babel";
+import buble from "rollup-plugin-buble";
 import eslint from "rollup-plugin-eslint";
 import resolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
@@ -47,7 +47,7 @@ export const createConfig = ({ includeDepencies }) => ({
           simplevars(),
           nested(),
           cssnext({ warnForDuplicates: false, }),
-          cssnano(),
+          //cssnano(),
         ],
     }),
     // Resolve libs in node_modules
@@ -78,7 +78,7 @@ export const createConfig = ({ includeDepencies }) => ({
       cache: true
     }),
 
-    babel()
+    //buble()
   ]
 });
 

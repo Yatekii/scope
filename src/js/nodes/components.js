@@ -5,7 +5,7 @@ export const radioSelection = {
         m('.form-group', [
             vnode.attrs.items.map(function(item){
                 return m('label.form-radio', [
-                    m('input', {
+                    m('input[' + (item == vnode.attrs.type ? 'checked' : '') + ']', {
                         type: 'radio',
                         name: vnode.attrs.id + '-items',
                         id: vnode.attrs.id + '-item-' + item,
