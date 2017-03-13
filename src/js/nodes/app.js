@@ -11,7 +11,6 @@ export const app = {
         this.nodes = [m('', 'KEK')];
     },
     view: function(vnode) {
-        return m('', 'KEK');
         return vnode.state.nodes;
     },
     add: function() {

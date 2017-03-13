@@ -54,7 +54,7 @@ function init() {
 
     console.log(app);
     m.mount(document.getElementById(conf.nodeTreeCanvas), { view: () =>
-       app
+       m(app)
     });
     app.add();
 

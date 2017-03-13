@@ -4050,7 +4050,6 @@ var app = {
         this.nodes = [mithril('', 'KEK')];
     },
     view: function view(vnode) {
-        return mithril('', 'KEK');
         return vnode.state.nodes;
     },
     add: function add() {
@@ -4101,7 +4100,7 @@ function init() {
 
     console.log(app);
     mithril.mount(document.getElementById(nodeTreeCanvas), { view: function view() {
-            return app;
+            return mithril(app);
         }
     });
     app.add();
