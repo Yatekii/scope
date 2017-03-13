@@ -15,7 +15,7 @@ const targetConfig = Object.assign({}, baseConfig, {
   sourceMap: true
 });
 
-targetConfig.plugins.push(uglify());
+// targetConfig.plugins.push(uglify());
 
 export default targetConfig;
 

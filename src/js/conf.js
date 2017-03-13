@@ -1,0 +1,1 @@
+export const nodeTreeCanvas = 'node-tree-canvas';

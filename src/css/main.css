@@ -1,17 +1,8 @@
-/*@font-face {
-  font-family: 'Material Icons';
-  font-style: normal;
-  font-weight: 400;
-  src: url(../external/mdl/fonts/MaterialIcons-Regular.eot); /* For IE6-8 */
-  src: local('Material Icons'),
-       local('MaterialIcons-Regular'),
-       url(../external/mdl/fonts/MaterialIcons-Regular.woff2) format('woff2'),
-       url(../external/mdl/fonts/MaterialIcons-Regular.woff) format('woff'),
-       url(../external/mdl/fonts/MaterialIcons-Regular.ttf) format('truetype');
-}*/
+body {
+    margin: 1em;
+    background-color: #E85D55;
+}
 
-body { margin: 1em;}
-p { margin: 1em 0;}
 #output {
     width: 512px;
     height: 256px;
@@ -69,7 +60,7 @@ p { margin: 1em 0;}
 }*/
 
 #node-tree-canvas {
-    width:1000px;
-    height:1000px;
+    width:100%;
+    height:100%;
     padding:50px;
 }

@@ -1,9 +1,14 @@
-//import 'mithril';
+import m from 'mithril';
 import { jsPlumb } from 'jsplumb';
 import * as oscilloscope from './oscilloscope';
 import * as source from './source.js';
 import * as helpers from './helpers.js';
 import * as trace from './trace.js';
+import * as conf from './conf.js';
+import { app } from './nodes/app.js';
+
+import '../css/main.css';
+import { traceNode } from './nodes/trace.js';
 
 function init() {
     if (!navigator.getUserMedia)
@@ -47,83 +52,89 @@ function init() {
     osc2.start(audioContext.currentTime+0.05);
     helpers.draw(scope);
 
-    var doneDraggables = [];
-    jsPlumb.ready(function(){
-        var i = 0;
-
-        scope.repr.style.top = (200 + (1 * 150)) + 'px';
-        scope.repr.style.left = '800px';
-        jsPlumb.draggable(scope.repr.id, {
-            containment:true,
-            grid:[50,50]
-        });
-
-        jsPlumb.addEndpoint(scope.repr.id, { 
-            anchor: ['Left', {shape: 'Rectangle'}],
-            isTarget: true,
-        });
-
-        // Make existing boxes draggable
-        scope.traces.forEach(function(trace) {
-            i++;
-
-            if(doneDraggables.indexOf(trace.source.repr.id) < 0){
-                trace.source.repr.style.top = (200 + (i * 150)) + 'px';
-                jsPlumb.draggable(trace.source.repr.id, {
-                    containment:true,
-                    grid:[50,50]
-                });
-
-                jsPlumb.addEndpoint(trace.source.repr.id, { 
-                    anchor: ['Right', {shape: 'Rectangle'}],
-                    isSource: true,
-                });
-            }
-
-            if(doneDraggables.indexOf(trace.repr.id) < 0){
-                trace.repr.style.top = (200 + (i * 150)) + 'px';
-                trace.repr.style.left = '400px';
-                
-                jsPlumb.draggable(trace.repr.id, {
-                    containment:true,
-                    grid:[50,50]
-                });
-
-                jsPlumb.addEndpoint(trace.repr.id, {
-                    anchor: [['Left', {shape: 'Rectangle'}],['Right', {shape: 'Rectangle'}]],
-                    isTarget: true,
-                    isSource: true
-                });
-            }
-            
-            doneDraggables.push(trace.source.repr.id);
-            doneDraggables.push(trace.repr.id);
-
-            jsPlumb.connect({
-                source: trace.source.repr.id,
-                target: trace.repr.id,
-                endpoint: 'Dot',
-                anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-            });
-
-            jsPlumb.connect({
-                source: trace.repr.id,
-                target: scope.repr.id,
-                endpoint: 'Dot',
-                anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-            });
-        });
-
-        // Bind connection event
-        jsPlumb.bind('connection', function(info) {
-            info.target.controller.source = info.source.controller;
-        });
-
-        // Bind connectionDetached event
-        jsPlumb.bind('connectionDetached', function(info) {
-            info.target.controller.source = null;
-        });
+    console.log(app);
+    m.mount(document.getElementById(conf.nodeTreeCanvas), { view: () =>
+       app
     });
+    app.add();
+
+    // var doneDraggables = [];
+    // jsPlumb.ready(function(){
+    //     var i = 0;
+
+    //     scope.repr.style.top = (200 + (1 * 150)) + 'px';
+    //     scope.repr.style.left = '800px';
+    //     jsPlumb.draggable(scope.repr.id, {
+    //         containment:true,
+    //         grid:[50,50]
+    //     });
+
+    //     jsPlumb.addEndpoint(scope.repr.id, { 
+    //         anchor: ['Left', {shape: 'Rectangle'}],
+    //         isTarget: true,
+    //     });
+
+    //     // Make existing boxes draggable
+    //     scope.traces.forEach(function(trace) {
+    //         i++;
+
+    //         if(doneDraggables.indexOf(trace.source.repr.id) < 0){
+    //             trace.source.repr.style.top = (200 + (i * 150)) + 'px';
+    //             jsPlumb.draggable(trace.source.repr.id, {
+    //                 containment:true,
+    //                 grid:[50,50]
+    //             });
+
+    //             jsPlumb.addEndpoint(trace.source.repr.id, { 
+    //                 anchor: ['Right', {shape: 'Rectangle'}],
+    //                 isSource: true,
+    //             });
+    //         }
+
+    //         if(doneDraggables.indexOf(trace.repr.id) < 0){
+    //             trace.repr.style.top = (200 + (i * 150)) + 'px';
+    //             trace.repr.style.left = '400px';
+                
+    //             jsPlumb.draggable(trace.repr.id, {
+    //                 containment:true,
+    //                 grid:[50,50]
+    //             });
+
+    //             jsPlumb.addEndpoint(trace.repr.id, {
+    //                 anchor: [['Left', {shape: 'Rectangle'}],['Right', {shape: 'Rectangle'}]],
+    //                 isTarget: true,
+    //                 isSource: true
+    //             });
+    //         }
+            
+    //         doneDraggables.push(trace.source.repr.id);
+    //         doneDraggables.push(trace.repr.id);
+
+    //         jsPlumb.connect({
+    //             source: trace.source.repr.id,
+    //             target: trace.repr.id,
+    //             endpoint: 'Dot',
+    //             anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
+    //         });
+
+    //         jsPlumb.connect({
+    //             source: trace.repr.id,
+    //             target: scope.repr.id,
+    //             endpoint: 'Dot',
+    //             anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
+    //         });
+    //     });
+
+    //     // Bind connection event
+    //     jsPlumb.bind('connection', function(info) {
+    //         info.target.controller.source = info.source.controller;
+    //     });
+
+    //     // Bind connectionDetached event
+    //     jsPlumb.bind('connectionDetached', function(info) {
+    //         info.target.controller.source = null;
+    //     });
+    // });
     // TODO: Crosswindow stuff
     // popup = window.open('http://fiddle.jshell.net');
     // popup.console.log(1);

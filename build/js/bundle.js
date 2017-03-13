@@ -1,8 +1,4196 @@
-!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e():"function"==typeof define&&define.amd?define(e):e()}(0,function(){"use strict";function t(t){return'<div class="mdl-shadow--2dp trace-card">\n        <div class="mdl-card__title">\n            <i class="material-icons trace-card-icon">keyboard_tab</i>&nbsp;\n            <div class="mdl-textfield mdl-js-textfield">\n                <input class="mdl-textfield__input card-title" type="text" id="'+t+'">\n                <label class="mdl-textfield__label" for="'+t+'">Oscilloscope</label>\n            </div>\n        </div>\n    </div>'}function e(t,e,s,o){switch(o){case"rising":default:return n(t,e,s);case"falling":return i(t,e,s)}}function n(t,e,n){for(var i=1;i<e;i++)if(t[i]>128+n&&t[i-1]<128+n)return i}function i(t,e,n){for(var i=1;i<e;i++)if(t[i]<128+n&&t[i-1]>128+n)return i}function s(t,e){if(128-t.offsetY<e.triggerLevel+3&&128-t.offsetY>e.triggerLevel-3)return void(e.triggerMoving=!0);for(var n=0;n<e.markers.length;n++)if(null!=e.markers[n].x){if(t.offsetX<e.markers[n].x+3&&t.offsetX>e.markers[n].x-3)return void(e.markerMoving=n)}else if(128-t.offsetY<e.markers[n].y+3&&128-t.offsetY>e.markers[n].y-3)return void(e.markerMoving=n)}function o(t,e){e.triggerMoving&&(e.triggerMoving=!1),e.markerMoving!==!1&&(e.markerMoving=!1)}function r(t,e){if(128-t.offsetY<e.triggerLevel+3&&128-t.offsetY>e.triggerLevel-3)document.body.style.cursor="row-resize";else{for(var n=!1,i=0;i<e.markers.length;i++)if(null!=e.markers[i].x){if(t.offsetX<e.markers[i].x+3&&t.offsetX>e.markers[i].x-3){document.body.style.cursor="col-resize",n=!0;break}}else if(128-t.offsetY<e.markers[i].y+3&&128-t.offsetY>e.markers[i].y-3){document.body.style.cursor="row-resize",n=!0;break}n||(document.body.style.cursor="initial")}if(e.triggerMoving){var s=128-t.offsetY;return s>127&&(s=127),s<-128&&(s=-128),void(e.triggerLevel=s)}if(e.markerMoving!==!1){var o=0;return null!=e.markers[e.markerMoving].x?(o=t.offsetX,o>e.canvas.width&&(o=e.canvas.width),o<0&&(o=0),void(e.markers[e.markerMoving].x=o)):(o=128-t.offsetY,o>127&&(o=127),o<-128&&(o=-128),void(e.markers[e.markerMoving].y=o))}}function a(t){this.osc.start(t)}function l(t){this.osc.stop(t)}function c(t,e){return'<div class="mdl-shadow--2dp trace-card">\n            <div class="mdl-card__title">\n                <i class="material-icons trace-card-icon">keyboard_capslock</i>&nbsp;\n                <div class="mdl-textfield mdl-js-textfield">\n                    <input class="mdl-textfield__input card-title" type="text" id="'+t+'">\n                    <label class="mdl-textfield__label" for="'+t+'">Waveform</label>\n                </div>\n                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="'+e+'">\n                    <input type="checkbox" id="'+e+'" class="mdl-switch__input trace-on-off"/>\n                </label>\n            </div>\n        </div>'}function u(t,e){console.log("Found a stream.");var n=x();t.input=n.createMediaStreamSource(e),t.traceGain=n.createGain(),t.input.connect(t.traceGain),t.sinkGain=n.createGain(),t.sinkGain.gain.value=0,t.traceGain.connect(t.sinkGain),t.sinkGain.connect(n.destination),t.analyzer=n.createAnalyser(),t.analyzer.fftSize=4096,t.traceGain.connect(t.analyzer),t.data=new Uint8Array(t.analyzer.frequencyBinCount),t.onactive(t),t.ready=!0,t.on_off.checked=!0}function h(t){navigator.getUserMedia({audio:{mandatory:{googEchoCancellation:"false",googAutoGainControl:"false",googNoiseSuppression:"false",googHighpassFilter:"false"},optional:[]}},function(e){u(t,e)},function(t){console.log("Error getting audio!"),console.log(t)})}function d(t,e){return'<div class="mdl-shadow--2dp trace-card">\n            <div class="mdl-card__title">\n                <i class="material-icons trace-card-icon">keyboard_tab</i>&nbsp;\n                <div class="mdl-textfield mdl-js-textfield">\n                    <input class="mdl-textfield__input card-title" type="text" id="'+t+'">\n                    <label class="mdl-textfield__label" for="'+t+'">Microphone</label>\n                </div>\n                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="'+e+'">\n                    <input type="checkbox" id="'+e+'" class="mdl-switch__input trace-on-off"/>\n                </label>\n            </div>\n        </div>'}function p(){navigator.getUserMedia||(navigator.getUserMedia=navigator.webkitGetUserMedia||navigator.mozGetUserMedia),navigator.cancelAnimationFrame||(navigator.cancelAnimationFrame=navigator.webkitCancelAnimationFrame||navigator.mozCancelAnimationFrame),navigator.requestAnimationFrame||(navigator.requestAnimationFrame=navigator.webkitRequestAnimationFrame||navigator.mozRequestAnimationFrame);var t=x(),e=new E(document.getElementById("scope-container"),"100%","256px"),n=new S(document.getElementById("node-tree-canvas"),e);n.osc.frequency.value=500;var i=new S(document.getElementById("node-tree-canvas"),e),s=new D(document.getElementById("node-tree-canvas"),e);e.addTrace(new w(document.getElementById("node-tree-canvas"),e,n)),e.addTrace(new w(document.getElementById("node-tree-canvas"),e,i)),e.traces[1].setColor("#E85D55");var o=new w(document.getElementById("node-tree-canvas"),e,s);e.addTrace(o);var r=new A(document.getElementById("node-tree-canvas"),e,s);e.addTrace(r),s.onactive=function(t){o.setSource(t),r.setSource(t)},n.start(t.currentTime+.05),i.start(t.currentTime+.05),b(e);var a=[];v.ready(function(){var t=0;e.repr.style.top="350px",e.repr.style.left="800px",v.draggable(e.repr.id,{containment:!0,grid:[50,50]}),v.addEndpoint(e.repr.id,{anchor:["Left",{shape:"Rectangle"}],isTarget:!0}),e.traces.forEach(function(n){t++,a.indexOf(n.source.repr.id)<0&&(n.source.repr.style.top=200+150*t+"px",v.draggable(n.source.repr.id,{containment:!0,grid:[50,50]}),v.addEndpoint(n.source.repr.id,{anchor:["Right",{shape:"Rectangle"}],isSource:!0})),a.indexOf(n.repr.id)<0&&(n.repr.style.top=200+150*t+"px",n.repr.style.left="400px",v.draggable(n.repr.id,{containment:!0,grid:[50,50]}),v.addEndpoint(n.repr.id,{anchor:[["Left",{shape:"Rectangle"}],["Right",{shape:"Rectangle"}]],isTarget:!0,isSource:!0})),a.push(n.source.repr.id),a.push(n.repr.id),v.connect({source:n.source.repr.id,target:n.repr.id,endpoint:"Dot",anchors:[["Right",{shape:"Circle"}],["Left",{shape:"Circle"}]]}),v.connect({source:n.repr.id,target:e.repr.id,endpoint:"Dot",anchors:[["Right",{shape:"Circle"}],["Left",{shape:"Circle"}]]})}),v.bind("connection",function(t){t.target.controller.source=t.source.controller}),v.bind("connectionDetached",function(t){t.target.controller.source=null})})}var f="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof self?self:{},g="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},m=function(t,e){return e={exports:{}},t(e,e.exports),e.exports}(function(t,e){(function(){void 0===Math.sgn&&(Math.sgn=function(t){return 0==t?0:t>0?1:-1});var t={subtract:function(t,e){return{x:t.x-e.x,y:t.y-e.y}},dotProduct:function(t,e){return t.x*e.x+t.y*e.y},square:function(t){return Math.sqrt(t.x*t.x+t.y*t.y)},scale:function(t,e){return{x:t.x*e,y:t.y*e}}},n=Math.pow(2,-65),i=function(e,n){for(var i=[],s=o(e,n),a=n.length-1,l=2*a-1,c=r(s,l,i,0),h=t.subtract(e,n[0]),d=t.square(h),p=0,f=0;f<c;f++){h=t.subtract(e,u(n,a,i[f],null,null));var g=t.square(h);g<d&&(d=g,p=i[f])}return h=t.subtract(e,n[a]),g=t.square(h),g<d&&(d=g,p=1),{location:p,distance:d}},s=function(t,e){var n=i(t,e);return{point:u(e,e.length-1,n.location,null,null),location:n.location}},o=function(e,n){for(var i=n.length-1,s=2*i-1,o=[],r=[],a=[],l=[],c=[[1,.6,.3,.1],[.4,.6,.6,.4],[.1,.3,.6,1]],u=0;u<=i;u++)o[u]=t.subtract(n[u],e);for(var u=0;u<=i-1;u++)r[u]=t.subtract(n[u+1],n[u]),r[u]=t.scale(r[u],3);for(var h=0;h<=i-1;h++)for(var d=0;d<=i;d++)a[h]||(a[h]=[]),a[h][d]=t.dotProduct(r[h],o[d]);for(u=0;u<=s;u++)l[u]||(l[u]=[]),l[u].y=0,l[u].x=parseFloat(u)/s;for(var p=i,f=i-1,g=0;g<=p+f;g++){var m=Math.max(0,g-f),v=Math.min(g,p);for(u=m;u<=v;u++)j=g-u,l[u+j].y+=a[j][u]*c[j][u]}return l},r=function t(e,n,i,s){var o,r,h=[],d=[],p=[],f=[];switch(a(e,n)){case 0:return 0;case 1:if(s>=64)return i[0]=(e[0].x+e[n].x)/2,1;if(l(e,n))return i[0]=c(e,n),1}u(e,n,.5,h,d),o=t(h,n,p,s+1),r=t(d,n,f,s+1);for(var g=0;g<o;g++)i[g]=p[g];for(var g=0;g<r;g++)i[g+o]=f[g];return o+r},a=function(t,e){var n,i,s=0;n=i=Math.sgn(t[0].y);for(var o=1;o<=e;o++)n=Math.sgn(t[o].y),n!=i&&s++,i=n;return s},l=function(t,e){var i,s,o,r,a,l,c,u,h,d,p,f,g,m,v,b;l=t[0].y-t[e].y,c=t[e].x-t[0].x,u=t[0].x*t[e].y-t[e].x*t[0].y;for(var y=max_distance_below=0,P=1;P<e;P++){var _=l*t[P].x+c*t[P].y+u;_>y?y=_:_<max_distance_below&&(max_distance_below=_)}return p=0,f=1,g=0,m=l,v=c,b=u-y,h=p*v-m*f,d=1/h,s=(f*b-v*g)*d,m=l,v=c,b=u-max_distance_below,h=p*v-m*f,d=1/h,o=(f*b-v*g)*d,r=Math.min(s,o),a=Math.max(s,o),i=a-r,i<n?1:0},c=function(t,e){var n=t[e].x-t[0].x,i=t[e].y-t[0].y,s=t[0].x-0;return 0+(n*(t[0].y-0)-i*s)*(1/(0*n-1*i))*1},u=function(t,e,n,i,s){for(var o=[[]],r=0;r<=e;r++)o[0][r]=t[r];for(var a=1;a<=e;a++)for(var r=0;r<=e-a;r++)o[a]||(o[a]=[]),o[a][r]||(o[a][r]={}),o[a][r].x=(1-n)*o[a-1][r].x+n*o[a-1][r+1].x,o[a][r].y=(1-n)*o[a-1][r].y+n*o[a-1][r+1].y;if(null!=i)for(r=0;r<=e;r++)i[r]=o[r][0];if(null!=s)for(r=0;r<=e;r++)s[r]=o[e-r][r];return o[e][0]},h={},d=function(t){var e=h[t];if(!e){e=[];var n=function(){return function(e){return Math.pow(e,t)}},i=function(){return function(e){return Math.pow(1-e,t)}},s=function(t){return function(e){return t}},o=function(){return function(t){return t}},r=function(){return function(t){return 1-t}},a=function(t){return function(e){for(var n=1,i=0;i<t.length;i++)n*=t[i](e);return n}};e.push(new n);for(var l=1;l<t;l++){for(var c=[new s(t)],u=0;u<t-l;u++)c.push(new o);for(var u=0;u<l;u++)c.push(new r);e.push(new a(c))}e.push(new i),h[t]=e}return e},p=function(t,e){for(var n=d(t.length-1),i=0,s=0,o=0;o<t.length;o++)i+=t[o].x*n[o](e),s+=t[o].y*n[o](e);return{x:i,y:s}},f=function(t,e){return Math.sqrt(Math.pow(t.x-e.x,2)+Math.pow(t.y-e.y,2))},g=function(t){return t[0].x==t[1].x&&t[0].y==t[1].y},m=function(t,e,n){if(g(t))return{point:t[0],location:e};for(var i=p(t,e),s=0,o=e,r=n>0?1:-1,a=null;s<Math.abs(n);)o+=.005*r,a=p(t,o),s+=f(a,i),i=a;return{point:a,location:o}},v=function(t){if(g(t))return 0;for(var e=p(t,0),n=0,i=0,s=null;i<1;)i+=.005,s=p(t,i),n+=f(s,e),e=s;return n},b=function(t,e,n){return m(t,e,n).point},y=function(t,e,n){return m(t,e,n).location},P=function(t,e){var n=p(t,e),i=p(t.slice(0,t.length-1),e),s=i.y-n.y,o=i.x-n.x;return 0==s?1/0:Math.atan(s/o)},_=function(t,e,n){var i=m(t,e,n);return i.location>1&&(i.location=1),i.location<0&&(i.location=0),P(t,i.location)},x=function(t,e,n,i){i=null==i?0:i;var s=m(t,e,i),o=P(t,s.location),r=Math.atan(-1/o),a=n/2*Math.sin(r),l=n/2*Math.cos(r);return[{x:s.point.x+l,y:s.point.y+a},{x:s.point.x-l,y:s.point.y-a}]},C=this.jsBezier={distanceFromCurve:i,gradientAtPoint:P,gradientAtPointAlongCurveFrom:_,nearestPointOnCurve:s,pointOnCurve:p,pointAlongCurveFrom:b,perpendicularToCurveAt:x,locationAlongCurveFrom:y,getLength:v,version:"0.9.0"};e.jsBezier=C}).call("undefined"!=typeof window?window:f),function(){var t=this,n=t.Biltong={version:"0.4.0"};e.Biltong=n;var i=function(t){return"[object Array]"===Object.prototype.toString.call(t)},s=function(t,e,n){return t=i(t)?t:[t.x,t.y],e=i(e)?e:[e.x,e.y],n(t,e)},o=n.gradient=function(t,e){return s(t,e,function(t,e){return e[0]==t[0]?e[1]>t[1]?1/0:-(1/0):e[1]==t[1]?e[0]>t[0]?0:-0:(e[1]-t[1])/(e[0]-t[0])})},r=(n.normal=function(t,e){return-1/o(t,e)},n.lineLength=function(t,e){return s(t,e,function(t,e){return Math.sqrt(Math.pow(e[1]-t[1],2)+Math.pow(e[0]-t[0],2))})},n.quadrant=function(t,e){return s(t,e,function(t,e){return e[0]>t[0]?e[1]>t[1]?2:1:e[0]==t[0]?e[1]>t[1]?2:1:e[1]>t[1]?3:4})}),a=(n.theta=function(t,e){return s(t,e,function(t,e){var n=o(t,e),i=Math.atan(n),s=r(t,e);return 4!=s&&3!=s||(i+=Math.PI),i<0&&(i+=2*Math.PI),i})},n.intersects=function(t,e){var n=t.x,i=t.x+t.w,s=t.y,o=t.y+t.h,r=e.x,a=e.x+e.w,l=e.y,c=e.y+e.h;return n<=r&&r<=i&&s<=l&&l<=o||n<=a&&a<=i&&s<=l&&l<=o||n<=r&&r<=i&&s<=c&&c<=o||n<=a&&r<=i&&s<=c&&c<=o||r<=n&&n<=a&&l<=s&&s<=c||r<=i&&i<=a&&l<=s&&s<=c||r<=n&&n<=a&&l<=o&&o<=c||r<=i&&n<=a&&l<=o&&o<=c},n.encloses=function(t,e,n){var i=t.x,s=t.x+t.w,o=t.y,r=t.y+t.h,a=e.x,l=e.x+e.w,c=e.y,u=e.y+e.h,h=function(t,e,i,s){return n?t<=e&&i>=s:t<e&&i>s};return h(i,a,s,l)&&h(o,c,r,u)},[null,[1,-1],[1,1],[-1,1],[-1,-1]]),l=[null,[-1,-1],[-1,1],[1,1],[1,-1]];n.pointOnLine=function(t,e,n){var i=o(t,e),s=r(t,e),c=n>0?a[s]:l[s],u=Math.atan(i),h=Math.abs(n*Math.sin(u))*c[1],d=Math.abs(n*Math.cos(u))*c[0];return{x:t.x+d,y:t.y+h}},n.perpendicularLineTo=function(t,e,n){var i=o(t,e),s=Math.atan(-1/i),r=n/2*Math.sin(s),a=n/2*Math.cos(s);return[{x:e.x+a,y:e.y+r},{x:e.x-a,y:e.y-r}]}}.call("undefined"!=typeof window?window:f),function(){var t=this,n={android:navigator.userAgent.toLowerCase().indexOf("android")>-1},i=function(t,e,n){n=n||t.parentNode;for(var i=n.querySelectorAll(e),s=0;s<i.length;s++)if(i[s]===t)return!0;return!1},s=function(t){return"string"==typeof t||t.constructor===String?document.getElementById(t):t},o=function(t){return t.srcElement||t.target},r=function(t,e,n,i){if(i){if(void 0!==t.path&&t.path.indexOf)return{path:t.path,end:t.path.indexOf(n)};var s={path:[],end:-1};return function t(e){s.path.push(e),e===n?s.end=s.path.length-1:null!=e.parentNode&&t(e.parentNode)}(e),s}return{path:[e],end:1}},a=function(t,e){for(var n=0,i=t.length;n<i&&t[n]!=e;n++);n<t.length&&t.splice(n,1)},l=1,c=function(t,e,n){var i=l++;return t.__ta=t.__ta||{},t.__ta[e]=t.__ta[e]||{},t.__ta[e][i]=n,n.__tauid=i,i},u=function(t,e,n){if(t.__ta&&t.__ta[e]&&delete t.__ta[e][n.__tauid],n.__taExtra){for(var i=0;i<n.__taExtra.length;i++)T(t,n.__taExtra[i][0],n.__taExtra[i][1]);n.__taExtra.length=0}n.__taUnstore&&n.__taUnstore()},h=function(t,e,n,s){if(null==t)return n;var a=t.split(","),l=function s(l){s.__tauid=n.__tauid;var c=o(l),u=c,h=r(l,c,e,null!=t);if(h.end!=-1)for(var d=0;d<h.end;d++){u=h.path[d];for(var p=0;p<a.length;p++)i(u,a[p],e)&&n.apply(u,arguments)}};return d(n,s,l),l},d=function(t,e,n){t.__taExtra=t.__taExtra||[],t.__taExtra.push([e,n])},p=function(t,e,n,i){if(y&&_[e]){var s=h(i,t,n,_[e]);k(t,_[e],s,n)}"focus"===e&&null==t.getAttribute("tabindex")&&t.setAttribute("tabindex","1"),k(t,e,h(i,t,n,e),n)},f=function(t,e,n,i){if(null==t.__taSmartClicks){var s=function(e){t.__tad=j(e)},r=function(e){t.__tau=j(e)},l=function(e){if(t.__tad&&t.__tau&&t.__tad[0]===t.__tau[0]&&t.__tad[1]===t.__tau[1])for(var n=0;n<t.__taSmartClicks.length;n++)t.__taSmartClicks[n].apply(o(e),[e])};p(t,"mousedown",s,i),p(t,"mouseup",r,i),p(t,"click",l,i),t.__taSmartClicks=[]}t.__taSmartClicks.push(n),n.__taUnstore=function(){a(t.__taSmartClicks,n)}},g={tap:{touches:1,taps:1},dbltap:{touches:1,taps:2},contextmenu:{touches:2,taps:1}},m=function(t,e){return function(n,s,l,c){if("contextmenu"==s&&P)p(n,s,l,c);else{if(null==n.__taTapHandler){var u=n.__taTapHandler={tap:[],dbltap:[],contextmenu:[],down:!1,taps:0,downSelectors:[]},h=function(s){for(var a=o(s),l=r(s,a,n,null!=c),h=!1,d=0;d<l.end;d++){if(h)return;a=l.path[d];for(var p=0;p<u.downSelectors.length;p++)if(null==u.downSelectors[p]||i(a,u.downSelectors[p],n)){u.down=!0,setTimeout(f,t),setTimeout(m,e),h=!0;break}}},d=function(t){if(u.down){var e,s,a=o(t);u.taps++;var l=I(t);for(var c in g)if(g.hasOwnProperty(c)){var h=g[c];if(h.touches===l&&(1===h.taps||h.taps===u.taps))for(var d=0;d<u[c].length;d++){s=r(t,a,n,null!=u[c][d][1]);for(var p=0;p<s.end;p++)if(e=s.path[p],null==u[c][d][1]||i(e,u[c][d][1],n)){u[c][d][0].apply(e,[t]);break}}}}},f=function(){u.down=!1},m=function(){u.taps=0};p(n,"mousedown",h),p(n,"mouseup",d)}n.__taTapHandler.downSelectors.push(c),n.__taTapHandler[s].push([l,c]),l.__taUnstore=function(){a(n.__taTapHandler[s],l)}}}},v=function(t,e,n,i){for(var s in n.__tamee[t])n.__tamee[t].hasOwnProperty(s)&&n.__tamee[t][s].apply(i,[e])},b=function(){var t=[];return function(e,n,s,r){if(!e.__tamee){e.__tamee={over:!1,mouseenter:[],mouseexit:[]};var a=function(n){var s=o(n);(null==r&&s==e&&!e.__tamee.over||i(s,r,e)&&(null==s.__tamee||!s.__tamee.over))&&(v("mouseenter",n,e,s),s.__tamee=s.__tamee||{},s.__tamee.over=!0,t.push(s))},l=function(n){for(var s=o(n),r=0;r<t.length;r++)s!=t[r]||i(n.relatedTarget||n.toElement,"*",s)||(s.__tamee.over=!1,t.splice(r,1),v("mouseexit",n,e,s))};k(e,"mouseover",h(r,e,a,"mouseover"),a),k(e,"mouseout",h(r,e,l,"mouseout"),l)}s.__taUnstore=function(){delete e.__tamee[n][s.__tauid]},c(e,n,s),e.__tamee[n][s.__tauid]=s}},y="ontouchstart"in document.documentElement,P="onmousedown"in document.documentElement,_={mousedown:"touchstart",mouseup:"touchend",mousemove:"touchmove"},x=function(){var t=-1;if("Microsoft Internet Explorer"==navigator.appName){var e=navigator.userAgent;null!=new RegExp("MSIE ([0-9]{1,}[.0-9]{0,})").exec(e)&&(t=parseFloat(RegExp.$1))}return t}(),C=x>-1&&x<9,E=function(t,e){if(null==t)return[0,0];var n=A(t),i=w(n,0);return[i[e+"X"],i[e+"Y"]]},j=function(t){return null==t?[0,0]:C?[t.clientX+document.documentElement.scrollLeft,t.clientY+document.documentElement.scrollTop]:E(t,"page")},S=function(t){return E(t,"screen")},D=function(t){return E(t,"client")},w=function(t,e){return t.item?t.item(e):t[e]},A=function(t){return t.touches&&t.touches.length>0?t.touches:t.changedTouches&&t.changedTouches.length>0?t.changedTouches:t.targetTouches&&t.targetTouches.length>0?t.targetTouches:[t]},I=function(t){return A(t).length},k=function(t,e,n,i){if(c(t,e,n),i.__tauid=n.__tauid,t.addEventListener)t.addEventListener(e,n,!1);else if(t.attachEvent){var s=e+n.__tauid;t["e"+s]=n,t[s]=function(){t["e"+s]&&t["e"+s](window.event)},t.attachEvent("on"+e,t[s])}},T=function t(e,n,i){null!=i&&O(e,function(){var o=s(this);if(u(o,n,i),null!=i.__tauid)if(o.removeEventListener)o.removeEventListener(n,i,!1),y&&_[n]&&o.removeEventListener(_[n],i,!1);else if(this.detachEvent){var r=n+i.__tauid;o[r]&&o.detachEvent("on"+n,o[r]),o[r]=null,o["e"+r]=null}i.__taTouchProxy&&t(e,i.__taTouchProxy[1],i.__taTouchProxy[0])})},O=function(t,e){if(null!=t){t="undefined"!=typeof Window&&"unknown"!=typeof t.top&&t==t.top?[t]:"string"!=typeof t&&null==t.tagName&&null!=t.length?t:"string"==typeof t?document.querySelectorAll(t):[t];for(var n=0;n<t.length;n++)e.apply(t[n])}};t.Mottle=function(t){t=t||{};var e=t.clickThreshold||250,i=t.dblClickThreshold||450,o=new b,r=new m(e,i),a=t.smartClicks,l=function(t,e,n,i){null!=n&&O(t,function(){var t=s(this);a&&"click"===e?f(t,0,n,i):"tap"===e||"dbltap"===e||"contextmenu"===e?r(t,e,n,i):"mouseenter"===e||"mouseexit"==e?o(t,e,n,i):p(t,e,n,i)})};this.remove=function(t){return O(t,function(){var t=s(this);if(t.__ta)for(var e in t.__ta)if(t.__ta.hasOwnProperty(e))for(var n in t.__ta[e])t.__ta[e].hasOwnProperty(n)&&T(t,e,t.__ta[e][n]);t.parentNode&&t.parentNode.removeChild(t)}),this},this.on=function(t,e,n,i){var s=arguments[0],o=4==arguments.length?arguments[2]:null;return l(s,arguments[1],arguments[arguments.length-1],o),this},this.off=function(t,e,n){return T(t,e,n),this},this.trigger=function(t,e,i,o){var r=P&&("undefined"==typeof MouseEvent||null==i||i.constructor===MouseEvent),a=y&&!P&&_[e]?_[e]:e,l=!(y&&!P&&_[e]),c=j(i),u=S(i),h=D(i);return O(t,function(){var t,d=s(this);i=i||{screenX:u[0],screenY:u[1],clientX:h[0],clientY:h[1]};var p=function(t){o&&(t.payload=o)},f={TouchEvent:function(t){var e=document.createTouch(window,d,0,c[0],c[1],u[0],u[1],h[0],h[1],0,0,0,0),n=document.createTouchList(e),i=document.createTouchList(e),s=document.createTouchList(e);t.initTouchEvent(a,!0,!0,window,null,u[0],u[1],h[0],h[1],!1,!1,!1,!1,n,i,s,1,0)},MouseEvents:function(t){if(t.initMouseEvent(a,!0,!0,window,0,u[0],u[1],h[0],h[1],!1,!1,!1,!1,1,d),n.android){var e=document.createTouch(window,d,0,c[0],c[1],u[0],u[1],h[0],h[1],0,0,0,0);t.touches=t.targetTouches=t.changedTouches=document.createTouchList(e)}}};if(document.createEvent){var g=!l&&!r&&y&&_[e]&&!n.android,m=g?"TouchEvent":"MouseEvents";t=document.createEvent(m),f[m](t),p(t),d.dispatchEvent(t)}else document.createEventObject&&(t=document.createEventObject(),t.eventType=t.eventName=a,t.screenX=u[0],t.screenY=u[1],t.clientX=h[0],t.clientY=h[1],p(t),d.fireEvent("on"+a,t))}),this}},t.Mottle.consume=function(t,e){t.stopPropagation?t.stopPropagation():t.returnValue=!1,!e&&t.preventDefault&&t.preventDefault()},t.Mottle.pageLocation=j,t.Mottle.setForceTouchEvents=function(t){y=t},t.Mottle.setForceMouseEvents=function(t){P=t},t.Mottle.version="0.8.0",e.Mottle=t.Mottle}.call("undefined"==typeof window?f:window),function(){var t=this,n=function(t,e,n){return t.indexOf(e)===-1&&(n?t.unshift(e):t.push(e),!0)},i=function(t,e){var n=t.indexOf(e);n!=-1&&t.splice(n,1)},s=function(t,e){for(var n=[],i=0;i<t.length;i++)e.indexOf(t[i])==-1&&n.push(t[i]);return n},o=function(t){return null!=t&&("string"==typeof t||t.constructor==String)},r=function(t){var e=t.getBoundingClientRect(),n=document.body,i=document.documentElement,s=window.pageYOffset||i.scrollTop||n.scrollTop,o=window.pageXOffset||i.scrollLeft||n.scrollLeft,r=i.clientTop||n.clientTop||0,a=i.clientLeft||n.clientLeft||0,l=e.top+s-r,c=e.left+o-a;return{top:Math.round(l),left:Math.round(c)}},a=function(t,e,n){n=n||t.parentNode;for(var i=n.querySelectorAll(e),s=0;s<i.length;s++)if(i[s]===t)return!0;return!1},l=function(){var t=-1;if("Microsoft Internet Explorer"==navigator.appName){var e=navigator.userAgent;null!=new RegExp("MSIE ([0-9]{1,}[.0-9]{0,})").exec(e)&&(t=parseFloat(RegExp.$1))}return t}(),c=l>-1&&l<9,u=9==l,h=function(t){if(c)return[t.clientX+document.documentElement.scrollLeft,t.clientY+document.documentElement.scrollTop];var e=p(t),n=d(e,0);return u?[n.pageX||n.clientX,n.pageY||n.clientY]:[n.pageX,n.pageY]},d=function(t,e){return t.item?t.item(e):t[e]},p=function(t){return t.touches&&t.touches.length>0?t.touches:t.changedTouches&&t.changedTouches.length>0?t.changedTouches:t.targetTouches&&t.targetTouches.length>0?t.targetTouches:[t]},f={draggable:"katavorio-draggable",droppable:"katavorio-droppable",drag:"katavorio-drag",selected:"katavorio-drag-selected",active:"katavorio-drag-active",hover:"katavorio-drag-hover",noSelect:"katavorio-drag-no-select",ghostProxy:"katavorio-ghost-proxy"},g=["stop","start","drag","drop","over","out","beforeStart"],m=function(){},v=function(){return!0},b=function(t,e,n){for(var i=0;i<t.length;i++)t[i]!=n&&e(t[i])},y=function(t,e,n,i){b(t,function(t){t.setActive(e),e&&t.updatePosition(),n&&t.setHover(i,e)})},P=function(t,e){if(null!=t){t=o(t)||null!=t.tagName||null==t.length?[t]:t;for(var n=0;n<t.length;n++)e.apply(t[n],[t[n]])}},_=function(t){t.stopPropagation?(t.stopPropagation(),t.preventDefault()):t.returnValue=!1},x=function(t,e,n){return!a(t.srcElement||t.target,n.getInputFilterSelector(),e)},C=function(t,e,n,i){this.params=e||{},this.el=t,this.params.addClass(this.el,this._class),this.uuid=w();var s=!0;return this.setEnabled=function(t){s=t},this.isEnabled=function(){return s},this.toggleEnabled=function(){s=!s},this.setScope=function(t){this.scopes=t?t.split(/\s+/):[i]},this.addScope=function(t){var e={};P(this.scopes,function(t){e[t]=!0}),P(t?t.split(/\s+/):[],function(t){e[t]=!0}),this.scopes=[];for(var n in e)this.scopes.push(n)},this.removeScope=function(t){var e={};P(this.scopes,function(t){e[t]=!0}),P(t?t.split(/\s+/):[],function(t){delete e[t]}),this.scopes=[];for(var n in e)this.scopes.push(n)},this.toggleScope=function(t){var e={};P(this.scopes,function(t){e[t]=!0}),P(t?t.split(/\s+/):[],function(t){e[t]?delete e[t]:e[t]=!0}),this.scopes=[];for(var n in e)this.scopes.push(n)},this.setScope(e.scope),this.k=e.katavorio,e.katavorio},E=function(){return!0},j=function(){return!1},S=function(t,e,n,i){this._class=n.draggable;var s=C.apply(this,arguments);this.rightButtonCanDrag=this.params.rightButtonCanDrag;var l=[0,0],c=null,u=null,d=[0,0],p=!1,g=this.params.consumeStartEvent!==!1,m=this.el,b=this.params.clone,P=(this.params.scroll,e.multipleDrop!==!1),S=!1,D=e.ghostProxy===!0?E:e.ghostProxy&&"function"==typeof e.ghostProxy?e.ghostProxy:j,I=function(t){return t.cloneNode(!0)},k=e.snapThreshold||5,T=function(t,e,n,i,s){i=i||k,s=s||k;var o=Math.floor(t[0]/e),r=e*o,a=r+e,l=Math.abs(t[0]-r)<=i?r:Math.abs(a-t[0])<=i?a:t[0],c=Math.floor(t[1]/n),u=n*c,h=u+n;return[l,Math.abs(t[1]-u)<=s?u:Math.abs(h-t[1])<=s?h:t[1]]};this.posses=[],this.posseRoles={},this.toGrid=function(t){return null==this.params.grid?t:T(t,this.params.grid[0],this.params.grid[1])},this.snap=function(t,e){if(null!=m){t=t||(this.params.grid?this.params.grid[0]:50),e=e||(this.params.grid?this.params.grid[1]:50);var n=this.params.getPosition(m);this.params.setPosition(m,T(n,t,e,t,e))}},this.setUseGhostProxy=function(t){D=t?E:j};var O,M=function(t){return e.allowNegative===!1?[Math.max(0,t[0]),Math.max(0,t[1])]:t},L=function(t){O="function"==typeof t?t:t?function(t){return M([Math.max(0,Math.min(R.w-this.size[0],t[0])),Math.max(0,Math.min(R.h-this.size[1],t[1]))])}.bind(this):function(t){return M(t)}}.bind(this);L("function"==typeof this.params.constrain?this.params.constrain:this.params.constrain||this.params.containment),this.setConstrain=function(t){L(t)};var F;this.setRevert=function(t){F=t};var G=function(t){return"function"==typeof t?(t._katavorioId=w(),t._katavorioId):t},N={},B=function(t){for(var e in N){var n=N[e],i=n[0](t);if(n[1]&&(i=!i),!i)return!1}return!0},U=this.setFilter=function(e,n){if(e){N[G(e)]=[function(n){var i,s=n.srcElement||n.target;return o(e)?i=a(s,e,t):"function"==typeof e&&(i=e(n,t)),i},n!==!1]}};this.addFilter=U,this.removeFilter=function(t){delete N["function"==typeof t?t._katavorioId:t]};this.clearAllFilters=function(){N={}},this.canDrag=this.params.canDrag||v;var R,Y=[],X=[];this.downListener=function(t){if((this.rightButtonCanDrag||3!==t.which&&2!==t.button)&&this.isEnabled()&&this.canDrag())if(B(t)&&x(t,this.el,this.k)){if(b){m=this.el.cloneNode(!0),m.setAttribute("id",null),m.style.position="absolute";var e=r(this.el);m.style.left=e.left+"px",m.style.top=e.top+"px",document.body.appendChild(m)}else m=this.el;g&&_(t),l=h(t),this.params.bind(document,"mousemove",this.moveListener),this.params.bind(document,"mouseup",this.upListener),s.markSelection(this),s.markPosses(this),this.params.addClass(document.body,n.noSelect),z("beforeStart",{el:this.el,pos:c,e:t,drag:this})}else this.params.consumeFilteredEvents&&_(t)}.bind(this),this.moveListener=function(t){if(l){if(!p){if(z("start",{el:this.el,pos:c,e:t,drag:this})!==!1){if(!l)return;this.mark(!0),p=!0}}if(l){X.length=0;var e=h(t),n=e[0]-l[0],i=e[1]-l[1],o=this.params.ignoreZoom?1:s.getZoom();n/=o,i/=o,this.moveBy(n,i,t),s.updateSelection(n,i,this),s.updatePosses(n,i,this)}}}.bind(this),this.upListener=function(t){l&&(l=null,this.params.unbind(document,"mousemove",this.moveListener),this.params.unbind(document,"mouseup",this.upListener),this.params.removeClass(document.body,n.noSelect),this.unmark(t),s.unmarkSelection(this,t),s.unmarkPosses(this,t),this.stop(t),s.notifySelectionDragStop(this,t),s.notifyPosseDragStop(this,t),p=!1,b&&(m&&m.parentNode&&m.parentNode.removeChild(m),m=null),F&&F(this.el,this.params.getPosition(this.el))===!0&&(this.params.setPosition(this.el,c),z("revert",this.el)))}.bind(this),this.getFilters=function(){return N},this.abort=function(){null!=l&&this.upListener()},this.getDragElement=function(){return m||this.el};var H={start:[],drag:[],stop:[],over:[],out:[],beforeStart:[],revert:[]};e.events.start&&H.start.push(e.events.start),e.events.beforeStart&&H.beforeStart.push(e.events.beforeStart),e.events.stop&&H.stop.push(e.events.stop),e.events.drag&&H.drag.push(e.events.drag),e.events.revert&&H.revert.push(e.events.revert),this.on=function(t,e){H[t]&&H[t].push(e)},this.off=function(t,e){if(H[t]){for(var n=[],i=0;i<H[t].length;i++)H[t][i]!==e&&n.push(H[t][i]);H[t]=n}};var z=function(t,e){if(H[t])for(var n=0;n<H[t].length;n++)try{H[t][n](e)}catch(t){}};this.notifyStart=function(t){z("start",{el:this.el,pos:this.params.getPosition(m),e:t,drag:this})},this.stop=function(t,e){if(e||p){var n=[],i=s.getSelection(),o=this.params.getPosition(m);if(i.length>1)for(var r=0;r<i.length;r++){var a=this.params.getPosition(i[r].el);n.push([i[r].el,{left:a[0],top:a[1]},i[r]])}else n.push([m,{left:o[0],top:o[1]},this]);z("stop",{el:m,pos:W||o,finalPos:o,e:t,drag:this,selection:n})}},this.mark=function(t){c=this.params.getPosition(m),u=this.params.getPosition(m,!0),d=[u[0]-c[0],u[1]-c[1]],this.size=this.params.getSize(m),Y=s.getMatchingDroppables(this),y(Y,!0,!1,this),this.params.addClass(m,this.params.dragClass||n.drag);var e=this.params.getSize(m.parentNode);R={w:e[0],h:e[1]},t&&s.notifySelectionDragStart(this)};var W;this.unmark=function(t,i){if(y(Y,!1,!0,this),S&&D(this.el)?(W=[m.offsetLeft,m.offsetTop],this.el.parentNode.removeChild(m),m=this.el):W=null,this.params.removeClass(m,this.params.dragClass||n.drag),Y.length=0,S=!1,!i){X.length>0&&W&&e.setPosition(this.el,W),X.sort(A);for(var s=0;s<X.length;s++){if(X[s].drop(this,t)===!0)break}}},this.moveBy=function(t,n,i){X.length=0;var s=this.toGrid([c[0]+t,c[1]+n]),o=O(s,m);if(D(this.el))if(s[0]!=o[0]||s[1]!=o[1]){if(!S){var r=I(this.el);e.addClass(r,f.ghostProxy),this.el.parentNode.appendChild(r),m=r,S=!0}o=s}else S&&(this.el.parentNode.removeChild(m),m=this.el,S=!1);var a={x:o[0],y:o[1],w:this.size[0],h:this.size[1]},l={x:a.x+d[0],y:a.y+d[1],w:a.w,h:a.h},u=null;this.params.setPosition(m,o);for(var h=0;h<Y.length;h++){var p={x:Y[h].pagePosition[0],y:Y[h].pagePosition[1],w:Y[h].size[0],h:Y[h].size[1]};this.params.intersects(l,p)&&(P||null==u||u==Y[h].el)&&Y[h].canDrop(this)?(u||(u=Y[h].el),X.push(Y[h]),Y[h].setHover(this,!0,i)):Y[h].isHover()&&Y[h].setHover(this,!1,i)}z("drag",{el:this.el,pos:o,e:i,drag:this})},this.destroy=function(){this.params.unbind(this.el,"mousedown",this.downListener),this.params.unbind(document,"mousemove",this.moveListener),this.params.unbind(document,"mouseup",this.upListener),this.downListener=null,this.upListener=null,this.moveListener=null},this.params.bind(this.el,"mousedown",this.downListener),this.params.handle?U(this.params.handle,!1):U(this.params.filter,this.params.filterExclude)},D=function(t,e,n,i){this._class=n.droppable,this.params=e||{},this.rank=e.rank||0,this._activeClass=this.params.activeClass||n.active,this._hoverClass=this.params.hoverClass||n.hover,C.apply(this,arguments);var s=!1;this.allowLoopback=this.params.allowLoopback!==!1,this.setActive=function(t){this.params[t?"addClass":"removeClass"](this.el,this._activeClass)},this.updatePosition=function(){this.position=this.params.getPosition(this.el),this.pagePosition=this.params.getPosition(this.el,!0),this.size=this.params.getSize(this.el)},this.canDrop=this.params.canDrop||function(t){return!0},this.isHover=function(){return s},this.setHover=function(t,e,n){(e||null==this.el._katavorioDragHover||this.el._katavorioDragHover==t.el._katavorio)&&(this.params[e?"addClass":"removeClass"](this.el,this._hoverClass),this.el._katavorioDragHover=e?t.el._katavorio:null,s!==e&&this.params.events[e?"over":"out"]({el:this.el,e:n,drag:t,drop:this}),s=e)},this.drop=function(t,e){return this.params.events.drop({drag:t,e:e,drop:this})},this.destroy=function(){this._class=null,this._activeClass=null,this._hoverClass=null,s=null}},w=function(){return"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(t){var e=16*Math.random()|0;return("x"==t?e:3&e|8).toString(16)})},A=function(t,e){return t.rank<e.rank?1:t.rank>e.rank?-1:0},I=function(t){return null==t?null:null==(t="string"==typeof t||t.constructor==String?document.getElementById(t):t)?null:(t._katavorio=t._katavorio||w(),t)};t.Katavorio=function(t){var e=[],r={};this._dragsByScope={},this._dropsByScope={};var a=1,l=function(t,e){P(t,function(t){for(var n=0;n<t.scopes.length;n++)e[t.scopes[n]]=e[t.scopes[n]]||[],e[t.scopes[n]].push(t)})
-},c=function(e,n){var i=0;return P(e,function(e){for(var s=0;s<e.scopes.length;s++)if(n[e.scopes[s]]){var o=t.indexOf(n[e.scopes[s]],e);o!=-1&&(n[e.scopes[s]].splice(o,1),i++)}}),i>0},u=(this.getMatchingDroppables=function(t){for(var e=[],n={},i=0;i<t.scopes.length;i++){var s=this._dropsByScope[t.scopes[i]];if(s)for(var o=0;o<s.length;o++)!s[o].canDrop(t)||n[s[o].uuid]||!s[o].allowLoopback&&s[o].el===t.el||(n[s[o].uuid]=!0,e.push(s[o]))}return e.sort(A),e},function(e){e=e||{};var n,i={events:{}};for(n in t)i[n]=t[n];for(n in e)i[n]=e[n];for(n=0;n<g.length;n++)i.events[g[n]]=e[g[n]]||m;return i.katavorio=this,i}.bind(this)),h=function(t,e){for(var n=0;n<g.length;n++)e[g[n]]&&t.on(g[n],e[g[n]])}.bind(this),d={},p=t.css||{},v=t.scope||"katavorio-drag-scope";for(var y in f)d[y]=f[y];for(var y in p)d[y]=p[y];var _=t.inputFilterSelector||"input,textarea,select,button,option";this.getInputFilterSelector=function(){return _},this.setInputFilterSelector=function(t){return _=t,this},this.draggable=function(e,n){var i=[];return P(e,function(e){if(null!=(e=I(e)))if(null==e._katavorioDrag){var s=u(n);e._katavorioDrag=new S(e,s,d,v),l(e._katavorioDrag,this._dragsByScope),i.push(e._katavorioDrag),t.addClass(e,d.draggable)}else h(e._katavorioDrag,n)}.bind(this)),i},this.droppable=function(e,n){var i=[];return P(e,function(e){if(null!=(e=I(e))){var s=new D(e,u(n),d,v);e._katavorioDrop=e._katavorioDrop||[],e._katavorioDrop.push(s),l(s,this._dropsByScope),i.push(s),t.addClass(e,d.droppable)}}.bind(this)),i},this.select=function(n){return P(n,function(){var n=I(this);n&&n._katavorioDrag&&(r[n._katavorio]||(e.push(n._katavorioDrag),r[n._katavorio]=[n,e.length-1],t.addClass(n,d.selected)))}),this},this.deselect=function(n){return P(n,function(){var n=I(this);if(n&&n._katavorio){if(r[n._katavorio]){for(var i=[],s=0;s<e.length;s++)e[s].el!==n&&i.push(e[s]);e=i,delete r[n._katavorio],t.removeClass(n,d.selected)}}}),this},this.deselectAll=function(){for(var n in r){var i=r[n];t.removeClass(i[0],d.selected)}e.length=0,r={}},this.markSelection=function(t){b(e,function(t){t.mark()},t)},this.markPosses=function(t){t.posses&&P(t.posses,function(e){t.posseRoles[e]&&j[e]&&b(j[e].members,function(t){t.mark()},t)})},this.unmarkSelection=function(t,n){b(e,function(t){t.unmark(n)},t)},this.unmarkPosses=function(t,e){t.posses&&P(t.posses,function(n){t.posseRoles[n]&&j[n]&&b(j[n].members,function(t){t.unmark(e,!0)},t)})},this.getSelection=function(){return e.slice(0)},this.updateSelection=function(t,n,i){b(e,function(e){e.moveBy(t,n)},i)};var x=function(t,e){e.posses&&P(e.posses,function(n){e.posseRoles[n]&&j[n]&&b(j[n].members,function(e){t(e)},e)})};this.updatePosses=function(t,e,n){x(function(n){n.moveBy(t,e)},n)},this.notifyPosseDragStop=function(t,e){x(function(t){t.stop(e,!0)},t)},this.notifySelectionDragStop=function(t,n){b(e,function(t){t.stop(n,!0)},t)},this.notifySelectionDragStart=function(t,n){b(e,function(t){t.notifyStart(n)},t)},this.setZoom=function(t){a=t},this.getZoom=function(){return a};var C=function(t,e,n,i){P(t,function(t){c(t,n),t[i](e),l(t,n)})};P(["set","add","remove","toggle"],function(t){this[t+"Scope"]=function(e,n){C(e._katavorioDrag,n,this._dragsByScope,t+"Scope"),C(e._katavorioDrop,n,this._dropsByScope,t+"Scope")}.bind(this),this[t+"DragScope"]=function(e,n){C(e.constructor===S?e:e._katavorioDrag,n,this._dragsByScope,t+"Scope")}.bind(this),this[t+"DropScope"]=function(e,n){C(e.constructor===D?e:e._katavorioDrop,n,this._dropsByScope,t+"Scope")}.bind(this)}.bind(this)),this.snapToGrid=function(t,e){for(var n in this._dragsByScope)b(this._dragsByScope[n],function(n){n.snap(t,e)})},this.getDragsForScope=function(t){return this._dragsByScope[t]},this.getDropsForScope=function(t){return this._dropsByScope[t]};var E=function(t,n,i){if(t=I(t),t[n]){var s=e.indexOf(t[n]);s>=0&&e.splice(s,1),c(t[n],i)&&P(t[n],function(t){t.destroy()}),delete t[n]}};this.elementRemoved=function(t){this.destroyDraggable(t),this.destroyDroppable(t)},this.destroyDraggable=function(t){E(t,"_katavorioDrag",this._dragsByScope)},this.destroyDroppable=function(t){E(t,"_katavorioDrop",this._dropsByScope)},this.reset=function(){this._dragsByScope={},this._dropsByScope={},e=[],r={},j={}};var j={},w=function(t,e,i){var s=o(e)?e:e.id,r=!!o(e)||e.active!==!1,a=j[s]||function(){var t={name:s,members:[]};return j[s]=t,t}();return P(t,function(t){if(t._katavorioDrag){if(i&&null!=t._katavorioDrag.posseRoles[a.name])return;n(a.members,t._katavorioDrag),n(t._katavorioDrag.posses,a.name),t._katavorioDrag.posseRoles[a.name]=r}}),a};this.addToPosse=function(t,e){for(var n=[],i=1;i<arguments.length;i++)n.push(w(t,arguments[i]));return 1==n.length?n[0]:n},this.setPosse=function(t,e){for(var n=[],i=1;i<arguments.length;i++)n.push(w(t,arguments[i],!0).name);return P(t,function(t){if(t._katavorioDrag){var e=s(t._katavorioDrag.posses,n),i=[];Array.prototype.push.apply(i,t._katavorioDrag.posses);for(var o=0;o<e.length;o++)this.removeFromPosse(t,e[o])}}.bind(this)),1==n.length?n[0]:n},this.removeFromPosse=function(t,e){if(arguments.length<2)throw new TypeError("No posse id provided for remove operation");for(var n=1;n<arguments.length;n++)e=arguments[n],P(t,function(t){if(t._katavorioDrag&&t._katavorioDrag.posses){var n=t._katavorioDrag;P(e,function(t){i(j[t].members,n),i(n.posses,t),delete n.posseRoles[t]})}})},this.removeFromAllPosses=function(t){P(t,function(t){if(t._katavorioDrag&&t._katavorioDrag.posses){var e=t._katavorioDrag;P(e.posses,function(t){i(j[t].members,e)}),e.posses.length=0,e.posseRoles={}}})},this.setPosseState=function(t,e,n){var i=j[e];i&&P(t,function(t){t._katavorioDrag&&t._katavorioDrag.posses&&(t._katavorioDrag.posseRoles[i.name]=n)})}},t.Katavorio.version="0.19.1",e.Katavorio=t.Katavorio}.call("undefined"!=typeof window?window:f),function(){var t=function(t){return"[object Array]"===Object.prototype.toString.call(t)},n=function(t){return"[object Number]"===Object.prototype.toString.call(t)},i=function(t){return"string"==typeof t},s=function(t){return"boolean"==typeof t},o=function(t){return null==t},r=function(t){return null!=t&&"[object Object]"===Object.prototype.toString.call(t)},a=function(t){return"[object Date]"===Object.prototype.toString.call(t)},l=function(t){return"[object Function]"===Object.prototype.toString.call(t)},c=function(t){for(var e in t)if(t.hasOwnProperty(e))return!1;return!0},u=this;u.jsPlumbUtil={isArray:t,isString:i,isBoolean:s,isNull:o,isObject:r,isDate:a,isFunction:l,isEmpty:c,isNumber:n,clone:function(e){if(i(e))return""+e;if(s(e))return!!e;if(a(e))return new Date(e.getTime());if(l(e))return e;if(t(e)){for(var n=[],o=0;o<e.length;o++)n.push(this.clone(e[o]));return n}if(r(e)){var c={};for(var u in e)c[u]=this.clone(e[u]);return c}return e},merge:function(e,n,o){var a,l,c={};for(o=o||[],l=0;l<o.length;l++)c[o[l]]=!0;var u=this.clone(e);for(l in n)if(null==u[l])u[l]=n[l];else if(i(n[l])||s(n[l]))c[l]?(a=[],a.push.apply(a,t(u[l])?u[l]:[u[l]]),a.push.apply(a,t(n[l])?n[l]:[n[l]]),u[l]=a):u[l]=n[l];else if(t(n[l]))a=[],t(u[l])&&a.push.apply(a,u[l]),a.push.apply(a,n[l]),u[l]=a;else if(r(n[l])){r(u[l])||(u[l]={});for(var h in n[l])u[l][h]=n[l][h]}return u},replace:function(t,e,n){if(null!=t){var i=t,s=i;return e.replace(/([^\.])+/g,function(t,e,i,o){var r=t.match(/([^\[0-9]+){1}(\[)([0-9+])/),a=i+t.length>=o.length,l=function(){return s[r[1]]||function(){return s[r[1]]=[],s[r[1]]}()};if(a)r?l()[r[3]]=n:s[t]=n;else if(r){var c=l();s=c[r[3]]||function(){return c[r[3]]={},c[r[3]]}()}else s=s[t]||function(){return s[t]={},s[t]}()}),t}},functionChain:function(t,e,n){for(var i=0;i<n.length;i++){var s=n[i][0][n[i][1]].apply(n[i][0],n[i][2]);if(s===e)return s}return t},populate:function(e,n,s){var o=function(t){var e=t.match(/(\${.*?})/g);if(null!=e)for(var i=0;i<e.length;i++){var s=n[e[i].substring(2,e[i].length-1)]||"";null!=s&&(t=t.replace(e[i],s))}return t};return function e(a){if(null!=a){if(i(a))return o(a);if(!l(a)||null!=s&&0!==(a.name||"").indexOf(s)){if(t(a)){for(var c=[],u=0;u<a.length;u++)c.push(e(a[u]));return c}if(r(a)){var h={};for(var d in a)h[d]=e(a[d]);return h}return a}return a(n)}}(e)},findWithFunction:function(t,e){if(t)for(var n=0;n<t.length;n++)if(e(t[n]))return n;return-1},removeWithFunction:function(t,e){var n=u.jsPlumbUtil.findWithFunction(t,e);return n>-1&&t.splice(n,1),n!=-1},remove:function(t,e){var n=t.indexOf(e);return n>-1&&t.splice(n,1),n!=-1},addWithFunction:function(t,e,n){u.jsPlumbUtil.findWithFunction(t,n)==-1&&t.push(e)},addToList:function(t,e,n,i){var s=t[e];return null==s&&(s=[],t[e]=s),s[i?"unshift":"push"](n),s},suggest:function(t,e,n){return t.indexOf(e)===-1&&(n?t.unshift(e):t.push(e),!0)},extend:function(e,n,i){var s;for(n=t(n)?n:[n],s=0;s<n.length;s++)for(var o in n[s].prototype)n[s].prototype.hasOwnProperty(o)&&(e.prototype[o]=n[s].prototype[o]);var r=function(t,e){return function(){for(s=0;s<n.length;s++)n[s].prototype[t]&&n[s].prototype[t].apply(this,arguments);return e.apply(this,arguments)}};if(arguments.length>2)for(s=2;s<arguments.length;s++)!function(t){for(var n in t)e.prototype[n]=r(n,t[n])}(arguments[s]);return e},uuid:function(){return"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(t){var e=16*Math.random()|0;return("x"==t?e:3&e|8).toString(16)})},logEnabled:!0,log:function(){if(u.jsPlumbUtil.logEnabled&&"undefined"!=typeof console)try{var t=arguments[arguments.length-1];console.log(t)}catch(t){}},wrap:function(t,e,n){return t=t||function(){},e=e||function(){},function(){var i=null;try{i=e.apply(this,arguments)}catch(t){u.jsPlumbUtil.log("jsPlumb function failed : "+t)}if(null==n||i!==n)try{i=t.apply(this,arguments)}catch(t){u.jsPlumbUtil.log("wrapped function failed : "+t)}return i}}},u.jsPlumbUtil.EventGenerator=function(){var t={},e=!1,n={ready:!0};this.bind=function(e,n,i){var s=function(e){u.jsPlumbUtil.addToList(t,e,n,i),n.__jsPlumb=n.__jsPlumb||{},n.__jsPlumb[u.jsPlumbUtil.uuid()]=e};if("string"==typeof e)s(e);else if(null!=e.length)for(var o=0;o<e.length;o++)s(e[o]);return this},this.fire=function(i,s,o){if(!e&&t[i]){var r=t[i].length,a=0,l=!1,c=null;if(!this.shouldFireEvent||this.shouldFireEvent(i,s,o))for(;!l&&a<r&&c!==!1;){if(n[i])t[i][a].apply(this,[s,o]);else try{c=t[i][a].apply(this,[s,o])}catch(t){u.jsPlumbUtil.log("jsPlumb: fire failed for event "+i+" : "+t)}a++,null!=t&&null!=t[i]||(l=!0)}}return this},this.unbind=function(e,n){if(0===arguments.length)t={};else if(1===arguments.length){if("string"==typeof e)delete t[e];else if(e.__jsPlumb){var i;for(var s in e.__jsPlumb)i=e.__jsPlumb[s],u.jsPlumbUtil.remove(t[i]||[],e)}}else 2===arguments.length&&u.jsPlumbUtil.remove(t[e]||[],n);return this},this.getListener=function(e){return t[e]},this.setSuspendEvents=function(t){e=t},this.isSuspendEvents=function(){return e},this.silently=function(t){this.setSuspendEvents(!0);try{t()}catch(t){u.jsPlumbUtil.log("Cannot execute silent function "+t)}this.setSuspendEvents(!1)},this.cleanupListeners=function(){for(var e in t)t[e]=null}},u.jsPlumbUtil.EventGenerator.prototype={cleanup:function(){this.cleanupListeners()}},e.jsPlumbUtil=u.jsPlumbUtil}.call("undefined"!=typeof window?window:f),function(){var t=this;t.jsPlumbUtil.matchesSelector=function(t,e,n){n=n||t.parentNode;for(var i=n.querySelectorAll(e),s=0;s<i.length;s++)if(i[s]===t)return!0;return!1},t.jsPlumbUtil.consume=function(t,e){t.stopPropagation?t.stopPropagation():t.returnValue=!1,!e&&t.preventDefault&&t.preventDefault()},t.jsPlumbUtil.sizeElement=function(t,e,n,i,s){t&&(t.style.height=s+"px",t.height=s,t.style.width=i+"px",t.width=i,t.style.left=e+"px",t.style.top=n+"px")}}.call("undefined"!=typeof window?window:f),function(){var t,n=this,i=[],s=n.jsPlumbUtil,o=function(){return""+(new Date).getTime()},r=function(t){if(t._jsPlumb.paintStyle&&t._jsPlumb.hoverPaintStyle){var e={};y.extend(e,t._jsPlumb.paintStyle),y.extend(e,t._jsPlumb.hoverPaintStyle),delete t._jsPlumb.hoverPaintStyle,e.gradient&&t._jsPlumb.paintStyle.fill&&delete e.gradient,t._jsPlumb.hoverPaintStyle=e}},a=["tap","dbltap","click","dblclick","mouseover","mouseout","mousemove","mousedown","mouseup","contextmenu"],l=function(t,e,n,i){var s=t.getAttachedElements();if(s)for(var o=0,r=s.length;o<r;o++)i&&i==s[o]||s[o].setHover(e,!0,n)},c=function(t){return null==t?null:t.split(" ")},u=function(t,e,n){for(var i in e)t[i]=n},h=function(t,e){e=s.isArray(e)||null!=e.length&&!s.isString(e)?e:[e];for(var n=0;n<e.length;n++)try{t.apply(e[n],[e[n]])}catch(t){s.log(".each iteration failed : "+t)}},d=function(t,e,n){if(t.getDefaultType){var i=t.getTypeDescriptor(),o={},r=t.getDefaultType(),a=s.merge({},r);u(o,r,"__default");for(var l=0,c=t._jsPlumb.types.length;l<c;l++){var h=t._jsPlumb.types[l];if("__default"!==h){var d=t._jsPlumb.instance.getType(h,i);null!=d&&(a=s.merge(a,d,["cssClass"]),u(o,d,h))}}e&&(a=s.populate(a,e,"_")),t.applyType(a,n,o),n||t.repaint()}},p=n.jsPlumbUIComponent=function(t){s.EventGenerator.apply(this,arguments);var e=this,n=arguments,i=e.idPrefix,o=i+(new Date).getTime();this._jsPlumb={instance:t._jsPlumb,parameters:t.parameters||{},paintStyle:null,hoverPaintStyle:null,paintStyleInUse:null,hover:!1,beforeDetach:t.beforeDetach,beforeDrop:t.beforeDrop,overlayPlacements:[],hoverClass:t.hoverClass||t._jsPlumb.Defaults.HoverClass,types:[],typeCache:{}},this.cacheTypeItem=function(t,e,n){this._jsPlumb.typeCache[n]=this._jsPlumb.typeCache[n]||{},this._jsPlumb.typeCache[n][t]=e},this.getCachedTypeItem=function(t,e){return this._jsPlumb.typeCache[e]?this._jsPlumb.typeCache[e][t]:null},this.getId=function(){return o};var r=t.overlays||[],a={};if(this.defaultOverlayKeys){for(var l=0;l<this.defaultOverlayKeys.length;l++)Array.prototype.push.apply(r,this._jsPlumb.instance.Defaults[this.defaultOverlayKeys[l]]||[]);for(l=0;l<r.length;l++){var c=y.convertToFullOverlaySpec(r[l]);a[c[1].id]=c}}var u={overlays:a,parameters:t.parameters||{},scope:t.scope||this._jsPlumb.instance.getDefaultScope()};if(this.getDefaultType=function(){return u},this.appendToDefaultType=function(t){for(var e in t)u[e]=t[e]},t.events)for(l in t.events)e.bind(l,t.events[l]);this.clone=function(){var t=Object.create(this.constructor.prototype);return this.constructor.apply(t,n),t}.bind(this),this.isDetachAllowed=function(t){var e=!0;if(this._jsPlumb.beforeDetach)try{e=this._jsPlumb.beforeDetach(t)}catch(t){s.log("jsPlumb: beforeDetach callback failed",t)}return e},this.isDropAllowed=function(t,e,n,i,o,r,a){var l=this._jsPlumb.instance.checkCondition("beforeDrop",{sourceId:t,targetId:e,scope:n,connection:i,dropEndpoint:o,source:r,target:a});if(this._jsPlumb.beforeDrop)try{l=this._jsPlumb.beforeDrop({sourceId:t,targetId:e,scope:n,connection:i,dropEndpoint:o,source:r,target:a})}catch(t){s.log("jsPlumb: beforeDrop callback failed",t)}return l};var h=[];this.setListenerComponent=function(t){for(var e=0;e<h.length;e++)h[e][3]=t}},f=function(t,e){var n=t._jsPlumb.types[e],i=t._jsPlumb.instance.getType(n,t.getTypeDescriptor());null!=i&&i.cssClass&&t.canvas&&t._jsPlumb.instance.removeClass(t.canvas,i.cssClass)};s.extend(n.jsPlumbUIComponent,s.EventGenerator,{getParameter:function(t){return this._jsPlumb.parameters[t]},setParameter:function(t,e){this._jsPlumb.parameters[t]=e},getParameters:function(){return this._jsPlumb.parameters},setParameters:function(t){this._jsPlumb.parameters=t},getClass:function(){return y.getClass(this.canvas)},hasClass:function(t){return y.hasClass(this.canvas,t)},addClass:function(t){y.addClass(this.canvas,t)},removeClass:function(t){y.removeClass(this.canvas,t)},updateClasses:function(t,e){y.updateClasses(this.canvas,t,e)},setType:function(t,e,n){this.clearTypes(),this._jsPlumb.types=c(t)||[],d(this,e,n)},getType:function(){return this._jsPlumb.types},reapplyTypes:function(t,e){d(this,t,e)},hasType:function(t){return this._jsPlumb.types.indexOf(t)!=-1},addType:function(t,e,n){var i=c(t),s=!1;if(null!=i){for(var o=0,r=i.length;o<r;o++)this.hasType(i[o])||(this._jsPlumb.types.push(i[o]),s=!0);s&&d(this,e,n)}},removeType:function(t,e,n){var i=c(t),s=!1,o=function(t){var e=this._jsPlumb.types.indexOf(t);return e!=-1&&(f(this,e),this._jsPlumb.types.splice(e,1),!0)}.bind(this);if(null!=i){for(var r=0,a=i.length;r<a;r++)s=o(i[r])||s;s&&d(this,e,n)}},clearTypes:function(t,e){for(var n=this._jsPlumb.types.length,i=0;i<n;i++)f(this,0),this._jsPlumb.types.splice(0,1);d(this,t,e)},toggleType:function(t,e,n){var i=c(t);if(null!=i){for(var s=0,o=i.length;s<o;s++){var r=this._jsPlumb.types.indexOf(i[s]);r!=-1?(f(this,r),this._jsPlumb.types.splice(r,1)):this._jsPlumb.types.push(i[s])}d(this,e,n)}},applyType:function(t,e){if(this.setPaintStyle(t.paintStyle,e),this.setHoverPaintStyle(t.hoverPaintStyle,e),t.parameters)for(var n in t.parameters)this.setParameter(n,t.parameters[n]);this._jsPlumb.paintStyleInUse=this.getPaintStyle()},setPaintStyle:function(t,e){this._jsPlumb.paintStyle=t,this._jsPlumb.paintStyleInUse=this._jsPlumb.paintStyle,r(this),e||this.repaint()},getPaintStyle:function(){return this._jsPlumb.paintStyle},setHoverPaintStyle:function(t,e){this._jsPlumb.hoverPaintStyle=t,r(this),e||this.repaint()},getHoverPaintStyle:function(){return this._jsPlumb.hoverPaintStyle},destroy:function(t){(t||null==this.typeId)&&(this.cleanupListeners(),this.clone=null,this._jsPlumb=null)},isHover:function(){return this._jsPlumb.hover},setHover:function(t,e,n){if(this._jsPlumb&&!this._jsPlumb.instance.currentlyDragging&&!this._jsPlumb.instance.isHoverSuspended()){if(this._jsPlumb.hover=t,null!=this.canvas){if(null!=this._jsPlumb.instance.hoverClass){var i=t?"addClass":"removeClass";this._jsPlumb.instance[i](this.canvas,this._jsPlumb.instance.hoverClass)}null!=this._jsPlumb.hoverClass&&this._jsPlumb.instance[i](this.canvas,this._jsPlumb.hoverClass)}null!=this._jsPlumb.hoverPaintStyle&&(this._jsPlumb.paintStyleInUse=t?this._jsPlumb.hoverPaintStyle:this._jsPlumb.paintStyle,this._jsPlumb.instance.isSuspendDrawing()||(n=n||o(),this.repaint({timestamp:n,recalc:!1}))),this.getAttachedElements&&!e&&l(this,t,o(),this)}}});var m=0,v=function(){var t=m+1;return m++,t},b=n.jsPlumbInstance=function(e){this.version="2.3.0",e&&y.extend(this.Defaults,e),this.logEnabled=this.Defaults.LogEnabled,this._connectionTypes={},this._endpointTypes={},s.EventGenerator.apply(this);var r=this,l=v(),c=r.bind,u={},d=1,f=function(t){if(null==t)return null;if(3==t.nodeType||8==t.nodeType)return{el:t,text:!0};var e=r.getElement(t);return{el:e,id:s.isString(t)&&null==e?t:$(e)}};this.getInstanceIndex=function(){return l},this.setZoom=function(t,e){return d=t,r.fire("zoom",d),e&&r.repaintEverything(),!0},this.getZoom=function(){return d};for(var m in this.Defaults)u[m]=this.Defaults[m];var b,P=[];this.unbindContainer=function(){if(null!=b&&P.length>0)for(var t=0;t<P.length;t++)r.off(b,P[t][0],P[t][1])},this.setContainer=function(t){this.unbindContainer(),t=this.getElement(t),this.select().each(function(e){e.moveParent(t)}),this.selectEndpoints().each(function(e){e.moveParent(t)});var e=b;b=t,P.length=0;for(var n={endpointclick:"endpointClick",endpointdblclick:"endpointDblClick"},i=function(t,e,i){var s=e.srcElement||e.target,o=(s&&s.parentNode?s.parentNode._jsPlumb:null)||(s?s._jsPlumb:null)||(s&&s.parentNode&&s.parentNode.parentNode?s.parentNode.parentNode._jsPlumb:null);if(o){o.fire(t,o,e);var a=i?n[i+t]||t:t;r.fire(a,o.component||o,e)}},s=function(t,e,n){P.push([t,n]),r.on(b,t,e,n)},o=0;o<a.length;o++)!function(t){s(t,".jtk-connector",function(e){i(t,e)}),s(t,".jtk-endpoint",function(e){i(t,e,"endpoint")}),s(t,".jtk-overlay",function(e){i(t,e)})}(a[o]);for(var l in S){var c=S[l].el;c.parentNode===e&&(e.removeChild(c),b.appendChild(c))}},this.getContainer=function(){return b},this.bind=function(t,e){"ready"===t&&x?e():c.apply(r,[t,e])},r.importDefaults=function(t){for(var e in t)r.Defaults[e]=t[e];return t.Container&&r.setContainer(t.Container),r},r.restoreDefaults=function(){return r.Defaults=y.extend({},u),r};var _=null,x=!1,C=[],E={},j={},S={},D={},w={},A={},I=!1,k=[],T=!1,O=null,M=this.Defaults.Scope,L=1,F=function(){return""+L++},G=function(t,e){b?b.appendChild(t):e?this.getElement(e).appendChild(t):this.appendToRoot(t)}.bind(this),N=function(t,e,n,i){if(!T){var s,a=$(t),l=r.getDragManager();l&&(s=l.getElementsForDraggable(a)),null==n&&(n=o());var c=bt({elId:a,offset:e,recalc:!1,timestamp:n});if(s&&c&&c.o)for(var u in s)bt({elId:s[u].id,offset:{left:c.o.left+s[u].offset.left,top:c.o.top+s[u].offset.top},recalc:!1,timestamp:n});if(r.anchorManager.redraw(a,e,n,null,i),s)for(var h in s)r.anchorManager.redraw(s[h].id,e,n,s[h].offset,i,!0)}},B=function(t){return j[t]},U=function(t,e,n,i,o){if(!y.headless){if(null!=e&&e&&y.isDragSupported(t,r)){var a=n||r.Defaults.DragOptions;if(a=y.extend({},a),y.isAlreadyDraggable(t,r))n.force&&r.initDraggable(t,a);else{var l=y.dragEvents.drag,c=y.dragEvents.stop,u=y.dragEvents.start,h=!1;vt(i,t),a[u]=s.wrap(a[u],function(){if(r.setHoverSuspended(!0),r.select({source:t}).addClass(r.elementDraggingClass+" "+r.sourceElementDraggingClass,!0),r.select({target:t}).addClass(r.elementDraggingClass+" "+r.targetElementDraggingClass,!0),r.setConnectionBeingDragged(!0),a.canDrag)return n.canDrag()},!1),a[l]=s.wrap(a[l],function(){var e=r.getUIPosition(arguments,r.getZoom());null!=e&&(N(t,e,null,!0),h&&r.addClass(t,"jtk-dragged"),h=!0)}),a[c]=s.wrap(a[c],function(){for(var t,e=arguments[0].selection,n=0;n<e.length;n++)!function(e){null!=e[1]&&(t=r.getUIPosition([{el:e[2].el,pos:[e[1].left,e[1].top]}]),N(e[2].el,t)),r.removeClass(e[0],"jtk-dragged"),r.select({source:e[2].el}).removeClass(r.elementDraggingClass+" "+r.sourceElementDraggingClass,!0),r.select({target:e[2].el}).removeClass(r.elementDraggingClass+" "+r.targetElementDraggingClass,!0),r.getDragManager().dragEnded(e[2].el)}(e[n]);h=!1,r.setHoverSuspended(!1),r.setConnectionBeingDragged(!1)});var d=$(t);A[d]=!0;var p=A[d];a.disabled=null!=p&&!p,r.initDraggable(t,a),r.getDragManager().register(t),o&&r.fire("elementDraggable",{el:t,options:a})}}}},R=function(t,e){for(var n=t.scope.split(/\s/),i=e.scope.split(/\s/),s=0;s<n.length;s++)for(var o=0;o<i.length;o++)if(i[o]==n[s])return!0;return!1},Y=function(t,e){var n=y.extend({},t);if(e&&y.extend(n,e),n.source&&(n.source.endpoint?n.sourceEndpoint=n.source:n.source=r.getElement(n.source)),n.target&&(n.target.endpoint?n.targetEndpoint=n.target:n.target=r.getElement(n.target)),t.uuids&&(n.sourceEndpoint=B(t.uuids[0]),n.targetEndpoint=B(t.uuids[1])),n.sourceEndpoint&&n.sourceEndpoint.isFull())return void s.log(r,"could not add connection; source endpoint is full");if(n.targetEndpoint&&n.targetEndpoint.isFull())return void s.log(r,"could not add connection; target endpoint is full");if(!n.type&&n.sourceEndpoint&&(n.type=n.sourceEndpoint.connectionType),n.sourceEndpoint&&n.sourceEndpoint.connectorOverlays){n.overlays=n.overlays||[];for(var i=0,o=n.sourceEndpoint.connectorOverlays.length;i<o;i++)n.overlays.push(n.sourceEndpoint.connectorOverlays[i])}n.sourceEndpoint&&n.sourceEndpoint.scope&&(n.scope=n.sourceEndpoint.scope),!n["pointer-events"]&&n.sourceEndpoint&&n.sourceEndpoint.connectorPointerEvents&&(n["pointer-events"]=n.sourceEndpoint.connectorPointerEvents);var a=function(t,e){var n=y.extend({},t);for(var i in e)e[i]&&(n[i]=e[i]);return n},l=function(t,e,i){return r.addEndpoint(t,a(e,{anchor:n.anchors?n.anchors[i]:n.anchor,endpoint:n.endpoints?n.endpoints[i]:n.endpoint,paintStyle:n.endpointStyles?n.endpointStyles[i]:n.endpointStyle,hoverPaintStyle:n.endpointHoverStyles?n.endpointHoverStyles[i]:n.endpointHoverStyle}))},c=function(t,e,i,s){if(n[t]&&!n[t].endpoint&&!n[t+"Endpoint"]&&!n.newConnection){var o=$(n[t]),r=i[o];if(r=r?r[s]:null){if(!r.enabled)return!1;var a=null!=r.endpoint&&r.endpoint._jsPlumb?r.endpoint:l(n[t],r.def,e);if(a.isFull())return!1;n[t+"Endpoint"]=a,!n.scope&&r.def.scope&&(n.scope=r.def.scope),a._doNotDeleteOnDetach=!1,a._deleteOnDetach=!0,r.uniqueEndpoint&&(r.endpoint?a.finalEndpoint=r.endpoint:(r.endpoint=a,a._deleteOnDetach=!1,a._doNotDeleteOnDetach=!0))}}};return c("source",0,this.sourceEndpointDefinitions,n.type||"default")!==!1&&c("target",1,this.targetEndpointDefinitions,n.type||"default")!==!1?(n.sourceEndpoint&&n.targetEndpoint&&(R(n.sourceEndpoint,n.targetEndpoint)||(n=null)),n):void 0}.bind(r),X=function t(e){var n=r.Defaults.ConnectionType||r.getDefaultConnectionType();e._jsPlumb=r,e.newConnection=t,e.newEndpoint=z,e.endpointsByUUID=j,e.endpointsByElement=E,e.finaliseConnection=H,e.id="con_"+F();var i=new n(e);return i.isDetachable()&&(i.endpoints[0].initDraggable("_jsPlumbSource"),i.endpoints[1].initDraggable("_jsPlumbTarget")),i},H=r.finaliseConnection=function(t,e,n,i){if(e=e||{},t.suspendedEndpoint||C.push(t),t.pending=null,t.endpoints[0].isTemporarySource=!1,i!==!1&&r.anchorManager.newConnection(t),N(t.source),!e.doNotFireConnectionEvent&&e.fireEvent!==!1){var s={connection:t,source:t.source,target:t.target,sourceId:t.sourceId,targetId:t.targetId,sourceEndpoint:t.endpoints[0],targetEndpoint:t.endpoints[1]};r.fire("connection",s,n)}},z=function t(e,n){var i=r.Defaults.EndpointType||y.Endpoint,s=y.extend({},e);s._jsPlumb=r,s.newConnection=X,s.newEndpoint=t,s.endpointsByUUID=j,s.endpointsByElement=E,s.fireDetachEvent=et,s.elementId=n||$(s.source);var o=new i(s);return o.id="ep_"+F(),vt(s.elementId,s.source),y.headless||r.getDragManager().endpointAdded(s.source,n),o},W=function(t,e,n){var i=E[t];if(i&&i.length)for(var s=0,o=i.length;s<o;s++){for(var r=0,a=i[s].connections.length;r<a;r++){var l=e(i[s].connections[r]);if(l)return}n&&n(i[s])}},q=function(t,e){return y.each(t,function(t){r.isDragSupported(t)&&(A[r.getAttribute(t,"id")]=e,r.setElementDraggable(t,e))})},V=function(t,e,n){e="block"===e;var i=null;n&&(i=function(t){t.setVisible(e,!0,!0)});var s=f(t);W(s.id,function(t){if(e&&n){var i=t.sourceId===s.id?1:0;t.endpoints[i].isVisible()&&t.setVisible(!0)}else t.setVisible(e)},i)},J=function(t){var e;return y.each(t,function(t){var n=r.getAttribute(t,"id");return e=null!=A[n]&&A[n],e=!e,A[n]=e,r.setDraggable(t,e),e}.bind(this)),e},Z=function(t,e){var n=null;e&&(n=function(t){var e=t.isVisible();t.setVisible(!e)}),W(t,function(t){var e=t.isVisible();t.setVisible(!e)},n)},K=function(t){var e=D[t];return e?{o:e,s:k[t]}:bt({elId:t})},$=function(t,e,n){if(s.isString(t))return t;if(null==t)return null;var i=r.getAttribute(t,"id");return i&&"undefined"!==i||(2==arguments.length&&void 0!==arguments[1]?i=e:(1==arguments.length||3==arguments.length&&!arguments[2])&&(i="jsPlumb_"+l+"_"+F()),n||r.setAttribute(t,"id",i)),i};this.setConnectionBeingDragged=function(t){I=t},this.isConnectionBeingDragged=function(){return I},this.getManagedElements=function(){return S},this.connectorClass="jtk-connector",this.connectorOutlineClass="jtk-connector-outline",this.editableConnectorClass="jtk-connector-editable",this.connectedClass="jtk-connected",this.hoverClass="jtk-hover",this.endpointClass="jtk-endpoint",this.endpointConnectedClass="jtk-endpoint-connected",this.endpointFullClass="jtk-endpoint-full",this.endpointDropAllowedClass="jtk-endpoint-drop-allowed",this.endpointDropForbiddenClass="jtk-endpoint-drop-forbidden",this.overlayClass="jtk-overlay",this.draggingClass="jtk-dragging",this.elementDraggingClass="jtk-element-dragging",this.sourceElementDraggingClass="jtk-source-element-dragging",this.targetElementDraggingClass="jtk-target-element-dragging",this.endpointAnchorClassPrefix="jtk-endpoint-anchor",this.hoverSourceClass="jtk-source-hover",this.hoverTargetClass="jtk-target-hover",this.dragSelectClass="jtk-drag-select",this.Anchors={},this.Connectors={svg:{}},this.Endpoints={svg:{}},this.Overlays={svg:{}},this.ConnectorRenderers={},this.SVG="svg",this.addEndpoint=function(t,e,n){n=n||{};var i=y.extend({},n);y.extend(i,e),i.endpoint=i.endpoint||r.Defaults.Endpoint,i.paintStyle=i.paintStyle||r.Defaults.EndpointStyle;for(var o=[],a=s.isArray(t)||null!=t.length&&!s.isString(t)?t:[t],l=0,c=a.length;l<c;l++){i.source=r.getElement(a[l]),gt(i.source);var u=$(i.source),h=z(i,u),d=vt(u,i.source).info.o;s.addToList(E,u,h),T||h.paint({anchorLoc:h.anchor.compute({xy:[d.left,d.top],wh:k[u],element:h,timestamp:O}),timestamp:O}),o.push(h),h._doNotDeleteOnDetach=!0}return 1==o.length?o[0]:o},this.addEndpoints=function(t,e,n){for(var i=[],o=0,a=e.length;o<a;o++){var l=r.addEndpoint(t,e[o],n);s.isArray(l)?Array.prototype.push.apply(i,l):i.push(l)}return i},this.animate=function(t,e,n){if(!this.animationSupported)return!1;n=n||{};var i=r.getElement(t),o=$(i),a=y.animEvents.step,l=y.animEvents.complete;n[a]=s.wrap(n[a],function(){r.revalidate(o)}),n[l]=s.wrap(n[l],function(){r.revalidate(o)}),r.doAnimate(i,e,n)},this.checkCondition=function(t,e){var n=r.getListener(t),i=!0;if(n&&n.length>0){var o=Array.prototype.slice.call(arguments,1);try{for(var a=0,l=n.length;a<l;a++)i=i&&n[a].apply(n[a],o)}catch(e){s.log(r,"cannot check condition ["+t+"]"+e)}}return i},this.connect=function(t,e){var n,i=Y(t,e);if(i){if(null==i.source&&null==i.sourceEndpoint)return void s.log("Cannot establish connection - source does not exist");if(null==i.target&&null==i.targetEndpoint)return void s.log("Cannot establish connection - target does not exist");gt(i.source),n=X(i),H(n,i)}return n};var Q=[{el:"source",elId:"sourceId",epDefs:"sourceEndpointDefinitions"},{el:"target",elId:"targetId",epDefs:"targetEndpointDefinitions"}],tt=function(t,e,n,i){var s,o,r,a=Q[n],l=t[a.elId],c=(t[a.el],t.endpoints[n]),u={index:n,originalSourceId:0===n?l:t.sourceId,newSourceId:t.sourceId,originalTargetId:1==n?l:t.targetId,newTargetId:t.targetId,connection:t};if(e.constructor==y.Endpoint)s=e,s.addConnection(t),e=s.element;else if(o=$(e),r=this[a.epDefs][o],o===t[a.elId])s=null;else if(r)for(var h in r){if(!r[h].enabled)return;s=null!=r[h].endpoint&&r[h].endpoint._jsPlumb?r[h].endpoint:this.addEndpoint(e,r[h].def),r[h].uniqueEndpoint&&(r[h].endpoint=s),s._doNotDeleteOnDetach=!1,s._deleteOnDetach=!0,s.addConnection(t)}else s=t.makeEndpoint(0===n,e,o),s._doNotDeleteOnDetach=!1,s._deleteOnDetach=!0;return null!=s&&(c.detachFromConnection(t),t.endpoints[n]=s,t[a.el]=s.element,t[a.elId]=s.elementId,u[0===n?"newSourceId":"newTargetId"]=s.elementId,nt(u),i||t.repaint()),u.element=e,u}.bind(this);this.setSource=function(t,e,n){var i=tt(t,e,0,n);this.anchorManager.sourceChanged(i.originalSourceId,i.newSourceId,t,i.el)},this.setTarget=function(t,e,n){var i=tt(t,e,1,n);this.anchorManager.updateOtherEndpoint(i.originalSourceId,i.originalTargetId,i.newTargetId,t)},this.deleteEndpoint=function(t,e,n){var i="string"==typeof t?j[t]:t;return i&&r.deleteObject({endpoint:i,dontUpdateHover:e,deleteAttachedObjects:n}),r},this.deleteEveryEndpoint=function(){var t=r.setSuspendDrawing(!0);for(var e in E){var n=E[e];if(n&&n.length)for(var i=0,s=n.length;i<s;i++)r.deleteEndpoint(n[i],!0)}return E={},S={},j={},D={},w={},r.anchorManager.reset(),r.getDragManager().reset(),t||r.setSuspendDrawing(!1),r};var et=function(t,e,n){var i=r.Defaults.ConnectionType||r.getDefaultConnectionType(),s=t.constructor==i,o=s?{connection:t,source:t.source,target:t.target,sourceId:t.sourceId,targetId:t.targetId,sourceEndpoint:t.endpoints[0],targetEndpoint:t.endpoints[1]}:t;e&&r.fire("connectionDetached",o,n),r.fire("internal.connectionDetached",o,n),r.anchorManager.connectionDetached(o)},nt=r.fireMoveEvent=function(t,e){r.fire("connectionMoved",t,e)};this.unregisterEndpoint=function(t){t._jsPlumb.uuid&&(j[t._jsPlumb.uuid]=null),r.anchorManager.deleteEndpoint(t);for(var e in E){var n=E[e];if(n){for(var i=[],s=0,o=n.length;s<o;s++)n[s]!=t&&i.push(n[s]);E[e]=i}E[e].length<1&&delete E[e]}},this.detach=function(){if(0!==arguments.length){var t=r.Defaults.ConnectionType||r.getDefaultConnectionType(),e=arguments[0].constructor==t,n=2==arguments.length&&e?arguments[1]||{}:arguments[0],i=n.fireEvent!==!1,o=n.forceDetach,a=e?arguments[0]:n.connection,l=e?null:n.deleteAttachedObjects
-;if(a)(o||s.functionChain(!0,!1,[[a.endpoints[0],"isDetachAllowed",[a]],[a.endpoints[1],"isDetachAllowed",[a]],[a,"isDetachAllowed",[a]],[r,"checkCondition",["beforeDetach",a]]]))&&a.endpoints[0].detach({connection:a,ignoreTarget:!1,forceDetach:!0,fireEvent:i,deleteAttachedObjects:l});else{var c=y.extend({},n);if(c.uuids)B(c.uuids[0]).detachFrom(B(c.uuids[1]),i);else if(c.sourceEndpoint&&c.targetEndpoint)c.sourceEndpoint.detachFrom(c.targetEndpoint);else{var u=$(r.getElement(c.source)),h=$(r.getElement(c.target));W(u,function(t){(t.sourceId==u&&t.targetId==h||t.targetId==u&&t.sourceId==h)&&r.checkCondition("beforeDetach",t)&&t.endpoints[0].detach({connection:t,ignoreTarget:!1,forceDetach:!0,fireEvent:i})})}}}},this.detachAllConnections=function(t,e){e=e||{},t=r.getElement(t);var n=$(t),i=E[n];if(i&&i.length)for(var s=0,o=i.length;s<o;s++)i[s].detachAll(e.fireEvent!==!1,e.forceDetach);return r},this.detachEveryConnection=function(t){return t=t||{},r.batch(function(){for(var e in E){var n=E[e];if(n&&n.length)for(var i=0,s=n.length;i<s;i++)n[i].detachAll(t.fireEvent!==!1,t.forceDetach)}C.length=0}),r},this.deleteObject=function(t){var e={endpoints:{},connections:{},endpointCount:0,connectionCount:0},n=(t.fireEvent,t.deleteAttachedObjects!==!1),i=function(i){if(null!=i&&null==e.connections[i.id]&&(t.dontUpdateHover||null==i._jsPlumb||i.setHover(!1),e.connections[i.id]=i,e.connectionCount++,n))for(var s=0;s<i.endpoints.length;s++)i.endpoints[s]._deleteOnDetach&&o(i.endpoints[s])},o=function(s){if(null!=s&&null==e.endpoints[s.id]&&(t.dontUpdateHover||null==s._jsPlumb||s.setHover(!1),e.endpoints[s.id]=s,e.endpointCount++,n))for(var o=0;o<s.connections.length;o++){var r=s.connections[o];i(r)}};t.connection?i(t.connection):o(t.endpoint);for(var a in e.connections){var l=e.connections[a];if(l._jsPlumb){s.removeWithFunction(C,function(t){return l.id==t.id}),et(l,t.fireEvent!==!1&&!l.pending,t.originalEvent);var c=null==t.deleteAttachedObjects?null:!t.deleteAttachedObjects;l.endpoints[0].detachFromConnection(l,null,c),l.endpoints[1].detachFromConnection(l,null,c),l.cleanup(!0),l.destroy(!0)}}for(var u in e.endpoints){var h=e.endpoints[u];h._jsPlumb&&(r.unregisterEndpoint(h),h.cleanup(!0),h.destroy(!0))}return e},this.draggable=function(t,e){var n;return h(function(t){n=f(t),n.el&&U(n.el,!0,e,n.id,!0)},t),r},this.droppable=function(t,e){var n;return e=e||{},e.allowLoopback=!1,h(function(t){n=f(t),n.el&&r.initDroppable(n.el,e)},t),r};var it=function(t,e,n,i){for(var s=0,o=t.length;s<o;s++)t[s][e].apply(t[s],n);return i(t)},st=function(t,e,n){for(var i=[],s=0,o=t.length;s<o;s++)i.push([t[s][e].apply(t[s],n),t[s]]);return i},ot=function(t,e,n){return function(){return it(t,e,arguments,n)}},rt=function(t,e){return function(){return st(t,e,arguments)}},at=function(t,e){var n=[];if(t)if("string"==typeof t){if("*"===t)return t;n.push(t)}else if(e)n=t;else if(t.length)for(var i=0,s=t.length;i<s;i++)n.push(f(t[i]).id);else n.push(f(t).id);return n},lt=function(t,e,n){return"*"===t||(t.length>0?t.indexOf(e)!=-1:!n)};this.getConnections=function(t,e){t?t.constructor==String&&(t={scope:t}):t={};for(var n=t.scope||r.getDefaultScope(),i=at(n,!0),s=at(t.source),o=at(t.target),a=!e&&i.length>1?{}:[],l=0,c=C.length;l<c;l++){var u=C[l],h=u.proxies&&u.proxies[0]?u.proxies[0].originalEp.elementId:u.sourceId,d=u.proxies&&u.proxies[1]?u.proxies[1].originalEp.elementId:u.targetId;lt(i,u.scope)&&lt(s,h)&&lt(o,d)&&function(t,n){if(!e&&i.length>1){var s=a[t];null==s&&(s=a[t]=[]),s.push(n)}else a.push(n)}(u.scope,u)}return a};var ct=function(t,e){return function(n){for(var i=0,s=t.length;i<s;i++)n(t[i]);return e(t)}},ut=function(t){return function(e){return t[e]}},ht=function(t,e){var n,i,s={length:t.length,each:ct(t,e),get:ut(t)},o=["setHover","removeAllOverlays","setLabel","addClass","addOverlay","removeOverlay","removeOverlays","showOverlay","hideOverlay","showOverlays","hideOverlays","setPaintStyle","setHoverPaintStyle","setSuspendEvents","setParameter","setParameters","setVisible","repaint","addType","toggleType","removeType","removeClass","setType","bind","unbind"],r=["getLabel","getOverlay","isHover","getParameter","getParameters","getPaintStyle","getHoverPaintStyle","isVisible","hasType","getType","isSuspendEvents"];for(n=0,i=o.length;n<i;n++)s[o[n]]=ot(t,o[n],e);for(n=0,i=r.length;n<i;n++)s[r[n]]=rt(t,r[n]);return s},dt=function t(e){var n=ht(e,t);return y.extend(n,{setDetachable:ot(e,"setDetachable",t),setReattach:ot(e,"setReattach",t),setConnector:ot(e,"setConnector",t),detach:function(){for(var t=0,n=e.length;t<n;t++)r.detach(e[t])},isDetachable:rt(e,"isDetachable"),isReattach:rt(e,"isReattach")})},pt=function t(e){var n=ht(e,t);return y.extend(n,{setEnabled:ot(e,"setEnabled",t),setAnchor:ot(e,"setAnchor",t),isEnabled:rt(e,"isEnabled"),detachAll:function(){for(var t=0,n=e.length;t<n;t++)e[t].detachAll()},remove:function(){for(var t=0,n=e.length;t<n;t++)r.deleteObject({endpoint:e[t]})}})};this.select=function(t){return t=t||{},t.scope=t.scope||"*",dt(t.connections||r.getConnections(t,!0))},this.selectEndpoints=function(t){t=t||{},t.scope=t.scope||"*";var e=!t.element&&!t.source&&!t.target,n=e?"*":at(t.element),i=e?"*":at(t.source),s=e?"*":at(t.target),o=at(t.scope,!0),r=[];for(var a in E){var l=lt(n,a,!0),c=lt(i,a,!0),u="*"!=i,h=lt(s,a,!0),d="*"!=s;if(l||c||h)t:for(var p=0,f=E[a].length;p<f;p++){var g=E[a][p];if(lt(o,g.scope,!0)){var m=u&&i.length>0&&!g.isSource,v=d&&s.length>0&&!g.isTarget;if(m||v)continue t;r.push(g)}}}return pt(r)},this.getAllConnections=function(){return C},this.getDefaultScope=function(){return M},this.getEndpoint=B,this.getEndpoints=function(t){return E[f(t).id]},this.getDefaultEndpointType=function(){return y.Endpoint},this.getDefaultConnectionType=function(){return y.Connection},this.getId=$,this.appendElement=G;var ft=!1;this.isHoverSuspended=function(){return ft},this.setHoverSuspended=function(t){ft=t},this.hide=function(t,e){return V(t,"none",e),r},this.idstamp=F,this.connectorsInitialized=!1,this.registerConnectorType=function(t,e){i.push([t,e])};var gt=function(t){if(!b&&t){var e=r.getElement(t);e.offsetParent&&r.setContainer(e.offsetParent)}},mt=function(){r.Defaults.Container&&r.setContainer(r.Defaults.Container)},vt=r.manage=function(t,e,n){return S[t]||(S[t]={el:e,endpoints:[],connections:[]},S[t].info=bt({elId:t,timestamp:O}),n||r.fire("manageElement",{id:t,info:S[t].info,el:e})),S[t]},bt=this.updateOffset=function(t){var e,n=t.timestamp,i=t.recalc,s=t.offset,o=t.elId;return T&&!n&&(n=O),!i&&n&&n===w[o]?{o:t.offset||D[o],s:k[o]}:(i||!s&&null==D[o]?null!=(e=S[o]?S[o].el:null)&&(k[o]=r.getSize(e),D[o]=r.getOffset(e),w[o]=n):(D[o]=s||D[o],null==k[o]&&null!=(e=S[o].el)&&(k[o]=r.getSize(e)),w[o]=n),D[o]&&!D[o].right&&(D[o].right=D[o].left+k[o][0],D[o].bottom=D[o].top+k[o][1],D[o].width=k[o][0],D[o].height=k[o][1],D[o].centerx=D[o].left+D[o].width/2,D[o].centery=D[o].top+D[o].height/2),{o:D[o],s:k[o]})};this.init=function(){t=n.jsPlumb.getRenderModes();if(!n.jsPlumb.connectorsInitialized){for(var e=0;e<i.length;e++)for(var o=0;o<t.length;o++)!function(t,e,i){n.jsPlumb.Connectors[t][e]=function(){i.apply(this,arguments),n.jsPlumb.ConnectorRenderers[t].apply(this,arguments)},s.extend(n.jsPlumb.Connectors[t][e],[i,n.jsPlumb.ConnectorRenderers[t]])}(t[o],i[e][1],i[e][0]);n.jsPlumb.connectorsInitialized=!0}x||(mt(),r.anchorManager=new n.jsPlumb.AnchorManager({jsPlumbInstance:r}),x=!0,r.fire("ready",r))}.bind(this),this.log=_,this.jsPlumbUIComponent=p,this.makeAnchor=function(){var t,e=function(t,e){if(n.jsPlumb.Anchors[t])return new n.jsPlumb.Anchors[t](e);if(!r.Defaults.DoNotThrowErrors)throw{msg:"jsPlumb: unknown anchor type '"+t+"'"}};if(0===arguments.length)return null;var i=arguments[0],o=arguments[1],a=(arguments[2],null);if(i.compute&&i.getOrientation)return i;if("string"==typeof i)a=e(arguments[0],{elementId:o,jsPlumbInstance:r});else if(s.isArray(i))if(s.isArray(i[0])||s.isString(i[0]))2==i.length&&s.isObject(i[1])?s.isString(i[0])?(t=n.jsPlumb.extend({elementId:o,jsPlumbInstance:r},i[1]),a=e(i[0],t)):(t=n.jsPlumb.extend({elementId:o,jsPlumbInstance:r,anchors:i[0]},i[1]),a=new n.jsPlumb.DynamicAnchor(t)):a=new y.DynamicAnchor({anchors:i,selector:null,elementId:o,jsPlumbInstance:r});else{var l={x:i[0],y:i[1],orientation:i.length>=4?[i[2],i[3]]:[0,0],offsets:i.length>=6?[i[4],i[5]]:[0,0],elementId:o,jsPlumbInstance:r,cssClass:7==i.length?i[6]:null};a=new n.jsPlumb.Anchor(l),a.clone=function(){return new n.jsPlumb.Anchor(l)}}return a.id||(a.id="anchor_"+F()),a},this.makeAnchors=function(t,e,i){for(var o=[],a=0,l=t.length;a<l;a++)"string"==typeof t[a]?o.push(n.jsPlumb.Anchors[t[a]]({elementId:e,jsPlumbInstance:i})):s.isArray(t[a])&&o.push(r.makeAnchor(t[a],e,i));return o},this.makeDynamicAnchor=function(t,e){return new n.jsPlumb.DynamicAnchor({anchors:t,selector:e,elementId:null,jsPlumbInstance:r})},this.targetEndpointDefinitions={};this.sourceEndpointDefinitions={};var yt=function(t,e,n,i,s){for(var o=t.target||t.srcElement,r=!1,a=i.getSelector(e,n),l=0;l<a.length;l++)if(a[l]==o){r=!0;break}return s?!r:r},Pt=function(t,e,i,o,a){var l=new p(e),c=e._jsPlumb.EndpointDropHandler({jsPlumb:r,enabled:function(){return t.def.enabled},isFull:function(){var e=r.select({target:t.id}).length;return t.def.maxConnections>0&&e>=t.def.maxConnections},element:t.el,elementId:t.id,isSource:o,isTarget:a,addClass:function(e){r.addClass(t.el,e)},removeClass:function(e){r.removeClass(t.el,e)},onDrop:function(t){t.endpoints[0].anchor.locked=!1},isDropAllowed:function(){return l.isDropAllowed.apply(l,arguments)},isRedrop:function(e){return null!=e.suspendedElement&&null!=e.suspendedEndpoint&&e.suspendedEndpoint.element===t.el},getEndpoint:function(i){var s=t.def.endpoint;if(null==s||null==s._jsPlumb){var o=r.deriveEndpointAndAnchorSpec(i.getType().join(" "),!0),a=o.endpoints?n.jsPlumb.extend(e,{endpoint:t.def.def.endpoint||o.endpoints[1]}):e;o.anchors&&(a=n.jsPlumb.extend(a,{anchor:t.def.def.anchor||o.anchors[1]})),s=r.addEndpoint(t.el,a),s._mtNew=!0}if(e.uniqueEndpoint&&(t.def.endpoint=s),s._doNotDeleteOnDetach=!1,s._deleteOnDetach=!0,i.isDetachable()&&s.initDraggable(),null!=s.anchor.positionFinder){var l=r.getUIPosition(arguments,r.getZoom()),c=r.getOffset(t.el),u=r.getSize(t.el),h=null==l?[0,0]:s.anchor.positionFinder(l,c,u,s.anchor.constructorParams);s.anchor.x=h[0],s.anchor.y=h[1]}return s},maybeCleanup:function(t){t._mtNew&&0===t.connections.length?r.deleteObject({endpoint:t}):delete t._mtNew}}),u=n.jsPlumb.dragEvents.drop;return i.scope=i.scope||e.scope||r.Defaults.Scope,i[u]=s.wrap(i[u],c,!0),a&&(i[n.jsPlumb.dragEvents.over]=function(){return!0}),e.allowLoopback===!1&&(i.canDrop=function(e){return e.getDragElement()._jsPlumbRelatedElement!=t.el}),r.initDroppable(t.el,i,"internal"),c};this.makeTarget=function(t,e,i){var s=n.jsPlumb.extend({_jsPlumb:this},i);n.jsPlumb.extend(s,e);for(var o=s.maxConnections||-1,r=function(t){var e=f(t),i=e.id,r=n.jsPlumb.extend({},s.dropOptions||{}),a=s.connectionType||"default";this.targetEndpointDefinitions[i]=this.targetEndpointDefinitions[i]||{},gt(i),e.el._isJsPlumbGroup&&null==r.rank&&(r.rank=-1);var l={def:n.jsPlumb.extend({},s),uniqueEndpoint:s.uniqueEndpoint,maxConnections:o,enabled:!0};e.def=l,this.targetEndpointDefinitions[i][a]=l,Pt(e,s,r,s.isSource===!0,!0),e.el._katavorioDrop[e.el._katavorioDrop.length-1].targetDef=l}.bind(this),a=t.length&&t.constructor!=String?t:[t],l=0,c=a.length;l<c;l++)r(a[l]);return this},this.unmakeTarget=function(t,e){var n=f(t);return r.destroyDroppable(n.el,"internal"),e||delete this.targetEndpointDefinitions[n.id],this},this.makeSource=function(t,e,i){var o=n.jsPlumb.extend({_jsPlumb:this},i);n.jsPlumb.extend(o,e);var a=o.connectionType||"default",l=r.deriveEndpointAndAnchorSpec(a);o.endpoint=o.endpoint||l.endpoints[0],o.anchor=o.anchor||l.anchors[0];for(var c=o.maxConnections||-1,u=o.onMaxConnections,h=function(t){var e=t.id,i=this.getElement(t.el);this.sourceEndpointDefinitions[e]=this.sourceEndpointDefinitions[e]||{},gt(e);var l={def:n.jsPlumb.extend({},o),uniqueEndpoint:o.uniqueEndpoint,maxConnections:c,enabled:!0};this.sourceEndpointDefinitions[e][a]=l,t.def=l;var h=n.jsPlumb.dragEvents.stop,p=n.jsPlumb.dragEvents.drag,f=n.jsPlumb.extend({},o.dragOptions||{}),g=f.drag,m=f.stop,v=null,b=!1;f.scope=f.scope||o.scope,f[p]=s.wrap(f[p],function(){g&&g.apply(this,arguments),b=!1}),f[h]=s.wrap(f[h],function(){if(m&&m.apply(this,arguments),this.currentlyDragging=!1,null!=v._jsPlumb){var t=o.anchor||this.Defaults.Anchor,n=v.anchor,i=v.connections[0],s=this.makeAnchor(t,e,this),a=v.element;if(null!=s.positionFinder){var l=r.getOffset(a),c=this.getSize(a),u={left:l.left+n.x*c[0],top:l.top+n.y*c[1]},h=s.positionFinder(u,l,c,s.constructorParams);s.x=h[0],s.y=h[1]}v.setAnchor(s,!0),v.repaint(),this.repaint(v.elementId),null!=i&&this.repaint(i.targetId)}}.bind(this));var y=function(l){if(3!==l.which&&2!==l.button){var h=this.sourceEndpointDefinitions[e][a];if(h.enabled){if(e=this.getId(this.getElement(t.el)),o.filter){if((s.isString(o.filter)?yt(l,t.el,o.filter,this,o.filterExclude):o.filter(l,t.el))===!1)return}var p=this.select({source:e}).length;if(h.maxConnections>=0&&p>=h.maxConnections)return u&&u({element:t.el,maxConnections:c},l),!1;var g=n.jsPlumb.getPositionOnElement(l,i,d),m={};n.jsPlumb.extend(m,o),m.isTemporarySource=!0,m.anchor=[g[0],g[1],0,0],m.dragOptions=f,h.def.scope&&(m.scope=h.def.scope),v=this.addEndpoint(e,m),b=!0,v._doNotDeleteOnDetach=!1,v._deleteOnDetach=!0,h.uniqueEndpoint&&(h.endpoint?v.finalEndpoint=h.endpoint:(h.endpoint=v,v._deleteOnDetach=!1,v._doNotDeleteOnDetach=!0));var y=function e(){r.off(v.canvas,"mouseup",e),r.off(t.el,"mouseup",e),b&&(b=!1,r.deleteEndpoint(v))};r.on(v.canvas,"mouseup",y),r.on(t.el,"mouseup",y);var P={};if(h.def.extract)for(var _ in h.def.extract){var x=(l.srcElement||l.target).getAttribute(_);x&&(P[h.def.extract[_]]=x)}r.trigger(v.canvas,"mousedown",l,P),s.consume(l)}}}.bind(this);this.on(t.el,"mousedown",y),l.trigger=y,o.filter&&(s.isString(o.filter)||s.isFunction(o.filter))&&r.setDragFilter(t.el,o.filter),Pt(t,o,n.jsPlumb.extend({},o.dropOptions||{}),!0,o.isTarget===!0)}.bind(this),p=t.length&&t.constructor!=String?t:[t],g=0,m=p.length;g<m;g++)h(f(p[g]));return this},this.unmakeSource=function(t,e,n){var i=f(t);r.destroyDroppable(i.el,"internal");var s=this.sourceEndpointDefinitions[i.id];if(s)for(var o in s)if(null==e||e===o){var a=s[o].trigger;a&&r.off(i.el,"mousedown",a),n||delete this.sourceEndpointDefinitions[i.id][o]}return this},this.unmakeEverySource=function(){for(var t in this.sourceEndpointDefinitions)r.unmakeSource(t,null,!0);return this.sourceEndpointDefinitions={},this};var _t=function(t,e,n){e=s.isArray(e)?e:[e];var i=$(t);n=n||"default";for(var o=0;o<e.length;o++){var r=this[e[o]][i];if(r&&r[n])return r[n].def.scope||this.Defaults.Scope}}.bind(this),xt=function(t,e,n,i){n=s.isArray(n)?n:[n];var o=$(t);i=i||"default";for(var r=0;r<n.length;r++){var a=this[n[r]][o];a&&a[i]&&(a[i].def.scope=e)}}.bind(this);this.getScope=function(t,e){return _t(t,["sourceEndpointDefinitions","targetEndpointDefinitions"])},this.getSourceScope=function(t){return _t(t,"sourceEndpointDefinitions")},this.getTargetScope=function(t){return _t(t,"targetEndpointDefinitions")},this.setScope=function(t,e,n){this.setSourceScope(t,e,n),this.setTargetScope(t,e,n)},this.setSourceScope=function(t,e,n){xt(t,e,"sourceEndpointDefinitions",n),this.setDragScope(t,e)},this.setTargetScope=function(t,e,n){xt(t,e,"targetEndpointDefinitions",n),this.setDropScope(t,e)},this.unmakeEveryTarget=function(){for(var t in this.targetEndpointDefinitions)r.unmakeTarget(t,!0);return this.targetEndpointDefinitions={},this};var Ct=function(t,e,n,i,o){var a,l,c,u="source"==t?this.sourceEndpointDefinitions:this.targetEndpointDefinitions;if(o=o||"default",e.length&&!s.isString(e)){a=[];for(var h=0,d=e.length;h<d;h++)l=f(e[h]),u[l.id]&&u[l.id][o]&&(a[h]=u[l.id][o].enabled,c=i?!a[h]:n,u[l.id][o].enabled=c,r[c?"removeClass":"addClass"](l.el,"jtk-"+t+"-disabled"))}else{l=f(e);var p=l.id;u[p]&&u[p][o]&&(a=u[p][o].enabled,c=i?!a:n,u[p][o].enabled=c,r[c?"removeClass":"addClass"](l.el,"jtk-"+t+"-disabled"))}return a}.bind(this),Et=function(t,e){return s.isString(t)||!t.length?e.apply(this,[t]):t.length?e.apply(this,[t[0]]):void 0}.bind(this);this.toggleSourceEnabled=function(t,e){return Ct("source",t,null,!0,e),this.isSourceEnabled(t,e)},this.setSourceEnabled=function(t,e,n){return Ct("source",t,e,null,n)},this.isSource=function(t,e){return e=e||"default",Et(t,function(t){var n=this.sourceEndpointDefinitions[f(t).id];return null!=n&&null!=n[e]}.bind(this))},this.isSourceEnabled=function(t,e){return e=e||"default",Et(t,function(t){var n=this.sourceEndpointDefinitions[f(t).id];return n&&n[e]&&n[e].enabled===!0}.bind(this))},this.toggleTargetEnabled=function(t,e){return Ct("target",t,null,!0,e),this.isTargetEnabled(t,e)},this.isTarget=function(t,e){return e=e||"default",Et(t,function(t){var n=this.targetEndpointDefinitions[f(t).id];return null!=n&&null!=n[e]}.bind(this))},this.isTargetEnabled=function(t,e){return e=e||"default",Et(t,function(t){var n=this.targetEndpointDefinitions[f(t).id];return n&&n[e]&&n[e].enabled===!0}.bind(this))},this.setTargetEnabled=function(t,e,n){return Ct("target",t,e,null,n)},this.ready=function(t){r.bind("ready",t)};var jt=function(t,e){if("object"==(void 0===t?"undefined":g(t))&&t.length)for(var n=0,i=t.length;n<i;n++)e(t[n]);else e(t);return r};this.repaint=function(t,e,n){return jt(t,function(t){N(t,e,n)})},this.revalidate=function(t,e,n){return jt(t,function(t){var i=n?t:r.getId(t);r.updateOffset({elId:i,recalc:!0,timestamp:e}),r.repaint(t)})},this.repaintEverything=function(){var t,e=o();for(t in E)r.updateOffset({elId:t,recalc:!0,timestamp:e});for(t in E)N(t,null,e);return this},this.removeAllEndpoints=function(t,e,n){n=n||[];return function t(i){var s,o,a=f(i),l=E[a.id];if(l)for(n.push(a),s=0,o=l.length;s<o;s++)r.deleteEndpoint(l[s],!1);if(delete E[a.id],e&&a.el&&3!=a.el.nodeType&&8!=a.el.nodeType)for(s=0,o=a.el.childNodes.length;s<o;s++)t(a.el.childNodes[s])}(t),this};var St=function(t,e){r.removeAllEndpoints(t.id,!0,e);for(var n=function(t){r.getDragManager().elementRemoved(t.id),r.anchorManager.clearFor(t.id),r.anchorManager.removeFloatingConnection(t.id),r.isSource(t.el)&&r.unmakeSource(t.el),r.isTarget(t.el)&&r.unmakeTarget(t.el),r.destroyDraggable(t.el),r.destroyDroppable(t.el),delete r.floatingConnections[t.id],delete S[t.id],delete D[t.id],t.el&&(r.removeElement(t.el),t.el._jsPlumb=null)},i=1;i<e.length;i++)n(e[i]);n(t)};this.remove=function(t,e){var n=f(t),i=[];return n.text?n.el.parentNode.removeChild(n.el):n.id&&r.batch(function(){St(n,i)},e===!1),r},this.empty=function(t,e){var n=[],i=function t(e,i){var s=f(e);if(s.text)s.el.parentNode.removeChild(s.el);else if(s.el){for(;s.el.childNodes.length>0;)t(s.el.childNodes[0]);i||St(s,n)}};return r.batch(function(){i(t,!0)},e===!1),r},this.reset=function(){r.silently(function(){ft=!1,r.removeAllGroups(),r.removeGroupManager(),r.deleteEveryEndpoint(),r.unbind(),this.targetEndpointDefinitions={},this.sourceEndpointDefinitions={},C.length=0,this.doReset&&this.doReset()}.bind(this))};var Dt=function(t){t.canvas&&t.canvas.parentNode&&t.canvas.parentNode.removeChild(t.canvas),t.cleanup(),t.destroy()};this.clear=function(){r.select().each(Dt),r.selectEndpoints().each(Dt),E={},j={}},this.setDefaultScope=function(t){return M=t,r},this.setDraggable=q,this.deriveEndpointAndAnchorSpec=function(t,e){for(var n=((e?"":"default ")+t).split(/[\s]/),i=null,s=null,o=null,a=null,l=0;l<n.length;l++){var c=r.getType(n[l],"connection");c&&(c.endpoints&&(i=c.endpoints),c.endpoint&&(s=c.endpoint),c.anchors&&(a=c.anchors),c.anchor&&(o=c.anchor))}return{endpoints:i?i:[s,s],anchors:a?a:[o,o]}},this.setId=function(t,e,n){var i;s.isString(t)?i=t:(t=this.getElement(t),i=this.getId(t));var o=this.getConnections({source:i,scope:"*"},!0),r=this.getConnections({target:i,scope:"*"},!0);e=""+e,n?t=this.getElement(e):(t=this.getElement(i),this.setAttribute(t,"id",e)),E[e]=E[i]||[];for(var a=0,l=E[e].length;a<l;a++)E[e][a].setElementId(e),E[e][a].setReferenceElement(t);delete E[i],this.sourceEndpointDefinitions[e]=this.sourceEndpointDefinitions[i],delete this.sourceEndpointDefinitions[i],this.targetEndpointDefinitions[e]=this.targetEndpointDefinitions[i],delete this.targetEndpointDefinitions[i],this.anchorManager.changeId(i,e),this.getDragManager().changeId(i,e),S[e]=S[i],delete S[i];var c=function(n,i,s){for(var o=0,r=n.length;o<r;o++)n[o].endpoints[i].setElementId(e),n[o].endpoints[i].setReferenceElement(t),n[o][s+"Id"]=e,n[o][s]=t};c(o,0,"source"),c(r,1,"target"),this.repaint(e)},this.setDebugLog=function(t){_=t},this.setSuspendDrawing=function(t,e){var n=T;return T=t,O=t?(new Date).getTime():null,e&&this.repaintEverything(),n},this.isSuspendDrawing=function(){return T},this.getSuspendedAt=function(){return O},this.batch=function(t,e){var n=this.isSuspendDrawing();n||this.setSuspendDrawing(!0);try{t()}catch(t){s.log("Function run while suspended failed",t)}n||this.setSuspendDrawing(!1,!e)},this.doWhileSuspended=this.batch,this.getCachedData=K,this.timestamp=o,this.show=function(t,e){return V(t,"block",e),r},this.toggleVisible=Z,this.toggleDraggable=J,this.addListener=this.bind};s.extend(n.jsPlumbInstance,s.EventGenerator,{setAttribute:function(t,e,n){this.setAttribute(t,e,n)},getAttribute:function(t,e){return this.getAttribute(n.jsPlumb.getElement(t),e)},convertToFullOverlaySpec:function(t){return s.isString(t)&&(t=[t,{}]),t[1].id=t[1].id||s.uuid(),t},registerConnectionType:function(t,e){if(this._connectionTypes[t]=n.jsPlumb.extend({},e),e.overlays){for(var i={},s=0;s<e.overlays.length;s++){var o=this.convertToFullOverlaySpec(e.overlays[s]);i[o[1].id]=o}this._connectionTypes[t].overlays=i}},registerConnectionTypes:function(t){for(var e in t)this.registerConnectionType(e,t[e])},registerEndpointType:function(t,e){if(this._endpointTypes[t]=n.jsPlumb.extend({},e),e.overlays){for(var i={},s=0;s<e.overlays.length;s++){var o=this.convertToFullOverlaySpec(e.overlays[s]);i[o[1].id]=o}this._endpointTypes[t].overlays=i}},registerEndpointTypes:function(t){for(var e in t)this.registerEndpointType(e,t[e])},getType:function(t,e){return"connection"===e?this._connectionTypes[t]:this._endpointTypes[t]},setIdChanged:function(t,e){this.setId(t,e,!0)},setParent:function(t,e){var n=this.getElement(t),i=this.getId(n),s=this.getElement(e),o=this.getId(s);n.parentNode.removeChild(n),s.appendChild(n),this.getDragManager().setParent(n,i,s,o)},extend:function(t,e,n){var i;if(n)for(i=0;i<n.length;i++)t[n[i]]=e[n[i]];else for(i in e)t[i]=e[i];return t},floatingConnections:{},getFloatingAnchorIndex:function(t){return t.endpoints[0].isFloating()?0:t.endpoints[1].isFloating()?1:-1}}),b.prototype.Defaults={Anchor:"Bottom",Anchors:[null,null],ConnectionsDetachable:!0,ConnectionOverlays:[],Connector:"Bezier",Container:null,DoNotThrowErrors:!1,DragOptions:{},DropOptions:{},Endpoint:"Dot",EndpointOverlays:[],Endpoints:[null,null],EndpointStyle:{fill:"#456"},EndpointStyles:[null,null],EndpointHoverStyle:null,EndpointHoverStyles:[null,null],HoverPaintStyle:null,LabelStyle:{color:"black"},LogEnabled:!1,Overlays:[],MaxConnections:1,PaintStyle:{"stroke-width":4,stroke:"#456"},ReattachConnections:!1,RenderMode:"svg",Scope:"jsPlumb_DefaultScope"};var y=new b;n.jsPlumb=y,y.getInstance=function(t,e){var n=new b(t);if(e)for(var i in e)n[i]=e[i];return n.init(),n},y.each=function(t,e){if(null!=t)if("string"==typeof t)e(y.getElement(t));else if(null!=t.length)for(var n=0;n<t.length;n++)e(y.getElement(t[n]));else e(t)},e.jsPlumb=y}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumbUtil,n=function(t,e){if(null==e)return[0,0];var n=a(e),i=r(n,0);return[i[t+"X"],i[t+"Y"]]},i=n.bind(this,"page"),s=n.bind(this,"screen"),o=n.bind(this,"client"),r=function(t,e){return t.item?t.item(e):t[e]},a=function(t){return t.touches&&t.touches.length>0?t.touches:t.changedTouches&&t.changedTouches.length>0?t.changedTouches:t.targetTouches&&t.targetTouches.length>0?t.targetTouches:[t]},l=function(t){var e={},n=[],i={},s={},o={};this.register=function(r){var a=t.getId(r),l=t.getOffset(r);e[a]||(e[a]=r,n.push(r),i[a]={});!function e(n){if(n)for(var r=0;r<n.childNodes.length;r++)if(3!=n.childNodes[r].nodeType&&8!=n.childNodes[r].nodeType){var c=jsPlumb.getElement(n.childNodes[r]),u=t.getId(n.childNodes[r],null,!0);if(u&&s[u]&&s[u]>0){var h=t.getOffset(c);i[a][u]={id:u,offset:{left:h.left-l.left,top:h.top-l.top}},o[u]=a}e(n.childNodes[r])}}(r)},this.updateOffsets=function(e,n){if(null!=e){n=n||{};var s=jsPlumb.getElement(e),r=t.getId(s),a=i[r],l=t.getOffset(s);if(a)for(var c in a)if(a.hasOwnProperty(c)){var u=jsPlumb.getElement(c),h=n[c]||t.getOffset(u);if(null==u.offsetParent&&null!=i[r][c])continue;i[r][c]={id:c,offset:{left:h.left-l.left,top:h.top-l.top}},o[c]=r}}},this.endpointAdded=function(n,r){r=r||t.getId(n);var a=document.body,l=n.parentNode;for(s[r]=s[r]?s[r]+1:1;null!=l&&l!=a;){var c=t.getId(l,null,!0);if(c&&e[c]){var u=t.getOffset(l);if(null==i[c][r]){var h=t.getOffset(n);i[c][r]={id:r,offset:{left:h.left-u.left,top:h.top-u.top}},o[r]=c}break}l=l.parentNode}},this.endpointDeleted=function(t){if(s[t.elementId]&&--s[t.elementId]<=0)for(var e in i)i.hasOwnProperty(e)&&i[e]&&(delete i[e][t.elementId],delete o[t.elementId])},this.changeId=function(t,e){i[e]=i[t],i[t]={},o[e]=o[t],o[t]=null},this.getElementsForDraggable=function(t){return i[t]},this.elementRemoved=function(t){var e=o[t];e&&(delete i[e][t],delete o[t])},this.reset=function(){e={},n=[],i={},s={}},this.dragEnded=function(e){if(null!=e.offsetParent){var n=t.getId(e),i=o[n];i&&this.updateOffsets(i)}},this.setParent=function(e,n,s,r,a){var l=o[n];i[r]||(i[r]={});var c=t.getOffset(s),u=a||t.getOffset(e);l&&delete i[l][n],i[r][n]={id:n,offset:{left:u.left-c.left,top:u.top-c.top}},o[n]=r},this.clearParent=function(t,e){var n=o[e];n&&(delete i[n][e],delete o[e])},this.revalidateParent=function(e,n,i){var s=o[n];if(s){var r={};r[n]=i,this.updateOffsets(s,r),t.revalidate(s)}},this.getDragAncestor=function(e){var n=jsPlumb.getElement(e),i=t.getId(n),s=o[i];return s?jsPlumb.getElement(s):null}},c=function(t){return null==t?null:t.replace(/^\s\s*/,"").replace(/\s\s*$/,"")},u=function(t,e){e=c(e),void 0!==t.className.baseVal?t.className.baseVal=e:t.className=e},h=function(t){return void 0===t.className.baseVal?t.className:t.className.baseVal},d=function(t,n,i){n=null==n?[]:e.isArray(n)?n:n.split(/\s+/),i=null==i?[]:e.isArray(i)?i:i.split(/\s+/);var s=h(t),o=s.split(/\s+/),r=function(t,e){for(var n=0;n<e.length;n++)if(t)o.indexOf(e[n])==-1&&o.push(e[n]);else{var i=o.indexOf(e[n]);i!=-1&&o.splice(i,1)}};r(!0,n),r(!1,i),u(t,o.join(" "))};t.jsPlumb.extend(t.jsPlumbInstance.prototype,{headless:!1,pageLocation:i,screenLocation:s,clientLocation:o,getDragManager:function(){return null==this.dragManager&&(this.dragManager=new l(this)),this.dragManager},recalculateOffsets:function(t){this.getDragManager().updateOffsets(t)},createElement:function(t,e,n,i){return this.createElementNS(null,t,e,n,i)},createElementNS:function(t,e,n,i,s){var o,r=null==t?document.createElement(e):document.createElementNS(t,e);n=n||{};for(o in n)r.style[o]=n[o];i&&(r.className=i),s=s||{};for(o in s)r.setAttribute(o,""+s[o]);return r},getAttribute:function(t,e){return null!=t.getAttribute?t.getAttribute(e):null},setAttribute:function(t,e,n){null!=t.setAttribute&&t.setAttribute(e,n)},setAttributes:function(t,e){for(var n in e)e.hasOwnProperty(n)&&t.setAttribute(n,e[n])},appendToRoot:function(t){document.body.appendChild(t)},getRenderModes:function(){return["svg"]},getClass:h,addClass:function(t,e){jsPlumb.each(t,function(t){d(t,e)})},hasClass:function(t,e){return t=jsPlumb.getElement(t),t.classList?t.classList.contains(e):h(t).indexOf(e)!=-1},removeClass:function(t,e){jsPlumb.each(t,function(t){d(t,null,e)})},updateClasses:function(t,e,n){jsPlumb.each(t,function(t){d(t,e,n)})},setClass:function(t,e){jsPlumb.each(t,function(t){u(t,e)})},setPosition:function(t,e){t.style.left=e.left+"px",t.style.top=e.top+"px"},getPosition:function(t){var e=function(e){var n=t.style[e];return n?n.substring(0,n.length-2):0};return{left:e("left"),top:e("top")}},getStyle:function(t,e){return void 0!==window.getComputedStyle?getComputedStyle(t,null).getPropertyValue(e):t.currentStyle[e]},getSelector:function(t,e){return 1==arguments.length?null!=t.nodeType?t:document.querySelectorAll(t):t.querySelectorAll(e)},getOffset:function(t,e,n){t=jsPlumb.getElement(t),n=n||this.getContainer();for(var i={left:t.offsetLeft,top:t.offsetTop},s=e||null!=n&&t!=n&&t.offsetParent!=n?t.offsetParent:null,o=function(t){null!=t&&t!==document.body&&(t.scrollTop>0||t.scrollLeft>0)&&(i.left-=t.scrollLeft,i.top-=t.scrollTop)}.bind(this);null!=s;)i.left+=s.offsetLeft,i.top+=s.offsetTop,o(s),s=e?s.offsetParent:s.offsetParent==n?null:s.offsetParent;if(null!=n&&!e&&(n.scrollTop>0||n.scrollLeft>0)){var r=null!=t.offsetParent?this.getStyle(t.offsetParent,"position"):"static",a=this.getStyle(t,"position");"absolute"!==a&&"fixed"!==a&&"absolute"!==r&&"fixed"!=r&&(i.left-=n.scrollLeft,i.top-=n.scrollTop)}return i},getPositionOnElement:function(t,e,n){var i=void 0!==e.getBoundingClientRect?e.getBoundingClientRect():{left:0,top:0,width:0,height:0},s=document.body,o=document.documentElement,r=window.pageYOffset||o.scrollTop||s.scrollTop,a=window.pageXOffset||o.scrollLeft||s.scrollLeft,l=o.clientTop||s.clientTop||0,c=o.clientLeft||s.clientLeft||0,u=i.top+r-l+0*n,h=i.left+a-c+0*n,d=jsPlumb.pageLocation(t),p=i.width||e.offsetWidth*n,f=i.height||e.offsetHeight*n;return[(d[0]-h)/p,(d[1]-u)/f]},getAbsolutePosition:function(t){var e=function(e){var n=t.style[e];if(n)return parseFloat(n.substring(0,n.length-2))};return[e("left"),e("top")]},setAbsolutePosition:function(t,e,n,i){n?this.animate(t,{left:"+="+(e[0]-n[0]),top:"+="+(e[1]-n[1])},i):(t.style.left=e[0]+"px",t.style.top=e[1]+"px")},getSize:function(t){return[t.offsetWidth,t.offsetHeight]},getWidth:function(t){return t.offsetWidth},getHeight:function(t){return t.offsetHeight},getRenderMode:function(){return"svg"}})}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil,i=function(t,n){var i={cssClass:n.cssClass,labelStyle:t.labelStyle,id:"__label",component:t,_jsPlumb:t._jsPlumb.instance},s=e.extend(i,n);return new(e.Overlays[t._jsPlumb.instance.getRenderMode()].Label)(s)},s=function(t,i){var s=null;if(n.isArray(i)){var o=i[0],r=e.extend({component:t,_jsPlumb:t._jsPlumb.instance},i[1]);3==i.length&&e.extend(r,i[2]),s=new(e.Overlays[t._jsPlumb.instance.getRenderMode()][o])(r)}else s=i.constructor==String?new(e.Overlays[t._jsPlumb.instance.getRenderMode()][i])({component:t,_jsPlumb:t._jsPlumb.instance}):i;return s.id=s.id||n.uuid(),t.cacheTypeItem("overlay",s,s.id),t._jsPlumb.overlays[s.id]=s,s};e.OverlayCapableJsPlumbUIComponent=function(e){t.jsPlumbUIComponent.apply(this,arguments),this._jsPlumb.overlays={},this._jsPlumb.overlayPositions={},e.label&&(this.getDefaultType().overlays.__label=["Label",{label:e.label,location:e.labelLocation||this.defaultLabelLocation||.5,labelStyle:e.labelStyle||this._jsPlumb.instance.Defaults.LabelStyle,id:"__label"}]),this.setListenerComponent=function(t){if(this._jsPlumb)for(var e in this._jsPlumb.overlays)this._jsPlumb.overlays[e].setListenerComponent(t)}},e.OverlayCapableJsPlumbUIComponent.applyType=function(t,e){if(e.overlays){var n,i={};for(n in e.overlays){var s=t._jsPlumb.overlays[e.overlays[n][1].id];if(s)s.updateFrom(e.overlays[n][1]),i[e.overlays[n][1].id]=!0;else{var o=t.getCachedTypeItem("overlay",e.overlays[n][1].id);null!=o?(o.reattach(t._jsPlumb.instance),o.setVisible(!0),o.updateFrom(e.overlays[n][1]),t._jsPlumb.overlays[o.id]=o):o=t.addOverlay(e.overlays[n],!0),i[o.id]=!0}}for(n in t._jsPlumb.overlays)null==i[t._jsPlumb.overlays[n].id]&&t.removeOverlay(t._jsPlumb.overlays[n].id,!0)}},
-n.extend(e.OverlayCapableJsPlumbUIComponent,t.jsPlumbUIComponent,{setHover:function(t,e){if(this._jsPlumb&&!this._jsPlumb.instance.isConnectionBeingDragged())for(var n in this._jsPlumb.overlays)this._jsPlumb.overlays[n][t?"addClass":"removeClass"](this._jsPlumb.instance.hoverClass)},addOverlay:function(t,e){var n=s(this,t);return e||this.repaint(),n},getOverlay:function(t){return this._jsPlumb.overlays[t]},getOverlays:function(){return this._jsPlumb.overlays},hideOverlay:function(t){var e=this.getOverlay(t);e&&e.hide()},hideOverlays:function(){for(var t in this._jsPlumb.overlays)this._jsPlumb.overlays[t].hide()},showOverlay:function(t){var e=this.getOverlay(t);e&&e.show()},showOverlays:function(){for(var t in this._jsPlumb.overlays)this._jsPlumb.overlays[t].show()},removeAllOverlays:function(t){for(var e in this._jsPlumb.overlays)this._jsPlumb.overlays[e].cleanup&&this._jsPlumb.overlays[e].cleanup();this._jsPlumb.overlays={},this._jsPlumb.overlayPositions=null,t||this.repaint()},removeOverlay:function(t,e){var n=this._jsPlumb.overlays[t];n&&(n.setVisible(!1),!e&&n.cleanup&&n.cleanup(),delete this._jsPlumb.overlays[t],this._jsPlumb.overlayPositions&&delete this._jsPlumb.overlayPositions[t])},removeOverlays:function(){for(var t=0,e=arguments.length;t<e;t++)this.removeOverlay(arguments[t])},moveParent:function(t){if(this.bgCanvas&&(this.bgCanvas.parentNode.removeChild(this.bgCanvas),t.appendChild(this.bgCanvas)),this.canvas&&this.canvas.parentNode){this.canvas.parentNode.removeChild(this.canvas),t.appendChild(this.canvas);for(var e in this._jsPlumb.overlays)if(this._jsPlumb.overlays[e].isAppendedAtTopLevel){var n=this._jsPlumb.overlays[e].getElement();n.parentNode.removeChild(n),t.appendChild(n)}}},getLabel:function(){var t=this.getOverlay("__label");return null!=t?t.getLabel():null},getLabelOverlay:function(){return this.getOverlay("__label")},setLabel:function(t){var e=this.getOverlay("__label");if(e)t.constructor==String||t.constructor==Function?e.setLabel(t):(t.label&&e.setLabel(t.label),t.location&&e.setLocation(t.location));else{e=i(this,t.constructor==String||t.constructor==Function?{label:t}:t),this._jsPlumb.overlays.__label=e}this._jsPlumb.instance.isSuspendDrawing()||this.repaint()},cleanup:function(t){for(var e in this._jsPlumb.overlays)this._jsPlumb.overlays[e].cleanup(t),this._jsPlumb.overlays[e].destroy(t);t&&(this._jsPlumb.overlays={},this._jsPlumb.overlayPositions=null)},setVisible:function(t){this[t?"showOverlays":"hideOverlays"]()},setAbsoluteOverlayPosition:function(t,e){this._jsPlumb.overlayPositions[t.id]=e},getAbsoluteOverlayPosition:function(t){return this._jsPlumb.overlayPositions?this._jsPlumb.overlayPositions[t.id]:null},_clazzManip:function(t,e,n){if(!n)for(var i in this._jsPlumb.overlays)this._jsPlumb.overlays[i][t+"Class"](e)},addClass:function(t,e){this._clazzManip("add",t,e)},removeClass:function(t,e){this._clazzManip("remove",t,e)}})}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil,i=function(t,e,n){var i=!1;return{drag:function(){if(i)return i=!1,!0;if(e.element){var s=n.getUIPosition(arguments,n.getZoom());null!=s&&jsPlumb.setPosition(e.element,s),n.repaint(e.element,s),t.paint({anchorPoint:t.anchor.getCurrentLocation({element:t})})}},stopDrag:function(){i=!0}}},s=function(t,e,n,i){var s=jsPlumb.createElement("div",{position:"absolute"});e.appendElement(s);var o=e.getId(s);jsPlumb.setPosition(s,n),s.style.width=i[0]+"px",s.style.height=i[1]+"px",e.manage(o,s,!0),t.id=o,t.element=s},o=function(t,n,i,s,o,r,a,l){return a({paintStyle:t,endpoint:i,anchor:new e.FloatingAnchor({reference:n,referenceCanvas:s,jsPlumbInstance:r}),source:o,scope:l})},r=["connectorStyle","connectorHoverStyle","connectorOverlays","connector","connectionType","connectorClass","connectorHoverClass"],a=function(t,e){var n=0;if(null!=e)for(var i=0;i<t.connections.length;i++)if(t.connections[i].sourceId==e||t.connections[i].targetId==e){n=i;break}return t.connections[n]};e.Endpoint=function(t){var l=t._jsPlumb,c=t.newConnection,u=t.newEndpoint;this.idPrefix="_jsplumb_e_",this.defaultLabelLocation=[.5,.5],this.defaultOverlayKeys=["Overlays","EndpointOverlays"],e.OverlayCapableJsPlumbUIComponent.apply(this,arguments),this.appendToDefaultType({connectionType:t.connectionType,maxConnections:null==t.maxConnections?this._jsPlumb.instance.Defaults.MaxConnections:t.maxConnections,paintStyle:t.endpointStyle||t.paintStyle||t.style||this._jsPlumb.instance.Defaults.EndpointStyle||e.Defaults.EndpointStyle,hoverPaintStyle:t.endpointHoverStyle||t.hoverPaintStyle||this._jsPlumb.instance.Defaults.EndpointHoverStyle||e.Defaults.EndpointHoverStyle,connectorStyle:t.connectorStyle,connectorHoverStyle:t.connectorHoverStyle,connectorClass:t.connectorClass,connectorHoverClass:t.connectorHoverClass,connectorOverlays:t.connectorOverlays,connector:t.connector,connectorTooltip:t.connectorTooltip}),this._jsPlumb.enabled=!(t.enabled===!1),this._jsPlumb.visible=!0,this.element=e.getElement(t.source),this._jsPlumb.uuid=t.uuid,this._jsPlumb.floatingEndpoint=null;this._jsPlumb.uuid&&(t.endpointsByUUID[this._jsPlumb.uuid]=this),this.elementId=t.elementId,this.dragProxy=t.dragProxy,this._jsPlumb.connectionCost=t.connectionCost,this._jsPlumb.connectionsDirected=t.connectionsDirected,this._jsPlumb.currentAnchorClass="",this._jsPlumb.events={};var h=function(){var t=l.endpointAnchorClassPrefix+"-"+this._jsPlumb.currentAnchorClass;this._jsPlumb.currentAnchorClass=this.anchor.getCssClass();var n=l.endpointAnchorClassPrefix+(this._jsPlumb.currentAnchorClass?"-"+this._jsPlumb.currentAnchorClass:"");this.removeClass(t),this.addClass(n),e.updateClasses(this.element,n,t)}.bind(this);this.prepareAnchor=function(t){var e=this._jsPlumb.instance.makeAnchor(t,this.elementId,l);return e.bind("anchorChanged",function(t){this.fire("anchorChanged",{endpoint:this,anchor:t}),h()}.bind(this)),e},this.setPreparedAnchor=function(t,e){return this._jsPlumb.instance.continuousAnchorFactory.clear(this.elementId),this.anchor=t,h(),e||this._jsPlumb.instance.repaint(this.elementId),this},this.setAnchor=function(t,e){var n=this.prepareAnchor(t);return this.setPreparedAnchor(n,e),this};var d=function(t){if(this.connections.length>0)for(var e=0;e<this.connections.length;e++)this.connections[e].setHover(t,!1);else this.setHover(t)}.bind(this);this.bind("mouseover",function(){d(!0)}),this.bind("mouseout",function(){d(!1)}),t._transient||this._jsPlumb.instance.anchorManager.add(this,this.elementId),this.prepareEndpoint=function(i,s){var o,r=function(t,n){var i=l.getRenderMode();if(e.Endpoints[i][t])return new e.Endpoints[i][t](n);if(!l.Defaults.DoNotThrowErrors)throw{msg:"jsPlumb: unknown endpoint type '"+t+"'"}},a={_jsPlumb:this._jsPlumb.instance,cssClass:t.cssClass,container:t.container,tooltip:t.tooltip,connectorTooltip:t.connectorTooltip,endpoint:this};return n.isString(i)?o=r(i,a):n.isArray(i)?(a=n.merge(i[1],a),o=r(i[0],a)):o=i.clone(),o.clone=function(){return n.isString(i)?r(i,a):n.isArray(i)?(a=n.merge(i[1],a),r(i[0],a)):void 0}.bind(this),o.typeId=s,o},this.setEndpoint=function(t,e){var n=this.prepareEndpoint(t);this.setPreparedEndpoint(n,!0)},this.setPreparedEndpoint=function(t,e){null!=this.endpoint&&(this.endpoint.cleanup(),this.endpoint.destroy()),this.endpoint=t,this.type=this.endpoint.type,this.canvas=this.endpoint.canvas},e.extend(this,t,r),this.isSource=t.isSource||!1,this.isTemporarySource=t.isTemporarySource||!1,this.isTarget=t.isTarget||!1,this.connections=t.connections||[],this.connectorPointerEvents=t["connector-pointer-events"],this.scope=t.scope||l.getDefaultScope(),this.timestamp=null,this.reattachConnections=t.reattach||l.Defaults.ReattachConnections,this.connectionsDetachable=l.Defaults.ConnectionsDetachable,t.connectionsDetachable!==!1&&t.detachable!==!1||(this.connectionsDetachable=!1),this.dragAllowedWhenFull=t.dragAllowedWhenFull!==!1,t.onMaxConnections&&this.bind("maxConnections",t.onMaxConnections),this.addConnection=function(t){this.connections.push(t),this[(this.connections.length>0?"add":"remove")+"Class"](l.endpointConnectedClass),this[(this.isFull()?"add":"remove")+"Class"](l.endpointFullClass)},this.detachFromConnection=function(t,e,n){e=null==e?this.connections.indexOf(t):e,e>=0&&(this.connections.splice(e,1),this[(this.connections.length>0?"add":"remove")+"Class"](l.endpointConnectedClass),this[(this.isFull()?"add":"remove")+"Class"](l.endpointFullClass)),(this._forceDeleteOnDetach||!n&&this._deleteOnDetach)&&0===this.connections.length&&l.deleteObject({endpoint:this,fireEvent:!1,deleteAttachedObjects:n!==!0})},this.detach=function(t){var e=t.connectionIndex,n=t.connection,i=t.ignoreTarget,s=t.fireEvent,o=t.originalEvent,r=t.endpointBeingDeleted,a=t.forceDetach,c=null==e?this.connections.indexOf(n):e,u=!1;return s=s!==!1,c>=0&&(a||n._forceDetach||n.isDetachable()&&n.isDetachAllowed(n)&&this.isDetachAllowed(n)&&l.checkCondition("beforeDetach",n,r))&&(l.deleteObject({connection:n,fireEvent:!i&&s,originalEvent:o,deleteAttachedObjects:t.deleteAttachedObjects}),u=!0),u},this.detachAll=function(t,e){for(var n=[];this.connections.length>0;){this.detach({connection:this.connections[0],ignoreTarget:!1,forceDetach:e===!0,fireEvent:t!==!1,originalEvent:null,endpointBeingDeleted:this,connectionIndex:0})||(n.push(this.connections[0]),this.connections.splice(0,1))}return this.connections=n,this},this.detachFrom=function(t,e,n){for(var i=[],s=0;s<this.connections.length;s++)this.connections[s].endpoints[1]!=t&&this.connections[s].endpoints[0]!=t||i.push(this.connections[s]);for(var o=0;o<i.length;o++)this.detach({connection:i[o],ignoreTarget:!1,forceDetach:!0,fireEvent:e,originalEvent:n});return this},this.getElement=function(){return this.element},this.setElement=function(i){var s=this._jsPlumb.instance.getId(i),o=this.elementId;return n.removeWithFunction(t.endpointsByElement[this.elementId],function(t){return t.id==this.id}.bind(this)),this.element=e.getElement(i),this.elementId=l.getId(this.element),l.anchorManager.rehomeEndpoint(this,o,this.element),l.dragManager.endpointAdded(this.element),n.addToList(t.endpointsByElement,s,this),this},this.makeInPlaceCopy=function(){var e=this.anchor.getCurrentLocation({element:this}),n=this.anchor.getOrientation(this),i=this.anchor.getCssClass(),s={bind:function(){},compute:function(){return[e[0],e[1]]},getCurrentLocation:function(){return[e[0],e[1]]},getOrientation:function(){return n},getCssClass:function(){return i}};return u({dropOptions:t.dropOptions,anchor:s,source:this.element,paintStyle:this.getPaintStyle(),endpoint:t.hideOnDrag?"Blank":this.endpoint,_transient:!0,scope:this.scope,reference:this})},this.connectorSelector=function(){var t=this.connections[0];return t?t:this.connections.length<this._jsPlumb.maxConnections||this._jsPlumb.maxConnections==-1?null:t},this.setStyle=this.setPaintStyle,this.paint=function(t){t=t||{};var e=t.timestamp,n=!(t.recalc===!1);if(!e||this.timestamp!==e){var i=l.updateOffset({elId:this.elementId,timestamp:e}),s=t.offset?t.offset.o:i.o;if(null!=s){var o=t.anchorPoint,r=t.connectorPaintStyle;if(null==o){var c=t.dimensions||i.s,u={xy:[s.left,s.top],wh:c,element:this,timestamp:e};if(n&&this.anchor.isDynamic&&this.connections.length>0){var h=a(this,t.elementWithPrecedence),d=h.endpoints[0]==this?1:0,p=0===d?h.sourceId:h.targetId,f=l.getCachedData(p),g=f.o,m=f.s;u.txy=[g.left,g.top],u.twh=m,u.tElement=h.endpoints[d]}o=this.anchor.compute(u)}this.endpoint.compute(o,this.anchor.getOrientation(this),this._jsPlumb.paintStyleInUse,r||this.paintStyleInUse),this.endpoint.paint(this._jsPlumb.paintStyleInUse,this.anchor),this.timestamp=e;for(var v in this._jsPlumb.overlays)if(this._jsPlumb.overlays.hasOwnProperty(v)){var b=this._jsPlumb.overlays[v];b.isVisible()&&(this._jsPlumb.overlayPlacements[v]=b.draw(this.endpoint,this._jsPlumb.paintStyleInUse),b.paint(this._jsPlumb.overlayPlacements[v]))}}}},this.getTypeDescriptor=function(){return"endpoint"},this.isVisible=function(){return this._jsPlumb.visible},this.repaint=this.paint;var p=!1;this.initDraggable=function(){if(!p&&e.isDragSupported(this.element)){var r,a={id:null,element:null},h=null,d=!1,f=null,m=i(this,a,l),v=t.dragOptions||{},b={},y=e.dragEvents.start,P=e.dragEvents.stop,_=e.dragEvents.drag,x=e.dragEvents.beforeStart,C=function(t){r=t.e.payload||{}},E=function(i){h=this.connectorSelector();var p=!0;this.isEnabled()||(p=!1),null!=h||this.isSource||this.isTemporarySource||(p=!1),!this.isSource||!this.isFull()||null!=h&&this.dragAllowedWhenFull||(p=!1),null==h||h.isDetachable(this)||(p=!1);var v=l.checkCondition(null==h?"beforeDrag":"beforeStartDetach",{endpoint:this,source:this.element,sourceId:this.elementId,connection:h});if(v===!1?p=!1:"object"===(void 0===v?"undefined":g(v))?e.extend(v,r||{}):v=r||{},p===!1)return l.stopDrag&&l.stopDrag(this.canvas),m.stopDrag(),!1;for(var b=0;b<this.connections.length;b++)this.connections[b].setHover(!1);this.addClass("endpointDrag"),l.setConnectionBeingDragged(!0),h&&!this.isFull()&&this.isSource&&(h=null),l.updateOffset({elId:this.elementId});var y=this._jsPlumb.instance.getOffset(this.canvas),P=this.canvas;s(a,l,y,this._jsPlumb.instance.getSize(this.canvas)),l.setAttributes(this.canvas,{dragId:a.id,elId:this.elementId});var _=this.dragProxy||this.endpoint;if(null==this.dragProxy&&null!=this.connectionType){var x=this._jsPlumb.instance.deriveEndpointAndAnchorSpec(this.connectionType);x.endpoints[1]&&(_=x.endpoints[1])}var C=this._jsPlumb.instance.makeAnchor("Center");C.isFloating=!0,this._jsPlumb.floatingEndpoint=o(this.getPaintStyle(),C,_,this.canvas,a.element,l,u,this.scope);var E=this._jsPlumb.floatingEndpoint.anchor;if(null==h)this.setHover(!1,!1),h=c({sourceEndpoint:this,targetEndpoint:this._jsPlumb.floatingEndpoint,source:this.element,target:a.element,anchors:[this.anchor,this._jsPlumb.floatingEndpoint.anchor],paintStyle:t.connectorStyle,hoverPaintStyle:t.connectorHoverStyle,connector:t.connector,overlays:t.connectorOverlays,type:this.connectionType,cssClass:this.connectorClass,hoverClass:this.connectorHoverClass,scope:t.scope,data:v}),h.pending=!0,h.addClass(l.draggingClass),this._jsPlumb.floatingEndpoint.addClass(l.draggingClass),this._jsPlumb.floatingEndpoint.anchor=E,l.fire("connectionDrag",h),l.anchorManager.newConnection(h);else{d=!0,h.setHover(!1);var j=h.endpoints[0].id==this.id?0:1;this.detachFromConnection(h,null,!0);var S=l.getDragScope(P);l.setAttribute(this.canvas,"originalScope",S),l.fire("connectionDrag",h),0===j?(f=[h.source,h.sourceId,P,S],l.anchorManager.sourceChanged(h.endpoints[j].elementId,a.id,h,a.element)):(f=[h.target,h.targetId,P,S],h.target=a.element,h.targetId=a.id,l.anchorManager.updateOtherEndpoint(h.sourceId,h.endpoints[j].elementId,h.targetId,h)),h.suspendedEndpoint=h.endpoints[j],h.suspendedElement=h.endpoints[j].getElement(),h.suspendedElementId=h.endpoints[j].elementId,h.suspendedElementType=0===j?"source":"target",h.suspendedEndpoint.setHover(!1),this._jsPlumb.floatingEndpoint.referenceEndpoint=h.suspendedEndpoint,h.endpoints[j]=this._jsPlumb.floatingEndpoint,h.addClass(l.draggingClass),this._jsPlumb.floatingEndpoint.addClass(l.draggingClass)}l.floatingConnections[a.id]=h,n.addToList(t.endpointsByElement,a.id,this._jsPlumb.floatingEndpoint),l.currentlyDragging=!0}.bind(this),j=function(){if(l.setConnectionBeingDragged(!1),h&&null!=h.endpoints){var t=l.getDropEvent(arguments),e=l.getFloatingAnchorIndex(h);if(h.endpoints[0===e?1:0].anchor.locked=!1,h.removeClass(l.draggingClass),this._jsPlumb&&(h.deleteConnectionNow||h.endpoints[e]==this._jsPlumb.floatingEndpoint)&&d&&h.suspendedEndpoint){0===e?(h.floatingElement=h.source,h.floatingId=h.sourceId,h.floatingEndpoint=h.endpoints[0],h.floatingIndex=0,h.source=f[0],h.sourceId=f[1]):(h.floatingElement=h.target,h.floatingId=h.targetId,h.floatingEndpoint=h.endpoints[1],h.floatingIndex=1,h.target=f[0],h.targetId=f[1]);var n=this._jsPlumb.floatingEndpoint;l.setDragScope(f[2],f[3]),h.endpoints[e]=h.suspendedEndpoint,h.isReattach()||h._forceReattach||h._forceDetach||!h.endpoints[0===e?1:0].detach({connection:h,ignoreTarget:!1,forceDetach:!1,fireEvent:!0,originalEvent:t,endpointBeingDeleted:!0})?(h.setHover(!1),h._forceDetach=null,h._forceReattach=null,this._jsPlumb.floatingEndpoint.detachFromConnection(h),h.suspendedEndpoint.addConnection(h),1==e?l.anchorManager.updateOtherEndpoint(h.sourceId,h.floatingId,h.targetId,h):l.anchorManager.sourceChanged(h.floatingId,h.sourceId,h,h.source),l.repaint(f[1])):l.deleteObject({endpoint:n})}this.deleteAfterDragStop?l.deleteObject({endpoint:this}):this._jsPlumb&&this.paint({recalc:!1}),l.fire("connectionDragStop",h,t),h.pending&&l.fire("connectionAborted",h,t),l.currentlyDragging=!1,h.suspendedElement=null,h.suspendedEndpoint=null,h=null}a&&a.element&&l.remove(a.element,!1,!1),this._jsPlumb&&(this.canvas.style.visibility="visible",this.anchor.locked=!1,this._jsPlumb.floatingEndpoint=null)}.bind(this);v=e.extend(b,v),v.scope=this.scope||v.scope,v[x]=n.wrap(v[x],C,!1),v[y]=n.wrap(v[y],E,!1),v[_]=n.wrap(v[_],m.drag),v[P]=n.wrap(v[P],j),v.multipleDrop=!1,v.canDrag=function(){return this.isSource||this.isTemporarySource||this.connections.length>0}.bind(this),l.initDraggable(this.canvas,v,"internal"),this.canvas._jsPlumbRelatedElement=this.element,p=!0}};var f=t.endpoint||this._jsPlumb.instance.Defaults.Endpoint||e.Defaults.Endpoint;this.setEndpoint(f,!0);var m=t.anchor?t.anchor:t.anchors?t.anchors:l.Defaults.Anchor||"Top";this.setAnchor(m,!0);var v=["default",t.type||""].join(" ");this.addType(v,t.data,!0),this.canvas=this.endpoint.canvas,this.canvas._jsPlumb=this,this.initDraggable();var b=function(i,s,o,r){if(e.isDropSupported(this.element)){var a=t.dropOptions||l.Defaults.DropOptions||e.Defaults.DropOptions;a=e.extend({},a),a.scope=a.scope||this.scope;var c=e.dragEvents.drop,u=e.dragEvents.over,h=e.dragEvents.out,d=this,p=l.EndpointDropHandler({getEndpoint:function(){return d},jsPlumb:l,enabled:function(){return null==o||o.isEnabled()},isFull:function(){return o.isFull()},element:this.element,elementId:this.elementId,isSource:this.isSource,isTarget:this.isTarget,addClass:function(t){d.addClass(t)},removeClass:function(t){d.removeClass(t)},isDropAllowed:function(){return d.isDropAllowed.apply(d,arguments)},reference:r,isRedrop:function(t,e){return t.suspendedEndpoint&&e.reference&&t.suspendedEndpoint.id===e.reference.id}});a[c]=n.wrap(a[c],p,!0),a[u]=n.wrap(a[u],function(){var t=e.getDragObject(arguments),n=l.getAttribute(e.getElement(t),"dragId"),i=l.floatingConnections[n];if(null!=i){var s=l.getFloatingAnchorIndex(i);if(this.isTarget&&0!==s||i.suspendedEndpoint&&this.referenceEndpoint&&this.referenceEndpoint.id==i.suspendedEndpoint.id){var o=l.checkCondition("checkDropAllowed",{sourceEndpoint:i.endpoints[s],targetEndpoint:this,connection:i});this[(o?"add":"remove")+"Class"](l.endpointDropAllowedClass),this[(o?"remove":"add")+"Class"](l.endpointDropForbiddenClass),i.endpoints[s].anchor.over(this.anchor,this)}}}.bind(this)),a[h]=n.wrap(a[h],function(){var t=e.getDragObject(arguments),n=null==t?null:l.getAttribute(e.getElement(t),"dragId"),i=n?l.floatingConnections[n]:null;if(null!=i){var s=l.getFloatingAnchorIndex(i);(this.isTarget&&0!==s||i.suspendedEndpoint&&this.referenceEndpoint&&this.referenceEndpoint.id==i.suspendedEndpoint.id)&&(this.removeClass(l.endpointDropAllowedClass),this.removeClass(l.endpointDropForbiddenClass),i.endpoints[s].anchor.out())}}.bind(this)),l.initDroppable(i,a,"internal",s)}}.bind(this);return this.anchor.isFloating||b(this.canvas,!(t._transient||this.anchor.isFloating),this,t.reference),this},n.extend(e.Endpoint,e.OverlayCapableJsPlumbUIComponent,{setVisible:function(t,e,n){if(this._jsPlumb.visible=t,this.canvas&&(this.canvas.style.display=t?"block":"none"),this[t?"showOverlays":"hideOverlays"](),!e)for(var i=0;i<this.connections.length;i++)if(this.connections[i].setVisible(t),!n){var s=this===this.connections[i].endpoints[0]?1:0;1==this.connections[i].endpoints[s].connections.length&&this.connections[i].endpoints[s].setVisible(t,!0,!0)}},getAttachedElements:function(){return this.connections},applyType:function(t,n){this.setPaintStyle(t.endpointStyle||t.paintStyle,n),this.setHoverPaintStyle(t.endpointHoverStyle||t.hoverPaintStyle,n),null!=t.maxConnections&&(this._jsPlumb.maxConnections=t.maxConnections),t.scope&&(this.scope=t.scope),e.extend(this,t,r),null!=t.cssClass&&this.canvas&&this._jsPlumb.instance.addClass(this.canvas,t.cssClass),e.OverlayCapableJsPlumbUIComponent.applyType(this,t)},isEnabled:function(){return this._jsPlumb.enabled},setEnabled:function(t){this._jsPlumb.enabled=t},cleanup:function(){var t=this._jsPlumb.instance.endpointAnchorClassPrefix+(this._jsPlumb.currentAnchorClass?"-"+this._jsPlumb.currentAnchorClass:"");e.removeClass(this.element,t),this.anchor=null,this.endpoint.cleanup(!0),this.endpoint.destroy(),this.endpoint=null,this._jsPlumb.instance.destroyDraggable(this.canvas,"internal"),this._jsPlumb.instance.destroyDroppable(this.canvas,"internal")},setHover:function(t){this.endpoint&&this._jsPlumb&&!this._jsPlumb.instance.isConnectionBeingDragged()&&this.endpoint.setHover(t)},isFull:function(){return 0===this._jsPlumb.maxConnections||!(this.isFloating()||this._jsPlumb.maxConnections<0||this.connections.length<this._jsPlumb.maxConnections)},isFloating:function(){return null!=this.anchor&&this.anchor.isFloating},isConnectedTo:function(t){var e=!1;if(t)for(var n=0;n<this.connections.length;n++)if(this.connections[n].endpoints[1]==t||this.connections[n].endpoints[0]==t){e=!0;break}return e},getConnectionCost:function(){return this._jsPlumb.connectionCost},setConnectionCost:function(t){this._jsPlumb.connectionCost=t},areConnectionsDirected:function(){return this._jsPlumb.connectionsDirected},setConnectionsDirected:function(t){this._jsPlumb.connectionsDirected=t},setElementId:function(t){this.elementId=t,this.anchor.elementId=t},setReferenceElement:function(t){this.element=e.getElement(t)},setDragAllowedWhenFull:function(t){this.dragAllowedWhenFull=t},equals:function(t){return this.anchor.equals(t.anchor)},getUuid:function(){return this._jsPlumb.uuid},computeAnchor:function(t){return this.anchor.compute(t)}}),t.jsPlumbInstance.prototype.EndpointDropHandler=function(t){return function(e){var i=t.jsPlumb;t.removeClass(i.endpointDropAllowedClass),t.removeClass(i.endpointDropForbiddenClass);var s=i.getDropEvent(arguments),o=i.getDragObject(arguments),r=i.getAttribute(o,"dragId"),a=(i.getAttribute(o,"elId"),i.getAttribute(o,"originalScope")),l=i.floatingConnections[r];if(null!=l){var c=null!=l.suspendedEndpoint;if(!c||null!=l.suspendedEndpoint._jsPlumb){var u=t.getEndpoint(l);if(null!=u){if(t.isRedrop(l,t))return l._forceReattach=!0,l.setHover(!1),void(t.maybeCleanup&&t.maybeCleanup(u));var h=i.getFloatingAnchorIndex(l);if(0===h&&!t.isSource||1===h&&!t.isTarget)return void(t.maybeCleanup&&t.maybeCleanup(u));t.onDrop&&t.onDrop(l),a&&i.setDragScope(o,a);var d=t.isFull(e);if(d&&u.fire("maxConnections",{endpoint:this,connection:l,maxConnections:u._jsPlumb.maxConnections},s),!d&&t.enabled()){var p=!0;0===h?(l.floatingElement=l.source,l.floatingId=l.sourceId,l.floatingEndpoint=l.endpoints[0],l.floatingIndex=0,l.source=t.element,l.sourceId=t.elementId):(l.floatingElement=l.target,l.floatingId=l.targetId,l.floatingEndpoint=l.endpoints[1],l.floatingIndex=1,l.target=t.element,l.targetId=t.elementId),c&&l.suspendedEndpoint.id!=u.id&&(l.isDetachAllowed(l)&&l.endpoints[h].isDetachAllowed(l)&&l.suspendedEndpoint.isDetachAllowed(l)&&i.checkCondition("beforeDetach",l)||(p=!1));var f=function(t){l.endpoints[h].detachFromConnection(l),l.suspendedEndpoint&&l.suspendedEndpoint.detachFromConnection(l),l.endpoints[h]=u,u.addConnection(l);var e=u.getParameters();for(var o in e)l.setParameter(o,e[o]);if(c){var r=l.suspendedEndpoint.elementId;i.fireMoveEvent({index:h,originalSourceId:0===h?r:l.sourceId,newSourceId:0===h?u.elementId:l.sourceId,originalTargetId:1==h?r:l.targetId,newTargetId:1==h?u.elementId:l.targetId,originalSourceEndpoint:0===h?l.suspendedEndpoint:l.endpoints[0],newSourceEndpoint:0===h?u:l.endpoints[0],originalTargetEndpoint:1==h?l.suspendedEndpoint:l.endpoints[1],newTargetEndpoint:1==h?u:l.endpoints[1],connection:l},s)}else e.draggable&&i.initDraggable(this.element,dragOptions,"internal",i);if(1==h?i.anchorManager.updateOtherEndpoint(l.sourceId,l.floatingId,l.targetId,l):i.anchorManager.sourceChanged(l.floatingId,l.sourceId,l,l.source),l.endpoints[0].finalEndpoint){l.endpoints[0].detachFromConnection(l),l.endpoints[0]=l.endpoints[0].finalEndpoint,l.endpoints[0].addConnection(l)}n.isObject(t)&&l.mergeData(t),i.finaliseConnection(l,null,s,!1),l.setHover(!1)}.bind(this);if(p=p&&t.isDropAllowed(l.sourceId,l.targetId,l.scope,l,u))return f(p),!0;!function(){l.suspendedEndpoint&&(l.endpoints[h]=l.suspendedEndpoint,l.setHover(!1),l._forceDetach=!0,0===h?(l.source=l.suspendedEndpoint.element,l.sourceId=l.suspendedEndpoint.elementId):(l.target=l.suspendedEndpoint.element,l.targetId=l.suspendedEndpoint.elementId),l.suspendedEndpoint.addConnection(l),1==h?i.anchorManager.updateOtherEndpoint(l.sourceId,l.floatingId,l.targetId,l):i.anchorManager.sourceChanged(l.floatingId,l.sourceId,l,l.source),i.repaint(l.sourceId),l._forceDetach=!1)}()}t.maybeCleanup&&t.maybeCleanup(u),i.currentlyDragging=!1}}}}}}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil,i=function(t,n,i,s,o){if(!t.Defaults.DoNotThrowErrors&&null==e.Connectors[n][i])throw{msg:"jsPlumb: unknown connector type '"+i+"'"};return new e.Connectors[n][i](s,o)},s=function(t,e,n){return t?n.makeAnchor(t,e,n):null},o=function(t,e,i,s){null!=e&&(e._jsPlumbConnections=e._jsPlumbConnections||{},s?delete e._jsPlumbConnections[t.id]:e._jsPlumbConnections[t.id]=!0,n.isEmpty(e._jsPlumbConnections)?i.removeClass(e,i.connectedClass):i.addClass(e,i.connectedClass))};e.Connection=function(t){var i=t.newEndpoint;this.id=t.id,this.connector=null,this.idPrefix="_jsplumb_c_",this.defaultLabelLocation=.5,this.defaultOverlayKeys=["Overlays","ConnectionOverlays"],this.previousConnection=t.previousConnection,this.source=e.getElement(t.source),this.target=e.getElement(t.target),t.sourceEndpoint&&(this.source=t.sourceEndpoint.getElement()),t.targetEndpoint&&(this.target=t.targetEndpoint.getElement()),e.OverlayCapableJsPlumbUIComponent.apply(this,arguments),this.sourceId=this._jsPlumb.instance.getId(this.source),this.targetId=this._jsPlumb.instance.getId(this.target),this.scope=t.scope,this.endpoints=[],this.endpointStyles=[];var s=this._jsPlumb.instance;s.manage(this.sourceId,this.source),s.manage(this.targetId,this.target),this._jsPlumb.visible=!0,this._jsPlumb.editable=t.editable===!0,this._jsPlumb.params={cssClass:t.cssClass,container:t.container,"pointer-events":t["pointer-events"],editorParams:t.editorParams,overlays:t.overlays},this._jsPlumb.lastPaintedAt=null,this.bind("mouseover",function(){this.setHover(!0)}.bind(this)),this.bind("mouseout",function(){this.setHover(!1)}.bind(this)),this.editableRequested=t.editable!==!1,this.setEditable=function(t){return!!this.connector&&this.connector.setEditable(t)},this.isEditable=function(){return!!this.connector&&this.connector.isEditable()},this.isEditing=function(){return!!this.connector&&this.connector.isEditing()},this.makeEndpoint=function(e,n,o,r){return o=o||this._jsPlumb.instance.getId(n),this.prepareEndpoint(s,i,this,r,e?0:1,t,n,o)},t.type&&(t.endpoints=this._jsPlumb.instance.deriveEndpointAndAnchorSpec(t.type).endpoints);var o=this.makeEndpoint(!0,this.source,this.sourceId,t.sourceEndpoint),r=this.makeEndpoint(!1,this.target,this.targetId,t.targetEndpoint);o&&n.addToList(t.endpointsByElement,this.sourceId,o),r&&n.addToList(t.endpointsByElement,this.targetId,r),this.scope||(this.scope=this.endpoints[0].scope),null!=t.deleteEndpointsOnDetach?(this.endpoints[0]._deleteOnDetach=t.deleteEndpointsOnDetach,this.endpoints[1]._deleteOnDetach=t.deleteEndpointsOnDetach):(this.endpoints[0]._doNotDeleteOnDetach||(this.endpoints[0]._deleteOnDetach=!0),this.endpoints[1]._doNotDeleteOnDetach||(this.endpoints[1]._deleteOnDetach=!0));var a=s.Defaults.ConnectionsDetachable;t.detachable===!1&&(a=!1),this.endpoints[0].connectionsDetachable===!1&&(a=!1),this.endpoints[1].connectionsDetachable===!1&&(a=!1);var l=t.reattach||this.endpoints[0].reattachConnections||this.endpoints[1].reattachConnections||s.Defaults.ReattachConnections;this.appendToDefaultType({detachable:a,reattach:l,paintStyle:this.endpoints[0].connectorStyle||this.endpoints[1].connectorStyle||t.paintStyle||s.Defaults.PaintStyle||e.Defaults.PaintStyle,hoverPaintStyle:this.endpoints[0].connectorHoverStyle||this.endpoints[1].connectorHoverStyle||t.hoverPaintStyle||s.Defaults.HoverPaintStyle||e.Defaults.HoverPaintStyle});var c=s.getSuspendedAt();if(!s.isSuspendDrawing()){var u=s.getCachedData(this.sourceId),h=u.o,d=u.s,p=s.getCachedData(this.targetId),f=p.o,g=p.s,m=c||s.timestamp(),v=this.endpoints[0].anchor.compute({xy:[h.left,h.top],wh:d,element:this.endpoints[0],elementId:this.endpoints[0].elementId,txy:[f.left,f.top],twh:g,tElement:this.endpoints[1],timestamp:m});this.endpoints[0].paint({anchorLoc:v,timestamp:m}),v=this.endpoints[1].anchor.compute({xy:[f.left,f.top],wh:g,element:this.endpoints[1],elementId:this.endpoints[1].elementId,txy:[h.left,h.top],twh:d,tElement:this.endpoints[0],timestamp:m}),this.endpoints[1].paint({anchorLoc:v,timestamp:m})}this.getTypeDescriptor=function(){return"connection"},this.getAttachedElements=function(){return this.endpoints},this.isDetachable=function(){return this._jsPlumb.detachable===!0},this.setDetachable=function(t){this._jsPlumb.detachable=t===!0},this.isReattach=function(){return this._jsPlumb.reattach===!0||this.endpoints[0].reattachConnections===!0||this.endpoints[1].reattachConnections===!0},this.setReattach=function(t){this._jsPlumb.reattach=t===!0},this._jsPlumb.cost=t.cost||this.endpoints[0].getConnectionCost(),this._jsPlumb.directed=t.directed,null==t.directed&&(this._jsPlumb.directed=this.endpoints[0].areConnectionsDirected());var b=e.extend({},this.endpoints[1].getParameters());e.extend(b,this.endpoints[0].getParameters()),e.extend(b,this.getParameters()),this.setParameters(b),this.setConnector(this.endpoints[0].connector||this.endpoints[1].connector||t.connector||s.Defaults.Connector||e.Defaults.Connector,!0),t.geometry&&this.connector.setGeometry(t.geometry);var y=null!=t.data&&n.isObject(t.data)?t.data:{};this.getData=function(){return y},this.setData=function(t){y=t||{}},this.mergeData=function(t){y=e.extend(y,t)};var P=["default",this.endpoints[0].connectionType,this.endpoints[1].connectionType,t.type].join(" ");/[^\s]/.test(P)&&this.addType(P,t.data,!0),this.updateConnectedClass()},n.extend(e.Connection,e.OverlayCapableJsPlumbUIComponent,{applyType:function(t,n,i){null!=t.detachable&&this.setDetachable(t.detachable),null!=t.reattach&&this.setReattach(t.reattach),t.scope&&(this.scope=t.scope),null!=t.cssClass&&this.canvas&&this._jsPlumb.instance.addClass(this.canvas,t.cssClass);var s=null;t.anchor?null==(s=this.getCachedTypeItem("anchors",i.anchor))&&(s=[this._jsPlumb.instance.makeAnchor(t.anchor),this._jsPlumb.instance.makeAnchor(t.anchor)],this.cacheTypeItem("anchors",s,i.anchor)):t.anchors&&null==(s=this.getCachedTypeItem("anchors",i.anchors))&&(s=[this._jsPlumb.instance.makeAnchor(t.anchors[0]),this._jsPlumb.instance.makeAnchor(t.anchors[1])],this.cacheTypeItem("anchors",s,i.anchors)),null!=s&&(this.endpoints[0].anchor=s[0],this.endpoints[1].anchor=s[1],this.endpoints[1].anchor.isDynamic&&this._jsPlumb.instance.repaint(this.endpoints[1].elementId)),e.OverlayCapableJsPlumbUIComponent.applyType(this,t)},addClass:function(t,e){e&&(this.endpoints[0].addClass(t),this.endpoints[1].addClass(t),this.suspendedEndpoint&&this.suspendedEndpoint.addClass(t)),this.connector&&this.connector.addClass(t)},removeClass:function(t,e){e&&(this.endpoints[0].removeClass(t),this.endpoints[1].removeClass(t),this.suspendedEndpoint&&this.suspendedEndpoint.removeClass(t)),
-this.connector&&this.connector.removeClass(t)},isVisible:function(){return this._jsPlumb.visible},setVisible:function(t){this._jsPlumb.visible=t,this.connector&&this.connector.setVisible(t),this.repaint()},cleanup:function(){this.updateConnectedClass(!0),this.endpoints=null,this.source=null,this.target=null,null!=this.connector&&(this.connector.cleanup(!0),this.connector.destroy(!0)),this.connector=null},updateConnectedClass:function(t){this._jsPlumb&&(o(this,this.source,this._jsPlumb.instance,t),o(this,this.target,this._jsPlumb.instance,t))},setHover:function(e){this.connector&&this._jsPlumb&&!this._jsPlumb.instance.isConnectionBeingDragged()&&(this.connector.setHover(e),t.jsPlumb[e?"addClass":"removeClass"](this.source,this._jsPlumb.instance.hoverSourceClass),t.jsPlumb[e?"addClass":"removeClass"](this.target,this._jsPlumb.instance.hoverTargetClass))},getUuids:function(){return[this.endpoints[0].getUuid(),this.endpoints[1].getUuid()]},getCost:function(){return this._jsPlumb?this._jsPlumb.cost:-(1/0)},setCost:function(t){this._jsPlumb.cost=t},isDirected:function(){return this._jsPlumb.directed===!0},getConnector:function(){return this.connector},getGeometry:function(){return this.connector?this.connector.getGeometry():null},setGeometry:function(t){this.connector&&this.connector.setGeometry(t)},prepareConnector:function(t,e){var s,o={_jsPlumb:this._jsPlumb.instance,cssClass:(this._jsPlumb.params.cssClass||"")+(this.isEditable()?this._jsPlumb.instance.editableConnectorClass:""),container:this._jsPlumb.params.container,"pointer-events":this._jsPlumb.params["pointer-events"],editable:this.editableRequested},r=this._jsPlumb.instance.getRenderMode();return n.isString(t)?s=i(this._jsPlumb.instance,r,t,o,this):n.isArray(t)&&(s=1==t.length?i(this._jsPlumb.instance,r,t[0],o,this):i(this._jsPlumb.instance,r,t[0],n.merge(t[1],o),this)),null!=e&&(s.typeId=e),s},setPreparedConnector:function(t,e,n,i){var s,o="";if(null!=this.connector&&(s=this.connector,o=s.getClass(),this.connector.cleanup(),this.connector.destroy()),this.connector=t,i&&this.cacheTypeItem("connector",t,i),this.canvas=this.connector.canvas,this.bgCanvas=this.connector.bgCanvas,this.addClass(o),this.canvas&&(this.canvas._jsPlumb=this),this.bgCanvas&&(this.bgCanvas._jsPlumb=this),null!=s)for(var r=this.getOverlays(),a=0;a<r.length;a++)r[a].transfer&&r[a].transfer(this.connector);n||this.setListenerComponent(this.connector),e||this.repaint()},setConnector:function(t,e,n,i){var s=this.prepareConnector(t,i);this.setPreparedConnector(s,e,n,i)},paint:function(t){if(!this._jsPlumb.instance.isSuspendDrawing()&&this._jsPlumb.visible){t=t||{};var e=t.timestamp,n=this.targetId,i=this.sourceId;if(null==e||e!=this._jsPlumb.lastPaintedAt){var s=this._jsPlumb.instance.updateOffset({elId:i}).o,o=this._jsPlumb.instance.updateOffset({elId:n}).o,r=this.endpoints[0],a=this.endpoints[1],l=r.anchor.getCurrentLocation({xy:[s.left,s.top],wh:[s.width,s.height],element:r,timestamp:e}),c=a.anchor.getCurrentLocation({xy:[o.left,o.top],wh:[o.width,o.height],element:a,timestamp:e});this.connector.resetBounds(),this.connector.compute({sourcePos:l,targetPos:c,sourceEndpoint:this.endpoints[0],targetEndpoint:this.endpoints[1],"stroke-width":this._jsPlumb.paintStyleInUse.strokeWidth,sourceInfo:s,targetInfo:o});var u={minX:1/0,minY:1/0,maxX:-(1/0),maxY:-(1/0)};for(var h in this._jsPlumb.overlays)if(this._jsPlumb.overlays.hasOwnProperty(h)){var d=this._jsPlumb.overlays[h];d.isVisible()&&(this._jsPlumb.overlayPlacements[h]=d.draw(this.connector,this._jsPlumb.paintStyleInUse,this.getAbsoluteOverlayPosition(d)),u.minX=Math.min(u.minX,this._jsPlumb.overlayPlacements[h].minX),u.maxX=Math.max(u.maxX,this._jsPlumb.overlayPlacements[h].maxX),u.minY=Math.min(u.minY,this._jsPlumb.overlayPlacements[h].minY),u.maxY=Math.max(u.maxY,this._jsPlumb.overlayPlacements[h].maxY))}var p=parseFloat(this._jsPlumb.paintStyleInUse.strokeWidth||1)/2,f=parseFloat(this._jsPlumb.paintStyleInUse.strokeWidth||0),g={xmin:Math.min(this.connector.bounds.minX-(p+f),u.minX),ymin:Math.min(this.connector.bounds.minY-(p+f),u.minY),xmax:Math.max(this.connector.bounds.maxX+(p+f),u.maxX),ymax:Math.max(this.connector.bounds.maxY+(p+f),u.maxY)};this.connector.paint(this._jsPlumb.paintStyleInUse,null,g);for(var m in this._jsPlumb.overlays)if(this._jsPlumb.overlays.hasOwnProperty(m)){var v=this._jsPlumb.overlays[m];v.isVisible()&&v.paint(this._jsPlumb.overlayPlacements[m],g)}}this._jsPlumb.lastPaintedAt=e}},repaint:function(t){t=t||{},this.paint({elId:this.sourceId,recalc:!(t.recalc===!1),timestamp:t.timestamp})},prepareEndpoint:function(t,n,i,o,r,a,l,c){var u;if(o)i.endpoints[r]=o,o.addConnection(i);else{a.endpoints||(a.endpoints=[null,null]);var h=a.endpoints[r]||a.endpoint||t.Defaults.Endpoints[r]||e.Defaults.Endpoints[r]||t.Defaults.Endpoint||e.Defaults.Endpoint;a.endpointStyles||(a.endpointStyles=[null,null]),a.endpointHoverStyles||(a.endpointHoverStyles=[null,null]);var d=a.endpointStyles[r]||a.endpointStyle||t.Defaults.EndpointStyles[r]||e.Defaults.EndpointStyles[r]||t.Defaults.EndpointStyle||e.Defaults.EndpointStyle;null==d.fill&&null!=a.paintStyle&&(d.fill=a.paintStyle.stroke),null==d.outlineStroke&&null!=a.paintStyle&&(d.outlineStroke=a.paintStyle.outlineStroke),null==d.outlineWidth&&null!=a.paintStyle&&(d.outlineWidth=a.paintStyle.outlineWidth);var p=a.endpointHoverStyles[r]||a.endpointHoverStyle||t.Defaults.EndpointHoverStyles[r]||e.Defaults.EndpointHoverStyles[r]||t.Defaults.EndpointHoverStyle||e.Defaults.EndpointHoverStyle;null!=a.hoverPaintStyle&&(null==p&&(p={}),null==p.fill&&(p.fill=a.hoverPaintStyle.stroke));var f=a.anchors?a.anchors[r]:a.anchor?a.anchor:s(t.Defaults.Anchors[r],c,t)||s(e.Defaults.Anchors[r],c,t)||s(t.Defaults.Anchor,c,t)||s(e.Defaults.Anchor,c,t);u=n({paintStyle:d,hoverPaintStyle:p,endpoint:h,connections:[i],uuid:a.uuids?a.uuids[r]:null,anchor:f,source:l,scope:a.scope,reattach:a.reattach||t.Defaults.ReattachConnections,detachable:a.detachable||t.Defaults.ConnectionsDetachable}),i.endpoints[r]=u,a.drawEndpoints===!1&&u.setVisible(!1,!0,!0)}return u}})}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumbUtil,n=t.jsPlumb;n.AnchorManager=function(t){var i={},s={},o={},r={},a={HORIZONTAL:"horizontal",VERTICAL:"vertical",DIAGONAL:"diagonal",IDENTITY:"identity"},l=["left","top","right","bottom"],c={},u=this,h={},d=t.jsPlumbInstance,p={},f=function(t,e,n,i,s,o){if(t===e)return{orientation:a.IDENTITY,a:["top","top"]};var r=Math.atan2(i.centery-n.centery,i.centerx-n.centerx),c=Math.atan2(n.centery-i.centery,n.centerx-i.centerx),u=[],h={};!function(t,e){for(var n=0;n<t.length;n++)h[t[n]]={left:[e[n].left,e[n].centery],right:[e[n].right,e[n].centery],top:[e[n].centerx,e[n].top],bottom:[e[n].centerx,e[n].bottom]}}(["source","target"],[n,i]);for(var d=0;d<l.length;d++)for(var p=0;p<l.length;p++)u.push({source:l[d],target:l[p],dist:Biltong.lineLength(h.source[l[d]],h.target[l[p]])});u.sort(function(t,e){return t.dist<e.dist?-1:t.dist>e.dist?1:0});for(var f=u[0].source,g=u[0].target,m=0;m<u.length&&(f=!s.isContinuous||s.isEdgeSupported(u[m].source)?u[m].source:null,g=!o.isContinuous||o.isEdgeSupported(u[m].target)?u[m].target:null,null==f||null==g);m++);return{a:[f,g],theta:r,theta2:c}},g=function(t,e,n,i,s,o,r){for(var a=[],l=e[s?0:1]/(i.length+1),c=0;c<i.length;c++){var u=(c+1)*l,h=o*e[s?1:0];r&&(u=e[s?0:1]-u);var d=s?u:h,p=n[0]+d,f=d/e[0],g=s?h:u,m=n[1]+g,v=g/e[1];a.push([p,m,f,v,i[c][1],i[c][2]])}return a},m=function(t){return function(e,n){var i=!0;return i=t?e[0][0]<n[0][0]:e[0][0]>n[0][0],i===!1?-1:1}},v=function(t,e){return(t[0][0]<0?-Math.PI-t[0][0]:Math.PI-t[0][0])>(e[0][0]<0?-Math.PI-e[0][0]:Math.PI-e[0][0])?1:-1},b={top:function(t,e){return t[0]>e[0]?1:-1},right:m(!0),bottom:m(!0),left:v},y=function(t,e){return t.sort(e)},P=function(t,e){var n=d.getCachedData(t),i=n.s,o=n.o,a=function(e,n,i,o,a,l,c){if(o.length>0)for(var u=y(o,b[e]),h="right"===e||"top"===e,d=g(0,n,i,u,a,l,h),p=function(t,e){s[t.id]=[e[0],e[1],e[2],e[3]],r[t.id]=c},f=0;f<d.length;f++){var m=d[f][4],v=m.endpoints[0].elementId===t,P=m.endpoints[1].elementId===t;v&&p(m.endpoints[0],d[f]),P&&p(m.endpoints[1],d[f])}};a("bottom",i,[o.left,o.top],e.bottom,!0,1,[0,1]),a("top",i,[o.left,o.top],e.top,!0,0,[0,-1]),a("left",i,[o.left,o.top],e.left,!1,0,[-1,0]),a("right",i,[o.left,o.top],e.right,!1,1,[1,0])};this.reset=function(){i={},c={},h={}},this.addFloatingConnection=function(t,e){p[t]=e},this.removeFloatingConnection=function(t){delete p[t]},this.newConnection=function(t){var i=t.sourceId,s=t.targetId,o=t.endpoints,r=!0,a=function(a,l,u,h,d){i==s&&u.isContinuous&&(t._jsPlumb.instance.removeElement(o[1].canvas),r=!1),e.addToList(c,h,[d,l,u.constructor==n.DynamicAnchor])};a(0,o[0],o[0].anchor,s,t),r&&a(0,o[1],o[1].anchor,i,t)};var _=function(t){!function(t,n){if(t){var i=function(t){return t[4]==n};e.removeWithFunction(t.top,i),e.removeWithFunction(t.left,i),e.removeWithFunction(t.bottom,i),e.removeWithFunction(t.right,i)}}(h[t.elementId],t.id)};this.connectionDetached=function(t,n){var i=t.connection||t,s=t.sourceId,o=t.targetId,r=i.endpoints,a=function(t,n,i,s,o){e.removeWithFunction(c[s],function(t){return t[0].id==o.id})};a(0,r[1],r[1].anchor,s,i),a(0,r[0],r[0].anchor,o,i),i.floatingId&&(a(i.floatingIndex,i.floatingEndpoint,i.floatingEndpoint.anchor,i.floatingId,i),_(i.floatingEndpoint)),_(i.endpoints[0]),_(i.endpoints[1]),n||(u.redraw(i.sourceId),i.targetId!==i.sourceId&&u.redraw(i.targetId))},this.add=function(t,n){e.addToList(i,n,t)},this.changeId=function(t,e){c[e]=c[t],i[e]=i[t],delete c[t],delete i[t]},this.getConnectionsFor=function(t){return c[t]||[]},this.getEndpointsFor=function(t){return i[t]||[]},this.deleteEndpoint=function(t){e.removeWithFunction(i[t.elementId],function(e){return e.id==t.id}),_(t)},this.clearFor=function(t){delete i[t],i[t]=[]};var x=function(n,i,s,o,r,a,l,c,u,h,d,p){var f,g,m=-1,v=o.endpoints[l],b=v.id,y=[1,0][l],P=[[i,s],o,r,a,b],_=n[u],x=v._continuousAnchorEdge?n[v._continuousAnchorEdge]:null;if(x){var C=e.findWithFunction(x,function(t){return t[4]==b});if(C!=-1)for(x.splice(C,1),f=0;f<x.length;f++)g=x[f][1],e.addWithFunction(d,g,function(t){return t.id==g.id}),e.addWithFunction(p,x[f][1].endpoints[l],function(t){return t.id==g.endpoints[l].id}),e.addWithFunction(p,x[f][1].endpoints[y],function(t){return t.id==g.endpoints[y].id})}for(f=0;f<_.length;f++)g=_[f][1],1==t.idx&&_[f][3]===a&&m==-1&&(m=f),e.addWithFunction(d,g,function(t){return t.id==g.id}),e.addWithFunction(p,_[f][1].endpoints[l],function(t){return t.id==g.endpoints[l].id}),e.addWithFunction(p,_[f][1].endpoints[y],function(t){return t.id==g.endpoints[y].id});var E=c?m!=-1?m:0:_.length;_.splice(E,0,P),v._continuousAnchorEdge=u};this.updateOtherEndpoint=function(t,i,s,o){var r=e.findWithFunction(c[t],function(t){return t[0].id===o.id}),a=e.findWithFunction(c[i],function(t){return t[0].id===o.id});r!=-1&&(c[t][r][0]=o,c[t][r][1]=o.endpoints[1],c[t][r][2]=o.endpoints[1].anchor.constructor==n.DynamicAnchor),a>-1&&(c[i].splice(a,1),e.addToList(c,s,[o,o.endpoints[0],o.endpoints[0].anchor.constructor==n.DynamicAnchor])),o.updateConnectedClass()},this.sourceChanged=function(t,i,s,o){if(t!==i){s.sourceId=i,s.source=o,e.removeWithFunction(c[t],function(t){return t[0].id===s.id});var r=e.findWithFunction(c[s.targetId],function(t){return t[0].id===s.id});r>-1&&(c[s.targetId][r][0]=s,c[s.targetId][r][1]=s.endpoints[0],c[s.targetId][r][2]=s.endpoints[0].anchor.constructor==n.DynamicAnchor),e.addToList(c,i,[s,s.endpoints[1],s.endpoints[1].anchor.constructor==n.DynamicAnchor]),s.endpoints[1].anchor.isContinuous&&(s.source===s.target?s._jsPlumb.instance.removeElement(s.endpoints[1].canvas):null==s.endpoints[1].canvas.parentNode&&s._jsPlumb.instance.appendElement(s.endpoints[1].canvas)),s.updateConnectedClass()}},this.rehomeEndpoint=function(t,e,n){var s=i[e]||[],o=d.getId(n);if(o!==e){var r=s.indexOf(t);if(r>-1){var a=s.splice(r,1)[0];u.add(a,o)}}for(var l=0;l<t.connections.length;l++)t.connections[l].sourceId==e?u.sourceChanged(e,t.elementId,t.connections[l],t.element):t.connections[l].targetId==e&&(t.connections[l].targetId=t.elementId,t.connections[l].target=t.element,u.updateOtherEndpoint(t.connections[l].sourceId,e,t.elementId,t.connections[l]))},this.redraw=function(t,s,o,r,a,l){if(!d.isSuspendDrawing()){var u=i[t]||[],g=c[t]||[],m=[],v=[],b=[];o=o||d.timestamp(),r=r||{left:0,top:0},s&&(s={left:s.left+r.left,top:s.top+r.top});for(var y=d.updateOffset({elId:t,offset:s,recalc:!1,timestamp:o}),_={},C=0;C<g.length;C++){var E=g[C][0],j=E.sourceId,S=E.targetId,D=E.endpoints[0].anchor.isContinuous,w=E.endpoints[1].anchor.isContinuous;if(D||w){var A=j+"_"+S,I=_[A],k=E.sourceId==t?1:0;D&&!h[j]&&(h[j]={top:[],right:[],bottom:[],left:[]}),w&&!h[S]&&(h[S]={top:[],right:[],bottom:[],left:[]}),t!=S&&d.updateOffset({elId:S,timestamp:o}),t!=j&&d.updateOffset({elId:j,timestamp:o});var T=d.getCachedData(S),O=d.getCachedData(j);S==j&&(D||w)?(x(h[j],-Math.PI/2,0,E,!1,S,0,!1,"top",0,m,v),x(h[S],-Math.PI/2,0,E,!1,j,1,!1,"top",0,m,v)):(I||(I=f(j,S,O.o,T.o,E.endpoints[0].anchor,E.endpoints[1].anchor),_[A]=I),D&&x(h[j],I.theta,0,E,!1,S,0,!1,I.a[0],0,m,v),w&&x(h[S],I.theta2,-1,E,!0,j,1,!0,I.a[1],0,m,v)),D&&e.addWithFunction(b,j,function(t){return t===j}),w&&e.addWithFunction(b,S,function(t){return t===S}),e.addWithFunction(m,E,function(t){return t.id==E.id}),(D&&0===k||w&&1===k)&&e.addWithFunction(v,E.endpoints[k],function(t){return t.id==E.endpoints[k].id})}}for(C=0;C<u.length;C++)0===u[C].connections.length&&u[C].anchor.isContinuous&&(h[t]||(h[t]={top:[],right:[],bottom:[],left:[]}),x(h[t],-Math.PI/2,0,{endpoints:[u[C],u[C]],paint:function(){}},!1,t,0,!1,u[C].anchor.getDefaultFace(),0,m,v),e.addWithFunction(b,t,function(e){return e===t}));for(C=0;C<b.length;C++)P(b[C],h[b[C]]);for(C=0;C<u.length;C++)u[C].paint({timestamp:o,offset:y,dimensions:y.s,recalc:l!==!0});for(C=0;C<v.length;C++){var M=d.getCachedData(v[C].elementId);v[C].paint({timestamp:o,offset:M,dimensions:M.s})}for(C=0;C<g.length;C++){var L=g[C][1];if(L.anchor.constructor==n.DynamicAnchor){L.paint({elementWithPrecedence:t,timestamp:o}),e.addWithFunction(m,g[C][0],function(t){return t.id==g[C][0].id});for(var F=0;F<L.connections.length;F++)L.connections[F]!==g[C][0]&&e.addWithFunction(m,L.connections[F],function(t){return t.id==L.connections[F].id})}else L.anchor.constructor==n.Anchor&&e.addWithFunction(m,g[C][0],function(t){return t.id==g[C][0].id})}var G=p[t];for(G&&G.paint({timestamp:o,recalc:!1,elId:t}),C=0;C<m.length;C++)m[C].paint({elId:t,timestamp:o,recalc:!1,clearEdits:a})}};var C=function(t){e.EventGenerator.apply(this),this.type="Continuous",this.isDynamic=!0,this.isContinuous=!0;for(var n=t.faces||["top","right","bottom","left"],i=!(t.clockwise===!1),a={},l={top:"bottom",right:"left",left:"right",bottom:"top"},c={top:"right",right:"bottom",left:"top",bottom:"left"},u={top:"left",right:"top",left:"bottom",bottom:"right"},h=i?c:u,d=i?u:c,p=t.cssClass||"",f=0;f<n.length;f++)a[n[f]]=!0;this.getDefaultFace=function(){return 0===n.length?"top":n[0]},this.verifyEdge=function(t){return a[t]?t:a[l[t]]?l[t]:a[h[t]]?h[t]:a[d[t]]?d[t]:t},this.isEdgeSupported=function(t){return a[t]===!0},this.compute=function(t){return o[t.element.id]||s[t.element.id]||[0,0]},this.getCurrentLocation=function(t){return o[t.element.id]||s[t.element.id]||[0,0]},this.getOrientation=function(t){return r[t.id]||[0,0]},this.clearUserDefinedLocation=function(){delete o[t.elementId]},this.setUserDefinedLocation=function(e){o[t.elementId]=e},this.getCssClass=function(){return p}};d.continuousAnchorFactory={get:function(t){return new C(t)},clear:function(t){delete o[t],delete s[t]}}},n.Anchor=function(t){this.x=t.x||0,this.y=t.y||0,this.elementId=t.elementId,this.cssClass=t.cssClass||"",this.userDefinedLocation=null,this.orientation=t.orientation||[0,0],this.lastReturnValue=null,this.offsets=t.offsets||[0,0],this.timestamp=null,e.EventGenerator.apply(this),this.compute=function(t){var e=t.xy,n=t.wh,i=t.timestamp;return t.clearUserDefinedLocation&&(this.userDefinedLocation=null),i&&i===this.timestamp?this.lastReturnValue:(null!=this.userDefinedLocation?this.lastReturnValue=this.userDefinedLocation:this.lastReturnValue=[e[0]+this.x*n[0]+this.offsets[0],e[1]+this.y*n[1]+this.offsets[1]],this.timestamp=i,this.lastReturnValue)},this.getCurrentLocation=function(t){return t=t||{},null==this.lastReturnValue||null!=t.timestamp&&this.timestamp!=t.timestamp?this.compute(t):this.lastReturnValue}},e.extend(n.Anchor,e.EventGenerator,{equals:function(t){if(!t)return!1;var e=t.getOrientation(),n=this.getOrientation();return this.x==t.x&&this.y==t.y&&this.offsets[0]==t.offsets[0]&&this.offsets[1]==t.offsets[1]&&n[0]==e[0]&&n[1]==e[1]},getUserDefinedLocation:function(){return this.userDefinedLocation},setUserDefinedLocation:function(t){this.userDefinedLocation=t},clearUserDefinedLocation:function(){this.userDefinedLocation=null},getOrientation:function(){return this.orientation},getCssClass:function(){return this.cssClass}}),n.FloatingAnchor=function(t){n.Anchor.apply(this,arguments);var e=t.reference,i=t.referenceCanvas,s=n.getSize(i),o=null,r=null;this.orientation=null,this.x=0,this.y=0,this.isFloating=!0,this.compute=function(t){var e=t.xy,n=[e[0]+s[0]/2,e[1]+s[1]/2];return r=n,n},this.getOrientation=function(t){if(o)return o;var n=e.getOrientation(t);return[0*Math.abs(n[0])*-1,0*Math.abs(n[1])*-1]},this.over=function(t,e){o=t.getOrientation(e)},this.out=function(){o=null},this.getCurrentLocation=function(t){return null==r?this.compute(t):r}},e.extend(n.FloatingAnchor,n.Anchor);var i=function(t,e,i){return t.constructor==n.Anchor?t:e.makeAnchor(t,i,e)};n.DynamicAnchor=function(t){n.Anchor.apply(this,arguments),this.isDynamic=!0,this.anchors=[],this.elementId=t.elementId,this.jsPlumbInstance=t.jsPlumbInstance;for(var e=0;e<t.anchors.length;e++)this.anchors[e]=i(t.anchors[e],this.jsPlumbInstance,this.elementId);this.getAnchors=function(){return this.anchors},this.locked=!1;var s=this.anchors.length>0?this.anchors[0]:null,o=s,r=this,a=function(t,e,n,i,s){var o=i[0]+t.x*s[0],r=i[1]+t.y*s[1],a=i[0]+s[0]/2,l=i[1]+s[1]/2;return Math.sqrt(Math.pow(e-o,2)+Math.pow(n-r,2))+Math.sqrt(Math.pow(a-o,2)+Math.pow(l-r,2))},l=t.selector||function(t,e,n,i,s){for(var o=n[0]+i[0]/2,r=n[1]+i[1]/2,l=-1,c=1/0,u=0;u<s.length;u++){var h=a(s[u],o,r,t,e);h<c&&(l=u+0,c=h)}return s[l]};this.compute=function(t){var e=t.xy,n=t.wh,i=t.txy,a=t.twh;this.timestamp=t.timestamp;var c=r.getUserDefinedLocation();return null!=c?c:this.locked||null==i||null==a?s.compute(t):(t.timestamp=null,s=l(e,n,i,a,this.anchors),this.x=s.x,this.y=s.y,s!=o&&this.fire("anchorChanged",s),o=s,s.compute(t))},this.getCurrentLocation=function(t){return this.getUserDefinedLocation()||(null!=s?s.getCurrentLocation(t):null)},this.getOrientation=function(t){return null!=s?s.getOrientation(t):[0,0]},this.over=function(t,e){null!=s&&s.over(t,e)},this.out=function(){null!=s&&s.out()},this.getCssClass=function(){return s&&s.getCssClass()||""}},e.extend(n.DynamicAnchor,n.Anchor);var s=function(t,e,i,s,o,r){n.Anchors[o]=function(n){var a=n.jsPlumbInstance.makeAnchor([t,e,i,s,0,0],n.elementId,n.jsPlumbInstance);return a.type=o,r&&r(a,n),a}};s(.5,0,0,-1,"TopCenter"),s(.5,1,0,1,"BottomCenter"),s(0,.5,-1,0,"LeftMiddle"),s(1,.5,1,0,"RightMiddle"),s(.5,0,0,-1,"Top"),s(.5,1,0,1,"Bottom"),s(0,.5,-1,0,"Left"),s(1,.5,1,0,"Right"),s(.5,.5,0,0,"Center"),s(1,0,0,-1,"TopRight"),s(1,1,0,1,"BottomRight"),s(0,0,0,-1,"TopLeft"),s(0,1,0,1,"BottomLeft"),n.Defaults.DynamicAnchors=function(t){return t.jsPlumbInstance.makeAnchors(["TopCenter","RightMiddle","BottomCenter","LeftMiddle"],t.elementId,t.jsPlumbInstance)},n.Anchors.AutoDefault=function(t){var e=t.jsPlumbInstance.makeDynamicAnchor(n.Defaults.DynamicAnchors(t));return e.type="AutoDefault",e};var o=function(t,e){n.Anchors[t]=function(n){var i=n.jsPlumbInstance.makeAnchor(["Continuous",{faces:e}],n.elementId,n.jsPlumbInstance);return i.type=t,i}};n.Anchors.Continuous=function(t){return t.jsPlumbInstance.continuousAnchorFactory.get(t)},o("ContinuousLeft",["left"]),o("ContinuousTop",["top"]),o("ContinuousBottom",["bottom"]),o("ContinuousRight",["right"]),s(0,0,0,0,"Assign",function(t,e){var n=e.position||"Fixed";t.positionFinder=n.constructor==String?e.jsPlumbInstance.AnchorPositionFinders[n]:n,t.constructorParams=e}),t.jsPlumbInstance.prototype.AnchorPositionFinders={Fixed:function(t,e,n){return[(t.left-e.left)/n[0],(t.top-e.top)/n[1]]},Grid:function(t,e,n,i){var s=t.left-e.left,o=t.top-e.top,r=n[0]/i.grid[0],a=n[1]/i.grid[1],l=Math.floor(s/r),c=Math.floor(o/a);return[(l*r+r/2)/n[0],(c*a+a/2)/n[1]]}},n.Anchors.Perimeter=function(t){t=t||{};var e=t.anchorCount||60,n=t.shape;if(!n)throw new Error("no shape supplied to Perimeter Anchor type");var i=function(){for(var t=2*Math.PI/e,n=0,i=[],s=0;s<e;s++){var o=.5+.5*Math.sin(n),r=.5+.5*Math.cos(n);i.push([o,r,0,0]),n+=t}return i},s=function(t){for(var n=e/t.length,i=[],s=function(t,s,o,r,a){n=e*a;for(var l=(o-t)/n,c=(r-s)/n,u=0;u<n;u++)i.push([t+l*u,s+c*u,0,0])},o=0;o<t.length;o++)s.apply(null,t[o]);return i},o=function(t){for(var e=[],n=0;n<t.length;n++)e.push([t[n][0],t[n][1],t[n][2],t[n][3],1/t.length]);return s(e)},r=function(){return o([[0,0,1,0],[1,0,1,1],[1,1,0,1],[0,1,0,0]])},a={Circle:i,Ellipse:i,Diamond:function(){return o([[.5,0,1,.5],[1,.5,.5,1],[.5,1,0,.5],[0,.5,.5,0]])},Rectangle:r,Square:r,Triangle:function(){return o([[.5,0,1,1],[1,1,0,1],[0,1,.5,0]])},Path:function(t){for(var e=t.points,n=[],i=0,o=0;o<e.length-1;o++){var r=Math.sqrt(Math.pow(e[o][2]-e[o][0])+Math.pow(e[o][3]-e[o][1]));i+=r,n.push([e[o][0],e[o][1],e[o+1][0],e[o+1][1],r])}for(var a=0;a<n.length;a++)n[a][4]=n[a][4]/i;return s(n)}};if(!a[n])throw new Error("Shape ["+n+"] is unknown by Perimeter Anchor type");var l=a[n](t);t.rotation&&(l=function(t,e){for(var n=[],i=e/180*Math.PI,s=0;s<t.length;s++){var o=t[s][0]-.5,r=t[s][1]-.5;n.push([o*Math.cos(i)-r*Math.sin(i)+.5,o*Math.sin(i)+r*Math.cos(i)+.5,t[s][2],t[s][3]])}return n}(l,t.rotation));var c=t.jsPlumbInstance.makeDynamicAnchor(l);return c.type="Perimeter",c}}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil,i=t.Biltong;e.Segments={AbstractSegment:function(t){this.params=t,this.findClosestPointOnPath=function(t,e){return{d:1/0,x:null,y:null,l:null}},this.getBounds=function(){return{minX:Math.min(t.x1,t.x2),minY:Math.min(t.y1,t.y2),maxX:Math.max(t.x1,t.x2),maxY:Math.max(t.y1,t.y2)}}},Straight:function(t){var n,s,o,r,a,l,c,u=(e.Segments.AbstractSegment.apply(this,arguments),function(){n=Math.sqrt(Math.pow(a-r,2)+Math.pow(c-l,2)),s=i.gradient({x:r,y:l},{x:a,y:c}),o=-1/s});this.type="Straight",this.getLength=function(){return n},this.getGradient=function(){return s},this.getCoordinates=function(){return{x1:r,y1:l,x2:a,y2:c}},this.setCoordinates=function(t){r=t.x1,l=t.y1,a=t.x2,c=t.y2,u()},this.setCoordinates({x1:t.x1,y1:t.y1,x2:t.x2,y2:t.y2}),this.getBounds=function(){return{minX:Math.min(r,a),minY:Math.min(l,c),maxX:Math.max(r,a),maxY:Math.max(l,c)}},this.pointOnPath=function(t,e){if(0!==t||e){if(1!=t||e){var s=e?t>0?t:n+t:t*n;return i.pointOnLine({x:r,y:l},{x:a,y:c},s)}return{x:a,y:c}}return{x:r,y:l}},this.gradientAtPoint=function(t){return s},this.pointAlongPathFrom=function(t,e,n){var s=this.pointOnPath(t,n),o=e<=0?{x:r,y:l}:{x:a,y:c};return e<=0&&Math.abs(e)>1&&(e*=-1),i.pointOnLine(s,o,e)};var h=function(t,e,n){return n>=Math.min(t,e)&&n<=Math.max(t,e)},d=function(t,e,n){return Math.abs(n-t)<Math.abs(n-e)?t:e};this.findClosestPointOnPath=function(t,e){var u={d:1/0,x:null,y:null,l:null,x1:r,x2:a,y1:l,y2:c};if(0===s)u.y=l,u.x=h(r,a,t)?t:d(r,a,t);else if(s==1/0||s==-(1/0))u.x=r,u.y=h(l,c,e)?e:d(l,c,e);else{var p=l-s*r,f=e-o*t,g=(f-p)/(s-o),m=s*g+p;u.x=h(r,a,g)?g:d(r,a,g),u.y=h(l,c,m)?m:d(l,c,m)}var v=i.lineLength([u.x,u.y],[r,l]);return u.d=i.lineLength([t,e],[u.x,u.y]),u.l=v/n,u}},Arc:function(t){var n=(e.Segments.AbstractSegment.apply(this,arguments),function(e,n){return i.theta([t.cx,t.cy],[e,n])}),s=function(t,e){if(t.anticlockwise){var n=t.startAngle<t.endAngle?t.startAngle+o:t.startAngle;return n-Math.abs(n-t.endAngle)*e}var i=t.endAngle<t.startAngle?t.endAngle+o:t.endAngle,s=Math.abs(i-t.startAngle);return t.startAngle+s*e},o=2*Math.PI;this.radius=t.r,this.anticlockwise=t.ac,this.type="Arc",t.startAngle&&t.endAngle?(this.startAngle=t.startAngle,this.endAngle=t.endAngle,this.x1=t.cx+this.radius*Math.cos(t.startAngle),this.y1=t.cy+this.radius*Math.sin(t.startAngle),this.x2=t.cx+this.radius*Math.cos(t.endAngle),this.y2=t.cy+this.radius*Math.sin(t.endAngle)):(this.startAngle=n(t.x1,t.y1),this.endAngle=n(t.x2,t.y2),this.x1=t.x1,this.y1=t.y1,this.x2=t.x2,this.y2=t.y2),this.endAngle<0&&(this.endAngle+=o),this.startAngle<0&&(this.startAngle+=o);var r=this.endAngle<this.startAngle?this.endAngle+o:this.endAngle;this.sweep=Math.abs(r-this.startAngle),this.anticlockwise&&(this.sweep=o-this.sweep);var a=2*Math.PI*this.radius,l=this.sweep/o,c=a*l;this.getLength=function(){return c},this.getBounds=function(){return{minX:t.cx-t.r,maxX:t.cx+t.r,minY:t.cy-t.r,maxY:t.cy+t.r}};var u=function(t){var e=Math.floor(t),n=Math.ceil(t);return t-e<1e-10?e:n-t<1e-10?n:t};this.pointOnPath=function(e,n){if(0===e)return{x:this.x1,y:this.y1,theta:this.startAngle};if(1==e)return{x:this.x2,y:this.y2,theta:this.endAngle};n&&(e/=c);var i=s(this,e),o=t.cx+t.r*Math.cos(i),r=t.cy+t.r*Math.sin(i);return{x:u(o),y:u(r),theta:i}},this.gradientAtPoint=function(e,n){var s=this.pointOnPath(e,n),o=i.normal([t.cx,t.cy],[s.x,s.y]);return this.anticlockwise||o!=1/0&&o!=-(1/0)||(o*=-1),o},this.pointAlongPathFrom=function(e,n,i){var s=this.pointOnPath(e,i),o=n/a*2*Math.PI,r=this.anticlockwise?-1:1,l=s.theta+r*o;return{x:t.cx+this.radius*Math.cos(l),y:t.cy+this.radius*Math.sin(l)}}},Bezier:function(n){this.curve=[{x:n.x1,y:n.y1},{x:n.cp1x,y:n.cp1y},{x:n.cp2x,y:n.cp2y},{x:n.x2,y:n.y2}];e.Segments.AbstractSegment.apply(this,arguments);this.bounds={minX:Math.min(n.x1,n.x2,n.cp1x,n.cp2x),minY:Math.min(n.y1,n.y2,n.cp1y,n.cp2y),maxX:Math.max(n.x1,n.x2,n.cp1x,n.cp2x),maxY:Math.max(n.y1,n.y2,n.cp1y,n.cp2y)},this.type="Bezier";var i=function(e,n,i){return i&&(n=t.jsBezier.locationAlongCurveFrom(e,n>0?0:1,n)),n};this.pointOnPath=function(e,n){return e=i(this.curve,e,n),t.jsBezier.pointOnCurve(this.curve,e)},this.gradientAtPoint=function(e,n){return e=i(this.curve,e,n),t.jsBezier.gradientAtPoint(this.curve,e)},this.pointAlongPathFrom=function(e,n,s){return e=i(this.curve,e,s),t.jsBezier.pointAlongCurveFrom(this.curve,e,n)},this.getLength=function(){return t.jsBezier.getLength(this.curve)},this.getBounds=function(){return this.bounds}}},e.SegmentRenderer={getPath:function(t){return{Straight:function(){var e=t.getCoordinates();return"M "+e.x1+" "+e.y1+" L "+e.x2+" "+e.y2},Bezier:function(){var e=t.params;return"M "+e.x1+" "+e.y1+" C "+e.cp1x+" "+e.cp1y+" "+e.cp2x+" "+e.cp2y+" "+e.x2+" "+e.y2},Arc:function(){var e=t.params,n=t.sweep>Math.PI?1:0,i=t.anticlockwise?0:1;return"M"+t.x1+" "+t.y1+" A "+t.radius+" "+e.r+" 0 "+n+","+i+" "+t.x2+" "+t.y2}}[t.type]()}};var s=function(){this.resetBounds=function(){this.bounds={minX:1/0,minY:1/0,maxX:-(1/0),maxY:-(1/0)}},this.resetBounds()};e.Connectors.AbstractConnector=function(t){s.apply(this,arguments);var o=[],r=0,a=[],l=[],c=t.stub||0,u=n.isArray(c)?c[0]:c,h=n.isArray(c)?c[1]:c,d=t.gap||0,p=n.isArray(d)?d[0]:d,f=n.isArray(d)?d[1]:d,g=null,m=!1,v=null,b=null,y=t.editable!==!1&&null!=e.ConnectorEditors&&null!=e.ConnectorEditors[this.type],P=this.setGeometry=function(t,e){m=!e,b=t},_=this.getGeometry=function(){return b};this.getPathData=function(){for(var t="",n=0;n<o.length;n++)t+=e.SegmentRenderer.getPath(o[n]),t+=" ";return t},this.hasBeenEdited=function(){return m},this.isEditing=function(){return null!=this.editor&&this.editor.isActive()},this.setEditable=function(t){return y=!(!t||null==e.ConnectorEditors||null==e.ConnectorEditors[this.type]||null!=this.overrideSetEditable&&!this.overrideSetEditable())&&t},this.isEditable=function(){return y},this.findSegmentForPoint=function(t,e){for(var n={d:1/0,s:null,x:null,y:null,l:null},i=0;i<o.length;i++){var s=o[i].findClosestPointOnPath(t,e);s.d<n.d&&(n.d=s.d,n.l=s.l,n.x=s.x,n.y=s.y,n.s=o[i],n.x1=s.x1,n.x2=s.x2,n.y1=s.y1,n.y2=s.y2,n.index=i)}return n};var x=function(){for(var t=0,e=0;e<o.length;e++){var n=o[e].getLength();l[e]=n/r,a[e]=[t,t+=n/r]}},C=function(t,e){e&&(t=t>0?t/r:(r+t)/r);for(var n=a.length-1,i=1,s=0;s<a.length;s++)if(a[s][1]>=t){n=s,i=1==t?1:0===t?0:(t-a[s][0])/l[s];break}return{segment:o[n],proportion:i,index:n}},E=function(t,n,i){if(i.x1!=i.x2||i.y1!=i.y2){var s=new e.Segments[n](i);o.push(s),r+=s.getLength(),t.updateBounds(s)}},j=function(){r=o.length=a.length=l.length=0};this.setSegments=function(t){g=[],r=0;for(var e=0;e<t.length;e++)g.push(t[e]),r+=t[e].getLength()},this.getLength=function(){return r};var S=function(t){this.strokeWidth=t.strokeWidth;var e=i.quadrant(t.sourcePos,t.targetPos),n=t.targetPos[0]<t.sourcePos[0],s=t.targetPos[1]<t.sourcePos[1],o=t.strokeWidth||1,r=t.sourceEndpoint.anchor.getOrientation(t.sourceEndpoint),a=t.targetEndpoint.anchor.getOrientation(t.targetEndpoint),l=n?t.targetPos[0]:t.sourcePos[0],c=s?t.targetPos[1]:t.sourcePos[1],d=Math.abs(t.targetPos[0]-t.sourcePos[0]),g=Math.abs(t.targetPos[1]-t.sourcePos[1]);if(0===r[0]&&0===r[1]||0===a[0]&&0===a[1]){var m=d>g?0:1,v=[1,0][m];r=[],a=[],r[m]=t.sourcePos[m]>t.targetPos[m]?-1:1,a[m]=t.sourcePos[m]>t.targetPos[m]?1:-1,r[v]=0,a[v]=0}var b=n?d+p*r[0]:p*r[0],y=s?g+p*r[1]:p*r[1],P=n?f*a[0]:d+f*a[0],_=s?f*a[1]:g+f*a[1],x=r[0]*a[0]+r[1]*a[1],C={sx:b,sy:y,tx:P,ty:_,lw:o,xSpan:Math.abs(P-b),ySpan:Math.abs(_-y),mx:(b+P)/2,my:(y+_)/2,so:r,to:a,x:l,y:c,w:d,h:g,segment:e,startStubX:b+r[0]*u,startStubY:y+r[1]*u,endStubX:P+a[0]*h,endStubY:_+a[1]*h,isXGreaterThanStubTimes2:Math.abs(b-P)>u+h,isYGreaterThanStubTimes2:Math.abs(y-_)>u+h,opposite:x==-1,perpendicular:0===x,orthogonal:1==x,sourceAxis:0===r[0]?"y":"x",points:[l,c,d,g,b,y,P,_]};return C.anchorOrientation=C.opposite?"opposite":C.orthogonal?"orthogonal":"perpendicular",C};this.getSegments=function(){return o},this.updateBounds=function(t){var e=t.getBounds();this.bounds.minX=Math.min(this.bounds.minX,e.minX),this.bounds.maxX=Math.max(this.bounds.maxX,e.maxX),this.bounds.minY=Math.min(this.bounds.minY,e.minY),this.bounds.maxY=Math.max(this.bounds.maxY,e.maxY)};return this.pointOnPath=function(t,e){var n=C(t,e);return n.segment&&n.segment.pointOnPath(n.proportion,!1)||[0,0]},this.gradientAtPoint=function(t,e){var n=C(t,e);return n.segment&&n.segment.gradientAtPoint(n.proportion,!1)||0},this.pointAlongPathFrom=function(t,e,n){var i=C(t,n);return i.segment&&i.segment.pointAlongPathFrom(i.proportion,e,!1)||[0,0]},this.compute=function(t){v=S.call(this,t),j(),this._compute(v,t),this.x=v.points[0],this.y=v.points[1],this.w=v.points[2],this.h=v.points[3],this.segment=v.segment,x()},{addSegment:E,prepareCompute:S,sourceStub:u,targetStub:h,maxStub:Math.max(u,h),sourceGap:p,targetGap:f,maxGap:Math.max(p,f),setGeometry:P,getGeometry:_}},n.extend(e.Connectors.AbstractConnector,s),e.Endpoints.AbstractEndpoint=function(t){return s.apply(this,arguments),{compute:this.compute=function(t,e,n,i){var s=this._compute.apply(this,arguments);return this.x=s[0],this.y=s[1],this.w=s[2],this.h=s[3],this.bounds.minX=this.x,this.bounds.minY=this.y,this.bounds.maxX=this.x+this.w,this.bounds.maxY=this.y+this.h,s},cssClass:t.cssClass}},n.extend(e.Endpoints.AbstractEndpoint,s),e.Endpoints.Dot=function(t){this.type="Dot";e.Endpoints.AbstractEndpoint.apply(this,arguments);t=t||{},this.radius=t.radius||10,this.defaultOffset=.5*this.radius,this.defaultInnerRadius=this.radius/3,this._compute=function(t,e,n,i){this.radius=n.radius||this.radius;var s=t[0]-this.radius,o=t[1]-this.radius,r=2*this.radius,a=2*this.radius;if(n.stroke){var l=n.strokeWidth||1;s-=l,o-=l,r+=2*l,a+=2*l}return[s,o,r,a,this.radius]}},n.extend(e.Endpoints.Dot,e.Endpoints.AbstractEndpoint),e.Endpoints.Rectangle=function(t){
-this.type="Rectangle";e.Endpoints.AbstractEndpoint.apply(this,arguments);t=t||{},this.width=t.width||20,this.height=t.height||20,this._compute=function(t,e,n,i){var s=n.width||this.width,o=n.height||this.height;return[t[0]-s/2,t[1]-o/2,s,o]}},n.extend(e.Endpoints.Rectangle,e.Endpoints.AbstractEndpoint);var o=function(t){e.jsPlumbUIComponent.apply(this,arguments),this._jsPlumb.displayElements=[]};n.extend(o,e.jsPlumbUIComponent,{getDisplayElements:function(){return this._jsPlumb.displayElements},appendDisplayElement:function(t){this._jsPlumb.displayElements.push(t)}}),e.Endpoints.Image=function(i){this.type="Image",o.apply(this,arguments),e.Endpoints.AbstractEndpoint.apply(this,arguments);var s=i.onload,r=i.src||i.url,a=i.cssClass?" "+i.cssClass:"";this._jsPlumb.img=new Image,this._jsPlumb.ready=!1,this._jsPlumb.initialized=!1,this._jsPlumb.deleted=!1,this._jsPlumb.widthToUse=i.width,this._jsPlumb.heightToUse=i.height,this._jsPlumb.endpoint=i.endpoint,this._jsPlumb.img.onload=function(){null!=this._jsPlumb&&(this._jsPlumb.ready=!0,this._jsPlumb.widthToUse=this._jsPlumb.widthToUse||this._jsPlumb.img.width,this._jsPlumb.heightToUse=this._jsPlumb.heightToUse||this._jsPlumb.img.height,s&&s(this))}.bind(this),this._jsPlumb.endpoint.setImage=function(t,e){var n=t.constructor==String?t:t.src;s=e,this._jsPlumb.img.src=n,null!=this.canvas&&this.canvas.setAttribute("src",this._jsPlumb.img.src)}.bind(this),this._jsPlumb.endpoint.setImage(r,s),this._compute=function(t,e,n,i){return this.anchorPoint=t,this._jsPlumb.ready?[t[0]-this._jsPlumb.widthToUse/2,t[1]-this._jsPlumb.heightToUse/2,this._jsPlumb.widthToUse,this._jsPlumb.heightToUse]:[0,0,0,0]},this.canvas=e.createElement("img",{position:"absolute",margin:0,padding:0,outline:0},this._jsPlumb.instance.endpointClass+a),this._jsPlumb.widthToUse&&this.canvas.setAttribute("width",this._jsPlumb.widthToUse),this._jsPlumb.heightToUse&&this.canvas.setAttribute("height",this._jsPlumb.heightToUse),this._jsPlumb.instance.appendElement(this.canvas),this.actuallyPaint=function(t,e,i){if(!this._jsPlumb.deleted){this._jsPlumb.initialized||(this.canvas.setAttribute("src",this._jsPlumb.img.src),this.appendDisplayElement(this.canvas),this._jsPlumb.initialized=!0);var s=this.anchorPoint[0]-this._jsPlumb.widthToUse/2,o=this.anchorPoint[1]-this._jsPlumb.heightToUse/2;n.sizeElement(this.canvas,s,o,this._jsPlumb.widthToUse,this._jsPlumb.heightToUse)}},this.paint=function(e,n){null!=this._jsPlumb&&(this._jsPlumb.ready?this.actuallyPaint(e,n):t.setTimeout(function(){this.paint(e,n)}.bind(this),200))}},n.extend(e.Endpoints.Image,[o,e.Endpoints.AbstractEndpoint],{cleanup:function(t){t&&(this._jsPlumb.deleted=!0,this.canvas&&this.canvas.parentNode.removeChild(this.canvas),this.canvas=null)}}),e.Endpoints.Blank=function(t){e.Endpoints.AbstractEndpoint.apply(this,arguments);this.type="Blank",o.apply(this,arguments),this._compute=function(t,e,n,i){return[t[0],t[1],10,0]};var i=t.cssClass?" "+t.cssClass:"";this.canvas=e.createElement("div",{display:"block",width:"1px",height:"1px",background:"transparent",position:"absolute"},this._jsPlumb.instance.endpointClass+i),this._jsPlumb.instance.appendElement(this.canvas),this.paint=function(t,e){n.sizeElement(this.canvas,this.x,this.y,this.w,this.h)}},n.extend(e.Endpoints.Blank,[e.Endpoints.AbstractEndpoint,o],{cleanup:function(){this.canvas&&this.canvas.parentNode&&this.canvas.parentNode.removeChild(this.canvas)}}),e.Endpoints.Triangle=function(t){this.type="Triangle",e.Endpoints.AbstractEndpoint.apply(this,arguments),t=t||{},t.width=t.width||55,t.height=t.height||55,this.width=t.width,this.height=t.height,this._compute=function(t,e,n,i){var s=n.width||self.width,o=n.height||self.height;return[t[0]-s/2,t[1]-o/2,s,o]}};var r=e.Overlays.AbstractOverlay=function(t){this.visible=!0,this.isAppendedAtTopLevel=!0,this.component=t.component,this.loc=null==t.location?.5:t.location,this.endpointLoc=null==t.endpointLocation?[.5,.5]:t.endpointLocation,this.visible=t.visible!==!1};r.prototype={cleanup:function(t){t&&(this.component=null,this.canvas=null,this.endpointLoc=null)},reattach:function(t){},setVisible:function(t){this.visible=t,this.component.repaint()},isVisible:function(){return this.visible},hide:function(){this.setVisible(!1)},show:function(){this.setVisible(!0)},incrementLocation:function(t){this.loc+=t,this.component.repaint()},setLocation:function(t){this.loc=t,this.component.repaint()},getLocation:function(){return this.loc},updateFrom:function(){}},e.Overlays.Arrow=function(t){this.type="Arrow",r.apply(this,arguments),this.isAppendedAtTopLevel=!1,t=t||{},this.length=t.length||20,this.width=t.width||20,this.id=t.id;var s=(t.direction||1)<0?-1:1,o=t.paintStyle||{"stroke-width":1},a=t.foldback||.623;this.computeMaxSize=function(){return 1.5*self.width},this.elementCreated=function(n,i){if(this.path=n,t.events)for(var s in t.events)e.on(n,s,t.events[s])},this.draw=function(t,e){var r,l,c,u,h;if(t.pointAlongPathFrom){if(n.isString(this.loc)||this.loc>1||this.loc<0){var d=parseInt(this.loc,10),p=this.loc<0?1:0;r=t.pointAlongPathFrom(p,d,!1),l=t.pointAlongPathFrom(p,d-s*this.length/2,!1),c=i.pointOnLine(r,l,this.length)}else if(1==this.loc){if(r=t.pointOnPath(this.loc),l=t.pointAlongPathFrom(this.loc,-this.length),c=i.pointOnLine(r,l,this.length),s==-1){var f=c;c=r,r=f}}else if(0===this.loc){if(c=t.pointOnPath(this.loc),l=t.pointAlongPathFrom(this.loc,this.length),r=i.pointOnLine(c,l,this.length),s==-1){var g=c;c=r,r=g}}else r=t.pointAlongPathFrom(this.loc,s*this.length/2),l=t.pointOnPath(this.loc),c=i.pointOnLine(r,l,this.length);u=i.perpendicularLineTo(r,c,this.width),h=i.pointOnLine(r,c,a*this.length);var m={hxy:r,tail:u,cxy:h},v=o.stroke||e.stroke,b=o.fill||e.stroke;return{component:t,d:m,"stroke-width":o.strokeWidth||e.strokeWidth,stroke:v,fill:b,minX:Math.min(r.x,u[0].x,u[1].x),maxX:Math.max(r.x,u[0].x,u[1].x),minY:Math.min(r.y,u[0].y,u[1].y),maxY:Math.max(r.y,u[0].y,u[1].y)}}return{component:t,minX:0,maxX:0,minY:0,maxY:0}}},n.extend(e.Overlays.Arrow,r,{updateFrom:function(t){this.length=t.length||this.length,this.width=t.width||this.width,this.direction=null!=t.direction?t.direction:this.direction,this.foldback=t.foldback||this.foldback}}),e.Overlays.PlainArrow=function(t){t=t||{};var n=e.extend(t,{foldback:1});e.Overlays.Arrow.call(this,n),this.type="PlainArrow"},n.extend(e.Overlays.PlainArrow,e.Overlays.Arrow),e.Overlays.Diamond=function(t){t=t||{};var n=t.length||40,i=e.extend(t,{length:n/2,foldback:2});e.Overlays.Arrow.call(this,i),this.type="Diamond"},n.extend(e.Overlays.Diamond,e.Overlays.Arrow);var a=function(t,e){return(null==t._jsPlumb.cachedDimensions||e)&&(t._jsPlumb.cachedDimensions=t.getDimensions()),t._jsPlumb.cachedDimensions},l=function(t){e.jsPlumbUIComponent.apply(this,arguments),r.apply(this,arguments);var i=this.fire;this.fire=function(){i.apply(this,arguments),this.component&&this.component.fire.apply(this.component,arguments)},this.detached=!1,this.id=t.id,this._jsPlumb.div=null,this._jsPlumb.initialised=!1,this._jsPlumb.component=t.component,this._jsPlumb.cachedDimensions=null,this._jsPlumb.create=t.create,this._jsPlumb.initiallyInvisible=t.visible===!1,this.getElement=function(){if(null==this._jsPlumb.div){var n=this._jsPlumb.div=e.getElement(this._jsPlumb.create(this._jsPlumb.component));n.style.position="absolute",n.className=this._jsPlumb.instance.overlayClass+" "+(this.cssClass?this.cssClass:t.cssClass?t.cssClass:""),this._jsPlumb.instance.appendElement(n),this._jsPlumb.instance.getId(n),this.canvas=n;var i="translate(-50%, -50%)";n.style.webkitTransform=i,n.style.mozTransform=i,n.style.msTransform=i,n.style.oTransform=i,n.style.transform=i,n._jsPlumb=this,t.visible===!1&&(n.style.display="none")}return this._jsPlumb.div},this.draw=function(t,e,i){var s=a(this);if(null!=s&&2==s.length){var o={x:0,y:0};if(i)o={x:i[0],y:i[1]};else if(t.pointOnPath){var r=this.loc,l=!1;(n.isString(this.loc)||this.loc<0||this.loc>1)&&(r=parseInt(this.loc,10),l=!0),o=t.pointOnPath(r,l)}else{var c=this.loc.constructor==Array?this.loc:this.endpointLoc;o={x:c[0]*t.w,y:c[1]*t.h}}var u=o.x-s[0]/2,h=o.y-s[1]/2;return{component:t,d:{minx:u,miny:h,td:s,cxy:o},minX:u,maxX:u+s[0],minY:h,maxY:h+s[1]}}return{minX:0,maxX:0,minY:0,maxY:0}}};n.extend(l,[e.jsPlumbUIComponent,r],{getDimensions:function(){return[1,1]},setVisible:function(t){this._jsPlumb.div&&(this._jsPlumb.div.style.display=t?"block":"none",t&&this._jsPlumb.initiallyInvisible&&(a(this,!0),this.component.repaint(),this._jsPlumb.initiallyInvisible=!1))},clearCachedDimensions:function(){this._jsPlumb.cachedDimensions=null},cleanup:function(t){t?null!=this._jsPlumb.div&&(this._jsPlumb.div._jsPlumb=null,this._jsPlumb.instance.removeElement(this._jsPlumb.div)):(this._jsPlumb&&this._jsPlumb.div&&this._jsPlumb.div.parentNode&&this._jsPlumb.div.parentNode.removeChild(this._jsPlumb.div),this.detached=!0)},reattach:function(t){null!=this._jsPlumb.div&&t.getContainer().appendChild(this._jsPlumb.div),this.detached=!1},computeMaxSize:function(){var t=a(this);return Math.max(t[0],t[1])},paint:function(t,e){this._jsPlumb.initialised||(this.getElement(),t.component.appendDisplayElement(this._jsPlumb.div),this._jsPlumb.initialised=!0,this.detached&&this._jsPlumb.div.parentNode.removeChild(this._jsPlumb.div)),this._jsPlumb.div.style.left=t.component.x+t.d.minx+"px",this._jsPlumb.div.style.top=t.component.y+t.d.miny+"px"}}),e.Overlays.Custom=function(t){this.type="Custom",l.apply(this,arguments)},n.extend(e.Overlays.Custom,l),e.Overlays.GuideLines=function(){var t=this;t.length=50,t.strokeWidth=5,this.type="GuideLines",r.apply(this,arguments),e.jsPlumbUIComponent.apply(this,arguments),this.draw=function(e,n){var s=e.pointAlongPathFrom(t.loc,t.length/2),o=e.pointOnPath(t.loc),r=i.pointOnLine(s,o,t.length),a=i.perpendicularLineTo(s,r,40),l=i.perpendicularLineTo(r,s,20);return{connector:e,head:s,tail:r,headLine:l,tailLine:a,minX:Math.min(s.x,r.x,l[0].x,l[1].x),minY:Math.min(s.y,r.y,l[0].y,l[1].y),maxX:Math.max(s.x,r.x,l[0].x,l[1].x),maxY:Math.max(s.y,r.y,l[0].y,l[1].y)}}},e.Overlays.Label=function(t){this.labelStyle=t.labelStyle;this.cssClass=null!=this.labelStyle?this.labelStyle.cssClass:null;var n=e.extend({create:function(){return e.createElement("div")}},t);if(e.Overlays.Custom.call(this,n),this.type="Label",this.label=t.label||"",this.labelText=null,this.labelStyle){var i=this.getElement();if(this.labelStyle.font=this.labelStyle.font||"12px sans-serif",i.style.font=this.labelStyle.font,i.style.color=this.labelStyle.color||"black",this.labelStyle.fill&&(i.style.background=this.labelStyle.fill),this.labelStyle.borderWidth>0){var s=this.labelStyle.borderStyle?this.labelStyle.borderStyle:"black";i.style.border=this.labelStyle.borderWidth+"px solid "+s}this.labelStyle.padding&&(i.style.padding=this.labelStyle.padding)}},n.extend(e.Overlays.Label,e.Overlays.Custom,{cleanup:function(t){t&&(this.div=null,this.label=null,this.labelText=null,this.cssClass=null,this.labelStyle=null)},getLabel:function(){return this.label},setLabel:function(t){this.label=t,this.labelText=null,this.clearCachedDimensions(),this.update(),this.component.repaint()},getDimensions:function(){return this.update(),l.prototype.getDimensions.apply(this,arguments)},update:function(){if("function"==typeof this.label){var t=this.label(this);this.getElement().innerHTML=t.replace(/\r\n/g,"<br/>")}else null==this.labelText&&(this.labelText=this.label,this.getElement().innerHTML=this.labelText.replace(/\r\n/g,"<br/>"))},updateFrom:function(t){null!=t.label&&this.setLabel(t.label)}})}.call("undefined"!=typeof window?window:f),function(){var t=this,e=function(e){var n=e._mottle;return n||(n=e._mottle=new t.Mottle),n};t.jsPlumb.extend(t.jsPlumbInstance.prototype,{getEventManager:function(){return e(this)},on:function(t,e,n){return this.getEventManager().on.apply(this,arguments),this},off:function(t,e,n){return this.getEventManager().off.apply(this,arguments),this}})}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumbUtil,n=t.jsPlumbInstance,i="stop",s="revert",o="_jsPlumbGroup",r=function(t){function n(t){delete t.proxies;var n,i=a[t.id];null!=i&&(n=function(e){return e.id===t.id},e.removeWithFunction(i.connections.source,n),e.removeWithFunction(i.connections.target,n),delete a[t.id]),null!=(i=l[t.id])&&(n=function(e){return e.id===t.id},e.removeWithFunction(i.connections.source,n),e.removeWithFunction(i.connections.target,n),delete l[t.id])}function i(e,n){for(var i=e.getMembers(),s=0;s<i.length;s++)t[n?"show":"hide"](i[s],!0)}function s(e){var n=e.getMembers(),i=t.getConnections({source:n},!0),s=t.getConnections({target:n},!0),o={};e.connections.source.length=0,e.connections.target.length=0;var r=function(t){for(var n=0;n<t.length;n++)o[t[n].id]||(o[t[n].id]=!0,t[n].source._jsPlumbGroup===e?(t[n].target._jsPlumbGroup!==e&&e.connections.source.push(t[n]),a[t[n].id]=e):t[n].target._jsPlumbGroup===e&&(e.connections.target.push(t[n]),l[t[n].id]=e))};r(i),r(s)}var r={},a={},l={},c=this;t.bind("connection",function(t){null!=t.source[o]&&null!=t.target[o]&&t.source[o]===t.target[o]?(a[t.connection.id]=t.source[o],l[t.connection.id]=t.source[o]):(null!=t.source[o]&&(e.suggest(t.source[o].connections.source,t.connection),a[t.connection.id]=t.source[o]),null!=t.target[o]&&(e.suggest(t.target[o].connections.target,t.connection),l[t.connection.id]=t.target[o]))}),t.bind("internal.connectionDetached",function(t){n(t.connection)}),t.bind("connectionMoved",function(t){var e=0===t.index?a:l,n=e[t.connection.id];if(n){var i=n.connections[0===t.index?"source":"target"],s=i.indexOf(t.connection);s!=-1&&i.splice(s,1)}}),this.addGroup=function(e){t.addClass(e.getEl(),"jtk-group-expanded"),r[e.id]=e,e.manager=this,s(e),t.fire("group:add",{group:e})},this.addToGroup=function(e,n,i){if(e=this.getGroup(e)){var s=e.getEl();if(n._isJsPlumbGroup)return;var o=n._jsPlumbGroup;if(o!==e){var r=t.getOffset(n,!0),a=e.collapsed?t.getOffset(s,!0):t.getOffset(e.getDragArea(),!0);null!=o&&(o.remove(n,i),c.updateConnectionsForGroup(o)),e.add(n,i);var l=function(t,n){var i=0==n?1:0;t.each(function(t){t.setVisible(!1),t.endpoints[i].element._jsPlumbGroup===e?(t.endpoints[i].setVisible(!1),c.expandConnection(t,i,e)):(t.endpoints[n].setVisible(!1),c.collapseConnection(t,n,e))})};e.collapsed&&(l(t.select({source:n}),0),l(t.select({target:n}),1));var u=t.getId(n);t.dragManager.setParent(n,u,s,t.getId(s),r);var h={left:r.left-a.left,top:r.top-a.top};t.setPosition(n,h),t.dragManager.revalidateParent(n,u,r),c.updateConnectionsForGroup(e),t.revalidate(u),setTimeout(function(){t.fire("group:addMember",{group:e,el:n})},0)}}},this.removeFromGroup=function(t,e,n){(t=this.getGroup(t))&&t.remove(e,null,n)},this.getGroup=function(t){var n=t;if(e.isString(t)&&null==(n=r[t]))throw new TypeError("No such group ["+t+"]");return n},this.getGroups=function(){var t=[];for(var e in r)t.push(r[e]);return t},this.removeGroup=function(e,n,i,s){e=this.getGroup(e),this.expandGroup(e,!0),e[n?"removeAll":"orphanAll"](i,s),t.remove(e.getEl()),delete r[e.id],delete t._groups[e.id],t.fire("group:remove",{group:e})},this.removeAllGroups=function(t,e,n){for(var i in r)this.removeGroup(r[i],t,e,n)};var u=this.collapseConnection=function(e,n,i){var s,r=i.getEl(),a=t.getId(r),l=e.endpoints[n].elementId,c=e.endpoints[0===n?1:0].element;c[o]&&!c[o].shouldProxy()&&c[o].collapsed||(e.proxies=e.proxies||[],e.proxies[n]?s=e.proxies[n].ep:(s=t.addEndpoint(r,{endpoint:i.getEndpoint(e,n),anchor:i.getAnchor(e,n),parameters:{isProxyEndpoint:!0}}),s._forceDeleteOnDetach=!0),e.proxies[n]={ep:s,originalEp:e.endpoints[n]},0===n?t.anchorManager.sourceChanged(l,a,e,r):(t.anchorManager.updateOtherEndpoint(e.endpoints[0].elementId,l,a,e),e.target=r,e.targetId=a),e.proxies[n].originalEp.detachFromConnection(e,null,!0),s.connections=[e],e.endpoints[n]=s,e.setVisible(!0))};this.collapseGroup=function(e){if(null!=(e=this.getGroup(e))&&!e.collapsed){var n=e.getEl();if(i(e,!1),e.shouldProxy()){var s=function(t,n){for(var i=0;i<t.length;i++){u(t[i],n,e)}};s(e.connections.source,0),s(e.connections.target,1)}e.collapsed=!0,t.removeClass(n,"jtk-group-expanded"),t.addClass(n,"jtk-group-collapsed"),t.revalidate(n),t.fire("group:collapse",{group:e})}};var h=this.expandConnection=function(e,n,i){if(null!=e.proxies&&null!=e.proxies[n]){var s=t.getId(i.getEl()),o=e.proxies[n].originalEp.element,r=e.proxies[n].originalEp.elementId;e.endpoints[n]=e.proxies[n].originalEp,0===n?t.anchorManager.sourceChanged(s,r,e,o):(t.anchorManager.updateOtherEndpoint(e.endpoints[0].elementId,s,r,e),e.target=o,e.targetId=r),e.proxies[n].ep.detachFromConnection(e,null,!0),e.proxies[n].originalEp.addConnection(e),delete e.proxies[n]}};this.expandGroup=function(e,n){if(null!=(e=this.getGroup(e))&&e.collapsed){var s=e.getEl();if(i(e,!0),e.shouldProxy()){var o=function(t,n){for(var i=0;i<t.length;i++){h(t[i],n,e)}};o(e.connections.source,0),o(e.connections.target,1)}e.collapsed=!1,t.addClass(s,"jtk-group-expanded"),t.removeClass(s,"jtk-group-collapsed"),t.revalidate(s),this.repaintGroup(e),n||t.fire("group:expand",{group:e})}},this.repaintGroup=function(e){e=this.getGroup(e);for(var n=e.getMembers(),i=0;i<n.length;i++)t.revalidate(n[i])},this.updateConnectionsForGroup=s,this.refreshAllGroups=function(){for(var e in r)s(r[e]),t.dragManager.updateOffsets(t.getId(r[e].getEl()))}},a=function(n,r){function a(t){return t.offsetParent}function l(t,e){var i=a(t),s=n.getSize(i),o=n.getSize(t),r=e[0],l=r+o[0],c=e[1],u=c+o[1];return l>0&&r<s[0]&&u>0&&c<s[1]}function c(t){var e=n.getId(t),i=n.getOffset(t);t.parentNode.removeChild(t),n.getContainer().appendChild(t),n.setPosition(t,i),delete t._jsPlumbGroup,d(t),n.dragManager.clearParent(t,e)}function u(t){l(t.el,t.pos)||(t.el._jsPlumbGroup.remove(t.el),_?n.remove(t.el):c(t.el))}function h(t){var e=n.getId(t);n.revalidate(t),n.dragManager.revalidateParent(t,e)}function d(t){t._katavorioDrag&&((_||P)&&t._katavorioDrag.off(i,u),_||P||!y||(t._katavorioDrag.off(s,h),t._katavorioDrag.setRevert(null)))}function p(t){t._katavorioDrag&&((_||P)&&t._katavorioDrag.on(i,u),b&&t._katavorioDrag.setConstrain(!0),v&&t._katavorioDrag.setUseGhostProxy(!0),_||P||!y||(t._katavorioDrag.on(s,h),t._katavorioDrag.setRevert(function(t,e){return!l(t,e)})))}var f=this,g=r.el;this.getEl=function(){return g},this.id=r.id||e.uuid(),g._isJsPlumbGroup=!0;var m=this.getDragArea=function(){var t=n.getSelector(g,"[jtk-group-content]");return t&&t.length>0?t[0]:g},v=r.ghost===!0,b=v||r.constrain===!0,y=r.revert!==!1,P=r.orphan===!0,_=r.prune===!0,x=r.dropOverride===!0,C=r.proxied!==!1,E=[];if(this.connections={source:[],target:[],internal:[]},this.getAnchor=function(t,e){return r.anchor||"Continuous"},this.getEndpoint=function(t,e){return r.endpoint||["Dot",{radius:10}]},this.collapsed=!1,r.draggable!==!1){var j={stop:function(t){n.fire("groupDragStop",jsPlumb.extend(t,{group:f}))},scope:"_jsPlumbGroupDrag"};r.dragOptions&&t.jsPlumb.extend(j,r.dragOptions),n.draggable(r.el,j)}r.droppable!==!1&&n.droppable(r.el,{drop:function(t){var e=t.drag.el;if(!e._isJsPlumbGroup){var i=e._jsPlumbGroup;if(i!==f){if(null!=i&&i.overrideDrop(e,f))return;n.getGroupManager().addToGroup(f,e,!1)}}}});var S=function(t,e){for(var n=null==t.nodeType?t:[t],i=0;i<n.length;i++)e(n[i])};this.overrideDrop=function(t,e){return x&&(y||_||P)},this.add=function(t,e){var i=m();S(t,function(t){if(null!=t._jsPlumbGroup){if(t._jsPlumbGroup===f)return;t._jsPlumbGroup.remove(t,!0,e,!1)}t._jsPlumbGroup=f,E.push(t),n.isAlreadyDraggable(t)&&p(t),t.parentNode!=i&&i.appendChild(t),e||n.fire("group:addMember",{group:f,el:t})}),n.getGroupManager().updateConnectionsForGroup(f)},this.remove=function(t,i,s,o){S(t,function(t){if(delete t._jsPlumbGroup,e.removeWithFunction(E,function(e){return e===t}),i)try{f.getDragArea().removeChild(t)}catch(t){jsPlumbUtil.log("Could not remove element from Group "+t)}d(t),s||n.fire("group:removeMember",{group:f,el:t})}),o||n.getGroupManager().updateConnectionsForGroup(f)},this.removeAll=function(t,e){for(var i=0,s=E.length;i<s;i++)f.remove(E[0],t,e,!0);E.length=0,n.getGroupManager().updateConnectionsForGroup(f)},this.orphanAll=function(){for(var t=0;t<E.length;t++)c(E[t]);E.length=0},this.getMembers=function(){return E},g[o]=this,n.bind("elementDraggable",function(t){t.el._jsPlumbGroup==this&&p(t.el)}.bind(this)),this.shouldProxy=function(){return C},n.getGroupManager().addGroup(this)};n.prototype.addGroup=function(t){var e=this;if(e._groups=e._groups||{},null!=e._groups[t.id])throw new TypeError("cannot create Group ["+t.id+"]; a Group with that ID exists");if(null!=t.el[o])throw new TypeError("cannot create Group ["+t.id+"]; the given element is already a Group");var n=new a(e,t);return e._groups[n.id]=n,n},n.prototype.addToGroup=function(t,e,n){var i=function(e){var i=this.getId(e);this.manage(i,e),this.getGroupManager().addToGroup(t,e,n)}.bind(this);if(Array.isArray(e))for(var s=0;s<e.length;s++)i(e[s]);else i(e)},n.prototype.removeFromGroup=function(t,e,n){this.getGroupManager().removeFromGroup(t,e,n)},n.prototype.removeGroup=function(t,e,n,i){this.getGroupManager().removeGroup(t,e,n,i)},n.prototype.removeAllGroups=function(t,e,n){this.getGroupManager().removeAllGroups(t,e,n)},n.prototype.getGroup=function(t){return this.getGroupManager().getGroup(t)},n.prototype.getGroups=function(){return this.getGroupManager().getGroups()},n.prototype.expandGroup=function(t){this.getGroupManager().expandGroup(t)},n.prototype.collapseGroup=function(t){this.getGroupManager().collapseGroup(t)},n.prototype.repaintGroup=function(t){this.getGroupManager().repaintGroup(t)},n.prototype.toggleGroup=function(t){null!=(t=this.getGroupManager().getGroup(t))&&this.getGroupManager()[t.collapsed?"expandGroup":"collapseGroup"](t)},n.prototype.getGroupManager=function(){var t=this._groupManager;return null==t&&(t=this._groupManager=new r(this)),t},n.prototype.removeGroupManager=function(){delete this._groupManager},n.prototype.getGroupFor=function(t){if(t=this.getElement(t))return t[o]}}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil,i=function(t){this.type="Flowchart",t=t||{},t.stub=null==t.stub?30:t.stub;var n,i,s=e.Connectors.AbstractConnector.apply(this,arguments),o=null==t.midpoint?.5:t.midpoint,r=t.alwaysRespectStubs===!0,a=null,l=null,c=null!=t.cornerRadius?t.cornerRadius:0,u=(t.loopbackRadius,function(t){return t<0?-1:0===t?0:1}),h=function(t,e,n,i){if(a!=e||l!=n){var s=null==a?i.sx:a,o=null==l?i.sy:l,r=s==e?"v":"h",c=u(e-s),h=u(n-o);a=e,l=n,t.push([s,o,e,n,r,c,h])}},d=function(t){return Math.sqrt(Math.pow(t[0]-t[2],2)+Math.pow(t[1]-t[3],2))},p=function(t){var e=[];return e.push.apply(e,t),e},f=function(t,e,n){for(var i,o=null,r=0;r<e.length-1;r++){if(o=o||p(e[r]),i=p(e[r+1]),c>0&&o[4]!=i[4]){var a=Math.min(c,d(o),d(i));o[2]-=o[5]*a,o[3]-=o[6]*a,i[0]+=i[5]*a,i[1]+=i[6]*a;var l=o[6]==i[5]&&1==i[5]||o[6]==i[5]&&0===i[5]&&o[5]!=i[6]||o[6]==i[5]&&i[5]==-1,u=i[1]>o[3]?1:-1,h=i[0]>o[2]?1:-1,f=u==h,g=f&&l||!f&&!l?i[0]:o[2],m=f&&l||!f&&!l?o[3]:i[1];s.addSegment(t,"Straight",{x1:o[0],y1:o[1],x2:o[2],y2:o[3]}),s.addSegment(t,"Arc",{r:a,x1:o[2],y1:o[3],x2:i[0],y2:i[1],cx:g,cy:m,ac:l})}else{var v=o[2]==o[0]?0:o[2]>o[0]?n.lw/2:-(n.lw/2),b=o[3]==o[1]?0:o[3]>o[1]?n.lw/2:-(n.lw/2);s.addSegment(t,"Straight",{x1:o[0]-v,y1:o[1]-b,x2:o[2]+v,y2:o[3]+b})}o=i}null!=i&&s.addSegment(t,"Straight",{x1:i[0],y1:i[1],x2:i[2],y2:i[3]})};this._compute=function(t,e){n=[],a=null,l=null,i=null;var c=function(){return[t.startStubX,t.startStubY,t.endStubX,t.endStubY]},u={perpendicular:c,orthogonal:c,opposite:function(e){var n=t,i="x"==e?0:1,s={x:function(){return 1==n.so[i]&&(n.startStubX>n.endStubX&&n.tx>n.startStubX||n.sx>n.endStubX&&n.tx>n.sx)||n.so[i]==-1&&(n.startStubX<n.endStubX&&n.tx<n.startStubX||n.sx<n.endStubX&&n.tx<n.sx)},y:function(){return 1==n.so[i]&&(n.startStubY>n.endStubY&&n.ty>n.startStubY||n.sy>n.endStubY&&n.ty>n.sy)||n.so[i]==-1&&(n.startStubY<n.endStubY&&n.ty<n.startStubY||n.sy<n.endStubY&&n.ty<n.sy)}};return!r&&s[e]()?{x:[(t.sx+t.tx)/2,t.startStubY,(t.sx+t.tx)/2,t.endStubY],y:[t.startStubX,(t.sy+t.ty)/2,t.endStubX,(t.sy+t.ty)/2]}[e]:[t.startStubX,t.startStubY,t.endStubX,t.endStubY]}},d=u[t.anchorOrientation](t.sourceAxis),p="x"==t.sourceAxis?0:1,g="x"==t.sourceAxis?1:0,m=d[p],v=d[g],b=d[p+2],y=d[g+2];h(n,d[0],d[1],t);var P=t.startStubX+(t.endStubX-t.startStubX)*o,_=t.startStubY+(t.endStubY-t.startStubY)*o,x={x:[0,1],y:[1,0]},C={perpendicular:function(e){var n=t,i={x:[[[1,2,3,4],null,[2,1,4,3]],null,[[4,3,2,1],null,[3,4,1,2]]],y:[[[3,2,1,4],null,[2,3,4,1]],null,[[4,1,2,3],null,[1,4,3,2]]]},s={x:[[n.startStubX,n.endStubX],null,[n.endStubX,n.startStubX]],y:[[n.startStubY,n.endStubY],null,[n.endStubY,n.startStubY]]},o={x:[[P,n.startStubY],[P,n.endStubY]],y:[[n.startStubX,_],[n.endStubX,_]]},r={x:[[n.endStubX,n.startStubY]],y:[[n.startStubX,n.endStubY]]},a={x:[[n.startStubX,n.endStubY],[n.endStubX,n.endStubY]],y:[[n.endStubX,n.startStubY],[n.endStubX,n.endStubY]]},l={x:[[n.startStubX,_],[n.endStubX,_],[n.endStubX,n.endStubY]],y:[[P,n.startStubY],[P,n.endStubY],[n.endStubX,n.endStubY]]},c={x:[n.startStubY,n.endStubY],y:[n.startStubX,n.endStubX]},u=x[e][0],h=x[e][1],d=n.so[u]+1,p=n.to[h]+1,f=n.to[h]==-1&&c[e][1]<c[e][0]||1==n.to[h]&&c[e][1]>c[e][0],g=s[e][d][0],m=s[e][d][1],v=i[e][d][p];return n.segment==v[3]||n.segment==v[2]&&f?o[e]:n.segment==v[2]&&m<g?r[e]:n.segment==v[2]&&m>=g||n.segment==v[1]&&!f?l[e]:n.segment==v[0]||n.segment==v[1]&&f?a[e]:void 0},orthogonal:function(e,n,i,s,o){var r=t,a={x:r.so[0]==-1?Math.min(n,s):Math.max(n,s),y:r.so[1]==-1?Math.min(n,s):Math.max(n,s)}[e];return{x:[[a,i],[a,o],[s,o]],y:[[i,a],[o,a],[o,s]]}[e]},opposite:function(n,i,o,r){var a=t,l={x:"y",y:"x"}[n],c={x:"height",y:"width"}[n],u=a["is"+n.toUpperCase()+"GreaterThanStubTimes2"];if(e.sourceEndpoint.elementId==e.targetEndpoint.elementId){var h=o+(1-e.sourceEndpoint.anchor[l])*e.sourceInfo[c]+s.maxStub;return{x:[[i,h],[r,h]],y:[[h,i],[h,r]]}[n]}return!u||1==a.so[p]&&i>r||a.so[p]==-1&&i<r?{x:[[i,_],[r,_]],y:[[P,i],[P,r]]}[n]:1==a.so[p]&&i<r||a.so[p]==-1&&i>r?{x:[[P,a.sy],[P,a.ty]],y:[[a.sx,_],[a.tx,_]]}[n]:void 0}},E=C[t.anchorOrientation](t.sourceAxis,m,v,b,y);if(E)for(var j=0;j<E.length;j++)h(n,E[j][0],E[j][1],t);h(n,d[2],d[3],t),h(n,t.tx,t.ty,t),f(this,n,t)}};n.extend(i,e.Connectors.AbstractConnector),e.registerConnectorType(i,"Flowchart")}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil;e.Connectors.AbstractBezierConnector=function(t){t=t||{};var n,i=t.showLoopback!==!1,s=(t.curviness,t.margin||5),o=(t.proximityLimit,t.orientation&&"clockwise"===t.orientation),r=t.loopbackRadius||25,a=!1;return this.overrideSetEditable=function(){return!a},this._compute=function(t,e){var l=e.sourcePos,c=e.targetPos,u=Math.abs(l[0]-c[0]),h=Math.abs(l[1]-c[1]);if(i&&e.sourceEndpoint.elementId===e.targetEndpoint.elementId){a=!0;var d=e.sourcePos[0],p=e.sourcePos[1]-s,f=d,g=p-r,m=f-r,v=g-r;u=2*r,h=2*r,t.points[0]=m,t.points[1]=v,t.points[2]=u,t.points[3]=h,n.addSegment(this,"Arc",{loopback:!0,x1:d-m+4,y1:p-v,startAngle:0,endAngle:2*Math.PI,r:r,ac:!o,x2:d-m-4,y2:p-v,cx:f-m,cy:g-v})}else a=!1,this._computeBezier(t,e,l,c,u,h)},n=e.Connectors.AbstractConnector.apply(this,arguments)},n.extend(e.Connectors.AbstractBezierConnector,e.Connectors.AbstractConnector);var i=function(t){t=t||{},this.type="Bezier";var n=e.Connectors.AbstractBezierConnector.apply(this,arguments),i=t.curviness||150;this.getCurviness=function(){return i},this._findControlPoint=function(t,e,n,s,o,r,a){var l=r[0]!=a[0]||r[1]==a[1],c=[];return l?(0===a[0]?c.push(n[0]<e[0]?t[0]+10:t[0]-10):c.push(t[0]+i*a[0]),0===a[1]?c.push(n[1]<e[1]?t[1]+10:t[1]-10):c.push(t[1]+i*r[1])):(0===r[0]?c.push(e[0]<n[0]?t[0]+10:t[0]-10):c.push(t[0]-i*r[0]),0===r[1]?c.push(e[1]<n[1]?t[1]+10:t[1]-10):c.push(t[1]+i*a[1])),c},this._computeBezier=function(t,e,i,s,o,r){var a,l,c=this.getGeometry(),u=i[0]<s[0]?o:0,h=i[1]<s[1]?r:0,d=i[0]<s[0]?0:o,p=i[1]<s[1]?0:r;(this.hasBeenEdited()||this.isEditing())&&null!=c&&null!=c.controlPoints&&null!=c.controlPoints[0]&&null!=c.controlPoints[1]?(a=c.controlPoints[0],l=c.controlPoints[1]):(a=this._findControlPoint([u,h],i,s,e.sourceEndpoint,e.targetEndpoint,t.so,t.to),l=this._findControlPoint([d,p],s,i,e.targetEndpoint,e.sourceEndpoint,t.to,t.so)),n.setGeometry({controlPoints:[a,l]},!0),n.addSegment(this,"Bezier",{x1:u,y1:h,x2:d,y2:p,cp1x:a[0],cp1y:a[1],cp2x:l[0],cp2y:l[1]})}};n.extend(i,e.Connectors.AbstractBezierConnector),e.registerConnectorType(i,"Bezier")}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil,i=function(t,e,n,i){return t<=n&&i<=e?1:t<=n&&e<=i?2:n<=t&&i>=e?3:4},s=function(t,e,n,i,s,o,r,a,l){return a<=l?[t,e]:1===n?i[3]<=0&&s[3]>=1?[t+(i[2]<.5?-1*o:o),e]:i[2]>=1&&s[2]<=0?[t,e+(i[3]<.5?-1*r:r)]:[t+-1*o,e+-1*r]:2===n?i[3]>=1&&s[3]<=0?[t+(i[2]<.5?-1*o:o),e]:i[2]>=1&&s[2]<=0?[t,e+(i[3]<.5?-1*r:r)]:[t+o,e+-1*r]:3===n?i[3]>=1&&s[3]<=0?[t+(i[2]<.5?-1*o:o),e]:i[2]<=0&&s[2]>=1?[t,e+(i[3]<.5?-1*r:r)]:[t+-1*o,e+-1*r]:4===n?i[3]<=0&&s[3]>=1?[t+(i[2]<.5?-1*o:o),e]:i[2]<=0&&s[2]>=1?[t,e+(i[3]<.5?-1*r:r)]:[t+o,e+-1*r]:void 0},o=function(t){t=t||{},this.type="StateMachine";var n,o=e.Connectors.AbstractBezierConnector.apply(this,arguments),r=t.curviness||10,a=t.margin||5,l=t.proximityLimit||80;t.orientation&&t.orientation;this._computeBezier=function(t,e,c,u,h,d){var p=e.sourcePos[0]<e.targetPos[0]?0:h,f=e.sourcePos[1]<e.targetPos[1]?0:d,g=e.sourcePos[0]<e.targetPos[0]?h:0,m=e.sourcePos[1]<e.targetPos[1]?d:0;0===e.sourcePos[2]&&(p-=a),1===e.sourcePos[2]&&(p+=a),0===e.sourcePos[3]&&(f-=a),1===e.sourcePos[3]&&(f+=a),0===e.targetPos[2]&&(g-=a),1===e.targetPos[2]&&(g+=a),0===e.targetPos[3]&&(m-=a),1===e.targetPos[3]&&(m+=a);var v,b,y,P,_=(p+g)/2,x=(f+m)/2,C=i(p,f,g,m),E=Math.sqrt(Math.pow(g-p,2)+Math.pow(m-f,2)),j=o.getGeometry();(this.hasBeenEdited()||this.isEditing())&&null!=j?(v=j.controlPoints[0][0],y=j.controlPoints[0][1],b=j.controlPoints[1][0],P=j.controlPoints[1][1]):(n=s(_,x,C,e.sourcePos,e.targetPos,r,r,E,l),v=n[0],b=n[0],y=n[1],P=n[1],o.setGeometry({controlPoints:[n,n]},!0)),o.addSegment(this,"Bezier",{x1:g,y1:m,x2:p,y2:f,cp1x:v,cp1y:y,cp2x:b,cp2y:P})}};n.extend(o,e.Connectors.AbstractBezierConnector),e.registerConnectorType(o,"StateMachine")}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil,i=function(t){this.type="Straight";var n=e.Connectors.AbstractConnector.apply(this,arguments);this._compute=function(t,e){n.addSegment(this,"Straight",{x1:t.sx,y1:t.sy,x2:t.startStubX,y2:t.startStubY}),n.addSegment(this,"Straight",{x1:t.startStubX,y1:t.startStubY,x2:t.endStubX,y2:t.endStubY}),n.addSegment(this,"Straight",{x1:t.endStubX,y1:t.endStubY,x2:t.tx,y2:t.ty})}};n.extend(i,e.Connectors.AbstractConnector),e.registerConnectorType(i,"Straight")}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil,i={"stroke-linejoin":"stroke-linejoin","stroke-dashoffset":"stroke-dashoffset","stroke-linecap":"stroke-linecap"},s={svg:"http://www.w3.org/2000/svg",xhtml:"http://www.w3.org/1999/xhtml"},o=function(t,e){for(var n in e)t.setAttribute(n,""+e[n])},r=function(t,n){return n=n||{},n.version="1.1",n.xmlns=s.xhtml,e.createElementNS(s.svg,t,null,null,n)},a=function(t){return"position:absolute;left:"+t[0]+"px;top:"+t[1]+"px"},l=function(t){for(var e=t.querySelectorAll(" defs,linearGradient,radialGradient"),n=0;n<e.length;n++)e[n].parentNode.removeChild(e[n])},c=function(t,e,n,i,s){var o="jsplumb_gradient_"+s._jsPlumb.instance.idstamp();l(t);var a;a=n.gradient.offset?r("radialGradient",{id:o}):r("linearGradient",{id:o,gradientUnits:"userSpaceOnUse"});var c=r("defs");t.appendChild(c),c.appendChild(a);for(var u=0;u<n.gradient.stops.length;u++){var h=1==s.segment||2==s.segment?u:n.gradient.stops.length-1-u,d=n.gradient.stops[h][1],p=r("stop",{offset:Math.floor(100*n.gradient.stops[u][0])+"%","stop-color":d});a.appendChild(p)}var f=n.stroke?"stroke":"fill"
-;e.setAttribute(f,"url(#"+o+")")},u=function(t,e,n,s,o){if(e.setAttribute("fill",n.fill?n.fill:"none"),e.setAttribute("stroke",n.stroke?n.stroke:"none"),n.gradient?c(t,e,n,0,o):(l(t),e.setAttribute("style","")),n.strokeWidth&&e.setAttribute("stroke-width",n.strokeWidth),n.dashstyle&&n.strokeWidth&&!n["stroke-dasharray"]){var r=n.dashstyle.indexOf(",")==-1?" ":",",a=n.dashstyle.split(r),u="";a.forEach(function(t){u+=Math.floor(t*n.strokeWidth)+r}),e.setAttribute("stroke-dasharray",u)}else n["stroke-dasharray"]&&e.setAttribute("stroke-dasharray",n["stroke-dasharray"]);for(var h in i)n[h]&&e.setAttribute(i[h],n[h])},h=function(t,e,n){t.childNodes.length>n?t.insertBefore(e,t.childNodes[n]):t.appendChild(e)};n.svg={node:r,attr:o,pos:a};var d=function(t){var i=t.pointerEventsSpec||"all",s={};e.jsPlumbUIComponent.apply(this,t.originalArgs),this.canvas=null,this.path=null,this.svg=null,this.bgCanvas=null;var l=t.cssClass+" "+(t.originalArgs[0].cssClass||""),c={style:"",width:0,height:0,"pointer-events":i,position:"absolute"};this.svg=r("svg",c),t.useDivWrapper?(this.canvas=e.createElement("div",{position:"absolute"}),n.sizeElement(this.canvas,0,0,1,1),this.canvas.className=l):(o(this.svg,{class:l}),this.canvas=this.svg),t._jsPlumb.appendElement(this.canvas,t.originalArgs[0].parent),t.useDivWrapper&&this.canvas.appendChild(this.svg);var u=[this.canvas];return this.getDisplayElements=function(){return u},this.appendDisplayElement=function(t){u.push(t)},this.paint=function(e,i,r){if(null!=e){var l,c=[this.x,this.y],u=[this.w,this.h];null!=r&&(r.xmin<0&&(c[0]+=r.xmin),r.ymin<0&&(c[1]+=r.ymin),u[0]=r.xmax+(r.xmin<0?-r.xmin:0),u[1]=r.ymax+(r.ymin<0?-r.ymin:0)),t.useDivWrapper?(n.sizeElement(this.canvas,c[0],c[1],u[0],u[1]),c[0]=0,c[1]=0,l=a([0,0])):l=a([c[0],c[1]]),s.paint.apply(this,arguments),o(this.svg,{style:l,width:u[0]||0,height:u[1]||0})}},{renderer:s}};n.extend(d,e.jsPlumbUIComponent,{cleanup:function(t){t||null==this.typeId?(this.canvas&&(this.canvas._jsPlumb=null),this.svg&&(this.svg._jsPlumb=null),this.bgCanvas&&(this.bgCanvas._jsPlumb=null),this.canvas&&this.canvas.parentNode&&this.canvas.parentNode.removeChild(this.canvas),this.bgCanvas&&this.bgCanvas.parentNode&&this.canvas.parentNode.removeChild(this.canvas),this.svg=null,this.canvas=null,this.path=null,this.group=null):(this.canvas&&this.canvas.parentNode&&this.canvas.parentNode.removeChild(this.canvas),this.bgCanvas&&this.bgCanvas.parentNode&&this.bgCanvas.parentNode.removeChild(this.bgCanvas))},reattach:function(t){var e=t.getContainer();this.canvas&&null==this.canvas.parentNode&&e.appendChild(this.canvas),this.bgCanvas&&null==this.bgCanvas.parentNode&&e.appendChild(this.bgCanvas)},setVisible:function(t){this.canvas&&(this.canvas.style.display=t?"block":"none")}}),e.ConnectorRenderers.svg=function(t){var n=this,i=d.apply(this,[{cssClass:t._jsPlumb.connectorClass+(this.isEditable()?" "+t._jsPlumb.editableConnectorClass:""),originalArgs:arguments,pointerEventsSpec:"none",_jsPlumb:t._jsPlumb}]),s=this.setEditable;this.setEditable=function(t){e[s.apply(this,[t])?"addClass":"removeClass"](this.canvas,this._jsPlumb.instance.editableConnectorClass)},i.renderer.paint=function(i,s,a){var l=n.getSegments(),c="",d=[0,0];if(a.xmin<0&&(d[0]=-a.xmin),a.ymin<0&&(d[1]=-a.ymin),l.length>0){c=n.getPathData();var p={d:c,transform:"translate("+d[0]+","+d[1]+")","pointer-events":t["pointer-events"]||"visibleStroke"},f=null;n.x,n.y,n.w,n.h;if(i.outlineStroke){var g=i.outlineWidth||1,m=i.strokeWidth+2*g;f=e.extend({},i),delete f.gradient,f.stroke=i.outlineStroke,f.strokeWidth=m,null==n.bgPath?(n.bgPath=r("path",p),e.addClass(n.bgPath,e.connectorOutlineClass),h(n.svg,n.bgPath,0)):o(n.bgPath,p),u(n.svg,n.bgPath,f,0,n)}null==n.path?(n.path=r("path",p),h(n.svg,n.path,i.outlineStroke?1:0)):o(n.path,p),u(n.svg,n.path,i,0,n)}}},n.extend(e.ConnectorRenderers.svg,d);var p=e.SvgEndpoint=function(t){d.apply(this,[{cssClass:t._jsPlumb.endpointClass,originalArgs:arguments,pointerEventsSpec:"all",useDivWrapper:!0,_jsPlumb:t._jsPlumb}]).renderer.paint=function(t){var n=e.extend({},t);n.outlineStroke&&(n.strokeWidth=n.strokeWidth,n.stroke=n.outlineStroke),null==this.node?(this.node=this.makeNode(n),this.svg.appendChild(this.node)):null!=this.updateNode&&this.updateNode(this.node),u(this.svg,this.node,n,(this.x,this.y,this.w,this.h),this),a(this.node,(this.x,this.y))}.bind(this)};n.extend(p,d),e.Endpoints.svg.Dot=function(){e.Endpoints.Dot.apply(this,arguments),p.apply(this,arguments),this.makeNode=function(t){return r("circle",{cx:this.w/2,cy:this.h/2,r:this.radius})},this.updateNode=function(t){o(t,{cx:this.w/2,cy:this.h/2,r:this.radius})}},n.extend(e.Endpoints.svg.Dot,[e.Endpoints.Dot,p]),e.Endpoints.svg.Rectangle=function(){e.Endpoints.Rectangle.apply(this,arguments),p.apply(this,arguments),this.makeNode=function(t){return r("rect",{width:this.w,height:this.h})},this.updateNode=function(t){o(t,{width:this.w,height:this.h})}},n.extend(e.Endpoints.svg.Rectangle,[e.Endpoints.Rectangle,p]),e.Endpoints.svg.Image=e.Endpoints.Image,e.Endpoints.svg.Blank=e.Endpoints.Blank,e.Overlays.svg.Label=e.Overlays.Label,e.Overlays.svg.Custom=e.Overlays.Custom;var f=function(t,n){t.apply(this,n),e.jsPlumbUIComponent.apply(this,n),this.isAppendedAtTopLevel=!1;this.path=null,this.paint=function(t,e){if(t.component.svg&&e){null==this.path&&(this.path=r("path",{"pointer-events":"all"}),t.component.svg.appendChild(this.path),this.elementCreated&&this.elementCreated(this.path,t.component),this.canvas=t.component.svg);var s=n&&1==n.length?n[0].cssClass||"":"",a=[0,0];e.xmin<0&&(a[0]=-e.xmin),e.ymin<0&&(a[1]=-e.ymin),o(this.path,{d:i(t.d),class:s,stroke:t.stroke?t.stroke:null,fill:t.fill?t.fill:null,transform:"translate("+a[0]+","+a[1]+")"})}};var i=function(t){return isNaN(t.cxy.x)||isNaN(t.cxy.y)?"":"M"+t.hxy.x+","+t.hxy.y+" L"+t.tail[0].x+","+t.tail[0].y+" L"+t.cxy.x+","+t.cxy.y+" L"+t.tail[1].x+","+t.tail[1].y+" L"+t.hxy.x+","+t.hxy.y};this.transfer=function(t){t.canvas&&this.path&&this.path.parentNode&&(this.path.parentNode.removeChild(this.path),t.canvas.appendChild(this.path))}};n.extend(f,[e.jsPlumbUIComponent,e.Overlays.AbstractOverlay],{cleanup:function(t){null!=this.path&&(t?this._jsPlumb.instance.removeElement(this.path):this.path.parentNode&&this.path.parentNode.removeChild(this.path))},reattach:function(t){this.path&&this.canvas&&null==this.path.parentNode&&this.canvas.appendChild(this.path)},setVisible:function(t){null!=this.path&&(this.path.style.display=t?"block":"none")}}),e.Overlays.svg.Arrow=function(){f.apply(this,[e.Overlays.Arrow,arguments])},n.extend(e.Overlays.svg.Arrow,[e.Overlays.Arrow,f]),e.Overlays.svg.PlainArrow=function(){f.apply(this,[e.Overlays.PlainArrow,arguments])},n.extend(e.Overlays.svg.PlainArrow,[e.Overlays.PlainArrow,f]),e.Overlays.svg.Diamond=function(){f.apply(this,[e.Overlays.Diamond,arguments])},n.extend(e.Overlays.svg.Diamond,[e.Overlays.Diamond,f]),e.Overlays.svg.GuideLines=function(){var t,n,i=null,s=this;e.Overlays.GuideLines.apply(this,arguments),this.paint=function(e,l){null==i&&(i=r("path"),e.connector.svg.appendChild(i),s.attachListeners(i,e.connector),s.attachListeners(i,s),t=r("path"),e.connector.svg.appendChild(t),s.attachListeners(t,e.connector),s.attachListeners(t,s),n=r("path"),e.connector.svg.appendChild(n),s.attachListeners(n,e.connector),s.attachListeners(n,s));var c=[0,0];l.xmin<0&&(c[0]=-l.xmin),l.ymin<0&&(c[1]=-l.ymin),o(i,{d:a(e.head,e.tail),stroke:"red",fill:null,transform:"translate("+c[0]+","+c[1]+")"}),o(t,{d:a(e.tailLine[0],e.tailLine[1]),stroke:"blue",fill:null,transform:"translate("+c[0]+","+c[1]+")"}),o(n,{d:a(e.headLine[0],e.headLine[1]),stroke:"green",fill:null,transform:"translate("+c[0]+","+c[1]+")"})};var a=function(t,e){return"M "+t.x+","+t.y+" L"+e.x+","+e.y}},n.extend(e.Overlays.svg.GuideLines,e.Overlays.GuideLines)}.call("undefined"!=typeof window?window:f),function(){var t=this,e=t.jsPlumb,n=t.jsPlumbUtil,i=t.Katavorio,s=t.Biltong,o=function(t,n){n=n||"main";var o="_katavorio_"+n,r=t[o],a=t.getEventManager();return r||(r=new i({bind:a.on,unbind:a.off,getSize:e.getSize,getPosition:function(e,n){var i=t.getOffset(e,n,e._katavorioDrag?e.offsetParent:null);return[i.left,i.top]},setPosition:function(t,e){t.style.left=e[0]+"px",t.style.top=e[1]+"px"},addClass:e.addClass,removeClass:e.removeClass,intersects:s.intersects,indexOf:function(t,e){return t.indexOf(e)},scope:t.getDefaultScope(),css:{noSelect:t.dragSelectClass,droppable:"jtk-droppable",draggable:"jtk-draggable",drag:"jtk-drag",selected:"jtk-drag-selected",active:"jtk-drag-active",hover:"jtk-drag-hover",ghostProxy:"jtk-ghost-proxy"}}),t[o]=r,t.bind("zoom",r.setZoom)),r},r=function(t,e){var i=function(i){if(null!=e[i]){if(n.isString(e[i])){var s=e[i].match(/-=/)?-1:1,o=e[i].substring(2);return t[i]+s*o}return e[i]}return t[i]};return[i("left"),i("top")]};e.extend(t.jsPlumbInstance.prototype,{animationSupported:!0,getElement:function(t){return null==t?null:(t="string"==typeof t?t:null!=t.length&&null==t.enctype?t[0]:t,"string"==typeof t?document.getElementById(t):t)},removeElement:function(t){o(this).elementRemoved(t),this.getEventManager().remove(t)},doAnimate:function(t,n,i){i=i||{};var s=this.getOffset(t),o=r(s,n),a=o[0]-s.left,l=o[1]-s.top,c=i.duration||250,u=c/15,h=15/c*a,d=15/c*l,p=0,f=setInterval(function(){e.setPosition(t,{left:s.left+h*(p+1),top:s.top+d*(p+1)}),null!=i.step&&i.step(p,Math.ceil(u)),++p>=u&&(window.clearInterval(f),null!=i.complete&&i.complete())},15)},destroyDraggable:function(t,e){o(this,e).destroyDraggable(t)},destroyDroppable:function(t,e){o(this,e).destroyDroppable(t)},initDraggable:function(t,e,n){o(this,n).draggable(t,e)},initDroppable:function(t,e,n){o(this,n).droppable(t,e)},isAlreadyDraggable:function(t){return null!=t._katavorioDrag},isDragSupported:function(t,e){return!0},isDropSupported:function(t,e){return!0},isElementDraggable:function(t){return t=e.getElement(t),t._katavorioDrag&&t._katavorioDrag.isEnabled()},getDragObject:function(t){return t[0].drag.getDragElement()},getDragScope:function(t){return t._katavorioDrag&&t._katavorioDrag.scopes.join(" ")||""},getDropEvent:function(t){return t[0].e},getUIPosition:function(t,e){var n=t[0].el;if(null==n.offsetParent)return null;var i=t[0].finalPos||t[0].pos,s={left:i[0],top:i[1]};if(n._katavorioDrag&&n.offsetParent!==this.getContainer()){var o=this.getOffset(n.offsetParent);s.left+=o.left,s.top+=o.top}return s},setDragFilter:function(t,e,n){t._katavorioDrag&&t._katavorioDrag.setFilter(e,n)},setElementDraggable:function(t,n){t=e.getElement(t),t._katavorioDrag&&t._katavorioDrag.setEnabled(n)},setDragScope:function(t,e){t._katavorioDrag&&t._katavorioDrag.k.setDragScope(t,e)},setDropScope:function(t,e){t._katavorioDrop&&t._katavorioDrop.length>0&&t._katavorioDrop[0].k.setDropScope(t,e)},addToPosse:function(t,n){var i=Array.prototype.slice.call(arguments,1),s=o(this);e.each(t,function(t){t=[e.getElement(t)],t.push.apply(t,i),s.addToPosse.apply(s,t)})},setPosse:function(t,n){var i=Array.prototype.slice.call(arguments,1),s=o(this);e.each(t,function(t){t=[e.getElement(t)],t.push.apply(t,i),s.setPosse.apply(s,t)})},removeFromPosse:function(t,n){var i=Array.prototype.slice.call(arguments,1),s=o(this);e.each(t,function(t){t=[e.getElement(t)],t.push.apply(t,i),s.removeFromPosse.apply(s,t)})},removeFromAllPosses:function(t){var n=o(this);e.each(t,function(t){n.removeFromAllPosses(e.getElement(t))})},setPosseState:function(t,n,i){var s=o(this);e.each(t,function(t){s.setPosseState(e.getElement(t),n,i)})},dragEvents:{start:"start",stop:"stop",drag:"drag",step:"step",over:"over",out:"out",drop:"drop",complete:"complete",beforeStart:"beforeStart"},animEvents:{step:"step",complete:"complete"},stopDrag:function(t){t._katavorioDrag&&t._katavorioDrag.abort()},addToDragSelection:function(t){o(this).select(t)},removeFromDragSelection:function(t){o(this).deselect(t)},clearDragSelection:function(){o(this).deselectAll()},trigger:function(t,e,n,i){this.getEventManager().trigger(t,e,n,i)},doReset:function(){for(var t in this)0===t.indexOf("_katavorio_")&&this[t].reset()}});!function(t){!function e(){/complete|loaded|interactive/.test(document.readyState)&&void 0!==document.body&&null!=document.body?t():setTimeout(e,9)}()}(e.init)}.call("undefined"!=typeof window?window:f)}),v=m.jsPlumb;window.requestAnimationFrame=window.requestAnimationFrame||window.webkitRequestAnimationFrame;var b=function t(e){e&&e.draw(),requestAnimationFrame(function(){t(e)})},y=function(t){var e=document.createElement("template");return e.innerHTML=t,e.content.firstChild},P=function(t,e){var n=y(t);return e?e.appendChild(n):document.body.appendChild(n),n},_=null,x=function(){return window.AudioContext=window.AudioContext||window.webkitAudioContext,_?_:_=new AudioContext},C=function(t,e,n){this.scope=t,"vertical"==e?(this.x=n,this.y=null):(this.x=null,this.y=n)};C.prototype.draw=function(){var t=this.scope.canvas.getContext("2d");t.strokeWidth=1,t.strokeStyle="#006644",t.setLineDash&&t.setLineDash([5]),null!=this.x?(t.beginPath(),t.moveTo(this.x,0),t.lineTo(this.x,this.scope.canvas.height),t.stroke()):null!=this.y&&(t.beginPath(),t.moveTo(0,128-this.y),t.lineTo(this.scope.canvas.width,128-this.y),t.stroke())};var E=function(e,n,i){var a=this;this.canvas=document.createElement("canvas"),this.canvas.style.width=n,this.canvas.style.height=i,this.canvas.id="scope",e?e.appendChild(this.canvas):document.body.appendChild(this.canvas);var l=t("oscilloscope-title-0"),c=P(l,document.getElementById("node-tree-canvas"));this.repr=c,c.controller=this,this.repr.id="oscilloscope-0",this.canvas.onmousedown=function(t){s(t,a)},this.canvas.onmouseup=function(t){o(t,a)},this.canvas.onmousemove=function(t){r(t,a)},this.triggerLevel=50,this.traces=[],this.sources=[],this.markers=[],this.markers.push(new C(this,"horizontal",80),new C(this,"vertical",200)),this.markerMoving=!1,this.autoTriggering=!0,this.triggerMoving=!1,this.triggerTrace=0,this.triggerType="rising"};E.prototype.draw=function(){var t=this.canvas.clientWidth,n=this.canvas.clientHeight,i=this.canvas.getContext("2d");this.canvas.height=n,this.canvas.width=t,this.scaling=n/256,i.strokeWidth=1,i.fillStyle="#222222",i.fillRect(0,0,t,n),i.strokeStyle="#278BFF",i.beginPath(),i.moveTo(0,128-this.triggerLevel),i.lineTo(t,128-this.triggerLevel),i.stroke(),this.traces[this.triggerTrace].fetch();var s=e(this.traces[this.triggerTrace].data,t,this.triggerLevel,this.triggerType);void 0===s&&this.autoTriggering&&(s=0),this.traces.forEach(function(t){t.on&&null!==t.source&&t.source.ready&&t.draw(s)}),this.markers.forEach(function(t){t.draw()})},E.prototype.addSource=function(t){this.sources.push(t)},E.prototype.addTrace=function(t){this.traces.push(t)},E.prototype.addMarker=function(t){this.markers.push(t)};var S=function(t,e){var n=this;this.scope=e,this.ready=!1;var i=c("source-title-"+e.sources.length,"source-switch-"+e.sources.length);this.repr=P(i,t),this.repr.controller=this,this.repr.id="source-"+e.sources.length,this.on_off=this.repr.getElementsByClassName("trace-on-off")[0],this.on_off.onchange=function(t){n.onSwitch(n,t)},this.on_off.checked=!0,this.repr.getElementsByClassName("card-title")[0];var s=x();this.osc=s.createOscillator(),this.output=s.createGain(),this.osc.type="sine",this.osc.frequency.value=1e3,this.osc.connect(this.output),this.output.gain.value=1,this.start=a,this.stop=l,this.analyzer=s.createAnalyser(),this.analyzer.fftSize=4096,this.output.connect(this.analyzer),this.ready=!0,e.addSource(this)};S.prototype.onSwitch=function(t,e){if(e.target.checked)this.osc.type=this.previousType,this.osc.frequency.value=this.previousFrequency;else{this.previousType=this.osc.type,this.previousFrequency=this.osc.frequency.value;var n=new Float32Array(1),i=new Float32Array(1);n[0]=0,i[0]=0;var s=x().createPeriodicWave(n,i);this.osc.setPeriodicWave(s)}};var D=function(t,e){var n=this;this.scope=e,this.ready=!1,this.onactive=null;var i=d("source-title-"+e.sources.length,"source-switch-"+e.sources.length),s=P(i,t);this.repr=s,s.controller=this,this.repr.id="source-"+e.sources.length,this.on_off=this.repr.getElementsByClassName("trace-on-off")[0],this.on_off.onchange=function(t){n.onSwitch(n,t)},this.on_off.checked=!1,this.repr.getElementsByClassName("card-title")[0],h(this),e.addSource(this)};D.prototype.constructSource=function(){h(this)},D.prototype.onSwitch=function(t,e){e.target.checked?this.traceGain.gain.previousGain=this.previousGain:(this.previousGain=this.traceGain.gain.value,this.traceGain.gain.value=1e-7)};var w=function(t,e,n){var i=this;this.scope=e,this.source=n,this.color="#E8830C",this.on=null!==n,this.colorpicker=null,this.title=null,this.icon=null;var s=this.createTraceRepr("trace-title-"+e.traces.length,"trace-switch-"+e.traces.length);this.repr=P(s,t),this.repr.id="trace-"+e.traces.length,this.repr.controller=this;var o=this.repr.getElementsByClassName("trace-on-off")[0];o.onchange=function(t){i.onSwitch(i,t)},o.checked=!0;var r=this.repr.getElementsByClassName("jscolor")[0];r.value=this.color,r.onchange=function(t){i.setColor(t.target.value)},this.title=this.repr.getElementsByClassName("card-title")[0],this.title.style.color=this.color,this.icon=this.repr.getElementsByClassName("material-icons")[0],this.icon.style.color=this.color,n&&n.ready&&(this.data=new Uint8Array(this.source.analyzer.frequencyBinCount)),this.fetched=!1};w.prototype.setSource=function(t){this.source=t,this.data=new Uint8Array(this.source.analyzer.frequencyBinCount)},w.prototype.createTraceRepr=function(t,e){return'<div class="mdl-shadow--2dp trace-card">\n            <div class="mdl-card__title">\n                <i class="material-icons trace-card-icon">timeline</i>&nbsp;\n                <div class="mdl-textfield mdl-js-textfield">\n                    <input class="mdl-textfield__input card-title" type="text" id="'+t+'">\n                    <label class="mdl-textfield__label" for="'+t+'">Trace</label>\n                </div><input class="jscolor">\n                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="'+e+'">\n                    <input type="checkbox" id="'+e+'" class="mdl-switch__input trace-on-off"/>\n                </label>\n            </div>\n        </div>'},w.prototype.setColor=function(t){this.color=t,this.icon.style.color=this.color,this.title.style.color=this.color},w.prototype.onSwitch=function(t,e){t.on=e.target.checked},w.prototype.fetch=function(){!this.fetched&&this.source&&this.source.ready&&this.source.analyzer.getByteTimeDomainData(this.data),this.fetched=!0},w.prototype.draw=function(t){var e=this.scope.canvas.getContext("2d");e.strokeWidth=1,this.fetch(),e.strokeStyle=this.color,e.beginPath(),e.moveTo(0,(256-this.data[t])*this.scope.scaling);for(var n=t,i=0;i<this.scope.canvas.width&&n<this.data.length;n++,i++)e.lineTo(i,(256-this.data[n])*this.scope.scaling);e.stroke(),this.fetched=!1};var A=function(t,e,n){var i=this;this.scope=e,this.source=n,this.color="#E8830C",this.on=null!==n;var s=this.createTraceRepr("trace-title-"+e.traces.length,"trace-switch-"+e.traces.length);this.repr=P(s,t),this.repr.id="trace-"+e.traces.length,this.repr.controller=this;var o=this.repr.getElementsByClassName("trace-on-off")[0];o.onchange=function(t){i.onSwitch(i,t)},o.checked=!0;var r=this.repr.getElementsByClassName("jscolor")[0];r.value=this.color,r.onchange=function(t){i.setColor(t.target.value)},this.title=this.repr.getElementsByClassName("card-title")[0],this.title.style.color=this.color,this.icon=this.repr.getElementsByClassName("material-icons")[0],this.icon.style.color=this.color,n&&n.ready&&(this.data=new Uint8Array(this.source.analyzer.frequencyBinCount)),this.fetched=!1};A.prototype.setSource=function(t){this.source=t,this.data=new Uint8Array(this.source.analyzer.frequencyBinCount)},A.prototype.createTraceRepr=function(t,e){return'<div class="mdl-shadow--2dp trace-card">\n        <div class="mdl-card__title">\n            <i class="material-icons trace-card-icon">equalizer</i>&nbsp;\n            <div class="mdl-textfield mdl-js-textfield">\n                <input class="mdl-textfield__input card-title" type="text" id="'+t+'">\n                <label class="mdl-textfield__label" for="'+t+'">FFT</label>\n            </div><input class="jscolor">\n            <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="'+e+'">\n                <input type="checkbox" id="'+e+'" class="mdl-switch__input trace-on-off"/>\n            </label>\n        </div>\n    </div>'},A.prototype.setColor=function(t){this.color=t},A.prototype.onSwitch=function(t,e){t.on=e.target.checked},A.prototype.fetch=function(){!this.fetched&&this.source&&this.source.ready&&this.source.analyzer.getByteFrequencyData(this.data),this.fetched=!0},A.prototype.draw=function(t){var e=Math.round(this.scope.canvas.width/1),n=this.source.analyzer.frequencyBinCount/e,i=this.scope.canvas.getContext("2d");i.lineCap="round",this.fetch();for(var s=0;s<e;++s){for(var o=0,r=Math.floor(s*n),a=0;a<n;a++)o+=this.data[r+a];o/=n,i.fillStyle="hsl("+Math.round(360*s/e)+", 100%, 50%)",i.fillRect(1*s,this.scope.canvas.height,1,-o)}return this.fetched=!1,t},window.addEventListener("load",p)});
+document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>');
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(factory());
+}(this, (function () { 'use strict';
+
+function __$styleInject(css, returnValue) {
+  if (typeof document === 'undefined') {
+    return returnValue;
+  }
+  css = css || '';
+  var head = document.head || document.getElementsByTagName('head')[0];
+  var style = document.createElement('style');
+  style.type = 'text/css';
+  if (style.styleSheet){
+    style.styleSheet.cssText = css;
+  } else {
+    style.appendChild(document.createTextNode(css));
+  }
+  head.appendChild(style);
+  return returnValue;
+}
+
+var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+
+
+
+
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+};
+
+var mithril = createCommonjsModule(function (module) {
+	new function () {
+
+		function Vnode(tag, key, attrs0, children, text, dom) {
+			return { tag: tag, key: key, attrs: attrs0, children: children, text: text, dom: dom, domSize: undefined, state: {}, events: undefined, instance: undefined, skip: false };
+		}
+		Vnode.normalize = function (node) {
+			if (Array.isArray(node)) return Vnode("[", undefined, undefined, Vnode.normalizeChildren(node), undefined, undefined);
+			if (node != null && (typeof node === "undefined" ? "undefined" : _typeof(node)) !== "object") return Vnode("#", undefined, undefined, node === false ? "" : node, undefined, undefined);
+			return node;
+		};
+		Vnode.normalizeChildren = function normalizeChildren(children) {
+			for (var i = 0; i < children.length; i++) {
+				children[i] = Vnode.normalize(children[i]);
+			}
+			return children;
+		};
+		var selectorParser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g;
+		var selectorCache = {};
+		function hyperscript(selector) {
+			if (selector == null || typeof selector !== "string" && typeof selector.view !== "function") {
+				throw Error("The selector must be either a string or a component.");
+			}
+			if (typeof selector === "string" && selectorCache[selector] === undefined) {
+				var match,
+				    tag,
+				    classes = [],
+				    attributes = {};
+				while (match = selectorParser.exec(selector)) {
+					var type = match[1],
+					    value = match[2];
+					if (type === "" && value !== "") tag = value;else if (type === "#") attributes.id = value;else if (type === ".") classes.push(value);else if (match[3][0] === "[") {
+						var attrValue = match[6];
+						if (attrValue) attrValue = attrValue.replace(/\\(["'])/g, "$1").replace(/\\\\/g, "\\");
+						if (match[4] === "class") classes.push(attrValue);else attributes[match[4]] = attrValue || true;
+					}
+				}
+				if (classes.length > 0) attributes.className = classes.join(" ");
+				selectorCache[selector] = function (attrs, children) {
+					var hasAttrs = false,
+					    childList,
+					    text;
+					var className = attrs.className || attrs.class;
+					for (var key in attributes) {
+						attrs[key] = attributes[key];
+					}if (className !== undefined) {
+						if (attrs.class !== undefined) {
+							attrs.class = undefined;
+							attrs.className = className;
+						}
+						if (attributes.className !== undefined) attrs.className = attributes.className + " " + className;
+					}
+					for (var key in attrs) {
+						if (key !== "key") {
+							hasAttrs = true;
+							break;
+						}
+					}
+					if (Array.isArray(children) && children.length == 1 && children[0] != null && children[0].tag === "#") text = children[0].children;else childList = children;
+					return Vnode(tag || "div", attrs.key, hasAttrs ? attrs : undefined, childList, text, undefined);
+				};
+			}
+			var attrs, children, childrenIndex;
+			if (arguments[1] == null || _typeof(arguments[1]) === "object" && arguments[1].tag === undefined && !Array.isArray(arguments[1])) {
+				attrs = arguments[1];
+				childrenIndex = 2;
+			} else childrenIndex = 1;
+			if (arguments.length === childrenIndex + 1) {
+				children = Array.isArray(arguments[childrenIndex]) ? arguments[childrenIndex] : [arguments[childrenIndex]];
+			} else {
+				children = [];
+				for (var i = childrenIndex; i < arguments.length; i++) {
+					children.push(arguments[i]);
+				}
+			}
+			if (typeof selector === "string") return selectorCache[selector](attrs || {}, Vnode.normalizeChildren(children));
+			return Vnode(selector, attrs && attrs.key, attrs || {}, Vnode.normalizeChildren(children), undefined, undefined);
+		}
+		hyperscript.trust = function (html) {
+			if (html == null) html = "";
+			return Vnode("<", undefined, undefined, html, undefined, undefined);
+		};
+		hyperscript.fragment = function (attrs1, children) {
+			return Vnode("[", attrs1.key, attrs1, Vnode.normalizeChildren(children), undefined, undefined);
+		};
+		var m = hyperscript;
+		/** @constructor */
+		var PromisePolyfill = function PromisePolyfill(executor) {
+			if (!(this instanceof PromisePolyfill)) throw new Error("Promise must be called with `new`");
+			if (typeof executor !== "function") throw new TypeError("executor must be a function");
+			var self = this,
+			    resolvers = [],
+			    rejectors = [],
+			    resolveCurrent = handler(resolvers, true),
+			    rejectCurrent = handler(rejectors, false);
+			var instance = self._instance = { resolvers: resolvers, rejectors: rejectors };
+			var callAsync = typeof setImmediate === "function" ? setImmediate : setTimeout;
+			function handler(list, shouldAbsorb) {
+				return function execute(value) {
+					var then;
+					try {
+						if (shouldAbsorb && value != null && ((typeof value === "undefined" ? "undefined" : _typeof(value)) === "object" || typeof value === "function") && typeof (then = value.then) === "function") {
+							if (value === self) throw new TypeError("Promise can't be resolved w/ itself");
+							executeOnce(then.bind(value));
+						} else {
+							callAsync(function () {
+								if (!shouldAbsorb && list.length === 0) console.error("Possible unhandled promise rejection:", value);
+								for (var i = 0; i < list.length; i++) {
+									list[i](value);
+								}resolvers.length = 0, rejectors.length = 0;
+								instance.state = shouldAbsorb;
+								instance.retry = function () {
+									execute(value);
+								};
+							});
+						}
+					} catch (e) {
+						rejectCurrent(e);
+					}
+				};
+			}
+			function executeOnce(then) {
+				var runs = 0;
+				function run(fn) {
+					return function (value) {
+						if (runs++ > 0) return;
+						fn(value);
+					};
+				}
+				var onerror = run(rejectCurrent);
+				try {
+					then(run(resolveCurrent), onerror);
+				} catch (e) {
+					onerror(e);
+				}
+			}
+			executeOnce(executor);
+		};
+		PromisePolyfill.prototype.then = function (onFulfilled, onRejection) {
+			var self = this,
+			    instance = self._instance;
+			function handle(callback, list, next, state) {
+				list.push(function (value) {
+					if (typeof callback !== "function") next(value);else try {
+						resolveNext(callback(value));
+					} catch (e) {
+						if (rejectNext) rejectNext(e);
+					}
+				});
+				if (typeof instance.retry === "function" && state === instance.state) instance.retry();
+			}
+			var resolveNext, rejectNext;
+			var promise = new PromisePolyfill(function (resolve, reject) {
+				resolveNext = resolve, rejectNext = reject;
+			});
+			handle(onFulfilled, instance.resolvers, resolveNext, true), handle(onRejection, instance.rejectors, rejectNext, false);
+			return promise;
+		};
+		PromisePolyfill.prototype.catch = function (onRejection) {
+			return this.then(null, onRejection);
+		};
+		PromisePolyfill.resolve = function (value) {
+			if (value instanceof PromisePolyfill) return value;
+			return new PromisePolyfill(function (resolve) {
+				resolve(value);
+			});
+		};
+		PromisePolyfill.reject = function (value) {
+			return new PromisePolyfill(function (resolve, reject) {
+				reject(value);
+			});
+		};
+		PromisePolyfill.all = function (list) {
+			return new PromisePolyfill(function (resolve, reject) {
+				var total = list.length,
+				    count = 0,
+				    values = [];
+				if (list.length === 0) resolve([]);else for (var i = 0; i < list.length; i++) {
+					(function (i) {
+						function consume(value) {
+							count++;
+							values[i] = value;
+							if (count === total) resolve(values);
+						}
+						if (list[i] != null && (_typeof(list[i]) === "object" || typeof list[i] === "function") && typeof list[i].then === "function") {
+							list[i].then(consume, reject);
+						} else consume(list[i]);
+					})(i);
+				}
+			});
+		};
+		PromisePolyfill.race = function (list) {
+			return new PromisePolyfill(function (resolve, reject) {
+				for (var i = 0; i < list.length; i++) {
+					list[i].then(resolve, reject);
+				}
+			});
+		};
+		if (typeof window !== "undefined") {
+			if (typeof window.Promise === "undefined") window.Promise = PromisePolyfill;
+			var PromisePolyfill = window.Promise;
+		} else if (typeof commonjsGlobal !== "undefined") {
+			if (typeof commonjsGlobal.Promise === "undefined") commonjsGlobal.Promise = PromisePolyfill;
+			var PromisePolyfill = commonjsGlobal.Promise;
+		} else {}
+		var buildQueryString = function buildQueryString(object) {
+			if (Object.prototype.toString.call(object) !== "[object Object]") return "";
+			var args = [];
+			for (var key0 in object) {
+				destructure(key0, object[key0]);
+			}
+			return args.join("&");
+			function destructure(key0, value) {
+				if (Array.isArray(value)) {
+					for (var i = 0; i < value.length; i++) {
+						destructure(key0 + "[" + i + "]", value[i]);
+					}
+				} else if (Object.prototype.toString.call(value) === "[object Object]") {
+					for (var i in value) {
+						destructure(key0 + "[" + i + "]", value[i]);
+					}
+				} else args.push(encodeURIComponent(key0) + (value != null && value !== "" ? "=" + encodeURIComponent(value) : ""));
+			}
+		};
+		var _8 = function _8($window, Promise) {
+			var callbackCount = 0;
+			var oncompletion;
+			function setCompletionCallback(callback) {
+				oncompletion = callback;
+			}
+			function finalizer() {
+				var count = 0;
+				function complete() {
+					if (--count === 0 && typeof oncompletion === "function") oncompletion();
+				}
+				return function finalize(promise0) {
+					var then0 = promise0.then;
+					promise0.then = function () {
+						count++;
+						var next = then0.apply(promise0, arguments);
+						next.then(complete, function (e) {
+							complete();
+							if (count === 0) throw e;
+						});
+						return finalize(next);
+					};
+					return promise0;
+				};
+			}
+			function normalize(args, extra) {
+				if (typeof args === "string") {
+					var url = args;
+					args = extra || {};
+					if (args.url == null) args.url = url;
+				}
+				return args;
+			}
+			function request(args, extra) {
+				var finalize = finalizer();
+				args = normalize(args, extra);
+				var promise0 = new Promise(function (resolve, reject) {
+					if (args.method == null) args.method = "GET";
+					args.method = args.method.toUpperCase();
+					var useBody = typeof args.useBody === "boolean" ? args.useBody : args.method !== "GET" && args.method !== "TRACE";
+					if (typeof args.serialize !== "function") args.serialize = typeof FormData !== "undefined" && args.data instanceof FormData ? function (value) {
+						return value;
+					} : JSON.stringify;
+					if (typeof args.deserialize !== "function") args.deserialize = deserialize;
+					if (typeof args.extract !== "function") args.extract = extract;
+					args.url = interpolate(args.url, args.data);
+					if (useBody) args.data = args.serialize(args.data);else args.url = assemble(args.url, args.data);
+					var xhr = new $window.XMLHttpRequest();
+					xhr.open(args.method, args.url, typeof args.async === "boolean" ? args.async : true, typeof args.user === "string" ? args.user : undefined, typeof args.password === "string" ? args.password : undefined);
+					if (args.serialize === JSON.stringify && useBody) {
+						xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+					}
+					if (args.deserialize === deserialize) {
+						xhr.setRequestHeader("Accept", "application/json, text/*");
+					}
+					if (args.withCredentials) xhr.withCredentials = args.withCredentials;
+					for (var key in args.headers) {
+						if ({}.hasOwnProperty.call(args.headers, key)) {
+							xhr.setRequestHeader(key, args.headers[key]);
+						}
+					}if (typeof args.config === "function") xhr = args.config(xhr, args) || xhr;
+					xhr.onreadystatechange = function () {
+						// Don't throw errors on xhr.abort(). XMLHttpRequests ends up in a state of
+						// xhr.status == 0 and xhr.readyState == 4 if aborted after open, but before completion.
+						if (xhr.status && xhr.readyState === 4) {
+							try {
+								var response = args.extract !== extract ? args.extract(xhr, args) : args.deserialize(args.extract(xhr, args));
+								if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
+									resolve(cast(args.type, response));
+								} else {
+									var error = new Error(xhr.responseText);
+									for (var key in response) {
+										error[key] = response[key];
+									}reject(error);
+								}
+							} catch (e) {
+								reject(e);
+							}
+						}
+					};
+					if (useBody && args.data != null) xhr.send(args.data);else xhr.send();
+				});
+				return args.background === true ? promise0 : finalize(promise0);
+			}
+			function jsonp(args, extra) {
+				var finalize = finalizer();
+				args = normalize(args, extra);
+				var promise0 = new Promise(function (resolve, reject) {
+					var callbackName = args.callbackName || "_mithril_" + Math.round(Math.random() * 1e16) + "_" + callbackCount++;
+					var script = $window.document.createElement("script");
+					$window[callbackName] = function (data) {
+						script.parentNode.removeChild(script);
+						resolve(cast(args.type, data));
+						delete $window[callbackName];
+					};
+					script.onerror = function () {
+						script.parentNode.removeChild(script);
+						reject(new Error("JSONP request failed"));
+						delete $window[callbackName];
+					};
+					if (args.data == null) args.data = {};
+					args.url = interpolate(args.url, args.data);
+					args.data[args.callbackKey || "callback"] = callbackName;
+					script.src = assemble(args.url, args.data);
+					$window.document.documentElement.appendChild(script);
+				});
+				return args.background === true ? promise0 : finalize(promise0);
+			}
+			function interpolate(url, data) {
+				if (data == null) return url;
+				var tokens = url.match(/:[^\/]+/gi) || [];
+				for (var i = 0; i < tokens.length; i++) {
+					var key = tokens[i].slice(1);
+					if (data[key] != null) {
+						url = url.replace(tokens[i], data[key]);
+					}
+				}
+				return url;
+			}
+			function assemble(url, data) {
+				var querystring = buildQueryString(data);
+				if (querystring !== "") {
+					var prefix = url.indexOf("?") < 0 ? "?" : "&";
+					url += prefix + querystring;
+				}
+				return url;
+			}
+			function deserialize(data) {
+				try {
+					return data !== "" ? JSON.parse(data) : null;
+				} catch (e) {
+					throw new Error(data);
+				}
+			}
+			function extract(xhr) {
+				return xhr.responseText;
+			}
+			function cast(type0, data) {
+				if (typeof type0 === "function") {
+					if (Array.isArray(data)) {
+						for (var i = 0; i < data.length; i++) {
+							data[i] = new type0(data[i]);
+						}
+					} else return new type0(data);
+				}
+				return data;
+			}
+			return { request: request, jsonp: jsonp, setCompletionCallback: setCompletionCallback };
+		};
+		var requestService = _8(window, PromisePolyfill);
+		var coreRenderer = function coreRenderer($window) {
+			var $doc = $window.document;
+			var $emptyFragment = $doc.createDocumentFragment();
+			var onevent;
+			function setEventCallback(callback) {
+				return onevent = callback;
+			}
+			//create
+			function createNodes(parent, vnodes, start, end, hooks, nextSibling, ns) {
+				for (var i = start; i < end; i++) {
+					var vnode = vnodes[i];
+					if (vnode != null) {
+						createNode(parent, vnode, hooks, ns, nextSibling);
+					}
+				}
+			}
+			function createNode(parent, vnode, hooks, ns, nextSibling) {
+				var tag = vnode.tag;
+				if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
+				if (typeof tag === "string") {
+					switch (tag) {
+						case "#":
+							return createText(parent, vnode, nextSibling);
+						case "<":
+							return createHTML(parent, vnode, nextSibling);
+						case "[":
+							return createFragment(parent, vnode, hooks, ns, nextSibling);
+						default:
+							return createElement(parent, vnode, hooks, ns, nextSibling);
+					}
+				} else return createComponent(parent, vnode, hooks, ns, nextSibling);
+			}
+			function createText(parent, vnode, nextSibling) {
+				vnode.dom = $doc.createTextNode(vnode.children);
+				insertNode(parent, vnode.dom, nextSibling);
+				return vnode.dom;
+			}
+			function createHTML(parent, vnode, nextSibling) {
+				var match1 = vnode.children.match(/^\s*?<(\w+)/im) || [];
+				var parent1 = { caption: "table", thead: "table", tbody: "table", tfoot: "table", tr: "tbody", th: "tr", td: "tr", colgroup: "table", col: "colgroup" }[match1[1]] || "div";
+				var temp = $doc.createElement(parent1);
+				temp.innerHTML = vnode.children;
+				vnode.dom = temp.firstChild;
+				vnode.domSize = temp.childNodes.length;
+				var fragment = $doc.createDocumentFragment();
+				var child;
+				while (child = temp.firstChild) {
+					fragment.appendChild(child);
+				}
+				insertNode(parent, fragment, nextSibling);
+				return fragment;
+			}
+			function createFragment(parent, vnode, hooks, ns, nextSibling) {
+				var fragment = $doc.createDocumentFragment();
+				if (vnode.children != null) {
+					var children = vnode.children;
+					createNodes(fragment, children, 0, children.length, hooks, null, ns);
+				}
+				vnode.dom = fragment.firstChild;
+				vnode.domSize = fragment.childNodes.length;
+				insertNode(parent, fragment, nextSibling);
+				return fragment;
+			}
+			function createElement(parent, vnode, hooks, ns, nextSibling) {
+				var tag = vnode.tag;
+				switch (vnode.tag) {
+					case "svg":
+						ns = "http://www.w3.org/2000/svg";break;
+					case "math":
+						ns = "http://www.w3.org/1998/Math/MathML";break;
+				}
+				var attrs2 = vnode.attrs;
+				var is = attrs2 && attrs2.is;
+				var element = ns ? is ? $doc.createElementNS(ns, tag, { is: is }) : $doc.createElementNS(ns, tag) : is ? $doc.createElement(tag, { is: is }) : $doc.createElement(tag);
+				vnode.dom = element;
+				if (attrs2 != null) {
+					setAttrs(vnode, attrs2, ns);
+				}
+				insertNode(parent, element, nextSibling);
+				if (vnode.attrs != null && vnode.attrs.contenteditable != null) {
+					setContentEditable(vnode);
+				} else {
+					if (vnode.text != null) {
+						if (vnode.text !== "") element.textContent = vnode.text;else vnode.children = [Vnode("#", undefined, undefined, vnode.text, undefined, undefined)];
+					}
+					if (vnode.children != null) {
+						var children = vnode.children;
+						createNodes(element, children, 0, children.length, hooks, null, ns);
+						setLateAttrs(vnode);
+					}
+				}
+				return element;
+			}
+			function createComponent(parent, vnode, hooks, ns, nextSibling) {
+				vnode.state = Object.create(vnode.tag);
+				var view = vnode.tag.view;
+				if (view.reentrantLock != null) return $emptyFragment;
+				view.reentrantLock = true;
+				initLifecycle(vnode.tag, vnode, hooks);
+				vnode.instance = Vnode.normalize(view.call(vnode.state, vnode));
+				view.reentrantLock = null;
+				if (vnode.instance != null) {
+					if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as arguments");
+					var element = createNode(parent, vnode.instance, hooks, ns, nextSibling);
+					vnode.dom = vnode.instance.dom;
+					vnode.domSize = vnode.dom != null ? vnode.instance.domSize : 0;
+					insertNode(parent, element, nextSibling);
+					return element;
+				} else {
+					vnode.domSize = 0;
+					return $emptyFragment;
+				}
+			}
+			//update
+			function updateNodes(parent, old, vnodes, recycling, hooks, nextSibling, ns) {
+				if (old === vnodes || old == null && vnodes == null) return;else if (old == null) createNodes(parent, vnodes, 0, vnodes.length, hooks, nextSibling, undefined);else if (vnodes == null) removeNodes(old, 0, old.length, vnodes);else {
+					if (old.length === vnodes.length) {
+						var isUnkeyed = false;
+						for (var i = 0; i < vnodes.length; i++) {
+							if (vnodes[i] != null && old[i] != null) {
+								isUnkeyed = vnodes[i].key == null && old[i].key == null;
+								break;
+							}
+						}
+						if (isUnkeyed) {
+							for (var i = 0; i < old.length; i++) {
+								if (old[i] === vnodes[i]) continue;else if (old[i] == null && vnodes[i] != null) createNode(parent, vnodes[i], hooks, ns, getNextSibling(old, i + 1, nextSibling));else if (vnodes[i] == null) removeNodes(old, i, i + 1, vnodes);else updateNode(parent, old[i], vnodes[i], hooks, getNextSibling(old, i + 1, nextSibling), false, ns);
+							}
+							return;
+						}
+					}
+					recycling = recycling || isRecyclable(old, vnodes);
+					if (recycling) old = old.concat(old.pool);
+
+					var oldStart = 0,
+					    start = 0,
+					    oldEnd = old.length - 1,
+					    end = vnodes.length - 1,
+					    map;
+					while (oldEnd >= oldStart && end >= start) {
+						var o = old[oldStart],
+						    v = vnodes[start];
+						if (o === v && !recycling) oldStart++, start++;else if (o == null) oldStart++;else if (v == null) start++;else if (o.key === v.key) {
+							oldStart++, start++;
+							updateNode(parent, o, v, hooks, getNextSibling(old, oldStart, nextSibling), recycling, ns);
+							if (recycling && o.tag === v.tag) insertNode(parent, toFragment(o), nextSibling);
+						} else {
+							var o = old[oldEnd];
+							if (o === v && !recycling) oldEnd--, start++;else if (o == null) oldEnd--;else if (v == null) start++;else if (o.key === v.key) {
+								updateNode(parent, o, v, hooks, getNextSibling(old, oldEnd + 1, nextSibling), recycling, ns);
+								if (recycling || start < end) insertNode(parent, toFragment(o), getNextSibling(old, oldStart, nextSibling));
+								oldEnd--, start++;
+							} else break;
+						}
+					}
+					while (oldEnd >= oldStart && end >= start) {
+						var o = old[oldEnd],
+						    v = vnodes[end];
+						if (o === v && !recycling) oldEnd--, end--;else if (o == null) oldEnd--;else if (v == null) end--;else if (o.key === v.key) {
+							updateNode(parent, o, v, hooks, getNextSibling(old, oldEnd + 1, nextSibling), recycling, ns);
+							if (recycling && o.tag === v.tag) insertNode(parent, toFragment(o), nextSibling);
+							if (o.dom != null) nextSibling = o.dom;
+							oldEnd--, end--;
+						} else {
+							if (!map) map = getKeyMap(old, oldEnd);
+							if (v != null) {
+								var oldIndex = map[v.key];
+								if (oldIndex != null) {
+									var movable = old[oldIndex];
+									updateNode(parent, movable, v, hooks, getNextSibling(old, oldEnd + 1, nextSibling), recycling, ns);
+									insertNode(parent, toFragment(movable), nextSibling);
+									old[oldIndex].skip = true;
+									if (movable.dom != null) nextSibling = movable.dom;
+								} else {
+									var dom = createNode(parent, v, hooks, undefined, nextSibling);
+									nextSibling = dom;
+								}
+							}
+							end--;
+						}
+						if (end < start) break;
+					}
+					createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+					removeNodes(old, oldStart, oldEnd + 1, vnodes);
+				}
+			}
+			function updateNode(parent, old, vnode, hooks, nextSibling, recycling, ns) {
+				var oldTag = old.tag,
+				    tag = vnode.tag;
+				if (oldTag === tag) {
+					vnode.state = old.state;
+					vnode.events = old.events;
+					if (shouldUpdate(vnode, old)) return;
+					if (vnode.attrs != null) {
+						updateLifecycle(vnode.attrs, vnode, hooks, recycling);
+					}
+					if (typeof oldTag === "string") {
+						switch (oldTag) {
+							case "#":
+								updateText(old, vnode);break;
+							case "<":
+								updateHTML(parent, old, vnode, nextSibling);break;
+							case "[":
+								updateFragment(parent, old, vnode, recycling, hooks, nextSibling, ns);break;
+							default:
+								updateElement(old, vnode, recycling, hooks, ns);
+						}
+					} else updateComponent(parent, old, vnode, hooks, nextSibling, recycling, ns);
+				} else {
+					removeNode(old, null);
+					createNode(parent, vnode, hooks, ns, nextSibling);
+				}
+			}
+			function updateText(old, vnode) {
+				if (old.children.toString() !== vnode.children.toString()) {
+					old.dom.nodeValue = vnode.children;
+				}
+				vnode.dom = old.dom;
+			}
+			function updateHTML(parent, old, vnode, nextSibling) {
+				if (old.children !== vnode.children) {
+					toFragment(old);
+					createHTML(parent, vnode, nextSibling);
+				} else vnode.dom = old.dom, vnode.domSize = old.domSize;
+			}
+			function updateFragment(parent, old, vnode, recycling, hooks, nextSibling, ns) {
+				updateNodes(parent, old.children, vnode.children, recycling, hooks, nextSibling, ns);
+				var domSize = 0,
+				    children = vnode.children;
+				vnode.dom = null;
+				if (children != null) {
+					for (var i = 0; i < children.length; i++) {
+						var child = children[i];
+						if (child != null && child.dom != null) {
+							if (vnode.dom == null) vnode.dom = child.dom;
+							domSize += child.domSize || 1;
+						}
+					}
+					if (domSize !== 1) vnode.domSize = domSize;
+				}
+			}
+			function updateElement(old, vnode, recycling, hooks, ns) {
+				var element = vnode.dom = old.dom;
+				switch (vnode.tag) {
+					case "svg":
+						ns = "http://www.w3.org/2000/svg";break;
+					case "math":
+						ns = "http://www.w3.org/1998/Math/MathML";break;
+				}
+				if (vnode.tag === "textarea") {
+					if (vnode.attrs == null) vnode.attrs = {};
+					if (vnode.text != null) {
+						vnode.attrs.value = vnode.text; //FIXME handle0 multiple children
+						vnode.text = undefined;
+					}
+				}
+				updateAttrs(vnode, old.attrs, vnode.attrs, ns);
+				if (vnode.attrs != null && vnode.attrs.contenteditable != null) {
+					setContentEditable(vnode);
+				} else if (old.text != null && vnode.text != null && vnode.text !== "") {
+					if (old.text.toString() !== vnode.text.toString()) old.dom.firstChild.nodeValue = vnode.text;
+				} else {
+					if (old.text != null) old.children = [Vnode("#", undefined, undefined, old.text, undefined, old.dom.firstChild)];
+					if (vnode.text != null) vnode.children = [Vnode("#", undefined, undefined, vnode.text, undefined, undefined)];
+					updateNodes(element, old.children, vnode.children, recycling, hooks, null, ns);
+				}
+			}
+			function updateComponent(parent, old, vnode, hooks, nextSibling, recycling, ns) {
+				vnode.instance = Vnode.normalize(vnode.tag.view.call(vnode.state, vnode));
+				updateLifecycle(vnode.tag, vnode, hooks, recycling);
+				if (vnode.instance != null) {
+					if (old.instance == null) createNode(parent, vnode.instance, hooks, ns, nextSibling);else updateNode(parent, old.instance, vnode.instance, hooks, nextSibling, recycling, ns);
+					vnode.dom = vnode.instance.dom;
+					vnode.domSize = vnode.instance.domSize;
+				} else if (old.instance != null) {
+					removeNode(old.instance, null);
+					vnode.dom = undefined;
+					vnode.domSize = 0;
+				} else {
+					vnode.dom = old.dom;
+					vnode.domSize = old.domSize;
+				}
+			}
+			function isRecyclable(old, vnodes) {
+				if (old.pool != null && Math.abs(old.pool.length - vnodes.length) <= Math.abs(old.length - vnodes.length)) {
+					var oldChildrenLength = old[0] && old[0].children && old[0].children.length || 0;
+					var poolChildrenLength = old.pool[0] && old.pool[0].children && old.pool[0].children.length || 0;
+					var vnodesChildrenLength = vnodes[0] && vnodes[0].children && vnodes[0].children.length || 0;
+					if (Math.abs(poolChildrenLength - vnodesChildrenLength) <= Math.abs(oldChildrenLength - vnodesChildrenLength)) {
+						return true;
+					}
+				}
+				return false;
+			}
+			function getKeyMap(vnodes, end) {
+				var map = {},
+				    i = 0;
+				for (var i = 0; i < end; i++) {
+					var vnode = vnodes[i];
+					if (vnode != null) {
+						var key2 = vnode.key;
+						if (key2 != null) map[key2] = i;
+					}
+				}
+				return map;
+			}
+			function toFragment(vnode) {
+				var count0 = vnode.domSize;
+				if (count0 != null || vnode.dom == null) {
+					var fragment = $doc.createDocumentFragment();
+					if (count0 > 0) {
+						var dom = vnode.dom;
+						while (--count0) {
+							fragment.appendChild(dom.nextSibling);
+						}fragment.insertBefore(dom, fragment.firstChild);
+					}
+					return fragment;
+				} else return vnode.dom;
+			}
+			function getNextSibling(vnodes, i, nextSibling) {
+				for (; i < vnodes.length; i++) {
+					if (vnodes[i] != null && vnodes[i].dom != null) return vnodes[i].dom;
+				}
+				return nextSibling;
+			}
+			function insertNode(parent, dom, nextSibling) {
+				if (nextSibling && nextSibling.parentNode) parent.insertBefore(dom, nextSibling);else parent.appendChild(dom);
+			}
+			function setContentEditable(vnode) {
+				var children = vnode.children;
+				if (children != null && children.length === 1 && children[0].tag === "<") {
+					var content = children[0].children;
+					if (vnode.dom.innerHTML !== content) vnode.dom.innerHTML = content;
+				} else if (vnode.text != null || children != null && children.length !== 0) throw new Error("Child node of a contenteditable must be trusted");
+			}
+			//remove
+			function removeNodes(vnodes, start, end, context) {
+				for (var i = start; i < end; i++) {
+					var vnode = vnodes[i];
+					if (vnode != null) {
+						if (vnode.skip) vnode.skip = false;else removeNode(vnode, context);
+					}
+				}
+			}
+			function removeNode(vnode, context) {
+				var expected = 1,
+				    called = 0;
+				if (vnode.attrs && vnode.attrs.onbeforeremove) {
+					var result = vnode.attrs.onbeforeremove.call(vnode.state, vnode);
+					if (result != null && typeof result.then === "function") {
+						expected++;
+						result.then(continuation, continuation);
+					}
+				}
+				if (typeof vnode.tag !== "string" && vnode.tag.onbeforeremove) {
+					var result = vnode.tag.onbeforeremove.call(vnode.state, vnode);
+					if (result != null && typeof result.then === "function") {
+						expected++;
+						result.then(continuation, continuation);
+					}
+				}
+				continuation();
+				function continuation() {
+					if (++called === expected) {
+						onremove(vnode);
+						if (vnode.dom) {
+							var count0 = vnode.domSize || 1;
+							if (count0 > 1) {
+								var dom = vnode.dom;
+								while (--count0) {
+									removeNodeFromDOM(dom.nextSibling);
+								}
+							}
+							removeNodeFromDOM(vnode.dom);
+							if (context != null && vnode.domSize == null && !hasIntegrationMethods(vnode.attrs) && typeof vnode.tag === "string") {
+								//TODO test custom elements
+								if (!context.pool) context.pool = [vnode];else context.pool.push(vnode);
+							}
+						}
+					}
+				}
+			}
+			function removeNodeFromDOM(node) {
+				var parent = node.parentNode;
+				if (parent != null) parent.removeChild(node);
+			}
+			function onremove(vnode) {
+				if (vnode.attrs && vnode.attrs.onremove) vnode.attrs.onremove.call(vnode.state, vnode);
+				if (typeof vnode.tag !== "string" && vnode.tag.onremove) vnode.tag.onremove.call(vnode.state, vnode);
+				if (vnode.instance != null) onremove(vnode.instance);else {
+					var children = vnode.children;
+					if (Array.isArray(children)) {
+						for (var i = 0; i < children.length; i++) {
+							var child = children[i];
+							if (child != null) onremove(child);
+						}
+					}
+				}
+			}
+			//attrs2
+			function setAttrs(vnode, attrs2, ns) {
+				for (var key2 in attrs2) {
+					setAttr(vnode, key2, null, attrs2[key2], ns);
+				}
+			}
+			function setAttr(vnode, key2, old, value, ns) {
+				var element = vnode.dom;
+				if (key2 === "key" || key2 === "is" || old === value && !isFormAttribute(vnode, key2) && (typeof value === "undefined" ? "undefined" : _typeof(value)) !== "object" || typeof value === "undefined" || isLifecycleMethod(key2)) return;
+				var nsLastIndex = key2.indexOf(":");
+				if (nsLastIndex > -1 && key2.substr(0, nsLastIndex) === "xlink") {
+					element.setAttributeNS("http://www.w3.org/1999/xlink", key2.slice(nsLastIndex + 1), value);
+				} else if (key2[0] === "o" && key2[1] === "n" && typeof value === "function") updateEvent(vnode, key2, value);else if (key2 === "style") updateStyle(element, old, value);else if (key2 in element && !isAttribute(key2) && ns === undefined && !isCustomElement(vnode)) {
+					//setting input[value] to same value by typing on focused element moves cursor to end in Chrome
+					if (vnode.tag === "input" && key2 === "value" && vnode.dom.value === value && vnode.dom === $doc.activeElement) return;
+					//setting select[value] to same value while having select open blinks select dropdown in Chrome
+					if (vnode.tag === "select" && key2 === "value" && vnode.dom.value === value && vnode.dom === $doc.activeElement) return;
+					//setting option[value] to same value while having select open blinks select dropdown in Chrome
+					if (vnode.tag === "option" && key2 === "value" && vnode.dom.value === value) return;
+					element[key2] = value;
+				} else {
+					if (typeof value === "boolean") {
+						if (value) element.setAttribute(key2, "");else element.removeAttribute(key2);
+					} else element.setAttribute(key2 === "className" ? "class" : key2, value);
+				}
+			}
+			function setLateAttrs(vnode) {
+				var attrs2 = vnode.attrs;
+				if (vnode.tag === "select" && attrs2 != null) {
+					if ("value" in attrs2) setAttr(vnode, "value", null, attrs2.value, undefined);
+					if ("selectedIndex" in attrs2) setAttr(vnode, "selectedIndex", null, attrs2.selectedIndex, undefined);
+				}
+			}
+			function updateAttrs(vnode, old, attrs2, ns) {
+				if (attrs2 != null) {
+					for (var key2 in attrs2) {
+						setAttr(vnode, key2, old && old[key2], attrs2[key2], ns);
+					}
+				}
+				if (old != null) {
+					for (var key2 in old) {
+						if (attrs2 == null || !(key2 in attrs2)) {
+							if (key2 === "className") key2 = "class";
+							if (key2[0] === "o" && key2[1] === "n" && !isLifecycleMethod(key2)) updateEvent(vnode, key2, undefined);else if (key2 !== "key") vnode.dom.removeAttribute(key2);
+						}
+					}
+				}
+			}
+			function isFormAttribute(vnode, attr) {
+				return attr === "value" || attr === "checked" || attr === "selectedIndex" || attr === "selected" && vnode.dom === $doc.activeElement;
+			}
+			function isLifecycleMethod(attr) {
+				return attr === "oninit" || attr === "oncreate" || attr === "onupdate" || attr === "onremove" || attr === "onbeforeremove" || attr === "onbeforeupdate";
+			}
+			function isAttribute(attr) {
+				return attr === "href" || attr === "list" || attr === "form" || attr === "width" || attr === "height"; // || attr === "type"
+			}
+			function isCustomElement(vnode) {
+				return vnode.attrs.is || vnode.tag.indexOf("-") > -1;
+			}
+			function hasIntegrationMethods(source) {
+				return source != null && (source.oncreate || source.onupdate || source.onbeforeremove || source.onremove);
+			}
+			//style
+			function updateStyle(element, old, style) {
+				if (old === style) element.style.cssText = "", old = null;
+				if (style == null) element.style.cssText = "";else if (typeof style === "string") element.style.cssText = style;else {
+					if (typeof old === "string") element.style.cssText = "";
+					for (var key2 in style) {
+						element.style[key2] = style[key2];
+					}
+					if (old != null && typeof old !== "string") {
+						for (var key2 in old) {
+							if (!(key2 in style)) element.style[key2] = "";
+						}
+					}
+				}
+			}
+			//event
+			function updateEvent(vnode, key2, value) {
+				var element = vnode.dom;
+				var callback = typeof onevent !== "function" ? value : function (e) {
+					var result = value.call(element, e);
+					onevent.call(element, e);
+					return result;
+				};
+				if (key2 in element) element[key2] = typeof value === "function" ? callback : null;else {
+					var eventName = key2.slice(2);
+					if (vnode.events === undefined) vnode.events = {};
+					if (vnode.events[key2] === callback) return;
+					if (vnode.events[key2] != null) element.removeEventListener(eventName, vnode.events[key2], false);
+					if (typeof value === "function") {
+						vnode.events[key2] = callback;
+						element.addEventListener(eventName, vnode.events[key2], false);
+					}
+				}
+			}
+			//lifecycle
+			function initLifecycle(source, vnode, hooks) {
+				if (typeof source.oninit === "function") source.oninit.call(vnode.state, vnode);
+				if (typeof source.oncreate === "function") hooks.push(source.oncreate.bind(vnode.state, vnode));
+			}
+			function updateLifecycle(source, vnode, hooks, recycling) {
+				if (recycling) initLifecycle(source, vnode, hooks);else if (typeof source.onupdate === "function") hooks.push(source.onupdate.bind(vnode.state, vnode));
+			}
+			function shouldUpdate(vnode, old) {
+				var forceVnodeUpdate, forceComponentUpdate;
+				if (vnode.attrs != null && typeof vnode.attrs.onbeforeupdate === "function") forceVnodeUpdate = vnode.attrs.onbeforeupdate.call(vnode.state, vnode, old);
+				if (typeof vnode.tag !== "string" && typeof vnode.tag.onbeforeupdate === "function") forceComponentUpdate = vnode.tag.onbeforeupdate.call(vnode.state, vnode, old);
+				if (!(forceVnodeUpdate === undefined && forceComponentUpdate === undefined) && !forceVnodeUpdate && !forceComponentUpdate) {
+					vnode.dom = old.dom;
+					vnode.domSize = old.domSize;
+					vnode.instance = old.instance;
+					return true;
+				}
+				return false;
+			}
+			function render(dom, vnodes) {
+				if (!dom) throw new Error("Ensure the DOM element being passed to m.route/m.mount/m.render is not undefined.");
+				var hooks = [];
+				var active = $doc.activeElement;
+				// First time0 rendering into a node clears it out
+				if (dom.vnodes == null) dom.textContent = "";
+				if (!Array.isArray(vnodes)) vnodes = [vnodes];
+				updateNodes(dom, dom.vnodes, Vnode.normalizeChildren(vnodes), false, hooks, null, undefined);
+				dom.vnodes = vnodes;
+				for (var i = 0; i < hooks.length; i++) {
+					hooks[i]();
+				}if ($doc.activeElement !== active) active.focus();
+			}
+			return { render: render, setEventCallback: setEventCallback };
+		};
+		function throttle(callback) {
+			//60fps translates to 16.6ms, round it down since setTimeout requires int
+			var time = 16;
+			var last = 0,
+			    pending = null;
+			var timeout = typeof requestAnimationFrame === "function" ? requestAnimationFrame : setTimeout;
+			return function () {
+				var now = Date.now();
+				if (last === 0 || now - last >= time) {
+					last = now;
+					callback();
+				} else if (pending === null) {
+					pending = timeout(function () {
+						pending = null;
+						callback();
+						last = Date.now();
+					}, time - (now - last));
+				}
+			};
+		}
+		var _11 = function _11($window) {
+			var renderService = coreRenderer($window);
+			renderService.setEventCallback(function (e) {
+				if (e.redraw !== false) redraw();
+			});
+			var callbacks = [];
+			function subscribe(key1, callback) {
+				unsubscribe(key1);
+				callbacks.push(key1, throttle(callback));
+			}
+			function unsubscribe(key1) {
+				var index = callbacks.indexOf(key1);
+				if (index > -1) callbacks.splice(index, 2);
+			}
+			function redraw() {
+				for (var i = 1; i < callbacks.length; i += 2) {
+					callbacks[i]();
+				}
+			}
+			return { subscribe: subscribe, unsubscribe: unsubscribe, redraw: redraw, render: renderService.render };
+		};
+		var redrawService = _11(window);
+		requestService.setCompletionCallback(redrawService.redraw);
+		var _16 = function _16(redrawService0) {
+			return function (root, component) {
+				if (component === null) {
+					redrawService0.render(root, []);
+					redrawService0.unsubscribe(root);
+					return;
+				}
+
+				if (component.view == null) throw new Error("m.mount(element, component) expects a component, not a vnode");
+
+				var run0 = function run0() {
+					redrawService0.render(root, Vnode(component));
+				};
+				redrawService0.subscribe(root, run0);
+				redrawService0.redraw();
+			};
+		};
+		m.mount = _16(redrawService);
+		var Promise = PromisePolyfill;
+		var parseQueryString = function parseQueryString(string) {
+			if (string === "" || string == null) return {};
+			if (string.charAt(0) === "?") string = string.slice(1);
+			var entries = string.split("&"),
+			    data0 = {},
+			    counters = {};
+			for (var i = 0; i < entries.length; i++) {
+				var entry = entries[i].split("=");
+				var key5 = decodeURIComponent(entry[0]);
+				var value = entry.length === 2 ? decodeURIComponent(entry[1]) : "";
+				if (value === "true") value = true;else if (value === "false") value = false;
+				var levels = key5.split(/\]\[?|\[/);
+				var cursor = data0;
+				if (key5.indexOf("[") > -1) levels.pop();
+				for (var j = 0; j < levels.length; j++) {
+					var level = levels[j],
+					    nextLevel = levels[j + 1];
+					var isNumber = nextLevel == "" || !isNaN(parseInt(nextLevel, 10));
+					var isValue = j === levels.length - 1;
+					if (level === "") {
+						var key5 = levels.slice(0, j).join();
+						if (counters[key5] == null) counters[key5] = 0;
+						level = counters[key5]++;
+					}
+					if (cursor[level] == null) {
+						cursor[level] = isValue ? value : isNumber ? [] : {};
+					}
+					cursor = cursor[level];
+				}
+			}
+			return data0;
+		};
+		var coreRouter = function coreRouter($window) {
+			var supportsPushState = typeof $window.history.pushState === "function";
+			var callAsync0 = typeof setImmediate === "function" ? setImmediate : setTimeout;
+			function normalize1(fragment0) {
+				var data = $window.location[fragment0].replace(/(?:%[a-f89][a-f0-9])+/gim, decodeURIComponent);
+				if (fragment0 === "pathname" && data[0] !== "/") data = "/" + data;
+				return data;
+			}
+			var asyncId;
+			function debounceAsync(callback0) {
+				return function () {
+					if (asyncId != null) return;
+					asyncId = callAsync0(function () {
+						asyncId = null;
+						callback0();
+					});
+				};
+			}
+			function parsePath(path, queryData, hashData) {
+				var queryIndex = path.indexOf("?");
+				var hashIndex = path.indexOf("#");
+				var pathEnd = queryIndex > -1 ? queryIndex : hashIndex > -1 ? hashIndex : path.length;
+				if (queryIndex > -1) {
+					var queryEnd = hashIndex > -1 ? hashIndex : path.length;
+					var queryParams = parseQueryString(path.slice(queryIndex + 1, queryEnd));
+					for (var key4 in queryParams) {
+						queryData[key4] = queryParams[key4];
+					}
+				}
+				if (hashIndex > -1) {
+					var hashParams = parseQueryString(path.slice(hashIndex + 1));
+					for (var key4 in hashParams) {
+						hashData[key4] = hashParams[key4];
+					}
+				}
+				return path.slice(0, pathEnd);
+			}
+			var router = { prefix: "#!" };
+			router.getPath = function () {
+				var type2 = router.prefix.charAt(0);
+				switch (type2) {
+					case "#":
+						return normalize1("hash").slice(router.prefix.length);
+					case "?":
+						return normalize1("search").slice(router.prefix.length) + normalize1("hash");
+					default:
+						return normalize1("pathname").slice(router.prefix.length) + normalize1("search") + normalize1("hash");
+				}
+			};
+			router.setPath = function (path, data, options) {
+				var queryData = {},
+				    hashData = {};
+				path = parsePath(path, queryData, hashData);
+				if (data != null) {
+					for (var key4 in data) {
+						queryData[key4] = data[key4];
+					}path = path.replace(/:([^\/]+)/g, function (match2, token) {
+						delete queryData[token];
+						return data[token];
+					});
+				}
+				var query = buildQueryString(queryData);
+				if (query) path += "?" + query;
+				var hash = buildQueryString(hashData);
+				if (hash) path += "#" + hash;
+				if (supportsPushState) {
+					var state = options ? options.state : null;
+					var title = options ? options.title : null;
+					$window.onpopstate();
+					if (options && options.replace) $window.history.replaceState(state, title, router.prefix + path);else $window.history.pushState(state, title, router.prefix + path);
+				} else $window.location.href = router.prefix + path;
+			};
+			router.defineRoutes = function (routes, resolve, reject) {
+				function resolveRoute() {
+					var path = router.getPath();
+					var params = {};
+					var pathname = parsePath(path, params, params);
+					var state = $window.history.state;
+					if (state != null) {
+						for (var k in state) {
+							params[k] = state[k];
+						}
+					}
+					for (var route0 in routes) {
+						var matcher = new RegExp("^" + route0.replace(/:[^\/]+?\.{3}/g, "(.*?)").replace(/:[^\/]+/g, "([^\\/]+)") + "\/?$");
+						if (matcher.test(pathname)) {
+							pathname.replace(matcher, function () {
+								var keys = route0.match(/:[^\/]+/g) || [];
+								var values = [].slice.call(arguments, 1, -2);
+								for (var i = 0; i < keys.length; i++) {
+									params[keys[i].replace(/:|\./g, "")] = decodeURIComponent(values[i]);
+								}
+								resolve(routes[route0], params, path, route0);
+							});
+							return;
+						}
+					}
+					reject(path, params);
+				}
+				if (supportsPushState) $window.onpopstate = debounceAsync(resolveRoute);else if (router.prefix.charAt(0) === "#") $window.onhashchange = resolveRoute;
+				resolveRoute();
+			};
+			return router;
+		};
+		var _20 = function _20($window, redrawService0) {
+			var routeService = coreRouter($window);
+			var identity = function identity(v) {
+				return v;
+			};
+			var render1, component, attrs3, currentPath, _lastUpdate;
+			var route = function route(root, defaultRoute, routes) {
+				if (root == null) throw new Error("Ensure the DOM element that was passed to `m.route` is not undefined");
+				var run1 = function run1() {
+					if (render1 != null) redrawService0.render(root, render1(Vnode(component, attrs3.key, attrs3)));
+				};
+				var bail = function bail(path) {
+					if (path !== defaultRoute) routeService.setPath(defaultRoute, null, { replace: true });else throw new Error("Could not resolve default route " + defaultRoute);
+				};
+				routeService.defineRoutes(routes, function (payload, params, path) {
+					var update = _lastUpdate = function lastUpdate(routeResolver, comp) {
+						if (update !== _lastUpdate) return;
+						component = comp != null && typeof comp.view === "function" ? comp : "div", attrs3 = params, currentPath = path, _lastUpdate = null;
+						render1 = (routeResolver.render || identity).bind(routeResolver);
+						run1();
+					};
+					if (payload.view) update({}, payload);else {
+						if (payload.onmatch) {
+							Promise.resolve(payload.onmatch(params, path)).then(function (resolved) {
+								update(payload, resolved);
+							}, bail);
+						} else update(payload, "div");
+					}
+				}, bail);
+				redrawService0.subscribe(root, run1);
+			};
+			route.set = function (path, data, options) {
+				if (_lastUpdate != null) options = { replace: true };
+				_lastUpdate = null;
+				routeService.setPath(path, data, options);
+			};
+			route.get = function () {
+				return currentPath;
+			};
+			route.prefix = function (prefix0) {
+				routeService.prefix = prefix0;
+			};
+			route.link = function (vnode1) {
+				vnode1.dom.setAttribute("href", routeService.prefix + vnode1.attrs.href);
+				vnode1.dom.onclick = function (e) {
+					if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2) return;
+					e.preventDefault();
+					e.redraw = false;
+					var href = this.getAttribute("href");
+					if (href.indexOf(routeService.prefix) === 0) href = href.slice(routeService.prefix.length);
+					route.set(href, undefined, undefined);
+				};
+			};
+			route.param = function (key3) {
+				if (typeof attrs3 !== "undefined" && typeof key3 !== "undefined") return attrs3[key3];
+				return attrs3;
+			};
+			return route;
+		};
+		m.route = _20(window, redrawService);
+		m.withAttr = function (attrName, callback1, context) {
+			return function (e) {
+				callback1.call(context || this, attrName in e.currentTarget ? e.currentTarget[attrName] : e.currentTarget.getAttribute(attrName));
+			};
+		};
+		var _28 = coreRenderer(window);
+		m.render = _28.render;
+		m.redraw = redrawService.redraw;
+		m.request = requestService.request;
+		m.jsonp = requestService.jsonp;
+		m.parseQueryString = parseQueryString;
+		m.buildQueryString = buildQueryString;
+		m.version = "1.0.1";
+		m.vnode = Vnode;
+		module["exports"] = m;
+	}();
+});
+
+var jsplumb=createCommonjsModule(function(module,exports){/**
+ * jsBezier
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * licensed under the MIT license.
+ *
+ * a set of Bezier curve functions that deal with Beziers, used by jsPlumb, and perhaps useful for other people.  These functions work with Bezier
+ * curves of arbitrary degree.
+ *
+ * - functions are all in the 'jsBezier' namespace.
+ *
+ * - all input points should be in the format {x:.., y:..}. all output points are in this format too.
+ *
+ * - all input curves should be in the format [ {x:.., y:..}, {x:.., y:..}, {x:.., y:..}, {x:.., y:..} ]
+ *
+ * - 'location' as used as an input here refers to a decimal in the range 0-1 inclusive, which indicates a point some proportion along the length
+ * of the curve.  location as output has the same format and meaning.
+ *
+ *
+ * Function List:
+ * --------------
+ *
+ * distanceFromCurve(point, curve)
+ *
+ * 	Calculates the distance that the given point lies from the given Bezier.  Note that it is computed relative to the center of the Bezier,
+ * so if you have stroked the curve with a wide pen you may wish to take that into account!  The distance returned is relative to the values
+ * of the curve and the point - it will most likely be pixels.
+ *
+ * gradientAtPoint(curve, location)
+ *
+ * 	Calculates the gradient to the curve at the given location, as a decimal between 0 and 1 inclusive.
+ *
+ * gradientAtPointAlongCurveFrom (curve, location)
+ *
+ *	Calculates the gradient at the point on the given curve that is 'distance' units from location.
+ *
+ * nearestPointOnCurve(point, curve)
+ *
+ *	Calculates the nearest point to the given point on the given curve.  The return value of this is a JS object literal, containing both the
+ *point's coordinates and also the 'location' of the point (see above), for example:  { point:{x:551,y:150}, location:0.263365 }.
+ *
+ * pointOnCurve(curve, location)
+ *
+ * 	Calculates the coordinates of the point on the given Bezier curve at the given location.
+ *
+ * pointAlongCurveFrom(curve, location, distance)
+ *
+ * 	Calculates the coordinates of the point on the given curve that is 'distance' units from location.  'distance' should be in the same coordinate
+ * space as that used to construct the Bezier curve.  For an HTML Canvas usage, for example, distance would be a measure of pixels.
+ *
+ * locationAlongCurveFrom(curve, location, distance)
+ *
+ * 	Calculates the location on the given curve that is 'distance' units from location.  'distance' should be in the same coordinate
+ * space as that used to construct the Bezier curve.  For an HTML Canvas usage, for example, distance would be a measure of pixels.
+ *
+ * perpendicularToCurveAt(curve, location, length, distance)
+ *
+ * 	Calculates the perpendicular to the given curve at the given location.  length is the length of the line you wish for (it will be centered
+ * on the point at 'location'). distance is optional, and allows you to specify a point along the path from the given location as the center of
+ * the perpendicular returned.  The return value of this is an array of two points: [ {x:...,y:...}, {x:...,y:...} ].
+ *
+ *
+ */(function(){var root=this;if(typeof Math.sgn=="undefined"){Math.sgn=function(x){return x==0?0:x>0?1:-1;};}var Vectors={subtract:function subtract(v1,v2){return{x:v1.x-v2.x,y:v1.y-v2.y};},dotProduct:function dotProduct(v1,v2){return v1.x*v2.x+v1.y*v2.y;},square:function square(v){return Math.sqrt(v.x*v.x+v.y*v.y);},scale:function scale(v,s){return{x:v.x*s,y:v.y*s};}},maxRecursion=64,flatnessTolerance=Math.pow(2.0,-maxRecursion-1);/**
+     * Calculates the distance that the point lies from the curve.
+     *
+     * @param point a point in the form {x:567, y:3342}
+     * @param curve a Bezier curve in the form [{x:..., y:...}, {x:..., y:...}, {x:..., y:...}, {x:..., y:...}].  note that this is currently
+     * hardcoded to assume cubiz beziers, but would be better off supporting any degree.
+     * @return a JS object literal containing location and distance, for example: {location:0.35, distance:10}.  Location is analogous to the location
+     * argument you pass to the pointOnPath function: it is a ratio of distance travelled along the curve.  Distance is the distance in pixels from
+     * the point to the curve.
+     */var _distanceFromCurve=function _distanceFromCurve(point,curve){var candidates=[],w=_convertToBezier(point,curve),degree=curve.length-1,higherDegree=2*degree-1,numSolutions=_findRoots(w,higherDegree,candidates,0),v=Vectors.subtract(point,curve[0]),dist=Vectors.square(v),t=0.0;for(var i=0;i<numSolutions;i++){v=Vectors.subtract(point,_bezier(curve,degree,candidates[i],null,null));var newDist=Vectors.square(v);if(newDist<dist){dist=newDist;t=candidates[i];}}v=Vectors.subtract(point,curve[degree]);newDist=Vectors.square(v);if(newDist<dist){dist=newDist;t=1.0;}return{location:t,distance:dist};};/**
+     * finds the nearest point on the curve to the given point.
+     */var _nearestPointOnCurve=function _nearestPointOnCurve(point,curve){var td=_distanceFromCurve(point,curve);return{point:_bezier(curve,curve.length-1,td.location,null,null),location:td.location};};var _convertToBezier=function _convertToBezier(point,curve){var degree=curve.length-1,higherDegree=2*degree-1,c=[],d=[],cdTable=[],w=[],z=[[1.0,0.6,0.3,0.1],[0.4,0.6,0.6,0.4],[0.1,0.3,0.6,1.0]];for(var i=0;i<=degree;i++){c[i]=Vectors.subtract(curve[i],point);}for(var i=0;i<=degree-1;i++){d[i]=Vectors.subtract(curve[i+1],curve[i]);d[i]=Vectors.scale(d[i],3.0);}for(var row=0;row<=degree-1;row++){for(var column=0;column<=degree;column++){if(!cdTable[row])cdTable[row]=[];cdTable[row][column]=Vectors.dotProduct(d[row],c[column]);}}for(i=0;i<=higherDegree;i++){if(!w[i])w[i]=[];w[i].y=0.0;w[i].x=parseFloat(i)/higherDegree;}var n=degree,m=degree-1;for(var k=0;k<=n+m;k++){var lb=Math.max(0,k-m),ub=Math.min(k,n);for(i=lb;i<=ub;i++){j=k-i;w[i+j].y+=cdTable[j][i]*z[j][i];}}return w;};/**
+     * counts how many roots there are.
+     */var _findRoots=function _findRoots(w,degree,t,depth){var left=[],right=[],left_count,right_count,left_t=[],right_t=[];switch(_getCrossingCount(w,degree)){case 0:{return 0;}case 1:{if(depth>=maxRecursion){t[0]=(w[0].x+w[degree].x)/2.0;return 1;}if(_isFlatEnough(w,degree)){t[0]=_computeXIntercept(w,degree);return 1;}break;}}_bezier(w,degree,0.5,left,right);left_count=_findRoots(left,degree,left_t,depth+1);right_count=_findRoots(right,degree,right_t,depth+1);for(var i=0;i<left_count;i++){t[i]=left_t[i];}for(var i=0;i<right_count;i++){t[i+left_count]=right_t[i];}return left_count+right_count;};var _getCrossingCount=function _getCrossingCount(curve,degree){var n_crossings=0,sign,old_sign;sign=old_sign=Math.sgn(curve[0].y);for(var i=1;i<=degree;i++){sign=Math.sgn(curve[i].y);if(sign!=old_sign)n_crossings++;old_sign=sign;}return n_crossings;};var _isFlatEnough=function _isFlatEnough(curve,degree){var error,intercept_1,intercept_2,left_intercept,right_intercept,a,b,c,det,dInv,a1,b1,c1,a2,b2,c2;a=curve[0].y-curve[degree].y;b=curve[degree].x-curve[0].x;c=curve[0].x*curve[degree].y-curve[degree].x*curve[0].y;var max_distance_above=max_distance_below=0.0;for(var i=1;i<degree;i++){var value=a*curve[i].x+b*curve[i].y+c;if(value>max_distance_above)max_distance_above=value;else if(value<max_distance_below)max_distance_below=value;}a1=0.0;b1=1.0;c1=0.0;a2=a;b2=b;c2=c-max_distance_above;det=a1*b2-a2*b1;dInv=1.0/det;intercept_1=(b1*c2-b2*c1)*dInv;a2=a;b2=b;c2=c-max_distance_below;det=a1*b2-a2*b1;dInv=1.0/det;intercept_2=(b1*c2-b2*c1)*dInv;left_intercept=Math.min(intercept_1,intercept_2);right_intercept=Math.max(intercept_1,intercept_2);error=right_intercept-left_intercept;return error<flatnessTolerance?1:0;};var _computeXIntercept=function _computeXIntercept(curve,degree){var XLK=1.0,YLK=0.0,XNM=curve[degree].x-curve[0].x,YNM=curve[degree].y-curve[0].y,XMK=curve[0].x-0.0,YMK=curve[0].y-0.0,det=XNM*YLK-YNM*XLK,detInv=1.0/det,S=(XNM*YMK-YNM*XMK)*detInv;return 0.0+XLK*S;};var _bezier=function _bezier(curve,degree,t,left,right){var temp=[[]];for(var j=0;j<=degree;j++){temp[0][j]=curve[j];}for(var i=1;i<=degree;i++){for(var j=0;j<=degree-i;j++){if(!temp[i])temp[i]=[];if(!temp[i][j])temp[i][j]={};temp[i][j].x=(1.0-t)*temp[i-1][j].x+t*temp[i-1][j+1].x;temp[i][j].y=(1.0-t)*temp[i-1][j].y+t*temp[i-1][j+1].y;}}if(left!=null)for(j=0;j<=degree;j++){left[j]=temp[j][0];}if(right!=null)for(j=0;j<=degree;j++){right[j]=temp[degree-j][j];}return temp[degree][0];};var _curveFunctionCache={};var _getCurveFunctions=function _getCurveFunctions(order){var fns=_curveFunctionCache[order];if(!fns){fns=[];var f_term=function f_term(){return function(t){return Math.pow(t,order);};},l_term=function l_term(){return function(t){return Math.pow(1-t,order);};},c_term=function c_term(c){return function(t){return c;};},t_term=function t_term(){return function(t){return t;};},one_minus_t_term=function one_minus_t_term(){return function(t){return 1-t;};},_termFunc=function _termFunc(terms){return function(t){var p=1;for(var i=0;i<terms.length;i++){p=p*terms[i](t);}return p;};};fns.push(new f_term());// first is t to the power of the curve order
+for(var i=1;i<order;i++){var terms=[new c_term(order)];for(var j=0;j<order-i;j++){terms.push(new t_term());}for(var j=0;j<i;j++){terms.push(new one_minus_t_term());}fns.push(new _termFunc(terms));}fns.push(new l_term());// last is (1-t) to the power of the curve order
+_curveFunctionCache[order]=fns;}return fns;};/**
+     * calculates a point on the curve, for a Bezier of arbitrary order.
+     * @param curve an array of control points, eg [{x:10,y:20}, {x:50,y:50}, {x:100,y:100}, {x:120,y:100}].  For a cubic bezier this should have four points.
+     * @param location a decimal indicating the distance along the curve the point should be located at.  this is the distance along the curve as it travels, taking the way it bends into account.  should be a number from 0 to 1, inclusive.
+     */var _pointOnPath=function _pointOnPath(curve,location){var cc=_getCurveFunctions(curve.length-1),_x=0,_y=0;for(var i=0;i<curve.length;i++){_x=_x+curve[i].x*cc[i](location);_y=_y+curve[i].y*cc[i](location);}return{x:_x,y:_y};};var _dist=function _dist(p1,p2){return Math.sqrt(Math.pow(p1.x-p2.x,2)+Math.pow(p1.y-p2.y,2));};var _isPoint=function _isPoint(curve){return curve[0].x==curve[1].x&&curve[0].y==curve[1].y;};/**
+     * finds the point that is 'distance' along the path from 'location'.  this method returns both the x,y location of the point and also
+     * its 'location' (proportion of travel along the path); the method below - _pointAlongPathFrom - calls this method and just returns the
+     * point.
+     */var _pointAlongPath=function _pointAlongPath(curve,location,distance){if(_isPoint(curve)){return{point:curve[0],location:location};}var prev=_pointOnPath(curve,location),tally=0,curLoc=location,direction=distance>0?1:-1,cur=null;while(tally<Math.abs(distance)){curLoc+=0.005*direction;cur=_pointOnPath(curve,curLoc);tally+=_dist(cur,prev);prev=cur;}return{point:cur,location:curLoc};};var _length=function _length(curve){if(_isPoint(curve))return 0;var prev=_pointOnPath(curve,0),tally=0,curLoc=0,direction=1,cur=null;while(curLoc<1){curLoc+=0.005*direction;cur=_pointOnPath(curve,curLoc);tally+=_dist(cur,prev);prev=cur;}return tally;};/**
+     * finds the point that is 'distance' along the path from 'location'.
+     */var _pointAlongPathFrom=function _pointAlongPathFrom(curve,location,distance){return _pointAlongPath(curve,location,distance).point;};/**
+     * finds the location that is 'distance' along the path from 'location'.
+     */var _locationAlongPathFrom=function _locationAlongPathFrom(curve,location,distance){return _pointAlongPath(curve,location,distance).location;};/**
+     * returns the gradient of the curve at the given location, which is a decimal between 0 and 1 inclusive.
+     *
+     * thanks // http://bimixual.org/AnimationLibrary/beziertangents.html
+     */var _gradientAtPoint=function _gradientAtPoint(curve,location){var p1=_pointOnPath(curve,location),p2=_pointOnPath(curve.slice(0,curve.length-1),location),dy=p2.y-p1.y,dx=p2.x-p1.x;return dy==0?Infinity:Math.atan(dy/dx);};/**
+     returns the gradient of the curve at the point which is 'distance' from the given location.
+     if this point is greater than location 1, the gradient at location 1 is returned.
+     if this point is less than location 0, the gradient at location 0 is returned.
+     */var _gradientAtPointAlongPathFrom=function _gradientAtPointAlongPathFrom(curve,location,distance){var p=_pointAlongPath(curve,location,distance);if(p.location>1)p.location=1;if(p.location<0)p.location=0;return _gradientAtPoint(curve,p.location);};/**
+     * calculates a line that is 'length' pixels long, perpendicular to, and centered on, the path at 'distance' pixels from the given location.
+     * if distance is not supplied, the perpendicular for the given location is computed (ie. we set distance to zero).
+     */var _perpendicularToPathAt=function _perpendicularToPathAt(curve,location,length,distance){distance=distance==null?0:distance;var p=_pointAlongPath(curve,location,distance),m=_gradientAtPoint(curve,p.location),_theta2=Math.atan(-1/m),y=length/2*Math.sin(_theta2),x=length/2*Math.cos(_theta2);return[{x:p.point.x+x,y:p.point.y+y},{x:p.point.x-x,y:p.point.y-y}];};var jsBezier=this.jsBezier={distanceFromCurve:_distanceFromCurve,gradientAtPoint:_gradientAtPoint,gradientAtPointAlongCurveFrom:_gradientAtPointAlongPathFrom,nearestPointOnCurve:_nearestPointOnCurve,pointOnCurve:_pointOnPath,pointAlongCurveFrom:_pointAlongPathFrom,perpendicularToCurveAt:_perpendicularToPathAt,locationAlongCurveFrom:_locationAlongPathFrom,getLength:_length,version:"0.9.0"};{exports.jsBezier=jsBezier;}}).call(typeof window!=='undefined'?window:commonjsGlobal);/**
+ * Biltong v0.4.0
+ *
+ * Various geometry functions written as part of jsPlumb and perhaps useful for others.
+ *
+ * Copyright (c) 2017 jsPlumb
+ * https://jsplumbtoolkit.com
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */(function(){"use strict";var root=this;var Biltong=root.Biltong={version:"0.4.0"};{exports.Biltong=Biltong;}var _isa=function _isa(a){return Object.prototype.toString.call(a)==="[object Array]";},_pointHelper=function _pointHelper(p1,p2,fn){p1=_isa(p1)?p1:[p1.x,p1.y];p2=_isa(p2)?p2:[p2.x,p2.y];return fn(p1,p2);},/**
+         * @name Biltong.gradient
+         * @function
+         * @desc Calculates the gradient of a line between the two points.
+         * @param {Point} p1 First point, either as a 2 entry array or object with `left` and `top` properties.
+         * @param {Point} p2 Second point, either as a 2 entry array or object with `left` and `top` properties.
+         * @return {Float} The gradient of a line between the two points.
+         */_gradient=Biltong.gradient=function(p1,p2){return _pointHelper(p1,p2,function(_p1,_p2){if(_p2[0]==_p1[0])return _p2[1]>_p1[1]?Infinity:-Infinity;else if(_p2[1]==_p1[1])return _p2[0]>_p1[0]?0:-0;else return(_p2[1]-_p1[1])/(_p2[0]-_p1[0]);});},/**
+         * @name Biltong.normal
+         * @function
+         * @desc Calculates the gradient of a normal to a line between the two points.
+         * @param {Point} p1 First point, either as a 2 entry array or object with `left` and `top` properties.
+         * @param {Point} p2 Second point, either as a 2 entry array or object with `left` and `top` properties.
+         * @return {Float} The gradient of a normal to a line between the two points.
+         */_normal=Biltong.normal=function(p1,p2){return-1/_gradient(p1,p2);},/**
+         * @name Biltong.lineLength
+         * @function
+         * @desc Calculates the length of a line between the two points.
+         * @param {Point} p1 First point, either as a 2 entry array or object with `left` and `top` properties.
+         * @param {Point} p2 Second point, either as a 2 entry array or object with `left` and `top` properties.
+         * @return {Float} The length of a line between the two points.
+         */_lineLength=Biltong.lineLength=function(p1,p2){return _pointHelper(p1,p2,function(_p1,_p2){return Math.sqrt(Math.pow(_p2[1]-_p1[1],2)+Math.pow(_p2[0]-_p1[0],2));});},/**
+         * @name Biltong.quadrant
+         * @function
+         * @desc Calculates the quadrant in which the angle between the two points lies.
+         * @param {Point} p1 First point, either as a 2 entry array or object with `left` and `top` properties.
+         * @param {Point} p2 Second point, either as a 2 entry array or object with `left` and `top` properties.
+         * @return {Integer} The quadrant - 1 for upper right, 2 for lower right, 3 for lower left, 4 for upper left.
+         */_quadrant=Biltong.quadrant=function(p1,p2){return _pointHelper(p1,p2,function(_p1,_p2){if(_p2[0]>_p1[0]){return _p2[1]>_p1[1]?2:1;}else if(_p2[0]==_p1[0]){return _p2[1]>_p1[1]?2:1;}else{return _p2[1]>_p1[1]?3:4;}});},/**
+         * @name Biltong.theta
+         * @function
+         * @desc Calculates the angle between the two points.
+         * @param {Point} p1 First point, either as a 2 entry array or object with `left` and `top` properties.
+         * @param {Point} p2 Second point, either as a 2 entry array or object with `left` and `top` properties.
+         * @return {Float} The angle between the two points.
+         */_theta=Biltong.theta=function(p1,p2){return _pointHelper(p1,p2,function(_p1,_p2){var m=_gradient(_p1,_p2),t=Math.atan(m),s=_quadrant(_p1,_p2);if(s==4||s==3)t+=Math.PI;if(t<0)t+=2*Math.PI;return t;});},/**
+         * @name Biltong.intersects
+         * @function
+         * @desc Calculates whether or not the two rectangles intersect.
+         * @param {Rectangle} r1 First rectangle, as a js object in the form `{x:.., y:.., w:.., h:..}`
+         * @param {Rectangle} r2 Second rectangle, as a js object in the form `{x:.., y:.., w:.., h:..}`
+         * @return {Boolean} True if the rectangles intersect, false otherwise.
+         */_intersects=Biltong.intersects=function(r1,r2){var x1=r1.x,x2=r1.x+r1.w,y1=r1.y,y2=r1.y+r1.h,a1=r2.x,a2=r2.x+r2.w,b1=r2.y,b2=r2.y+r2.h;return x1<=a1&&a1<=x2&&y1<=b1&&b1<=y2||x1<=a2&&a2<=x2&&y1<=b1&&b1<=y2||x1<=a1&&a1<=x2&&y1<=b2&&b2<=y2||x1<=a2&&a1<=x2&&y1<=b2&&b2<=y2||a1<=x1&&x1<=a2&&b1<=y1&&y1<=b2||a1<=x2&&x2<=a2&&b1<=y1&&y1<=b2||a1<=x1&&x1<=a2&&b1<=y2&&y2<=b2||a1<=x2&&x1<=a2&&b1<=y2&&y2<=b2;},/**
+         * @name Biltong.encloses
+         * @function
+         * @desc Calculates whether or not r2 is completely enclosed by r1.
+         * @param {Rectangle} r1 First rectangle, as a js object in the form `{x:.., y:.., w:.., h:..}`
+         * @param {Rectangle} r2 Second rectangle, as a js object in the form `{x:.., y:.., w:.., h:..}`
+         * @param {Boolean} [allowSharedEdges=false] If true, the concept of enclosure allows for one or more edges to be shared by the two rectangles.
+         * @return {Boolean} True if r1 encloses r2, false otherwise.
+         */_encloses=Biltong.encloses=function(r1,r2,allowSharedEdges){var x1=r1.x,x2=r1.x+r1.w,y1=r1.y,y2=r1.y+r1.h,a1=r2.x,a2=r2.x+r2.w,b1=r2.y,b2=r2.y+r2.h,c=function c(v1,v2,v3,v4){return allowSharedEdges?v1<=v2&&v3>=v4:v1<v2&&v3>v4;};return c(x1,a1,x2,a2)&&c(y1,b1,y2,b2);},_segmentMultipliers=[null,[1,-1],[1,1],[-1,1],[-1,-1]],_inverseSegmentMultipliers=[null,[-1,-1],[-1,1],[1,1],[1,-1]],/**
+         * @name Biltong.pointOnLine
+         * @function
+         * @desc Calculates a point on the line from `fromPoint` to `toPoint` that is `distance` units along the length of the line.
+         * @param {Point} p1 First point, either as a 2 entry array or object with `left` and `top` properties.
+         * @param {Point} p2 Second point, either as a 2 entry array or object with `left` and `top` properties.
+         * @return {Point} Point on the line, in the form `{ x:..., y:... }`.
+         */_pointOnLine=Biltong.pointOnLine=function(fromPoint,toPoint,distance){var m=_gradient(fromPoint,toPoint),s=_quadrant(fromPoint,toPoint),segmentMultiplier=distance>0?_segmentMultipliers[s]:_inverseSegmentMultipliers[s],theta=Math.atan(m),y=Math.abs(distance*Math.sin(theta))*segmentMultiplier[1],x=Math.abs(distance*Math.cos(theta))*segmentMultiplier[0];return{x:fromPoint.x+x,y:fromPoint.y+y};},/**
+         * @name Biltong.perpendicularLineTo
+         * @function
+         * @desc Calculates a line of length `length` that is perpendicular to the line from `fromPoint` to `toPoint` and passes through `toPoint`.
+         * @param {Point} p1 First point, either as a 2 entry array or object with `left` and `top` properties.
+         * @param {Point} p2 Second point, either as a 2 entry array or object with `left` and `top` properties.
+         * @return {Line} Perpendicular line, in the form `[ { x:..., y:... }, { x:..., y:... } ]`.
+         */_perpendicularLineTo=Biltong.perpendicularLineTo=function(fromPoint,toPoint,length){var m=_gradient(fromPoint,toPoint),theta2=Math.atan(-1/m),y=length/2*Math.sin(theta2),x=length/2*Math.cos(theta2);return[{x:toPoint.x+x,y:toPoint.y+y},{x:toPoint.x-x,y:toPoint.y-y}];};}).call(typeof window!=='undefined'?window:commonjsGlobal);(function(){"use strict";var root=this,Sniff={android:navigator.userAgent.toLowerCase().indexOf("android")>-1},matchesSelector=function matchesSelector(el,selector,ctx){ctx=ctx||el.parentNode;var possibles=ctx.querySelectorAll(selector);for(var i=0;i<possibles.length;i++){if(possibles[i]===el){return true;}}return false;},_gel=function _gel(el){return typeof el=="string"||el.constructor===String?document.getElementById(el):el;},_t=function _t(e){return e.srcElement||e.target;},//
+// gets path info for the given event - the path from target to obj, in the event's bubble chain. if doCompute
+// is false we just return target for the path.
+//
+_pi=function _pi(e,target,obj,doCompute){if(!doCompute)return{path:[target],end:1};else if(typeof e.path!=="undefined"&&e.path.indexOf){return{path:e.path,end:e.path.indexOf(obj)};}else{var out={path:[],end:-1},_one=function _one(el){out.path.push(el);if(el===obj){out.end=out.path.length-1;}else if(el.parentNode!=null){_one(el.parentNode);}};_one(target);return out;}},_d=function _d(l,fn){for(var i=0,j=l.length;i<j;i++){if(l[i]==fn)break;}if(i<l.length)l.splice(i,1);},guid=1,//
+// this function generates a guid for every handler, sets it on the handler, then adds
+// it to the associated object's map of handlers for the given event. this is what enables us
+// to unbind all events of some type, or all events (the second of which can be requested by the user,
+// but it also used by Mottle when an element is removed.)
+_store=function _store(obj,event,fn){var g=guid++;obj.__ta=obj.__ta||{};obj.__ta[event]=obj.__ta[event]||{};// store each handler with a unique guid.
+obj.__ta[event][g]=fn;// set the guid on the handler.
+fn.__tauid=g;return g;},_unstore=function _unstore(obj,event,fn){obj.__ta&&obj.__ta[event]&&delete obj.__ta[event][fn.__tauid];// a handler might have attached extra functions, so we unbind those too.
+if(fn.__taExtra){for(var i=0;i<fn.__taExtra.length;i++){_unbind(obj,fn.__taExtra[i][0],fn.__taExtra[i][1]);}fn.__taExtra.length=0;}// a handler might have attached an unstore callback
+fn.__taUnstore&&fn.__taUnstore();},_curryChildFilter=function _curryChildFilter(children,obj,fn,evt){if(children==null)return fn;else{var c=children.split(","),_fn=function _fn(e){_fn.__tauid=fn.__tauid;var t=_t(e),target=t;// t is the target element on which the event occurred. it is the
+// element we will wish to pass to any callbacks.
+var pathInfo=_pi(e,t,obj,children!=null);if(pathInfo.end!=-1){for(var p=0;p<pathInfo.end;p++){target=pathInfo.path[p];for(var i=0;i<c.length;i++){if(matchesSelector(target,c[i],obj)){fn.apply(target,arguments);}}}}};registerExtraFunction(fn,evt,_fn);return _fn;}},//
+// registers an 'extra' function on some event listener function we were given - a function that we
+// created and bound to the element as part of our housekeeping, and which we want to unbind and remove
+// whenever the given function is unbound.
+registerExtraFunction=function registerExtraFunction(fn,evt,newFn){fn.__taExtra=fn.__taExtra||[];fn.__taExtra.push([evt,newFn]);},DefaultHandler=function DefaultHandler(obj,evt,fn,children){if(isTouchDevice&&touchMap[evt]){var tfn=_curryChildFilter(children,obj,fn,touchMap[evt]);_bind(obj,touchMap[evt],tfn,fn);}if(evt==="focus"&&obj.getAttribute("tabindex")==null){obj.setAttribute("tabindex","1");}_bind(obj,evt,_curryChildFilter(children,obj,fn,evt),fn);},SmartClickHandler=function SmartClickHandler(obj,evt,fn,children){if(obj.__taSmartClicks==null){var down=function down(e){obj.__tad=_pageLocation(e);},up=function up(e){obj.__tau=_pageLocation(e);},click=function click(e){if(obj.__tad&&obj.__tau&&obj.__tad[0]===obj.__tau[0]&&obj.__tad[1]===obj.__tau[1]){for(var i=0;i<obj.__taSmartClicks.length;i++){obj.__taSmartClicks[i].apply(_t(e),[e]);}}};DefaultHandler(obj,"mousedown",down,children);DefaultHandler(obj,"mouseup",up,children);DefaultHandler(obj,"click",click,children);obj.__taSmartClicks=[];}// store in the list of callbacks
+obj.__taSmartClicks.push(fn);// the unstore function removes this function from the object's listener list for this type.
+fn.__taUnstore=function(){_d(obj.__taSmartClicks,fn);};},_tapProfiles={"tap":{touches:1,taps:1},"dbltap":{touches:1,taps:2},"contextmenu":{touches:2,taps:1}},TapHandler=function TapHandler(clickThreshold,dblClickThreshold){return function(obj,evt,fn,children){// if event is contextmenu, for devices which are mouse only, we want to
+// use the default bind.
+if(evt=="contextmenu"&&isMouseDevice)DefaultHandler(obj,evt,fn,children);else{// the issue here is that this down handler gets registered only for the
+// child nodes in the first registration. in fact it should be registered with
+// no child selector and then on down we should cycle through the registered
+// functions to see if one of them matches. on mouseup we should execute ALL of
+// the functions whose children are either null or match the element.
+if(obj.__taTapHandler==null){var tt=obj.__taTapHandler={tap:[],dbltap:[],contextmenu:[],down:false,taps:0,downSelectors:[]};var down=function down(e){var target=_t(e),pathInfo=_pi(e,target,obj,children!=null),finished=false;for(var p=0;p<pathInfo.end;p++){if(finished)return;target=pathInfo.path[p];for(var i=0;i<tt.downSelectors.length;i++){if(tt.downSelectors[i]==null||matchesSelector(target,tt.downSelectors[i],obj)){tt.down=true;setTimeout(clearSingle,clickThreshold);setTimeout(clearDouble,dblClickThreshold);finished=true;break;// we only need one match on mousedown
+}}}},up=function up(e){if(tt.down){var target=_t(e),currentTarget,pathInfo;tt.taps++;var tc=_touchCount(e);for(var eventId in _tapProfiles){if(_tapProfiles.hasOwnProperty(eventId)){var p=_tapProfiles[eventId];if(p.touches===tc&&(p.taps===1||p.taps===tt.taps)){for(var i=0;i<tt[eventId].length;i++){pathInfo=_pi(e,target,obj,tt[eventId][i][1]!=null);for(var pLoop=0;pLoop<pathInfo.end;pLoop++){currentTarget=pathInfo.path[pLoop];// this is a single event registration handler.
+if(tt[eventId][i][1]==null||matchesSelector(currentTarget,tt[eventId][i][1],obj)){tt[eventId][i][0].apply(currentTarget,[e]);break;}}}}}}}},clearSingle=function clearSingle(){tt.down=false;},clearDouble=function clearDouble(){tt.taps=0;};DefaultHandler(obj,"mousedown",down);DefaultHandler(obj,"mouseup",up);}// add this child selector (it can be null, that's fine).
+obj.__taTapHandler.downSelectors.push(children);obj.__taTapHandler[evt].push([fn,children]);// the unstore function removes this function from the object's listener list for this type.
+fn.__taUnstore=function(){_d(obj.__taTapHandler[evt],fn);};}};},meeHelper=function meeHelper(type,evt,obj,target){for(var i in obj.__tamee[type]){if(obj.__tamee[type].hasOwnProperty(i)){obj.__tamee[type][i].apply(target,[evt]);}}},MouseEnterExitHandler=function MouseEnterExitHandler(){var activeElements=[];return function(obj,evt,fn,children){if(!obj.__tamee){// __tamee holds a flag saying whether the mouse is currently "in" the element, and a list of
+// both mouseenter and mouseexit functions.
+obj.__tamee={over:false,mouseenter:[],mouseexit:[]};// register over and out functions
+var over=function over(e){var t=_t(e);if(children==null&&t==obj&&!obj.__tamee.over||matchesSelector(t,children,obj)&&(t.__tamee==null||!t.__tamee.over)){meeHelper("mouseenter",e,obj,t);t.__tamee=t.__tamee||{};t.__tamee.over=true;activeElements.push(t);}},out=function out(e){var t=_t(e);// is the current target one of the activeElements? and is the
+// related target NOT a descendant of it?
+for(var i=0;i<activeElements.length;i++){if(t==activeElements[i]&&!matchesSelector(e.relatedTarget||e.toElement,"*",t)){t.__tamee.over=false;activeElements.splice(i,1);meeHelper("mouseexit",e,obj,t);}}};_bind(obj,"mouseover",_curryChildFilter(children,obj,over,"mouseover"),over);_bind(obj,"mouseout",_curryChildFilter(children,obj,out,"mouseout"),out);}fn.__taUnstore=function(){delete obj.__tamee[evt][fn.__tauid];};_store(obj,evt,fn);obj.__tamee[evt][fn.__tauid]=fn;};},isTouchDevice="ontouchstart"in document.documentElement,isMouseDevice="onmousedown"in document.documentElement,touchMap={"mousedown":"touchstart","mouseup":"touchend","mousemove":"touchmove"},touchstart="touchstart",touchend="touchend",touchmove="touchmove",iev=function(){var rv=-1;if(navigator.appName=='Microsoft Internet Explorer'){var ua=navigator.userAgent,re=new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");if(re.exec(ua)!=null)rv=parseFloat(RegExp.$1);}return rv;}(),isIELT9=iev>-1&&iev<9,_genLoc=function _genLoc(e,prefix){if(e==null)return[0,0];var ts=_touches(e),t=_getTouch(ts,0);return[t[prefix+"X"],t[prefix+"Y"]];},_pageLocation=function _pageLocation(e){if(e==null)return[0,0];if(isIELT9){return[e.clientX+document.documentElement.scrollLeft,e.clientY+document.documentElement.scrollTop];}else{return _genLoc(e,"page");}},_screenLocation=function _screenLocation(e){return _genLoc(e,"screen");},_clientLocation=function _clientLocation(e){return _genLoc(e,"client");},_getTouch=function _getTouch(touches,idx){return touches.item?touches.item(idx):touches[idx];},_touches=function _touches(e){return e.touches&&e.touches.length>0?e.touches:e.changedTouches&&e.changedTouches.length>0?e.changedTouches:e.targetTouches&&e.targetTouches.length>0?e.targetTouches:[e];},_touchCount=function _touchCount(e){return _touches(e).length;},//http://www.quirksmode.org/blog/archives/2005/10/_and_the_winner_1.html
+_bind=function _bind(obj,type,fn,originalFn){_store(obj,type,fn);originalFn.__tauid=fn.__tauid;if(obj.addEventListener)obj.addEventListener(type,fn,false);else if(obj.attachEvent){var key=type+fn.__tauid;obj["e"+key]=fn;// TODO look at replacing with .call(..)
+obj[key]=function(){obj["e"+key]&&obj["e"+key](window.event);};obj.attachEvent("on"+type,obj[key]);}},_unbind=function _unbind(obj,type,fn){if(fn==null)return;_each(obj,function(){var _el=_gel(this);_unstore(_el,type,fn);// it has been bound if there is a tauid. otherwise it was not bound and we can ignore it.
+if(fn.__tauid!=null){if(_el.removeEventListener){_el.removeEventListener(type,fn,false);if(isTouchDevice&&touchMap[type])_el.removeEventListener(touchMap[type],fn,false);}else if(this.detachEvent){var key=type+fn.__tauid;_el[key]&&_el.detachEvent("on"+type,_el[key]);_el[key]=null;_el["e"+key]=null;}}// if a touch event was also registered, deregister now.
+if(fn.__taTouchProxy){_unbind(obj,fn.__taTouchProxy[1],fn.__taTouchProxy[0]);}});},_each=function _each(obj,fn){if(obj==null)return;// if a list (or list-like), use it. if a string, get a list
+// by running the string through querySelectorAll. else, assume
+// it's an Element.
+// obj.top is "unknown" in IE8.
+obj=typeof Window!=="undefined"&&typeof obj.top!=="unknown"&&obj==obj.top?[obj]:typeof obj!=="string"&&obj.tagName==null&&obj.length!=null?obj:typeof obj==="string"?document.querySelectorAll(obj):[obj];for(var i=0;i<obj.length;i++){fn.apply(obj[i]);}};/**
+     * Mottle offers support for abstracting out the differences
+     * between touch and mouse devices, plus "smart click" functionality
+     * (don't fire click if the mouse has moved between mousedown and mouseup),
+     * and synthesized click/tap events.
+     * @class Mottle
+     * @constructor
+     * @param {Object} params Constructor params
+     * @param {Number} [params.clickThreshold=250] Threshold, in milliseconds beyond which a touchstart followed by a touchend is not considered to be a click.
+     * @param {Number} [params.dblClickThreshold=450] Threshold, in milliseconds beyond which two successive tap events are not considered to be a click.
+     * @param {Boolean} [params.smartClicks=false] If true, won't fire click events if the mouse has moved between mousedown and mouseup. Note that this functionality
+     * requires that Mottle consume the mousedown event, and so may not be viable in all use cases.
+     */root.Mottle=function(params){params=params||{};var clickThreshold=params.clickThreshold||250,dblClickThreshold=params.dblClickThreshold||450,mouseEnterExitHandler=new MouseEnterExitHandler(),tapHandler=new TapHandler(clickThreshold,dblClickThreshold),_smartClicks=params.smartClicks,_doBind=function _doBind(obj,evt,fn,children){if(fn==null)return;_each(obj,function(){var _el=_gel(this);if(_smartClicks&&evt==="click")SmartClickHandler(_el,evt,fn,children);else if(evt==="tap"||evt==="dbltap"||evt==="contextmenu"){tapHandler(_el,evt,fn,children);}else if(evt==="mouseenter"||evt=="mouseexit")mouseEnterExitHandler(_el,evt,fn,children);else DefaultHandler(_el,evt,fn,children);});};/**
+         * Removes an element from the DOM, and deregisters all event handlers for it. You should use this
+         * to ensure you don't leak memory.
+         * @method remove
+         * @param {String|Element} el Element, or id of the element, to remove.
+         * @return {Mottle} The current Mottle instance; you can chain this method.
+         */this.remove=function(el){_each(el,function(){var _el=_gel(this);if(_el.__ta){for(var evt in _el.__ta){if(_el.__ta.hasOwnProperty(evt)){for(var h in _el.__ta[evt]){if(_el.__ta[evt].hasOwnProperty(h))_unbind(_el,evt,_el.__ta[evt][h]);}}}}_el.parentNode&&_el.parentNode.removeChild(_el);});return this;};/**
+         * Register an event handler, optionally as a delegate for some set of descendant elements. Note
+         * that this method takes either 3 or 4 arguments - if you supply 3 arguments it is assumed you have
+         * omitted the `children` parameter, and that the event handler should be bound directly to the given element.
+         * @method on
+         * @param {Element[]|Element|String} el Either an Element, or a CSS spec for a list of elements, or an array of Elements.
+         * @param {String} [children] Comma-delimited list of selectors identifying allowed children.
+         * @param {String} event Event ID.
+         * @param {Function} fn Event handler function.
+         * @return {Mottle} The current Mottle instance; you can chain this method.
+         */this.on=function(el,event,children,fn){var _el=arguments[0],_c=arguments.length==4?arguments[2]:null,_e=arguments[1],_f=arguments[arguments.length-1];_doBind(_el,_e,_f,_c);return this;};/**
+         * Cancel delegate event handling for the given function. Note that unlike with 'on' you do not supply
+         * a list of child selectors here: it removes event delegation from all of the child selectors for which the
+         * given function was registered (if any).
+         * @method off
+         * @param {Element[]|Element|String} el Element - or ID of element - from which to remove event listener.
+         * @param {String} event Event ID.
+         * @param {Function} fn Event handler function.
+         * @return {Mottle} The current Mottle instance; you can chain this method.
+         */this.off=function(el,event,fn){_unbind(el,event,fn);return this;};/**
+         * Triggers some event for a given element.
+         * @method trigger
+         * @param {Element} el Element for which to trigger the event.
+         * @param {String} event Event ID.
+         * @param {Event} originalEvent The original event. Should be optional of course, but currently is not, due
+         * to the jsPlumb use case that caused this method to be added.
+         * @param {Object} [payload] Optional object to set as `payload` on the generated event; useful for message passing.
+         * @return {Mottle} The current Mottle instance; you can chain this method.
+         */this.trigger=function(el,event,originalEvent,payload){// MouseEvent undefined in old IE; that's how we know it's a mouse event.  A fine Microsoft paradox.
+var originalIsMouse=isMouseDevice&&(typeof MouseEvent==="undefined"||originalEvent==null||originalEvent.constructor===MouseEvent);var eventToBind=isTouchDevice&&!isMouseDevice&&touchMap[event]?touchMap[event]:event,bindingAMouseEvent=!(isTouchDevice&&!isMouseDevice&&touchMap[event]);var pl=_pageLocation(originalEvent),sl=_screenLocation(originalEvent),cl=_clientLocation(originalEvent);_each(el,function(){var _el=_gel(this),evt;originalEvent=originalEvent||{screenX:sl[0],screenY:sl[1],clientX:cl[0],clientY:cl[1]};var _decorate=function _decorate(_evt){if(payload)_evt.payload=payload;};var eventGenerators={"TouchEvent":function TouchEvent(evt){var touch=document.createTouch(window,_el,0,pl[0],pl[1],sl[0],sl[1],cl[0],cl[1],0,0,0,0);// https://gist.github.com/sstephenson/448808
+var touches=document.createTouchList(touch);var targetTouches=document.createTouchList(touch);var changedTouches=document.createTouchList(touch);evt.initTouchEvent(eventToBind,true,true,window,null,sl[0],sl[1],cl[0],cl[1],false,false,false,false,touches,targetTouches,changedTouches,1,0);},"MouseEvents":function MouseEvents(evt){evt.initMouseEvent(eventToBind,true,true,window,0,sl[0],sl[1],cl[0],cl[1],false,false,false,false,1,_el);if(Sniff.android){// Android's touch events are not standard.
+var t=document.createTouch(window,_el,0,pl[0],pl[1],sl[0],sl[1],cl[0],cl[1],0,0,0,0);evt.touches=evt.targetTouches=evt.changedTouches=document.createTouchList(t);}}};if(document.createEvent){var ite=!bindingAMouseEvent&&!originalIsMouse&&isTouchDevice&&touchMap[event]&&!Sniff.android,evtName=ite?"TouchEvent":"MouseEvents";evt=document.createEvent(evtName);eventGenerators[evtName](evt);_decorate(evt);_el.dispatchEvent(evt);}else if(document.createEventObject){evt=document.createEventObject();evt.eventType=evt.eventName=eventToBind;evt.screenX=sl[0];evt.screenY=sl[1];evt.clientX=cl[0];evt.clientY=cl[1];_decorate(evt);_el.fireEvent('on'+eventToBind,evt);}});return this;};};/**
+     * Static method to assist in 'consuming' an element: uses `stopPropagation` where available, or sets
+     * `e.returnValue=false` where it is not.
+     * @method Mottle.consume
+     * @param {Event} e Event to consume
+     * @param {Boolean} [doNotPreventDefault=false] If true, does not call `preventDefault()` on the event.
+     */root.Mottle.consume=function(e,doNotPreventDefault){if(e.stopPropagation)e.stopPropagation();else e.returnValue=false;if(!doNotPreventDefault&&e.preventDefault)e.preventDefault();};/**
+     * Gets the page location corresponding to the given event. For touch events this means get the page location of the first touch.
+     * @method Mottle.pageLocation
+     * @param {Event} e Event to get page location for.
+     * @return {Number[]} [left, top] for the given event.
+     */root.Mottle.pageLocation=_pageLocation;/**
+     * Forces touch events to be turned "on". Useful for testing: even if you don't have a touch device, you can still
+     * trigger a touch event when this is switched on and it will be captured and acted on.
+     * @method setForceTouchEvents
+     * @param {Boolean} value If true, force touch events to be on.
+     */root.Mottle.setForceTouchEvents=function(value){isTouchDevice=value;};/**
+     * Forces mouse events to be turned "on". Useful for testing: even if you don't have a mouse, you can still
+     * trigger a mouse event when this is switched on and it will be captured and acted on.
+     * @method setForceMouseEvents
+     * @param {Boolean} value If true, force mouse events to be on.
+     */root.Mottle.setForceMouseEvents=function(value){isMouseDevice=value;};root.Mottle.version="0.8.0";{exports.Mottle=root.Mottle;}}).call(typeof window==="undefined"?commonjsGlobal:window);/**
+ drag/drop functionality for use with jsPlumb but with
+ no knowledge of jsPlumb. supports multiple scopes (separated by whitespace), dragging
+ multiple elements, constrain to parent, drop filters, drag start filters, custom
+ css classes.
+
+ a lot of the functionality of this script is expected to be plugged in:
+
+ addClass
+ removeClass
+
+ addEvent
+ removeEvent
+
+ getPosition
+ setPosition
+ getSize
+
+ indexOf
+ intersects
+
+ the name came from here:
+
+ http://mrsharpoblunto.github.io/foswig.js/
+
+ copyright 2016 jsPlumb
+ */(function(){"use strict";var root=this;var _suggest=function _suggest(list,item,head){if(list.indexOf(item)===-1){head?list.unshift(item):list.push(item);return true;}return false;};var _vanquish=function _vanquish(list,item){var idx=list.indexOf(item);if(idx!=-1)list.splice(idx,1);};var _difference=function _difference(l1,l2){var d=[];for(var i=0;i<l1.length;i++){if(l2.indexOf(l1[i])==-1)d.push(l1[i]);}return d;};var _isString=function _isString(f){return f==null?false:typeof f==="string"||f.constructor==String;};var getOffsetRect=function getOffsetRect(elem){// (1)
+var box=elem.getBoundingClientRect(),body=document.body,docElem=document.documentElement,// (2)
+scrollTop=window.pageYOffset||docElem.scrollTop||body.scrollTop,scrollLeft=window.pageXOffset||docElem.scrollLeft||body.scrollLeft,// (3)
+clientTop=docElem.clientTop||body.clientTop||0,clientLeft=docElem.clientLeft||body.clientLeft||0,// (4)
+top=box.top+scrollTop-clientTop,left=box.left+scrollLeft-clientLeft;return{top:Math.round(top),left:Math.round(left)};};var matchesSelector=function matchesSelector(el,selector,ctx){ctx=ctx||el.parentNode;var possibles=ctx.querySelectorAll(selector);for(var i=0;i<possibles.length;i++){if(possibles[i]===el)return true;}return false;};var iev=function(){var rv=-1;if(navigator.appName=='Microsoft Internet Explorer'){var ua=navigator.userAgent,re=new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");if(re.exec(ua)!=null)rv=parseFloat(RegExp.$1);}return rv;}(),DEFAULT_GRID_X=50,DEFAULT_GRID_Y=50,isIELT9=iev>-1&&iev<9,isIE9=iev==9,_pl=function _pl(e){if(isIELT9){return[e.clientX+document.documentElement.scrollLeft,e.clientY+document.documentElement.scrollTop];}else{var ts=_touches(e),t=_getTouch(ts,0);// for IE9 pageX might be null if the event was synthesized. We try for pageX/pageY first,
+// falling back to clientX/clientY if necessary. In every other browser we want to use pageX/pageY.
+return isIE9?[t.pageX||t.clientX,t.pageY||t.clientY]:[t.pageX,t.pageY];}},_getTouch=function _getTouch(touches,idx){return touches.item?touches.item(idx):touches[idx];},_touches=function _touches(e){return e.touches&&e.touches.length>0?e.touches:e.changedTouches&&e.changedTouches.length>0?e.changedTouches:e.targetTouches&&e.targetTouches.length>0?e.targetTouches:[e];},_classes={draggable:"katavorio-draggable",// draggable elements
+droppable:"katavorio-droppable",// droppable elements
+drag:"katavorio-drag",// elements currently being dragged
+selected:"katavorio-drag-selected",// elements in current drag selection
+active:"katavorio-drag-active",// droppables that are targets of a currently dragged element
+hover:"katavorio-drag-hover",// droppables over which a matching drag element is hovering
+noSelect:"katavorio-drag-no-select",// added to the body to provide a hook to suppress text selection
+ghostProxy:"katavorio-ghost-proxy"// added to a ghost proxy element in use when a drag has exited the bounds of its parent.
+},_defaultScope="katavorio-drag-scope",_events=["stop","start","drag","drop","over","out","beforeStart"],_devNull=function _devNull(){},_true=function _true(){return true;},_foreach=function _foreach(l,fn,from){for(var i=0;i<l.length;i++){if(l[i]!=from)fn(l[i]);}},_setDroppablesActive=function _setDroppablesActive(dd,val,andHover,drag){_foreach(dd,function(e){e.setActive(val);if(val)e.updatePosition();if(andHover)e.setHover(drag,val);});},_each=function _each(obj,fn){if(obj==null)return;obj=!_isString(obj)&&obj.tagName==null&&obj.length!=null?obj:[obj];for(var i=0;i<obj.length;i++){fn.apply(obj[i],[obj[i]]);}},_consume=function _consume(e){if(e.stopPropagation){e.stopPropagation();e.preventDefault();}else{e.returnValue=false;}},_defaultInputFilterSelector="input,textarea,select,button,option",//
+// filters out events on all input elements, like textarea, checkbox, input, select.
+_inputFilter=function _inputFilter(e,el,_katavorio){var t=e.srcElement||e.target;return!matchesSelector(t,_katavorio.getInputFilterSelector(),el);};var Super=function Super(el,params,css,scope){this.params=params||{};this.el=el;this.params.addClass(this.el,this._class);this.uuid=_uuid();var enabled=true;this.setEnabled=function(e){enabled=e;};this.isEnabled=function(){return enabled;};this.toggleEnabled=function(){enabled=!enabled;};this.setScope=function(scopes){this.scopes=scopes?scopes.split(/\s+/):[scope];};this.addScope=function(scopes){var m={};_each(this.scopes,function(s){m[s]=true;});_each(scopes?scopes.split(/\s+/):[],function(s){m[s]=true;});this.scopes=[];for(var i in m){this.scopes.push(i);}};this.removeScope=function(scopes){var m={};_each(this.scopes,function(s){m[s]=true;});_each(scopes?scopes.split(/\s+/):[],function(s){delete m[s];});this.scopes=[];for(var i in m){this.scopes.push(i);}};this.toggleScope=function(scopes){var m={};_each(this.scopes,function(s){m[s]=true;});_each(scopes?scopes.split(/\s+/):[],function(s){if(m[s])delete m[s];else m[s]=true;});this.scopes=[];for(var i in m){this.scopes.push(i);}};this.setScope(params.scope);this.k=params.katavorio;return params.katavorio;};var TRUE=function TRUE(){return true;};var FALSE=function FALSE(){return false;};var Drag=function Drag(el,params,css,scope){this._class=css.draggable;var k=Super.apply(this,arguments);this.rightButtonCanDrag=this.params.rightButtonCanDrag;var downAt=[0,0],posAtDown=null,pagePosAtDown=null,pageDelta=[0,0],moving=false,consumeStartEvent=this.params.consumeStartEvent!==false,dragEl=this.el,clone=this.params.clone,scroll=this.params.scroll,_multipleDrop=params.multipleDrop!==false,isConstrained=false,useGhostProxy=params.ghostProxy===true?TRUE:params.ghostProxy&&typeof params.ghostProxy==="function"?params.ghostProxy:FALSE,ghostProxy=function ghostProxy(el){return el.cloneNode(true);};var snapThreshold=params.snapThreshold||5,_snap=function _snap(pos,x,y,thresholdX,thresholdY){thresholdX=thresholdX||snapThreshold;thresholdY=thresholdY||snapThreshold;var _dx=Math.floor(pos[0]/x),_dxl=x*_dx,_dxt=_dxl+x,_x=Math.abs(pos[0]-_dxl)<=thresholdX?_dxl:Math.abs(_dxt-pos[0])<=thresholdX?_dxt:pos[0];var _dy=Math.floor(pos[1]/y),_dyl=y*_dy,_dyt=_dyl+y,_y=Math.abs(pos[1]-_dyl)<=thresholdY?_dyl:Math.abs(_dyt-pos[1])<=thresholdY?_dyt:pos[1];return[_x,_y];};this.posses=[];this.posseRoles={};this.toGrid=function(pos){if(this.params.grid==null){return pos;}else{return _snap(pos,this.params.grid[0],this.params.grid[1]);}};this.snap=function(x,y){if(dragEl==null)return;x=x||(this.params.grid?this.params.grid[0]:DEFAULT_GRID_X);y=y||(this.params.grid?this.params.grid[1]:DEFAULT_GRID_Y);var p=this.params.getPosition(dragEl);this.params.setPosition(dragEl,_snap(p,x,y,x,y));};this.setUseGhostProxy=function(val){useGhostProxy=val?TRUE:FALSE;};var constrain;var negativeFilter=function negativeFilter(pos){return params.allowNegative===false?[Math.max(0,pos[0]),Math.max(0,pos[1])]:pos;};var _setConstrain=function(value){constrain=typeof value==="function"?value:value?function(pos){return negativeFilter([Math.max(0,Math.min(constrainRect.w-this.size[0],pos[0])),Math.max(0,Math.min(constrainRect.h-this.size[1],pos[1]))]);}.bind(this):function(pos){return negativeFilter(pos);};}.bind(this);_setConstrain(typeof this.params.constrain==="function"?this.params.constrain:this.params.constrain||this.params.containment);/**
+         * Sets whether or not the Drag is constrained. A value of 'true' means constrain to parent bounds; a function
+         * will be executed and returns true if the position is allowed.
+         * @param value
+         */this.setConstrain=function(value){_setConstrain(value);};var revertFunction;/**
+         * Sets a function to call on drag stop, which, if it returns true, indicates that the given element should
+         * revert to its position before the previous drag.
+         * @param fn
+         */this.setRevert=function(fn){revertFunction=fn;};var _assignId=function _assignId(obj){if(typeof obj=="function"){obj._katavorioId=_uuid();return obj._katavorioId;}else{return obj;}},// a map of { spec -> [ fn, exclusion ] } entries.
+_filters={},_testFilter=function _testFilter(e){for(var key in _filters){var f=_filters[key];var rv=f[0](e);if(f[1])rv=!rv;if(!rv)return false;}return true;},_setFilter=this.setFilter=function(f,_exclude){if(f){var key=_assignId(f);_filters[key]=[function(e){var t=e.srcElement||e.target,m;if(_isString(f)){m=matchesSelector(t,f,el);}else if(typeof f==="function"){m=f(e,el);}return m;},_exclude!==false];}},_addFilter=this.addFilter=_setFilter,_removeFilter=this.removeFilter=function(f){var key=typeof f=="function"?f._katavorioId:f;delete _filters[key];};this.clearAllFilters=function(){_filters={};};this.canDrag=this.params.canDrag||_true;var constrainRect,matchingDroppables=[],intersectingDroppables=[];this.downListener=function(e){var isNotRightClick=this.rightButtonCanDrag||e.which!==3&&e.button!==2;if(isNotRightClick&&this.isEnabled()&&this.canDrag()){var _f=_testFilter(e)&&_inputFilter(e,this.el,this.k);if(_f){if(!clone)dragEl=this.el;else{dragEl=this.el.cloneNode(true);dragEl.setAttribute("id",null);dragEl.style.position="absolute";// the clone node is added to the body; getOffsetRect gives us a value
+// relative to the body.
+var b=getOffsetRect(this.el);dragEl.style.left=b.left+"px";dragEl.style.top=b.top+"px";document.body.appendChild(dragEl);}consumeStartEvent&&_consume(e);downAt=_pl(e);//
+this.params.bind(document,"mousemove",this.moveListener);this.params.bind(document,"mouseup",this.upListener);k.markSelection(this);k.markPosses(this);this.params.addClass(document.body,css.noSelect);_dispatch("beforeStart",{el:this.el,pos:posAtDown,e:e,drag:this});}else if(this.params.consumeFilteredEvents){_consume(e);}}}.bind(this);this.moveListener=function(e){if(downAt){if(!moving){var _continue=_dispatch("start",{el:this.el,pos:posAtDown,e:e,drag:this});if(_continue!==false){if(!downAt)return;this.mark(true);moving=true;}}// it is possible that the start event caused the drag to be aborted. So we check
+// again that we are currently dragging.
+if(downAt){intersectingDroppables.length=0;var pos=_pl(e),dx=pos[0]-downAt[0],dy=pos[1]-downAt[1],z=this.params.ignoreZoom?1:k.getZoom();dx/=z;dy/=z;this.moveBy(dx,dy,e);k.updateSelection(dx,dy,this);k.updatePosses(dx,dy,this);}}}.bind(this);this.upListener=function(e){if(downAt){downAt=null;this.params.unbind(document,"mousemove",this.moveListener);this.params.unbind(document,"mouseup",this.upListener);this.params.removeClass(document.body,css.noSelect);this.unmark(e);k.unmarkSelection(this,e);k.unmarkPosses(this,e);this.stop(e);k.notifySelectionDragStop(this,e);k.notifyPosseDragStop(this,e);moving=false;if(clone){dragEl&&dragEl.parentNode&&dragEl.parentNode.removeChild(dragEl);dragEl=null;}if(revertFunction&&revertFunction(this.el,this.params.getPosition(this.el))===true){this.params.setPosition(this.el,posAtDown);_dispatch("revert",this.el);}}}.bind(this);this.getFilters=function(){return _filters;};this.abort=function(){if(downAt!=null)this.upListener();};this.getDragElement=function(){return dragEl||this.el;};var listeners={"start":[],"drag":[],"stop":[],"over":[],"out":[],"beforeStart":[],"revert":[]};if(params.events.start)listeners.start.push(params.events.start);if(params.events.beforeStart)listeners.beforeStart.push(params.events.beforeStart);if(params.events.stop)listeners.stop.push(params.events.stop);if(params.events.drag)listeners.drag.push(params.events.drag);if(params.events.revert)listeners.revert.push(params.events.revert);this.on=function(evt,fn){if(listeners[evt])listeners[evt].push(fn);};this.off=function(evt,fn){if(listeners[evt]){var l=[];for(var i=0;i<listeners[evt].length;i++){if(listeners[evt][i]!==fn)l.push(listeners[evt][i]);}listeners[evt]=l;}};var _dispatch=function _dispatch(evt,value){if(listeners[evt]){for(var i=0;i<listeners[evt].length;i++){try{listeners[evt][i](value);}catch(e){}}}};this.notifyStart=function(e){_dispatch("start",{el:this.el,pos:this.params.getPosition(dragEl),e:e,drag:this});};this.stop=function(e,force){if(force||moving){var positions=[],sel=k.getSelection(),dPos=this.params.getPosition(dragEl);if(sel.length>1){for(var i=0;i<sel.length;i++){var p=this.params.getPosition(sel[i].el);positions.push([sel[i].el,{left:p[0],top:p[1]},sel[i]]);}}else{positions.push([dragEl,{left:dPos[0],top:dPos[1]},this]);}_dispatch("stop",{el:dragEl,pos:ghostProxyOffsets||dPos,finalPos:dPos,e:e,drag:this,selection:positions});}};this.mark=function(andNotify){posAtDown=this.params.getPosition(dragEl);pagePosAtDown=this.params.getPosition(dragEl,true);pageDelta=[pagePosAtDown[0]-posAtDown[0],pagePosAtDown[1]-posAtDown[1]];this.size=this.params.getSize(dragEl);matchingDroppables=k.getMatchingDroppables(this);_setDroppablesActive(matchingDroppables,true,false,this);this.params.addClass(dragEl,this.params.dragClass||css.drag);//if (this.params.constrain || this.params.containment) {
+var cs=this.params.getSize(dragEl.parentNode);constrainRect={w:cs[0],h:cs[1]};//}
+if(andNotify){k.notifySelectionDragStart(this);}};var ghostProxyOffsets;this.unmark=function(e,doNotCheckDroppables){_setDroppablesActive(matchingDroppables,false,true,this);if(isConstrained&&useGhostProxy(this.el)){ghostProxyOffsets=[dragEl.offsetLeft,dragEl.offsetTop];this.el.parentNode.removeChild(dragEl);dragEl=this.el;}else{ghostProxyOffsets=null;}this.params.removeClass(dragEl,this.params.dragClass||css.drag);matchingDroppables.length=0;isConstrained=false;if(!doNotCheckDroppables){if(intersectingDroppables.length>0&&ghostProxyOffsets){params.setPosition(this.el,ghostProxyOffsets);}intersectingDroppables.sort(_rankSort);for(var i=0;i<intersectingDroppables.length;i++){var retVal=intersectingDroppables[i].drop(this,e);if(retVal===true)break;}}};this.moveBy=function(dx,dy,e){intersectingDroppables.length=0;var desiredLoc=this.toGrid([posAtDown[0]+dx,posAtDown[1]+dy]),cPos=constrain(desiredLoc,dragEl);if(useGhostProxy(this.el)){if(desiredLoc[0]!=cPos[0]||desiredLoc[1]!=cPos[1]){if(!isConstrained){var gp=ghostProxy(this.el);params.addClass(gp,_classes.ghostProxy);this.el.parentNode.appendChild(gp);dragEl=gp;isConstrained=true;}cPos=desiredLoc;}else{if(isConstrained){this.el.parentNode.removeChild(dragEl);dragEl=this.el;isConstrained=false;}}}var rect={x:cPos[0],y:cPos[1],w:this.size[0],h:this.size[1]},pageRect={x:rect.x+pageDelta[0],y:rect.y+pageDelta[1],w:rect.w,h:rect.h},focusDropElement=null;this.params.setPosition(dragEl,cPos);for(var i=0;i<matchingDroppables.length;i++){var r2={x:matchingDroppables[i].pagePosition[0],y:matchingDroppables[i].pagePosition[1],w:matchingDroppables[i].size[0],h:matchingDroppables[i].size[1]};if(this.params.intersects(pageRect,r2)&&(_multipleDrop||focusDropElement==null||focusDropElement==matchingDroppables[i].el)&&matchingDroppables[i].canDrop(this)){if(!focusDropElement)focusDropElement=matchingDroppables[i].el;intersectingDroppables.push(matchingDroppables[i]);matchingDroppables[i].setHover(this,true,e);}else if(matchingDroppables[i].isHover()){matchingDroppables[i].setHover(this,false,e);}}_dispatch("drag",{el:this.el,pos:cPos,e:e,drag:this});/* test to see if the parent needs to be scrolled (future)
+             if (scroll) {
+             var pnsl = dragEl.parentNode.scrollLeft, pnst = dragEl.parentNode.scrollTop;
+             console.log("scroll!", pnsl, pnst);
+             }*/};this.destroy=function(){this.params.unbind(this.el,"mousedown",this.downListener);this.params.unbind(document,"mousemove",this.moveListener);this.params.unbind(document,"mouseup",this.upListener);this.downListener=null;this.upListener=null;this.moveListener=null;};// init:register mousedown, and perhaps set a filter
+this.params.bind(this.el,"mousedown",this.downListener);// if handle provded, use that.  otherwise, try to set a filter.
+// note that a `handle` selector always results in filterExclude being set to false, ie.
+// the selector defines the handle element(s).
+if(this.params.handle)_setFilter(this.params.handle,false);else _setFilter(this.params.filter,this.params.filterExclude);};var Drop=function Drop(el,params,css,scope){this._class=css.droppable;this.params=params||{};this.rank=params.rank||0;this._activeClass=this.params.activeClass||css.active;this._hoverClass=this.params.hoverClass||css.hover;Super.apply(this,arguments);var hover=false;this.allowLoopback=this.params.allowLoopback!==false;this.setActive=function(val){this.params[val?"addClass":"removeClass"](this.el,this._activeClass);};this.updatePosition=function(){this.position=this.params.getPosition(this.el);this.pagePosition=this.params.getPosition(this.el,true);this.size=this.params.getSize(this.el);};this.canDrop=this.params.canDrop||function(drag){return true;};this.isHover=function(){return hover;};this.setHover=function(drag,val,e){// if turning off hover but this was not the drag that caused the hover, ignore.
+if(val||this.el._katavorioDragHover==null||this.el._katavorioDragHover==drag.el._katavorio){this.params[val?"addClass":"removeClass"](this.el,this._hoverClass);//this.el._katavorioDragHover = val ? drag.el._katavorio : null;
+this.el._katavorioDragHover=val?drag.el._katavorio:null;if(hover!==val)this.params.events[val?"over":"out"]({el:this.el,e:e,drag:drag,drop:this});hover=val;}};this.drop=function(drag,event){return this.params.events["drop"]({drag:drag,e:event,drop:this});};this.destroy=function(){this._class=null;this._activeClass=null;this._hoverClass=null;//this.params = null;
+hover=null;//this.el = null;
+};};var _uuid=function _uuid(){return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c=='x'?r:r&0x3|0x8;return v.toString(16);});};var _rankSort=function _rankSort(a,b){return a.rank<b.rank?1:a.rank>b.rank?-1:0;};var _gel=function _gel(el){if(el==null)return null;el=typeof el==="string"||el.constructor==String?document.getElementById(el):el;if(el==null)return null;el._katavorio=el._katavorio||_uuid();return el;};root.Katavorio=function(katavorioParams){var _selection=[],_selectionMap={};this._dragsByScope={};this._dropsByScope={};var _zoom=1,_reg=function _reg(obj,map){_each(obj,function(_obj){for(var i=0;i<_obj.scopes.length;i++){map[_obj.scopes[i]]=map[_obj.scopes[i]]||[];map[_obj.scopes[i]].push(_obj);}});},_unreg=function _unreg(obj,map){var c=0;_each(obj,function(_obj){for(var i=0;i<_obj.scopes.length;i++){if(map[_obj.scopes[i]]){var idx=katavorioParams.indexOf(map[_obj.scopes[i]],_obj);if(idx!=-1){map[_obj.scopes[i]].splice(idx,1);c++;}}}});return c>0;},_getMatchingDroppables=this.getMatchingDroppables=function(drag){var dd=[],_m={};for(var i=0;i<drag.scopes.length;i++){var _dd=this._dropsByScope[drag.scopes[i]];if(_dd){for(var j=0;j<_dd.length;j++){if(_dd[j].canDrop(drag)&&!_m[_dd[j].uuid]&&(_dd[j].allowLoopback||_dd[j].el!==drag.el)){_m[_dd[j].uuid]=true;dd.push(_dd[j]);}}}}dd.sort(_rankSort);return dd;},_prepareParams=function(p){p=p||{};var _p={events:{}},i;for(i in katavorioParams){_p[i]=katavorioParams[i];}for(i in p){_p[i]=p[i];}// events
+for(i=0;i<_events.length;i++){_p.events[_events[i]]=p[_events[i]]||_devNull;}_p.katavorio=this;return _p;}.bind(this),_mistletoe=function(existingDrag,params){for(var i=0;i<_events.length;i++){if(params[_events[i]]){existingDrag.on(_events[i],params[_events[i]]);}}}.bind(this),_css={},overrideCss=katavorioParams.css||{},_scope=katavorioParams.scope||_defaultScope;// prepare map of css classes based on defaults frst, then optional overrides
+for(var i in _classes){_css[i]=_classes[i];}for(var i in overrideCss){_css[i]=overrideCss[i];}var inputFilterSelector=katavorioParams.inputFilterSelector||_defaultInputFilterSelector;/**
+         * Gets the selector identifying which input elements to filter from drag events.
+         * @method getInputFilterSelector
+         * @return {String} Current input filter selector.
+         */this.getInputFilterSelector=function(){return inputFilterSelector;};/**
+         * Sets the selector identifying which input elements to filter from drag events.
+         * @method setInputFilterSelector
+         * @param {String} selector Input filter selector to set.
+         * @return {Katavorio} Current instance; method may be chained.
+         */this.setInputFilterSelector=function(selector){inputFilterSelector=selector;return this;};this.draggable=function(el,params){var o=[];_each(el,function(_el){_el=_gel(_el);if(_el!=null){if(_el._katavorioDrag==null){var p=_prepareParams(params);_el._katavorioDrag=new Drag(_el,p,_css,_scope);_reg(_el._katavorioDrag,this._dragsByScope);o.push(_el._katavorioDrag);katavorioParams.addClass(_el,_css.draggable);}else{_mistletoe(_el._katavorioDrag,params);}}}.bind(this));return o;};this.droppable=function(el,params){var o=[];_each(el,function(_el){_el=_gel(_el);if(_el!=null){var drop=new Drop(_el,_prepareParams(params),_css,_scope);_el._katavorioDrop=_el._katavorioDrop||[];_el._katavorioDrop.push(drop);_reg(drop,this._dropsByScope);o.push(drop);katavorioParams.addClass(_el,_css.droppable);}}.bind(this));return o;};/**
+         * @name Katavorio#select
+         * @function
+         * @desc Adds an element to the current selection (for multiple node drag)
+         * @param {Element|String} DOM element - or id of the element - to add.
+         */this.select=function(el){_each(el,function(){var _el=_gel(this);if(_el&&_el._katavorioDrag){if(!_selectionMap[_el._katavorio]){_selection.push(_el._katavorioDrag);_selectionMap[_el._katavorio]=[_el,_selection.length-1];katavorioParams.addClass(_el,_css.selected);}}});return this;};/**
+         * @name Katavorio#deselect
+         * @function
+         * @desc Removes an element from the current selection (for multiple node drag)
+         * @param {Element|String} DOM element - or id of the element - to remove.
+         */this.deselect=function(el){_each(el,function(){var _el=_gel(this);if(_el&&_el._katavorio){var e=_selectionMap[_el._katavorio];if(e){var _s=[];for(var i=0;i<_selection.length;i++){if(_selection[i].el!==_el)_s.push(_selection[i]);}_selection=_s;delete _selectionMap[_el._katavorio];katavorioParams.removeClass(_el,_css.selected);}}});return this;};this.deselectAll=function(){for(var i in _selectionMap){var d=_selectionMap[i];katavorioParams.removeClass(d[0],_css.selected);}_selection.length=0;_selectionMap={};};this.markSelection=function(drag){_foreach(_selection,function(e){e.mark();},drag);};this.markPosses=function(drag){if(drag.posses){_each(drag.posses,function(p){if(drag.posseRoles[p]&&_posses[p]){_foreach(_posses[p].members,function(d){d.mark();},drag);}});}};this.unmarkSelection=function(drag,event){_foreach(_selection,function(e){e.unmark(event);},drag);};this.unmarkPosses=function(drag,event){if(drag.posses){_each(drag.posses,function(p){if(drag.posseRoles[p]&&_posses[p]){_foreach(_posses[p].members,function(d){d.unmark(event,true);},drag);}});}};this.getSelection=function(){return _selection.slice(0);};this.updateSelection=function(dx,dy,drag){_foreach(_selection,function(e){e.moveBy(dx,dy);},drag);};var _posseAction=function _posseAction(fn,drag){if(drag.posses){_each(drag.posses,function(p){if(drag.posseRoles[p]&&_posses[p]){_foreach(_posses[p].members,function(e){fn(e);},drag);}});}};this.updatePosses=function(dx,dy,drag){_posseAction(function(e){e.moveBy(dx,dy);},drag);};this.notifyPosseDragStop=function(drag,evt){_posseAction(function(e){e.stop(evt,true);},drag);};this.notifySelectionDragStop=function(drag,evt){_foreach(_selection,function(e){e.stop(evt,true);},drag);};this.notifySelectionDragStart=function(drag,evt){_foreach(_selection,function(e){e.notifyStart(evt);},drag);};this.setZoom=function(z){_zoom=z;};this.getZoom=function(){return _zoom;};// does the work of changing scopes
+var _scopeManip=function _scopeManip(kObj,scopes,map,fn){_each(kObj,function(_kObj){_unreg(_kObj,map);// deregister existing scopes
+_kObj[fn](scopes);// set scopes
+_reg(_kObj,map);// register new ones
+});};_each(["set","add","remove","toggle"],function(v){this[v+"Scope"]=function(el,scopes){_scopeManip(el._katavorioDrag,scopes,this._dragsByScope,v+"Scope");_scopeManip(el._katavorioDrop,scopes,this._dropsByScope,v+"Scope");}.bind(this);this[v+"DragScope"]=function(el,scopes){_scopeManip(el.constructor===Drag?el:el._katavorioDrag,scopes,this._dragsByScope,v+"Scope");}.bind(this);this[v+"DropScope"]=function(el,scopes){_scopeManip(el.constructor===Drop?el:el._katavorioDrop,scopes,this._dropsByScope,v+"Scope");}.bind(this);}.bind(this));this.snapToGrid=function(x,y){for(var s in this._dragsByScope){_foreach(this._dragsByScope[s],function(d){d.snap(x,y);});}};this.getDragsForScope=function(s){return this._dragsByScope[s];};this.getDropsForScope=function(s){return this._dropsByScope[s];};var _destroy=function _destroy(el,type,map){el=_gel(el);if(el[type]){// remove from selection, if present.
+var selIdx=_selection.indexOf(el[type]);if(selIdx>=0){_selection.splice(selIdx,1);}if(_unreg(el[type],map)){_each(el[type],function(kObj){kObj.destroy();});}delete el[type];}};this.elementRemoved=function(el){this.destroyDraggable(el);this.destroyDroppable(el);};this.destroyDraggable=function(el){_destroy(el,"_katavorioDrag",this._dragsByScope);};this.destroyDroppable=function(el){_destroy(el,"_katavorioDrop",this._dropsByScope);};this.reset=function(){this._dragsByScope={};this._dropsByScope={};_selection=[];_selectionMap={};_posses={};};// ----- groups
+var _posses={};var _processOneSpec=function _processOneSpec(el,_spec,dontAddExisting){var posseId=_isString(_spec)?_spec:_spec.id;var active=_isString(_spec)?true:_spec.active!==false;var posse=_posses[posseId]||function(){var g={name:posseId,members:[]};_posses[posseId]=g;return g;}();_each(el,function(_el){if(_el._katavorioDrag){if(dontAddExisting&&_el._katavorioDrag.posseRoles[posse.name]!=null)return;_suggest(posse.members,_el._katavorioDrag);_suggest(_el._katavorioDrag.posses,posse.name);_el._katavorioDrag.posseRoles[posse.name]=active;}});return posse;};/**
+         * Add the given element to the posse with the given id, creating the group if it at first does not exist.
+         * @method addToPosse
+         * @param {Element} el Element to add.
+         * @param {String...|Object...} spec Variable args parameters. Each argument can be a either a String, indicating
+         * the ID of a Posse to which the element should be added as an active participant, or an Object containing
+         * `{ id:"posseId", active:false/true}`. In the latter case, if `active` is not provided it is assumed to be
+         * true.
+         * @returns {Posse|Posse[]} The Posse(s) to which the element(s) was/were added.
+         */this.addToPosse=function(el,spec){var posses=[];for(var i=1;i<arguments.length;i++){posses.push(_processOneSpec(el,arguments[i]));}return posses.length==1?posses[0]:posses;};/**
+         * Sets the posse(s) for the element with the given id, creating those that do not yet exist, and removing from
+         * the element any current Posses that are not specified by this method call. This method will not change the
+         * active/passive state if it is given a posse in which the element is already a member.
+         * @method setPosse
+         * @param {Element} el Element to set posse(s) on.
+         * @param {String...|Object...} spec Variable args parameters. Each argument can be a either a String, indicating
+         * the ID of a Posse to which the element should be added as an active participant, or an Object containing
+         * `{ id:"posseId", active:false/true}`. In the latter case, if `active` is not provided it is assumed to be
+         * true.
+         * @returns {Posse|Posse[]} The Posse(s) to which the element(s) now belongs.
+         */this.setPosse=function(el,spec){var posses=[];for(var i=1;i<arguments.length;i++){posses.push(_processOneSpec(el,arguments[i],true).name);}_each(el,function(_el){if(_el._katavorioDrag){var diff=_difference(_el._katavorioDrag.posses,posses);var p=[];Array.prototype.push.apply(p,_el._katavorioDrag.posses);for(var i=0;i<diff.length;i++){this.removeFromPosse(_el,diff[i]);}}}.bind(this));return posses.length==1?posses[0]:posses;};/**
+         * Remove the given element from the given posse(s).
+         * @method removeFromPosse
+         * @param {Element} el Element to remove.
+         * @param {String...} posseId Varargs parameter: one value for each posse to remove the element from.
+         */this.removeFromPosse=function(el,posseId){if(arguments.length<2)throw new TypeError("No posse id provided for remove operation");for(var i=1;i<arguments.length;i++){posseId=arguments[i];_each(el,function(_el){if(_el._katavorioDrag&&_el._katavorioDrag.posses){var d=_el._katavorioDrag;_each(posseId,function(p){_vanquish(_posses[p].members,d);_vanquish(d.posses,p);delete d.posseRoles[p];});}});}};/**
+         * Remove the given element from all Posses to which it belongs.
+         * @method removeFromAllPosses
+         * @param {Element|Element[]} el Element to remove from Posses.
+         */this.removeFromAllPosses=function(el){_each(el,function(_el){if(_el._katavorioDrag&&_el._katavorioDrag.posses){var d=_el._katavorioDrag;_each(d.posses,function(p){_vanquish(_posses[p].members,d);});d.posses.length=0;d.posseRoles={};}});};/**
+         * Changes the participation state for the element in the Posse with the given ID.
+         * @param {Element|Element[]} el Element(s) to change state for.
+         * @param {String} posseId ID of the Posse to change element state for.
+         * @param {Boolean} state True to make active, false to make passive.
+         */this.setPosseState=function(el,posseId,state){var posse=_posses[posseId];if(posse){_each(el,function(_el){if(_el._katavorioDrag&&_el._katavorioDrag.posses){_el._katavorioDrag.posseRoles[posse.name]=state;}});}};};root.Katavorio.version="0.19.1";{exports.Katavorio=root.Katavorio;}}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ *
+ * Title:jsPlumb 2.3.0
+ *
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ *
+ * This file contains utility functions that run in both browsers and headless.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ *
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){var _isa=function _isa(a){return Object.prototype.toString.call(a)==="[object Array]";},_isnum=function _isnum(n){return Object.prototype.toString.call(n)==="[object Number]";},_iss=function _iss(s){return typeof s==="string";},_isb=function _isb(s){return typeof s==="boolean";},_isnull=function _isnull(s){return s==null;},_iso=function _iso(o){return o==null?false:Object.prototype.toString.call(o)==="[object Object]";},_isd=function _isd(o){return Object.prototype.toString.call(o)==="[object Date]";},_isf=function _isf(o){return Object.prototype.toString.call(o)==="[object Function]";},_isNamedFunction=function _isNamedFunction(o){return _isf(o)&&o.name!=null&&o.name.length>0;},_ise=function _ise(o){for(var i in o){if(o.hasOwnProperty(i))return false;}return true;};var root=this;root.jsPlumbUtil={isArray:_isa,isString:_iss,isBoolean:_isb,isNull:_isnull,isObject:_iso,isDate:_isd,isFunction:_isf,isEmpty:_ise,isNumber:_isnum,clone:function clone(a){if(_iss(a))return""+a;else if(_isb(a))return!!a;else if(_isd(a))return new Date(a.getTime());else if(_isf(a))return a;else if(_isa(a)){var b=[];for(var i=0;i<a.length;i++){b.push(this.clone(a[i]));}return b;}else if(_iso(a)){var c={};for(var j in a){c[j]=this.clone(a[j]);}return c;}else return a;},merge:function merge(a,b,collations){// first change the collations array - if present - into a lookup table, because its faster.
+var cMap={},ar,i;collations=collations||[];for(i=0;i<collations.length;i++){cMap[collations[i]]=true;}var c=this.clone(a);for(i in b){if(c[i]==null){c[i]=b[i];}else if(_iss(b[i])||_isb(b[i])){if(!cMap[i]){c[i]=b[i];// if we dont want to collate, just copy it in.
+}else{ar=[];// if c's object is also an array we can keep its values.
+ar.push.apply(ar,_isa(c[i])?c[i]:[c[i]]);ar.push.apply(ar,_isa(b[i])?b[i]:[b[i]]);c[i]=ar;}}else{if(_isa(b[i])){ar=[];// if c's object is also an array we can keep its values.
+if(_isa(c[i]))ar.push.apply(ar,c[i]);ar.push.apply(ar,b[i]);c[i]=ar;}else if(_iso(b[i])){// overwite c's value with an object if it is not already one.
+if(!_iso(c[i]))c[i]={};for(var j in b[i]){c[i][j]=b[i][j];}}}}return c;},replace:function replace(inObj,path,value){if(inObj==null)return;var q=inObj,t=q;path.replace(/([^\.])+/g,function(term,lc,pos,str){var array=term.match(/([^\[0-9]+){1}(\[)([0-9+])/),last=pos+term.length>=str.length,_getArray=function _getArray(){return t[array[1]]||function(){t[array[1]]=[];return t[array[1]];}();};if(last){// set term = value on current t, creating term as array if necessary.
+if(array)_getArray()[array[3]]=value;else t[term]=value;}else{// set to current t[term], creating t[term] if necessary.
+if(array){var a=_getArray();t=a[array[3]]||function(){a[array[3]]={};return a[array[3]];}();}else t=t[term]||function(){t[term]={};return t[term];}();}});return inObj;},//
+// chain a list of functions, supplied by [ object, method name, args ], and return on the first
+// one that returns the failValue. if none return the failValue, return the successValue.
+//
+functionChain:function functionChain(successValue,failValue,fns){for(var i=0;i<fns.length;i++){var o=fns[i][0][fns[i][1]].apply(fns[i][0],fns[i][2]);if(o===failValue){return o;}}return successValue;},// take the given model and expand out any parameters.
+// 'functionPrefix' is optional, and if present, helps jsplumb figure out what to do if a value is a Function.
+// if you do not provide it, jsplumb will run the given values through any functions it finds, and use the function's
+// output as the value in the result. if you do provide the prefix, only functions that are named and have this prefix
+// will be executed; other functions will be passed as values to the output.
+populate:function populate(model,values,functionPrefix){// for a string, see if it has parameter matches, and if so, try to make the substitutions.
+var getValue=function getValue(fromString){var matches=fromString.match(/(\${.*?})/g);if(matches!=null){for(var i=0;i<matches.length;i++){var val=values[matches[i].substring(2,matches[i].length-1)]||"";if(val!=null){fromString=fromString.replace(matches[i],val);}}}return fromString;},// process one entry.
+_one=function _one(d){if(d!=null){if(_iss(d)){return getValue(d);}else if(_isf(d)&&(functionPrefix==null||(d.name||"").indexOf(functionPrefix)===0)){return d(values);}else if(_isa(d)){var r=[];for(var i=0;i<d.length;i++){r.push(_one(d[i]));}return r;}else if(_iso(d)){var s={};for(var j in d){s[j]=_one(d[j]);}return s;}else{return d;}}};return _one(model);},findWithFunction:function findWithFunction(a,f){if(a)for(var i=0;i<a.length;i++){if(f(a[i]))return i;}return-1;},removeWithFunction:function removeWithFunction(a,f){var idx=root.jsPlumbUtil.findWithFunction(a,f);if(idx>-1)a.splice(idx,1);return idx!=-1;},remove:function remove(l,v){var idx=l.indexOf(v);if(idx>-1)l.splice(idx,1);return idx!=-1;},// TODO support insert index
+addWithFunction:function addWithFunction(list,item,hashFunction){if(root.jsPlumbUtil.findWithFunction(list,hashFunction)==-1)list.push(item);},addToList:function addToList(map,key,value,insertAtStart){var l=map[key];if(l==null){l=[];map[key]=l;}l[insertAtStart?"unshift":"push"](value);return l;},suggest:function suggest(list,item,insertAtHead){if(list.indexOf(item)===-1){if(insertAtHead){list.unshift(item);}else{list.push(item);}return true;}return false;},//
+// extends the given obj (which can be an array) with the given constructor function, prototype functions, and
+// class members, any of which may be null.
+//
+extend:function extend(child,parent,_protoFn){var i;parent=_isa(parent)?parent:[parent];for(i=0;i<parent.length;i++){for(var j in parent[i].prototype){if(parent[i].prototype.hasOwnProperty(j)){child.prototype[j]=parent[i].prototype[j];}}}var _makeFn=function _makeFn(name,protoFn){return function(){for(i=0;i<parent.length;i++){if(parent[i].prototype[name])parent[i].prototype[name].apply(this,arguments);}return protoFn.apply(this,arguments);};};var _oneSet=function _oneSet(fns){for(var k in fns){child.prototype[k]=_makeFn(k,fns[k]);}};if(arguments.length>2){for(i=2;i<arguments.length;i++){_oneSet(arguments[i]);}}return child;},uuid:function uuid(){return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c=='x'?r:r&0x3|0x8;return v.toString(16);});},logEnabled:true,log:function log(){if(root.jsPlumbUtil.logEnabled&&typeof console!="undefined"){try{var msg=arguments[arguments.length-1];console.log(msg);}catch(e){}}},/**
+         * Wraps one function with another, creating a placeholder for the
+         * wrapped function if it was null. this is used to wrap the various
+         * drag/drop event functions - to allow jsPlumb to be notified of
+         * important lifecycle events without imposing itself on the user's
+         * drag/drop functionality.
+         * @method jsPlumbUtil.wrap
+         * @param {Function} wrappedFunction original function to wrap; may be null.
+         * @param {Function} newFunction function to wrap the original with.
+         * @param {Object} [returnOnThisValue] Optional. Indicates that the wrappedFunction should
+         * not be executed if the newFunction returns a value matching 'returnOnThisValue'.
+         * note that this is a simple comparison and only works for primitives right now.
+         */wrap:function wrap(wrappedFunction,newFunction,returnOnThisValue){wrappedFunction=wrappedFunction||function(){};newFunction=newFunction||function(){};return function(){var r=null;try{r=newFunction.apply(this,arguments);}catch(e){root.jsPlumbUtil.log("jsPlumb function failed : "+e);}if(returnOnThisValue==null||r!==returnOnThisValue){try{r=wrappedFunction.apply(this,arguments);}catch(e){root.jsPlumbUtil.log("wrapped function failed : "+e);}}return r;};}};root.jsPlumbUtil.EventGenerator=function(){var _listeners={},eventsSuspended=false,// this is a list of events that should re-throw any errors that occur during their dispatch. it is current private.
+eventsToDieOn={"ready":true};this.bind=function(event,listener,insertAtStart){var _one=function _one(evt){root.jsPlumbUtil.addToList(_listeners,evt,listener,insertAtStart);listener.__jsPlumb=listener.__jsPlumb||{};listener.__jsPlumb[root.jsPlumbUtil.uuid()]=evt;};if(typeof event==="string")_one(event);else if(event.length!=null){for(var i=0;i<event.length;i++){_one(event[i]);}}return this;};this.fire=function(event,value,originalEvent){if(!eventsSuspended&&_listeners[event]){var l=_listeners[event].length,i=0,_gone=false,ret=null;if(!this.shouldFireEvent||this.shouldFireEvent(event,value,originalEvent)){while(!_gone&&i<l&&ret!==false){// doing it this way rather than catching and then possibly re-throwing means that an error propagated by this
+// method will have the whole call stack available in the debugger.
+if(eventsToDieOn[event])_listeners[event][i].apply(this,[value,originalEvent]);else{try{ret=_listeners[event][i].apply(this,[value,originalEvent]);}catch(e){root.jsPlumbUtil.log("jsPlumb: fire failed for event "+event+" : "+e);}}i++;if(_listeners==null||_listeners[event]==null)_gone=true;}}}return this;};this.unbind=function(eventOrListener,listener){if(arguments.length===0){_listeners={};}else if(arguments.length===1){if(typeof eventOrListener==="string")delete _listeners[eventOrListener];else if(eventOrListener.__jsPlumb){var evt;for(var i in eventOrListener.__jsPlumb){evt=eventOrListener.__jsPlumb[i];root.jsPlumbUtil.remove(_listeners[evt]||[],eventOrListener);}}}else if(arguments.length===2){root.jsPlumbUtil.remove(_listeners[eventOrListener]||[],listener);}return this;};this.getListener=function(forEvent){return _listeners[forEvent];};this.setSuspendEvents=function(val){eventsSuspended=val;};this.isSuspendEvents=function(){return eventsSuspended;};this.silently=function(fn){this.setSuspendEvents(true);try{fn();}catch(e){root.jsPlumbUtil.log("Cannot execute silent function "+e);}this.setSuspendEvents(false);};this.cleanupListeners=function(){for(var i in _listeners){_listeners[i]=null;}};};root.jsPlumbUtil.EventGenerator.prototype={cleanup:function cleanup(){this.cleanupListeners();}};{exports.jsPlumbUtil=root.jsPlumbUtil;}}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ *
+ * Title:jsPlumb 2.3.0
+ *
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ *
+ * This file contains utility functions that run in browsers only.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ *
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this;root.jsPlumbUtil.matchesSelector=function(el,selector,ctx){ctx=ctx||el.parentNode;var possibles=ctx.querySelectorAll(selector);for(var i=0;i<possibles.length;i++){if(possibles[i]===el)return true;}return false;};root.jsPlumbUtil.consume=function(e,doNotPreventDefault){if(e.stopPropagation)e.stopPropagation();else e.returnValue=false;if(!doNotPreventDefault&&e.preventDefault)e.preventDefault();};/*
+    * Function: sizeElement
+    * Helper to size and position an element. You would typically use
+    * this when writing your own Connector or Endpoint implementation.
+    *
+    * Parameters:
+    *  x - [int] x position for the element origin
+    *  y - [int] y position for the element origin
+    *  w - [int] width of the element
+    *  h - [int] height of the element
+    *
+    */root.jsPlumbUtil.sizeElement=function(el,x,y,w,h){if(el){el.style.height=h+"px";el.height=h;el.style.width=w+"px";el.width=w;el.style.left=x+"px";el.style.top=y+"px";}};}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ * 
+ * Title:jsPlumb 2.3.0
+ * 
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ * 
+ * This file contains the core code.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ * 
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this;var connectorTypes=[],rendererTypes;var _ju=root.jsPlumbUtil,_getOffset=function _getOffset(el,_instance,relativeToRoot){return _instance.getOffset(el,relativeToRoot);},/**
+         * creates a timestamp, using milliseconds since 1970, but as a string.
+         */_timestamp=function _timestamp(){return""+new Date().getTime();},// helper method to update the hover style whenever it, or paintStyle, changes.
+// we use paintStyle as the foundation and merge hoverPaintStyle over the
+// top.
+_updateHoverStyle=function _updateHoverStyle(component){if(component._jsPlumb.paintStyle&&component._jsPlumb.hoverPaintStyle){var mergedHoverStyle={};jsPlumb.extend(mergedHoverStyle,component._jsPlumb.paintStyle);jsPlumb.extend(mergedHoverStyle,component._jsPlumb.hoverPaintStyle);delete component._jsPlumb.hoverPaintStyle;// we want the fill of paintStyle to override a gradient, if possible.
+if(mergedHoverStyle.gradient&&component._jsPlumb.paintStyle.fill)delete mergedHoverStyle.gradient;component._jsPlumb.hoverPaintStyle=mergedHoverStyle;}},events=["tap","dbltap","click","dblclick","mouseover","mouseout","mousemove","mousedown","mouseup","contextmenu"],eventFilters={"mouseout":"mouseleave","mouseexit":"mouseleave"},_updateAttachedElements=function _updateAttachedElements(component,state,timestamp,sourceElement){var affectedElements=component.getAttachedElements();if(affectedElements){for(var i=0,j=affectedElements.length;i<j;i++){if(!sourceElement||sourceElement!=affectedElements[i])affectedElements[i].setHover(state,true,timestamp);// tell the attached elements not to inform their own attached elements.
+}}},_splitType=function _splitType(t){return t==null?null:t.split(" ");},_mapType=function _mapType(map,obj,typeId){for(var i in obj){map[i]=typeId;}},_each=function _each(fn,obj){obj=_ju.isArray(obj)||obj.length!=null&&!_ju.isString(obj)?obj:[obj];for(var i=0;i<obj.length;i++){try{fn.apply(obj[i],[obj[i]]);}catch(e){_ju.log(".each iteration failed : "+e);}}},_applyTypes=function _applyTypes(component,params,doNotRepaint){if(component.getDefaultType){var td=component.getTypeDescriptor(),map={};var defType=component.getDefaultType();var o=_ju.merge({},defType);_mapType(map,defType,"__default");for(var i=0,j=component._jsPlumb.types.length;i<j;i++){var tid=component._jsPlumb.types[i];if(tid!=="__default"){var _t=component._jsPlumb.instance.getType(tid,td);if(_t!=null){o=_ju.merge(o,_t,["cssClass"]);_mapType(map,_t,tid);}}}if(params){o=_ju.populate(o,params,"_");}component.applyType(o,doNotRepaint,map);if(!doNotRepaint)component.repaint();}},// ------------------------------ BEGIN jsPlumbUIComponent --------------------------------------------
+jsPlumbUIComponent=root.jsPlumbUIComponent=function(params){_ju.EventGenerator.apply(this,arguments);var self=this,a=arguments,idPrefix=self.idPrefix,id=idPrefix+new Date().getTime();this._jsPlumb={instance:params._jsPlumb,parameters:params.parameters||{},paintStyle:null,hoverPaintStyle:null,paintStyleInUse:null,hover:false,beforeDetach:params.beforeDetach,beforeDrop:params.beforeDrop,overlayPlacements:[],hoverClass:params.hoverClass||params._jsPlumb.Defaults.HoverClass,types:[],typeCache:{}};this.cacheTypeItem=function(key,item,typeId){this._jsPlumb.typeCache[typeId]=this._jsPlumb.typeCache[typeId]||{};this._jsPlumb.typeCache[typeId][key]=item;};this.getCachedTypeItem=function(key,typeId){return this._jsPlumb.typeCache[typeId]?this._jsPlumb.typeCache[typeId][key]:null;};this.getId=function(){return id;};// ----------------------------- default type --------------------------------------------
+var o=params.overlays||[],oo={};if(this.defaultOverlayKeys){for(var i=0;i<this.defaultOverlayKeys.length;i++){Array.prototype.push.apply(o,this._jsPlumb.instance.Defaults[this.defaultOverlayKeys[i]]||[]);}for(i=0;i<o.length;i++){// if a string, convert to object representation so that we can store the typeid on it.
+// also assign an id.
+var fo=jsPlumb.convertToFullOverlaySpec(o[i]);oo[fo[1].id]=fo;}}var _defaultType={overlays:oo,parameters:params.parameters||{},scope:params.scope||this._jsPlumb.instance.getDefaultScope()};this.getDefaultType=function(){return _defaultType;};this.appendToDefaultType=function(obj){for(var i in obj){_defaultType[i]=obj[i];}};// ----------------------------- end default type --------------------------------------------
+// all components can generate events
+if(params.events){for(i in params.events){self.bind(i,params.events[i]);}}// all components get this clone function.
+// TODO issue 116 showed a problem with this - it seems 'a' that is in
+// the clone function's scope is shared by all invocations of it, the classic
+// JS closure problem.  for now, jsPlumb does a version of this inline where
+// it used to call clone.  but it would be nice to find some time to look
+// further at this.
+this.clone=function(){var o=Object.create(this.constructor.prototype);this.constructor.apply(o,a);return o;}.bind(this);// user can supply a beforeDetach callback, which will be executed before a detach
+// is performed; returning false prevents the detach.
+this.isDetachAllowed=function(connection){var r=true;if(this._jsPlumb.beforeDetach){try{r=this._jsPlumb.beforeDetach(connection);}catch(e){_ju.log("jsPlumb: beforeDetach callback failed",e);}}return r;};// user can supply a beforeDrop callback, which will be executed before a dropped
+// connection is confirmed. user can return false to reject connection.
+this.isDropAllowed=function(sourceId,targetId,scope,connection,dropEndpoint,source,target){var r=this._jsPlumb.instance.checkCondition("beforeDrop",{sourceId:sourceId,targetId:targetId,scope:scope,connection:connection,dropEndpoint:dropEndpoint,source:source,target:target});if(this._jsPlumb.beforeDrop){try{r=this._jsPlumb.beforeDrop({sourceId:sourceId,targetId:targetId,scope:scope,connection:connection,dropEndpoint:dropEndpoint,source:source,target:target});}catch(e){_ju.log("jsPlumb: beforeDrop callback failed",e);}}return r;};var boundListeners=[],bindAListener=function bindAListener(obj,type,fn){boundListeners.push([obj,type,fn]);obj.bind(type,fn);},domListeners=[];// sets the component associated with listener events. for instance, an overlay delegates
+// its events back to a connector. but if the connector is swapped on the underlying connection,
+// then this component must be changed. This is called by setConnector in the Connection class.
+this.setListenerComponent=function(c){for(var i=0;i<domListeners.length;i++){domListeners[i][3]=c;}};};var _removeTypeCssHelper=function _removeTypeCssHelper(component,typeIndex){var typeId=component._jsPlumb.types[typeIndex],type=component._jsPlumb.instance.getType(typeId,component.getTypeDescriptor());if(type!=null){if(type.cssClass&&component.canvas)component._jsPlumb.instance.removeClass(component.canvas,type.cssClass);}};_ju.extend(root.jsPlumbUIComponent,_ju.EventGenerator,{getParameter:function getParameter(name){return this._jsPlumb.parameters[name];},setParameter:function setParameter(name,value){this._jsPlumb.parameters[name]=value;},getParameters:function getParameters(){return this._jsPlumb.parameters;},setParameters:function setParameters(p){this._jsPlumb.parameters=p;},getClass:function getClass(){return jsPlumb.getClass(this.canvas);},hasClass:function hasClass(clazz){return jsPlumb.hasClass(this.canvas,clazz);},addClass:function addClass(clazz){jsPlumb.addClass(this.canvas,clazz);},removeClass:function removeClass(clazz){jsPlumb.removeClass(this.canvas,clazz);},updateClasses:function updateClasses(classesToAdd,classesToRemove){jsPlumb.updateClasses(this.canvas,classesToAdd,classesToRemove);},setType:function setType(typeId,params,doNotRepaint){this.clearTypes();this._jsPlumb.types=_splitType(typeId)||[];_applyTypes(this,params,doNotRepaint);},getType:function getType(){return this._jsPlumb.types;},reapplyTypes:function reapplyTypes(params,doNotRepaint){_applyTypes(this,params,doNotRepaint);},hasType:function hasType(typeId){return this._jsPlumb.types.indexOf(typeId)!=-1;},addType:function addType(typeId,params,doNotRepaint){var t=_splitType(typeId),_cont=false;if(t!=null){for(var i=0,j=t.length;i<j;i++){if(!this.hasType(t[i])){this._jsPlumb.types.push(t[i]);_cont=true;}}if(_cont)_applyTypes(this,params,doNotRepaint);}},removeType:function removeType(typeId,params,doNotRepaint){var t=_splitType(typeId),_cont=false,_one=function(tt){var idx=this._jsPlumb.types.indexOf(tt);if(idx!=-1){// remove css class if necessary
+_removeTypeCssHelper(this,idx);this._jsPlumb.types.splice(idx,1);return true;}return false;}.bind(this);if(t!=null){for(var i=0,j=t.length;i<j;i++){_cont=_one(t[i])||_cont;}if(_cont)_applyTypes(this,params,doNotRepaint);}},clearTypes:function clearTypes(params,doNotRepaint){var i=this._jsPlumb.types.length;for(var j=0;j<i;j++){_removeTypeCssHelper(this,0);this._jsPlumb.types.splice(0,1);}_applyTypes(this,params,doNotRepaint);},toggleType:function toggleType(typeId,params,doNotRepaint){var t=_splitType(typeId);if(t!=null){for(var i=0,j=t.length;i<j;i++){var idx=this._jsPlumb.types.indexOf(t[i]);if(idx!=-1){_removeTypeCssHelper(this,idx);this._jsPlumb.types.splice(idx,1);}else this._jsPlumb.types.push(t[i]);}_applyTypes(this,params,doNotRepaint);}},applyType:function applyType(t,doNotRepaint){this.setPaintStyle(t.paintStyle,doNotRepaint);this.setHoverPaintStyle(t.hoverPaintStyle,doNotRepaint);if(t.parameters){for(var i in t.parameters){this.setParameter(i,t.parameters[i]);}}this._jsPlumb.paintStyleInUse=this.getPaintStyle();},setPaintStyle:function setPaintStyle(style,doNotRepaint){//		    	this._jsPlumb.paintStyle = jsPlumb.extend({}, style);
+// TODO figure out if we want components to clone paintStyle so as not to share it.
+this._jsPlumb.paintStyle=style;this._jsPlumb.paintStyleInUse=this._jsPlumb.paintStyle;_updateHoverStyle(this);if(!doNotRepaint)this.repaint();},getPaintStyle:function getPaintStyle(){return this._jsPlumb.paintStyle;},setHoverPaintStyle:function setHoverPaintStyle(style,doNotRepaint){//this._jsPlumb.hoverPaintStyle = jsPlumb.extend({}, style);
+// TODO figure out if we want components to clone paintStyle so as not to share it.		    	
+this._jsPlumb.hoverPaintStyle=style;_updateHoverStyle(this);if(!doNotRepaint)this.repaint();},getHoverPaintStyle:function getHoverPaintStyle(){return this._jsPlumb.hoverPaintStyle;},destroy:function destroy(force){if(force||this.typeId==null){this.cleanupListeners();// this is on EventGenerator
+this.clone=null;this._jsPlumb=null;}},isHover:function isHover(){return this._jsPlumb.hover;},setHover:function setHover(hover,ignoreAttachedElements,timestamp){// while dragging, we ignore these events.  this keeps the UI from flashing and
+// swishing and whatevering.
+if(this._jsPlumb&&!this._jsPlumb.instance.currentlyDragging&&!this._jsPlumb.instance.isHoverSuspended()){this._jsPlumb.hover=hover;if(this.canvas!=null){if(this._jsPlumb.instance.hoverClass!=null){var method=hover?"addClass":"removeClass";this._jsPlumb.instance[method](this.canvas,this._jsPlumb.instance.hoverClass);}if(this._jsPlumb.hoverClass!=null){this._jsPlumb.instance[method](this.canvas,this._jsPlumb.hoverClass);}}if(this._jsPlumb.hoverPaintStyle!=null){this._jsPlumb.paintStyleInUse=hover?this._jsPlumb.hoverPaintStyle:this._jsPlumb.paintStyle;if(!this._jsPlumb.instance.isSuspendDrawing()){timestamp=timestamp||_timestamp();this.repaint({timestamp:timestamp,recalc:false});}}// get the list of other affected elements, if supported by this component.
+// for a connection, its the endpoints.  for an endpoint, its the connections! surprise.
+if(this.getAttachedElements&&!ignoreAttachedElements)_updateAttachedElements(this,hover,_timestamp(),this);}}});// ------------------------------ END jsPlumbUIComponent --------------------------------------------
+var _jsPlumbInstanceIndex=0,getInstanceIndex=function getInstanceIndex(){var i=_jsPlumbInstanceIndex+1;_jsPlumbInstanceIndex++;return i;};var jsPlumbInstance=root.jsPlumbInstance=function(_defaults){this.version="2.3.0";if(_defaults)jsPlumb.extend(this.Defaults,_defaults);this.logEnabled=this.Defaults.LogEnabled;this._connectionTypes={};this._endpointTypes={};_ju.EventGenerator.apply(this);var _currentInstance=this,_instanceIndex=getInstanceIndex(),_bb=_currentInstance.bind,_initialDefaults={},_zoom=1,_info=function _info(el){if(el==null)return null;else if(el.nodeType==3||el.nodeType==8){return{el:el,text:true};}else{var _el=_currentInstance.getElement(el);return{el:_el,id:_ju.isString(el)&&_el==null?el:_getId(_el)};}};this.getInstanceIndex=function(){return _instanceIndex;};this.setZoom=function(z,repaintEverything){_zoom=z;_currentInstance.fire("zoom",_zoom);if(repaintEverything)_currentInstance.repaintEverything();return true;};this.getZoom=function(){return _zoom;};for(var i in this.Defaults){_initialDefaults[i]=this.Defaults[i];}var _container,_containerDelegations=[];this.unbindContainer=function(){if(_container!=null&&_containerDelegations.length>0){for(var i=0;i<_containerDelegations.length;i++){_currentInstance.off(_container,_containerDelegations[i][0],_containerDelegations[i][1]);}}};this.setContainer=function(c){this.unbindContainer();// get container as dom element.
+c=this.getElement(c);// move existing connections and endpoints, if any.
+this.select().each(function(conn){conn.moveParent(c);});this.selectEndpoints().each(function(ep){ep.moveParent(c);});// set container.
+var previousContainer=_container;_container=c;_containerDelegations.length=0;var eventAliases={"endpointclick":"endpointClick","endpointdblclick":"endpointDblClick"};var _oneDelegateHandler=function _oneDelegateHandler(id,e,componentType){var t=e.srcElement||e.target,jp=(t&&t.parentNode?t.parentNode._jsPlumb:null)||(t?t._jsPlumb:null)||(t&&t.parentNode&&t.parentNode.parentNode?t.parentNode.parentNode._jsPlumb:null);if(jp){jp.fire(id,jp,e);var alias=componentType?eventAliases[componentType+id]||id:id;// jsplumb also fires every event coming from components/overlays. That's what the test for `jp.component` is for.
+_currentInstance.fire(alias,jp.component||jp,e);}};var _addOneDelegate=function _addOneDelegate(eventId,selector,fn){_containerDelegations.push([eventId,fn]);_currentInstance.on(_container,eventId,selector,fn);};// delegate one event on the container to jsplumb elements. it might be possible to
+// abstract this out: each of endpoint, connection and overlay could register themselves with
+// jsplumb as "component types" or whatever, and provide a suitable selector. this would be
+// done by the renderer (although admittedly from 2.0 onwards we're not supporting vml anymore)
+var _oneDelegate=function _oneDelegate(id){// connections.
+_addOneDelegate(id,".jtk-connector",function(e){_oneDelegateHandler(id,e);});// endpoints. note they can have an enclosing div, or not.
+_addOneDelegate(id,".jtk-endpoint",function(e){_oneDelegateHandler(id,e,"endpoint");});// overlays
+_addOneDelegate(id,".jtk-overlay",function(e){_oneDelegateHandler(id,e);});};for(var i=0;i<events.length;i++){_oneDelegate(events[i]);}// managed elements
+for(var elId in managedElements){var el=managedElements[elId].el;if(el.parentNode===previousContainer){previousContainer.removeChild(el);_container.appendChild(el);}}};this.getContainer=function(){return _container;};this.bind=function(event,fn){if("ready"===event&&initialized)fn();else _bb.apply(_currentInstance,[event,fn]);};_currentInstance.importDefaults=function(d){for(var i in d){_currentInstance.Defaults[i]=d[i];}if(d.Container)_currentInstance.setContainer(d.Container);return _currentInstance;};_currentInstance.restoreDefaults=function(){_currentInstance.Defaults=jsPlumb.extend({},_initialDefaults);return _currentInstance;};var log=null,initialized=false,// TODO remove from window scope
+connections=[],// map of element id -> endpoint lists. an element can have an arbitrary
+// number of endpoints on it, and not all of them have to be connected
+// to anything.
+endpointsByElement={},endpointsByUUID={},managedElements={},offsets={},offsetTimestamps={},draggableStates={},connectionBeingDragged=false,sizes=[],_suspendDrawing=false,_suspendedAt=null,DEFAULT_SCOPE=this.Defaults.Scope,_curIdStamp=1,_idstamp=function _idstamp(){return""+_curIdStamp++;},//
+// appends an element to some other element, which is calculated as follows:
+//
+// 1. if Container exists, use that element.
+// 2. if the 'parent' parameter exists, use that.
+// 3. otherwise just use the root element.
+//
+//
+_appendElement=function(el,parent){if(_container)_container.appendChild(el);else if(!parent)this.appendToRoot(el);else this.getElement(parent).appendChild(el);}.bind(this),//
+// Draws an endpoint and its connections. this is the main entry point into drawing connections as well
+// as endpoints, since jsPlumb is endpoint-centric under the hood.
+//
+// @param element element to draw (of type library specific element object)
+// @param ui UI object from current library's event system. optional.
+// @param timestamp timestamp for this paint cycle. used to speed things up a little by cutting down the amount of offset calculations we do.
+// @param clearEdits defaults to false; indicates that mouse edits for connectors should be cleared
+///
+_draw=function _draw(element,ui,timestamp,clearEdits){if(!_suspendDrawing){var id=_getId(element),repaintEls,dm=_currentInstance.getDragManager();if(dm)repaintEls=dm.getElementsForDraggable(id);if(timestamp==null)timestamp=_timestamp();// update the offset of everything _before_ we try to draw anything.
+var o=_updateOffset({elId:id,offset:ui,recalc:false,timestamp:timestamp});if(repaintEls&&o&&o.o){for(var i in repaintEls){_updateOffset({elId:repaintEls[i].id,offset:{left:o.o.left+repaintEls[i].offset.left,top:o.o.top+repaintEls[i].offset.top},recalc:false,timestamp:timestamp});}}_currentInstance.anchorManager.redraw(id,ui,timestamp,null,clearEdits);if(repaintEls){for(var j in repaintEls){_currentInstance.anchorManager.redraw(repaintEls[j].id,ui,timestamp,repaintEls[j].offset,clearEdits,true);}}}},//
+// gets an Endpoint by uuid.
+//
+_getEndpoint=function _getEndpoint(uuid){return endpointsByUUID[uuid];},/**
+             * inits a draggable if it's not already initialised.
+             * TODO: somehow abstract this to the adapter, because the concept of "draggable" has no
+             * place on the server.
+             */_initDraggableIfNecessary=function _initDraggableIfNecessary(element,isDraggable,dragOptions,id,fireEvent){// move to DragManager?
+if(!jsPlumb.headless){var _draggable=isDraggable==null?false:isDraggable;if(_draggable){if(jsPlumb.isDragSupported(element,_currentInstance)){var options=dragOptions||_currentInstance.Defaults.DragOptions;options=jsPlumb.extend({},options);// make a copy.
+if(!jsPlumb.isAlreadyDraggable(element,_currentInstance)){var dragEvent=jsPlumb.dragEvents.drag,stopEvent=jsPlumb.dragEvents.stop,startEvent=jsPlumb.dragEvents.start,_started=false;_manage(id,element);options[startEvent]=_ju.wrap(options[startEvent],function(){_currentInstance.setHoverSuspended(true);_currentInstance.select({source:element}).addClass(_currentInstance.elementDraggingClass+" "+_currentInstance.sourceElementDraggingClass,true);_currentInstance.select({target:element}).addClass(_currentInstance.elementDraggingClass+" "+_currentInstance.targetElementDraggingClass,true);_currentInstance.setConnectionBeingDragged(true);if(options.canDrag)return dragOptions.canDrag();},false);options[dragEvent]=_ju.wrap(options[dragEvent],function(){// TODO: here we could actually use getDragObject, and then compute it ourselves,
+// since every adapter does the same thing. but i'm not sure why YUI's getDragObject
+// differs from getUIPosition so much
+var ui=_currentInstance.getUIPosition(arguments,_currentInstance.getZoom());if(ui!=null){_draw(element,ui,null,true);if(_started)_currentInstance.addClass(element,"jtk-dragged");_started=true;}});options[stopEvent]=_ju.wrap(options[stopEvent],function(){var elements=arguments[0].selection,uip;var _one=function _one(_e){if(_e[1]!=null){// run the reported offset through the code that takes parent containers
+// into account, to adjust if necessary (issue 554)
+uip=_currentInstance.getUIPosition([{el:_e[2].el,pos:[_e[1].left,_e[1].top]}]);_draw(_e[2].el,uip);}_currentInstance.removeClass(_e[0],"jtk-dragged");_currentInstance.select({source:_e[2].el}).removeClass(_currentInstance.elementDraggingClass+" "+_currentInstance.sourceElementDraggingClass,true);_currentInstance.select({target:_e[2].el}).removeClass(_currentInstance.elementDraggingClass+" "+_currentInstance.targetElementDraggingClass,true);_currentInstance.getDragManager().dragEnded(_e[2].el);};for(var i=0;i<elements.length;i++){_one(elements[i]);}_started=false;_currentInstance.setHoverSuspended(false);_currentInstance.setConnectionBeingDragged(false);});var elId=_getId(element);// need ID
+draggableStates[elId]=true;var draggable=draggableStates[elId];options.disabled=draggable==null?false:!draggable;_currentInstance.initDraggable(element,options);_currentInstance.getDragManager().register(element);if(fireEvent)_currentInstance.fire("elementDraggable",{el:element,options:options});}else{// already draggable. attach any start, drag or stop listeners to the current Drag.
+if(dragOptions.force){_currentInstance.initDraggable(element,options);}}}}}},_scopeMatch=function _scopeMatch(e1,e2){var s1=e1.scope.split(/\s/),s2=e2.scope.split(/\s/);for(var i=0;i<s1.length;i++){for(var j=0;j<s2.length;j++){if(s2[j]==s1[i])return true;}}return false;},/*
+         * prepares a final params object that can be passed to _newConnection, taking into account defaults, events, etc.
+         */_prepareConnectionParams=function(params,referenceParams){var _p=jsPlumb.extend({},params);if(referenceParams)jsPlumb.extend(_p,referenceParams);// hotwire endpoints passed as source or target to sourceEndpoint/targetEndpoint, respectively.
+if(_p.source){if(_p.source.endpoint)_p.sourceEndpoint=_p.source;else _p.source=_currentInstance.getElement(_p.source);}if(_p.target){if(_p.target.endpoint)_p.targetEndpoint=_p.target;else _p.target=_currentInstance.getElement(_p.target);}// test for endpoint uuids to connect
+if(params.uuids){_p.sourceEndpoint=_getEndpoint(params.uuids[0]);_p.targetEndpoint=_getEndpoint(params.uuids[1]);}// now ensure that if we do have Endpoints already, they're not full.
+// source:
+if(_p.sourceEndpoint&&_p.sourceEndpoint.isFull()){_ju.log(_currentInstance,"could not add connection; source endpoint is full");return;}// target:
+if(_p.targetEndpoint&&_p.targetEndpoint.isFull()){_ju.log(_currentInstance,"could not add connection; target endpoint is full");return;}// if source endpoint mandates connection type and nothing specified in our params, use it.
+if(!_p.type&&_p.sourceEndpoint)_p.type=_p.sourceEndpoint.connectionType;// copy in any connectorOverlays that were specified on the source endpoint.
+// it doesnt copy target endpoint overlays.  i'm not sure if we want it to or not.
+if(_p.sourceEndpoint&&_p.sourceEndpoint.connectorOverlays){_p.overlays=_p.overlays||[];for(var i=0,j=_p.sourceEndpoint.connectorOverlays.length;i<j;i++){_p.overlays.push(_p.sourceEndpoint.connectorOverlays[i]);}}// scope
+if(_p.sourceEndpoint&&_p.sourceEndpoint.scope){_p.scope=_p.sourceEndpoint.scope;}// pointer events
+if(!_p["pointer-events"]&&_p.sourceEndpoint&&_p.sourceEndpoint.connectorPointerEvents)_p["pointer-events"]=_p.sourceEndpoint.connectorPointerEvents;var _mergeOverrides=function _mergeOverrides(def,values){var m=jsPlumb.extend({},def);for(var i in values){if(values[i])m[i]=values[i];}return m;};var _addEndpoint=function _addEndpoint(el,def,idx){return _currentInstance.addEndpoint(el,_mergeOverrides(def,{anchor:_p.anchors?_p.anchors[idx]:_p.anchor,endpoint:_p.endpoints?_p.endpoints[idx]:_p.endpoint,paintStyle:_p.endpointStyles?_p.endpointStyles[idx]:_p.endpointStyle,hoverPaintStyle:_p.endpointHoverStyles?_p.endpointHoverStyles[idx]:_p.endpointHoverStyle}));};// check for makeSource/makeTarget specs.
+var _oneElementDef=function _oneElementDef(type,idx,defs,matchType){if(_p[type]&&!_p[type].endpoint&&!_p[type+"Endpoint"]&&!_p.newConnection){var tid=_getId(_p[type]),tep=defs[tid];tep=tep?tep[matchType]:null;if(tep){// if not enabled, return.
+if(!tep.enabled)return false;var newEndpoint=tep.endpoint!=null&&tep.endpoint._jsPlumb?tep.endpoint:_addEndpoint(_p[type],tep.def,idx);if(newEndpoint.isFull())return false;_p[type+"Endpoint"]=newEndpoint;if(!_p.scope&&tep.def.scope)_p.scope=tep.def.scope;// provide scope if not already provided and endpoint def has one.
+newEndpoint._doNotDeleteOnDetach=false;// reset.
+newEndpoint._deleteOnDetach=true;if(tep.uniqueEndpoint){if(!tep.endpoint){tep.endpoint=newEndpoint;newEndpoint._deleteOnDetach=false;newEndpoint._doNotDeleteOnDetach=true;}else newEndpoint.finalEndpoint=tep.endpoint;}}}};if(_oneElementDef("source",0,this.sourceEndpointDefinitions,_p.type||"default")===false)return;if(_oneElementDef("target",1,this.targetEndpointDefinitions,_p.type||"default")===false)return;// last, ensure scopes match
+if(_p.sourceEndpoint&&_p.targetEndpoint)if(!_scopeMatch(_p.sourceEndpoint,_p.targetEndpoint))_p=null;return _p;}.bind(_currentInstance),_newConnection=function _newConnection(params){var connectionFunc=_currentInstance.Defaults.ConnectionType||_currentInstance.getDefaultConnectionType();params._jsPlumb=_currentInstance;params.newConnection=_newConnection;params.newEndpoint=_newEndpoint;params.endpointsByUUID=endpointsByUUID;params.endpointsByElement=endpointsByElement;params.finaliseConnection=_finaliseConnection;params.id="con_"+_idstamp();var con=new connectionFunc(params);// if the connection is draggable, then maybe we need to tell the target endpoint to init the
+// dragging code. it won't run again if it already configured to be draggable.
+if(con.isDetachable()){con.endpoints[0].initDraggable("_jsPlumbSource");con.endpoints[1].initDraggable("_jsPlumbTarget");}return con;},//
+// adds the connection to the backing model, fires an event if necessary and then redraws
+//
+_finaliseConnection=_currentInstance.finaliseConnection=function(jpc,params,originalEvent,doInformAnchorManager){params=params||{};// add to list of connections (by scope).
+if(!jpc.suspendedEndpoint)connections.push(jpc);jpc.pending=null;// turn off isTemporarySource on the source endpoint (only viable on first draw)
+jpc.endpoints[0].isTemporarySource=false;// always inform the anchor manager
+// except that if jpc has a suspended endpoint it's not true to say the
+// connection is new; it has just (possibly) moved. the question is whether
+// to make that call here or in the anchor manager.  i think perhaps here.
+if(doInformAnchorManager!==false)_currentInstance.anchorManager.newConnection(jpc);// force a paint
+_draw(jpc.source);// fire an event
+if(!params.doNotFireConnectionEvent&&params.fireEvent!==false){var eventArgs={connection:jpc,source:jpc.source,target:jpc.target,sourceId:jpc.sourceId,targetId:jpc.targetId,sourceEndpoint:jpc.endpoints[0],targetEndpoint:jpc.endpoints[1]};_currentInstance.fire("connection",eventArgs,originalEvent);}},/*
+         factory method to prepare a new endpoint.  this should always be used instead of creating Endpoints
+         manually, since this method attaches event listeners and an id.
+         */_newEndpoint=function _newEndpoint(params,id){var endpointFunc=_currentInstance.Defaults.EndpointType||jsPlumb.Endpoint;var _p=jsPlumb.extend({},params);_p._jsPlumb=_currentInstance;_p.newConnection=_newConnection;_p.newEndpoint=_newEndpoint;_p.endpointsByUUID=endpointsByUUID;_p.endpointsByElement=endpointsByElement;_p.fireDetachEvent=fireDetachEvent;_p.elementId=id||_getId(_p.source);var ep=new endpointFunc(_p);ep.id="ep_"+_idstamp();_manage(_p.elementId,_p.source);if(!jsPlumb.headless)_currentInstance.getDragManager().endpointAdded(_p.source,id);return ep;},/*
+         * performs the given function operation on all the connections found
+         * for the given element id; this means we find all the endpoints for
+         * the given element, and then for each endpoint find the connectors
+         * connected to it. then we pass each connection in to the given
+         * function.
+         */_operation=function _operation(elId,func,endpointFunc){var endpoints=endpointsByElement[elId];if(endpoints&&endpoints.length){for(var i=0,ii=endpoints.length;i<ii;i++){for(var j=0,jj=endpoints[i].connections.length;j<jj;j++){var retVal=func(endpoints[i].connections[j]);// if the function passed in returns true, we exit.
+// most functions return false.
+if(retVal)return;}if(endpointFunc)endpointFunc(endpoints[i]);}}},_setDraggable=function _setDraggable(element,draggable){return jsPlumb.each(element,function(el){if(_currentInstance.isDragSupported(el)){draggableStates[_currentInstance.getAttribute(el,"id")]=draggable;_currentInstance.setElementDraggable(el,draggable);}});},/*
+         * private method to do the business of hiding/showing.
+         *
+         * @param el
+         *            either Id of the element in question or a library specific
+         *            object for the element.
+         * @param state
+         *            String specifying a value for the css 'display' property
+         *            ('block' or 'none').
+         */_setVisible=function _setVisible(el,state,alsoChangeEndpoints){state=state==="block";var endpointFunc=null;if(alsoChangeEndpoints){endpointFunc=function endpointFunc(ep){ep.setVisible(state,true,true);};}var info=_info(el);_operation(info.id,function(jpc){if(state&&alsoChangeEndpoints){// this test is necessary because this functionality is new, and i wanted to maintain backwards compatibility.
+// this block will only set a connection to be visible if the other endpoint in the connection is also visible.
+var oidx=jpc.sourceId===info.id?1:0;if(jpc.endpoints[oidx].isVisible())jpc.setVisible(true);}else// the default behaviour for show, and what always happens for hide, is to just set the visibility without getting clever.
+jpc.setVisible(state);},endpointFunc);},/*
+         * toggles the draggable state of the given element(s).
+         * el is either an id, or an element object, or a list of ids/element objects.
+         */_toggleDraggable=function _toggleDraggable(el){var state;jsPlumb.each(el,function(el){var elId=_currentInstance.getAttribute(el,"id");state=draggableStates[elId]==null?false:draggableStates[elId];state=!state;draggableStates[elId]=state;_currentInstance.setDraggable(el,state);return state;}.bind(this));return state;},/**
+             * private method to do the business of toggling hiding/showing.
+             */_toggleVisible=function _toggleVisible(elId,changeEndpoints){var endpointFunc=null;if(changeEndpoints){endpointFunc=function endpointFunc(ep){var state=ep.isVisible();ep.setVisible(!state);};}_operation(elId,function(jpc){var state=jpc.isVisible();jpc.setVisible(!state);},endpointFunc);},// TODO comparison performance
+_getCachedData=function _getCachedData(elId){var o=offsets[elId];if(!o)return _updateOffset({elId:elId});else return{o:o,s:sizes[elId]};},/**
+             * gets an id for the given element, creating and setting one if
+             * necessary.  the id is of the form
+             *
+             *    jsPlumb_<instance index>_<index in instance>
+             *
+             * where "index in instance" is a monotonically increasing integer that starts at 0,
+             * for each instance.  this method is used not only to assign ids to elements that do not
+             * have them but also to connections and endpoints.
+             */_getId=function _getId(element,uuid,doNotCreateIfNotFound){if(_ju.isString(element))return element;if(element==null)return null;var id=_currentInstance.getAttribute(element,"id");if(!id||id==="undefined"){// check if fixed uuid parameter is given
+if(arguments.length==2&&arguments[1]!==undefined)id=uuid;else if(arguments.length==1||arguments.length==3&&!arguments[2])id="jsPlumb_"+_instanceIndex+"_"+_idstamp();if(!doNotCreateIfNotFound)_currentInstance.setAttribute(element,"id",id);}return id;};this.setConnectionBeingDragged=function(v){connectionBeingDragged=v;};this.isConnectionBeingDragged=function(){return connectionBeingDragged;};/**
+         * Returns a map of all the elements this jsPlumbInstance is currently managing.
+         * @returns {Object} Map of [id-> {el, endpoint[], connection, position}] information.
+         */this.getManagedElements=function(){return managedElements;};this.connectorClass="jtk-connector";this.connectorOutlineClass="jtk-connector-outline";this.editableConnectorClass="jtk-connector-editable";this.connectedClass="jtk-connected";this.hoverClass="jtk-hover";this.endpointClass="jtk-endpoint";this.endpointConnectedClass="jtk-endpoint-connected";this.endpointFullClass="jtk-endpoint-full";this.endpointDropAllowedClass="jtk-endpoint-drop-allowed";this.endpointDropForbiddenClass="jtk-endpoint-drop-forbidden";this.overlayClass="jtk-overlay";this.draggingClass="jtk-dragging";this.elementDraggingClass="jtk-element-dragging";this.sourceElementDraggingClass="jtk-source-element-dragging";this.targetElementDraggingClass="jtk-target-element-dragging";this.endpointAnchorClassPrefix="jtk-endpoint-anchor";this.hoverSourceClass="jtk-source-hover";this.hoverTargetClass="jtk-target-hover";this.dragSelectClass="jtk-drag-select";this.Anchors={};this.Connectors={"svg":{}};this.Endpoints={"svg":{}};this.Overlays={"svg":{}};this.ConnectorRenderers={};this.SVG="svg";// --------------------------- jsPlumbInstance public API ---------------------------------------------------------
+this.addEndpoint=function(el,params,referenceParams){referenceParams=referenceParams||{};var p=jsPlumb.extend({},referenceParams);jsPlumb.extend(p,params);p.endpoint=p.endpoint||_currentInstance.Defaults.Endpoint;p.paintStyle=p.paintStyle||_currentInstance.Defaults.EndpointStyle;var results=[],inputs=_ju.isArray(el)||el.length!=null&&!_ju.isString(el)?el:[el];for(var i=0,j=inputs.length;i<j;i++){p.source=_currentInstance.getElement(inputs[i]);_ensureContainer(p.source);var id=_getId(p.source),e=_newEndpoint(p,id);// SP new. here we have introduced a class-wide element manager, which is responsible
+// for getting object dimensions and width/height, and for updating these values only
+// when necessary (after a drag, or on a forced refresh call).
+var myOffset=_manage(id,p.source).info.o;_ju.addToList(endpointsByElement,id,e);if(!_suspendDrawing){e.paint({anchorLoc:e.anchor.compute({xy:[myOffset.left,myOffset.top],wh:sizes[id],element:e,timestamp:_suspendedAt}),timestamp:_suspendedAt});}results.push(e);e._doNotDeleteOnDetach=true;// mark this as being added via addEndpoint.
+}return results.length==1?results[0]:results;};this.addEndpoints=function(el,endpoints,referenceParams){var results=[];for(var i=0,j=endpoints.length;i<j;i++){var e=_currentInstance.addEndpoint(el,endpoints[i],referenceParams);if(_ju.isArray(e))Array.prototype.push.apply(results,e);else results.push(e);}return results;};this.animate=function(el,properties,options){if(!this.animationSupported)return false;options=options||{};var del=_currentInstance.getElement(el),id=_getId(del),stepFunction=jsPlumb.animEvents.step,completeFunction=jsPlumb.animEvents.complete;options[stepFunction]=_ju.wrap(options[stepFunction],function(){_currentInstance.revalidate(id);});// onComplete repaints, just to make sure everything looks good at the end of the animation.
+options[completeFunction]=_ju.wrap(options[completeFunction],function(){_currentInstance.revalidate(id);});_currentInstance.doAnimate(del,properties,options);};/**
+         * checks for a listener for the given condition, executing it if found, passing in the given value.
+         * condition listeners would have been attached using "bind" (which is, you could argue, now overloaded, since
+         * firing click events etc is a bit different to what this does).  i thought about adding a "bindCondition"
+         * or something, but decided against it, for the sake of simplicity. jsPlumb will never fire one of these
+         * condition events anyway.
+         */this.checkCondition=function(conditionName,args){var l=_currentInstance.getListener(conditionName),r=true;if(l&&l.length>0){var values=Array.prototype.slice.call(arguments,1);try{for(var i=0,j=l.length;i<j;i++){r=r&&l[i].apply(l[i],values);}}catch(e){_ju.log(_currentInstance,"cannot check condition ["+conditionName+"]"+e);}}return r;};this.connect=function(params,referenceParams){// prepare a final set of parameters to create connection with
+var _p=_prepareConnectionParams(params,referenceParams),jpc;// TODO probably a nicer return value if the connection was not made.  _prepareConnectionParams
+// will return null (and log something) if either endpoint was full.  what would be nicer is to
+// create a dedicated 'error' object.
+if(_p){if(_p.source==null&&_p.sourceEndpoint==null){_ju.log("Cannot establish connection - source does not exist");return;}if(_p.target==null&&_p.targetEndpoint==null){_ju.log("Cannot establish connection - target does not exist");return;}_ensureContainer(_p.source);// create the connection.  it is not yet registered
+jpc=_newConnection(_p);// now add it the model, fire an event, and redraw
+_finaliseConnection(jpc,_p);}return jpc;};var stTypes=[{el:"source",elId:"sourceId",epDefs:"sourceEndpointDefinitions"},{el:"target",elId:"targetId",epDefs:"targetEndpointDefinitions"}];var _set=function(c,el,idx,doNotRepaint){var ep,_st=stTypes[idx],cId=c[_st.elId],cEl=c[_st.el],sid,sep,oldEndpoint=c.endpoints[idx];var evtParams={index:idx,originalSourceId:idx===0?cId:c.sourceId,newSourceId:c.sourceId,originalTargetId:idx==1?cId:c.targetId,newTargetId:c.targetId,connection:c};if(el.constructor==jsPlumb.Endpoint){// TODO here match the current endpoint class; users can change it {
+ep=el;ep.addConnection(c);el=ep.element;}else{sid=_getId(el);sep=this[_st.epDefs][sid];if(sid===c[_st.elId])ep=null;// dont change source/target if the element is already the one given.
+else if(sep){for(var t in sep){if(!sep[t].enabled)return;ep=sep[t].endpoint!=null&&sep[t].endpoint._jsPlumb?sep[t].endpoint:this.addEndpoint(el,sep[t].def);if(sep[t].uniqueEndpoint)sep[t].endpoint=ep;ep._doNotDeleteOnDetach=false;ep._deleteOnDetach=true;ep.addConnection(c);}}else{ep=c.makeEndpoint(idx===0,el,sid);ep._doNotDeleteOnDetach=false;ep._deleteOnDetach=true;}}if(ep!=null){oldEndpoint.detachFromConnection(c);c.endpoints[idx]=ep;c[_st.el]=ep.element;c[_st.elId]=ep.elementId;evtParams[idx===0?"newSourceId":"newTargetId"]=ep.elementId;fireMoveEvent(evtParams);if(!doNotRepaint)c.repaint();}evtParams.element=el;return evtParams;}.bind(this);this.setSource=function(connection,el,doNotRepaint){var p=_set(connection,el,0,doNotRepaint);this.anchorManager.sourceChanged(p.originalSourceId,p.newSourceId,connection,p.el);};this.setTarget=function(connection,el,doNotRepaint){var p=_set(connection,el,1,doNotRepaint);this.anchorManager.updateOtherEndpoint(p.originalSourceId,p.originalTargetId,p.newTargetId,connection);};this.deleteEndpoint=function(object,dontUpdateHover,deleteAttachedObjects){var endpoint=typeof object==="string"?endpointsByUUID[object]:object;if(endpoint){_currentInstance.deleteObject({endpoint:endpoint,dontUpdateHover:dontUpdateHover,deleteAttachedObjects:deleteAttachedObjects});}return _currentInstance;};this.deleteEveryEndpoint=function(){var _is=_currentInstance.setSuspendDrawing(true);for(var id in endpointsByElement){var endpoints=endpointsByElement[id];if(endpoints&&endpoints.length){for(var i=0,j=endpoints.length;i<j;i++){_currentInstance.deleteEndpoint(endpoints[i],true);}}}endpointsByElement={};// SP new
+managedElements={};endpointsByUUID={};offsets={};offsetTimestamps={};_currentInstance.anchorManager.reset();_currentInstance.getDragManager().reset();if(!_is)_currentInstance.setSuspendDrawing(false);return _currentInstance;};var fireDetachEvent=function fireDetachEvent(jpc,doFireEvent,originalEvent){// may have been given a connection, or in special cases, an object
+var connType=_currentInstance.Defaults.ConnectionType||_currentInstance.getDefaultConnectionType(),argIsConnection=jpc.constructor==connType,params=argIsConnection?{connection:jpc,source:jpc.source,target:jpc.target,sourceId:jpc.sourceId,targetId:jpc.targetId,sourceEndpoint:jpc.endpoints[0],targetEndpoint:jpc.endpoints[1]}:jpc;if(doFireEvent){_currentInstance.fire("connectionDetached",params,originalEvent);}// always fire this. used by internal jsplumb stuff.
+_currentInstance.fire("internal.connectionDetached",params,originalEvent);_currentInstance.anchorManager.connectionDetached(params);};var fireMoveEvent=_currentInstance.fireMoveEvent=function(params,evt){_currentInstance.fire("connectionMoved",params,evt);};this.unregisterEndpoint=function(endpoint){//if (endpoint._jsPlumb == null) return;
+if(endpoint._jsPlumb.uuid)endpointsByUUID[endpoint._jsPlumb.uuid]=null;_currentInstance.anchorManager.deleteEndpoint(endpoint);// TODO at least replace this with a removeWithFunction call.
+for(var e in endpointsByElement){var endpoints=endpointsByElement[e];if(endpoints){var newEndpoints=[];for(var i=0,j=endpoints.length;i<j;i++){if(endpoints[i]!=endpoint)newEndpoints.push(endpoints[i]);}endpointsByElement[e]=newEndpoints;}if(endpointsByElement[e].length<1){delete endpointsByElement[e];}}};this.detach=function(){if(arguments.length===0)return;var connType=_currentInstance.Defaults.ConnectionType||_currentInstance.getDefaultConnectionType(),firstArgIsConnection=arguments[0].constructor==connType,params=arguments.length==2?firstArgIsConnection?arguments[1]||{}:arguments[0]:arguments[0],fireEvent=params.fireEvent!==false,forceDetach=params.forceDetach,conn=firstArgIsConnection?arguments[0]:params.connection,deleteAttachedObjects=firstArgIsConnection?null:params.deleteAttachedObjects;if(conn){if(forceDetach||_ju.functionChain(true,false,[[conn.endpoints[0],"isDetachAllowed",[conn]],[conn.endpoints[1],"isDetachAllowed",[conn]],[conn,"isDetachAllowed",[conn]],[_currentInstance,"checkCondition",["beforeDetach",conn]]])){conn.endpoints[0].detach({connection:conn,ignoreTarget:false,forceDetach:true,fireEvent:fireEvent,deleteAttachedObjects:deleteAttachedObjects});}}else{var _p=jsPlumb.extend({},params);// a backwards compatibility hack: source should be thought of as 'params' in this case.
+// test for endpoint uuids to detach
+if(_p.uuids){_getEndpoint(_p.uuids[0]).detachFrom(_getEndpoint(_p.uuids[1]),fireEvent);}else if(_p.sourceEndpoint&&_p.targetEndpoint){_p.sourceEndpoint.detachFrom(_p.targetEndpoint);}else{var sourceId=_getId(_currentInstance.getElement(_p.source)),targetId=_getId(_currentInstance.getElement(_p.target));_operation(sourceId,function(jpc){if(jpc.sourceId==sourceId&&jpc.targetId==targetId||jpc.targetId==sourceId&&jpc.sourceId==targetId){if(_currentInstance.checkCondition("beforeDetach",jpc)){jpc.endpoints[0].detach({connection:jpc,ignoreTarget:false,forceDetach:true,fireEvent:fireEvent});}}});}}};this.detachAllConnections=function(el,params){params=params||{};el=_currentInstance.getElement(el);var id=_getId(el),endpoints=endpointsByElement[id];if(endpoints&&endpoints.length){for(var i=0,j=endpoints.length;i<j;i++){endpoints[i].detachAll(params.fireEvent!==false,params.forceDetach);}}return _currentInstance;};this.detachEveryConnection=function(params){params=params||{};_currentInstance.batch(function(){for(var id in endpointsByElement){var endpoints=endpointsByElement[id];if(endpoints&&endpoints.length){for(var i=0,j=endpoints.length;i<j;i++){endpoints[i].detachAll(params.fireEvent!==false,params.forceDetach);}}}connections.length=0;});return _currentInstance;};/// not public.  but of course its exposed. how to change this.
+this.deleteObject=function(params){var result={endpoints:{},connections:{},endpointCount:0,connectionCount:0},fireEvent=params.fireEvent!==false,deleteAttachedObjects=params.deleteAttachedObjects!==false;var unravelConnection=function unravelConnection(connection){if(connection!=null&&result.connections[connection.id]==null){if(!params.dontUpdateHover&&connection._jsPlumb!=null)connection.setHover(false);result.connections[connection.id]=connection;result.connectionCount++;if(deleteAttachedObjects){for(var j=0;j<connection.endpoints.length;j++){if(connection.endpoints[j]._deleteOnDetach)unravelEndpoint(connection.endpoints[j]);}}}};var unravelEndpoint=function unravelEndpoint(endpoint){if(endpoint!=null&&result.endpoints[endpoint.id]==null){if(!params.dontUpdateHover&&endpoint._jsPlumb!=null)endpoint.setHover(false);result.endpoints[endpoint.id]=endpoint;result.endpointCount++;if(deleteAttachedObjects){for(var i=0;i<endpoint.connections.length;i++){var c=endpoint.connections[i];unravelConnection(c);}}}};if(params.connection)unravelConnection(params.connection);else unravelEndpoint(params.endpoint);// loop through connections
+for(var i in result.connections){var c=result.connections[i];if(c._jsPlumb){_ju.removeWithFunction(connections,function(_c){return c.id==_c.id;});fireDetachEvent(c,params.fireEvent===false?false:!c.pending,params.originalEvent);var doNotCleanup=params.deleteAttachedObjects==null?null:!params.deleteAttachedObjects;c.endpoints[0].detachFromConnection(c,null,doNotCleanup);c.endpoints[1].detachFromConnection(c,null,doNotCleanup);c.cleanup(true);c.destroy(true);}}// loop through endpoints
+for(var j in result.endpoints){var e=result.endpoints[j];if(e._jsPlumb){_currentInstance.unregisterEndpoint(e);// FIRE some endpoint deleted event?
+e.cleanup(true);e.destroy(true);}}return result;};this.draggable=function(el,options){var info;_each(function(_el){info=_info(_el);if(info.el)_initDraggableIfNecessary(info.el,true,options,info.id,true);},el);return _currentInstance;};this.droppable=function(el,options){var info;options=options||{};options.allowLoopback=false;_each(function(_el){info=_info(_el);if(info.el)_currentInstance.initDroppable(info.el,options);},el);return _currentInstance;};// helpers for select/selectEndpoints
+var _setOperation=function _setOperation(list,func,args,selector){for(var i=0,j=list.length;i<j;i++){list[i][func].apply(list[i],args);}return selector(list);},_getOperation=function _getOperation(list,func,args){var out=[];for(var i=0,j=list.length;i<j;i++){out.push([list[i][func].apply(list[i],args),list[i]]);}return out;},setter=function setter(list,func,selector){return function(){return _setOperation(list,func,arguments,selector);};},getter=function getter(list,func){return function(){return _getOperation(list,func,arguments);};},prepareList=function prepareList(input,doNotGetIds){var r=[];if(input){if(typeof input=='string'){if(input==="*")return input;r.push(input);}else{if(doNotGetIds)r=input;else{if(input.length){for(var i=0,j=input.length;i<j;i++){r.push(_info(input[i]).id);}}else r.push(_info(input).id);}}}return r;},filterList=function filterList(list,value,missingIsFalse){if(list==="*")return true;return list.length>0?list.indexOf(value)!=-1:!missingIsFalse;};// get some connections, specifying source/target/scope
+this.getConnections=function(options,flat){if(!options){options={};}else if(options.constructor==String){options={"scope":options};}var scope=options.scope||_currentInstance.getDefaultScope(),scopes=prepareList(scope,true),sources=prepareList(options.source),targets=prepareList(options.target),results=!flat&&scopes.length>1?{}:[],_addOne=function _addOne(scope,obj){if(!flat&&scopes.length>1){var ss=results[scope];if(ss==null){ss=results[scope]=[];}ss.push(obj);}else results.push(obj);};for(var j=0,jj=connections.length;j<jj;j++){var c=connections[j],sourceId=c.proxies&&c.proxies[0]?c.proxies[0].originalEp.elementId:c.sourceId,targetId=c.proxies&&c.proxies[1]?c.proxies[1].originalEp.elementId:c.targetId;if(filterList(scopes,c.scope)&&filterList(sources,sourceId)&&filterList(targets,targetId))_addOne(c.scope,c);}return results;};var _curryEach=function _curryEach(list,executor){return function(f){for(var i=0,ii=list.length;i<ii;i++){f(list[i]);}return executor(list);};},_curryGet=function _curryGet(list){return function(idx){return list[idx];};};var _makeCommonSelectHandler=function _makeCommonSelectHandler(list,executor){var out={length:list.length,each:_curryEach(list,executor),get:_curryGet(list)},setters=["setHover","removeAllOverlays","setLabel","addClass","addOverlay","removeOverlay","removeOverlays","showOverlay","hideOverlay","showOverlays","hideOverlays","setPaintStyle","setHoverPaintStyle","setSuspendEvents","setParameter","setParameters","setVisible","repaint","addType","toggleType","removeType","removeClass","setType","bind","unbind"],getters=["getLabel","getOverlay","isHover","getParameter","getParameters","getPaintStyle","getHoverPaintStyle","isVisible","hasType","getType","isSuspendEvents"],i,ii;for(i=0,ii=setters.length;i<ii;i++){out[setters[i]]=setter(list,setters[i],executor);}for(i=0,ii=getters.length;i<ii;i++){out[getters[i]]=getter(list,getters[i]);}return out;};var _makeConnectionSelectHandler=function _makeConnectionSelectHandler(list){var common=_makeCommonSelectHandler(list,_makeConnectionSelectHandler);return jsPlumb.extend(common,{// setters
+setDetachable:setter(list,"setDetachable",_makeConnectionSelectHandler),setReattach:setter(list,"setReattach",_makeConnectionSelectHandler),setConnector:setter(list,"setConnector",_makeConnectionSelectHandler),detach:function detach(){for(var i=0,ii=list.length;i<ii;i++){_currentInstance.detach(list[i]);}},// getters
+isDetachable:getter(list,"isDetachable"),isReattach:getter(list,"isReattach")});};var _makeEndpointSelectHandler=function _makeEndpointSelectHandler(list){var common=_makeCommonSelectHandler(list,_makeEndpointSelectHandler);return jsPlumb.extend(common,{setEnabled:setter(list,"setEnabled",_makeEndpointSelectHandler),setAnchor:setter(list,"setAnchor",_makeEndpointSelectHandler),isEnabled:getter(list,"isEnabled"),detachAll:function detachAll(){for(var i=0,ii=list.length;i<ii;i++){list[i].detachAll();}},"remove":function remove(){for(var i=0,ii=list.length;i<ii;i++){_currentInstance.deleteObject({endpoint:list[i]});}}});};this.select=function(params){params=params||{};params.scope=params.scope||"*";return _makeConnectionSelectHandler(params.connections||_currentInstance.getConnections(params,true));};this.selectEndpoints=function(params){params=params||{};params.scope=params.scope||"*";var noElementFilters=!params.element&&!params.source&&!params.target,elements=noElementFilters?"*":prepareList(params.element),sources=noElementFilters?"*":prepareList(params.source),targets=noElementFilters?"*":prepareList(params.target),scopes=prepareList(params.scope,true);var ep=[];for(var el in endpointsByElement){var either=filterList(elements,el,true),source=filterList(sources,el,true),sourceMatchExact=sources!="*",target=filterList(targets,el,true),targetMatchExact=targets!="*";// if they requested 'either' then just match scope. otherwise if they requested 'source' (not as a wildcard) then we have to match only endpoints that have isSource set to to true, and the same thing with isTarget.
+if(either||source||target){inner:for(var i=0,ii=endpointsByElement[el].length;i<ii;i++){var _ep=endpointsByElement[el][i];if(filterList(scopes,_ep.scope,true)){var noMatchSource=sourceMatchExact&&sources.length>0&&!_ep.isSource,noMatchTarget=targetMatchExact&&targets.length>0&&!_ep.isTarget;if(noMatchSource||noMatchTarget)continue inner;ep.push(_ep);}}}}return _makeEndpointSelectHandler(ep);};// get all connections managed by the instance of jsplumb.
+this.getAllConnections=function(){return connections;};this.getDefaultScope=function(){return DEFAULT_SCOPE;};// get an endpoint by uuid.
+this.getEndpoint=_getEndpoint;// get endpoints for some element.
+this.getEndpoints=function(el){return endpointsByElement[_info(el).id];};// gets the default endpoint type. used when subclassing. see wiki.
+this.getDefaultEndpointType=function(){return jsPlumb.Endpoint;};// gets the default connection type. used when subclassing.  see wiki.
+this.getDefaultConnectionType=function(){return jsPlumb.Connection;};/*
+         * Gets an element's id, creating one if necessary. really only exposed
+         * for the lib-specific functionality to access; would be better to pass
+         * the current instance into the lib-specific code (even though this is
+         * a static call. i just don't want to expose it to the public API).
+         */this.getId=_getId;this.appendElement=_appendElement;var _hoverSuspended=false;this.isHoverSuspended=function(){return _hoverSuspended;};this.setHoverSuspended=function(s){_hoverSuspended=s;};// set an element's connections to be hidden
+this.hide=function(el,changeEndpoints){_setVisible(el,"none",changeEndpoints);return _currentInstance;};// exposed for other objects to use to get a unique id.
+this.idstamp=_idstamp;this.connectorsInitialized=false;this.registerConnectorType=function(connector,name){connectorTypes.push([connector,name]);};// ensure that, if the current container exists, it is a DOM element and not a selector.
+// if it does not exist and `candidate` is supplied, the offset parent of that element will be set as the Container.
+// this is used to do a better default behaviour for the case that the user has not set a container:
+// addEndpoint, makeSource, makeTarget and connect all call this method with the offsetParent of the
+// element in question (for connect it is the source element). So if no container is set, it is inferred
+// to be the offsetParent of the first element the user tries to connect.
+var _ensureContainer=function _ensureContainer(candidate){if(!_container&&candidate){var can=_currentInstance.getElement(candidate);if(can.offsetParent)_currentInstance.setContainer(can.offsetParent);}};var _getContainerFromDefaults=function _getContainerFromDefaults(){if(_currentInstance.Defaults.Container)_currentInstance.setContainer(_currentInstance.Defaults.Container);};// check if a given element is managed or not. if not, add to our map. if drawing is not suspended then
+// we'll also stash its dimensions; otherwise we'll do this in a lazy way through updateOffset.
+var _manage=_currentInstance.manage=function(id,element,_transient){if(!managedElements[id]){managedElements[id]={el:element,endpoints:[],connections:[]};managedElements[id].info=_updateOffset({elId:id,timestamp:_suspendedAt});if(!_transient){_currentInstance.fire("manageElement",{id:id,info:managedElements[id].info,el:element});}}return managedElements[id];};var _unmanage=function _unmanage(id){if(managedElements[id]){delete managedElements[id];_currentInstance.fire("unmanageElement",id);}};/**
+         * updates the offset and size for a given element, and stores the
+         * values. if 'offset' is not null we use that (it would have been
+         * passed in from a drag call) because it's faster; but if it is null,
+         * or if 'recalc' is true in order to force a recalculation, we get the current values.
+         */var _updateOffset=this.updateOffset=function(params){var timestamp=params.timestamp,recalc=params.recalc,offset=params.offset,elId=params.elId,s;if(_suspendDrawing&&!timestamp)timestamp=_suspendedAt;if(!recalc){if(timestamp&&timestamp===offsetTimestamps[elId]){return{o:params.offset||offsets[elId],s:sizes[elId]};}}if(recalc||!offset&&offsets[elId]==null){// if forced repaint or no offset available, we recalculate.
+// get the current size and offset, and store them
+s=managedElements[elId]?managedElements[elId].el:null;if(s!=null){sizes[elId]=_currentInstance.getSize(s);offsets[elId]=_currentInstance.getOffset(s);offsetTimestamps[elId]=timestamp;}}else{offsets[elId]=offset||offsets[elId];if(sizes[elId]==null){s=managedElements[elId].el;if(s!=null)sizes[elId]=_currentInstance.getSize(s);}offsetTimestamps[elId]=timestamp;}if(offsets[elId]&&!offsets[elId].right){offsets[elId].right=offsets[elId].left+sizes[elId][0];offsets[elId].bottom=offsets[elId].top+sizes[elId][1];offsets[elId].width=sizes[elId][0];offsets[elId].height=sizes[elId][1];offsets[elId].centerx=offsets[elId].left+offsets[elId].width/2;offsets[elId].centery=offsets[elId].top+offsets[elId].height/2;}return{o:offsets[elId],s:sizes[elId]};};/**
+         * callback from the current library to tell us to prepare ourselves (attach
+         * mouse listeners etc; can't do that until the library has provided a bind method)
+         */this.init=function(){rendererTypes=root.jsPlumb.getRenderModes();var _oneType=function _oneType(renderer,name,fn){root.jsPlumb.Connectors[renderer][name]=function(){fn.apply(this,arguments);root.jsPlumb.ConnectorRenderers[renderer].apply(this,arguments);};_ju.extend(root.jsPlumb.Connectors[renderer][name],[fn,root.jsPlumb.ConnectorRenderers[renderer]]);};if(!root.jsPlumb.connectorsInitialized){for(var i=0;i<connectorTypes.length;i++){for(var j=0;j<rendererTypes.length;j++){_oneType(rendererTypes[j],connectorTypes[i][1],connectorTypes[i][0]);}}root.jsPlumb.connectorsInitialized=true;}if(!initialized){_getContainerFromDefaults();_currentInstance.anchorManager=new root.jsPlumb.AnchorManager({jsPlumbInstance:_currentInstance});initialized=true;_currentInstance.fire("ready",_currentInstance);}}.bind(this);this.log=log;this.jsPlumbUIComponent=jsPlumbUIComponent;/*
+         * Creates an anchor with the given params.
+         *
+         *
+         * Returns: The newly created Anchor.
+         * Throws: an error if a named anchor was not found.
+         */this.makeAnchor=function(){var pp,_a=function _a(t,p){if(root.jsPlumb.Anchors[t])return new root.jsPlumb.Anchors[t](p);if(!_currentInstance.Defaults.DoNotThrowErrors)throw{msg:"jsPlumb: unknown anchor type '"+t+"'"};};if(arguments.length===0)return null;var specimen=arguments[0],elementId=arguments[1],jsPlumbInstance=arguments[2],newAnchor=null;// if it appears to be an anchor already...
+if(specimen.compute&&specimen.getOrientation)return specimen;//TODO hazy here about whether it should be added or is already added somehow.
+// is it the name of an anchor type?
+else if(typeof specimen=="string"){newAnchor=_a(arguments[0],{elementId:elementId,jsPlumbInstance:_currentInstance});}// is it an array? it will be one of:
+// 		an array of [spec, params] - this defines a single anchor, which may be dynamic, but has parameters.
+//		an array of arrays - this defines some dynamic anchors
+//		an array of numbers - this defines a single anchor.
+else if(_ju.isArray(specimen)){if(_ju.isArray(specimen[0])||_ju.isString(specimen[0])){// if [spec, params] format
+if(specimen.length==2&&_ju.isObject(specimen[1])){// if first arg is a string, its a named anchor with params
+if(_ju.isString(specimen[0])){pp=root.jsPlumb.extend({elementId:elementId,jsPlumbInstance:_currentInstance},specimen[1]);newAnchor=_a(specimen[0],pp);}// otherwise first arg is array, second is params. we treat as a dynamic anchor, which is fine
+// even if the first arg has only one entry. you could argue all anchors should be implicitly dynamic in fact.
+else{pp=root.jsPlumb.extend({elementId:elementId,jsPlumbInstance:_currentInstance,anchors:specimen[0]},specimen[1]);newAnchor=new root.jsPlumb.DynamicAnchor(pp);}}else newAnchor=new jsPlumb.DynamicAnchor({anchors:specimen,selector:null,elementId:elementId,jsPlumbInstance:_currentInstance});}else{var anchorParams={x:specimen[0],y:specimen[1],orientation:specimen.length>=4?[specimen[2],specimen[3]]:[0,0],offsets:specimen.length>=6?[specimen[4],specimen[5]]:[0,0],elementId:elementId,jsPlumbInstance:_currentInstance,cssClass:specimen.length==7?specimen[6]:null};newAnchor=new root.jsPlumb.Anchor(anchorParams);newAnchor.clone=function(){return new root.jsPlumb.Anchor(anchorParams);};}}if(!newAnchor.id)newAnchor.id="anchor_"+_idstamp();return newAnchor;};/**
+         * makes a list of anchors from the given list of types or coords, eg
+         * ["TopCenter", "RightMiddle", "BottomCenter", [0, 1, -1, -1] ]
+         */this.makeAnchors=function(types,elementId,jsPlumbInstance){var r=[];for(var i=0,ii=types.length;i<ii;i++){if(typeof types[i]=="string")r.push(root.jsPlumb.Anchors[types[i]]({elementId:elementId,jsPlumbInstance:jsPlumbInstance}));else if(_ju.isArray(types[i]))r.push(_currentInstance.makeAnchor(types[i],elementId,jsPlumbInstance));}return r;};/**
+         * Makes a dynamic anchor from the given list of anchors (which may be in shorthand notation as strings or dimension arrays, or Anchor
+         * objects themselves) and the given, optional, anchorSelector function (jsPlumb uses a default if this is not provided; most people will
+         * not need to provide this - i think).
+         */this.makeDynamicAnchor=function(anchors,anchorSelector){return new root.jsPlumb.DynamicAnchor({anchors:anchors,selector:anchorSelector,elementId:null,jsPlumbInstance:_currentInstance});};// --------------------- makeSource/makeTarget ---------------------------------------------- 
+this.targetEndpointDefinitions={};var _setEndpointPaintStylesAndAnchor=function _setEndpointPaintStylesAndAnchor(ep,epIndex,_instance){/* ep.paintStyle = ep.paintStyle ||
+                _instance.Defaults.EndpointStyles[epIndex] ||
+                _instance.Defaults.EndpointStyle;
+
+            ep.hoverPaintStyle = ep.hoverPaintStyle ||
+                _instance.Defaults.EndpointHoverStyles[epIndex] ||
+                _instance.Defaults.EndpointHoverStyle;
+
+            ep.anchor = ep.anchor ||
+                _instance.Defaults.Anchors[epIndex] ||
+                _instance.Defaults.Anchor;
+
+            ep.endpoint = ep.endpoint ||
+                _instance.Defaults.Endpoints[epIndex] ||
+                _instance.Defaults.Endpoint;*/};// TODO put all the source stuff inside one parent, keyed by id.
+this.sourceEndpointDefinitions={};var selectorFilter=function selectorFilter(evt,_el,selector,_instance,negate){var t=evt.target||evt.srcElement,ok=false,sel=_instance.getSelector(_el,selector);for(var j=0;j<sel.length;j++){if(sel[j]==t){ok=true;break;}}return negate?!ok:ok;};// SP target source refactor
+var _makeElementDropHandler=function _makeElementDropHandler(elInfo,p,dropOptions,isSource,isTarget){var proxyComponent=new jsPlumbUIComponent(p);var _drop=p._jsPlumb.EndpointDropHandler({jsPlumb:_currentInstance,enabled:function enabled(){return elInfo.def.enabled;},isFull:function isFull(){var targetCount=_currentInstance.select({target:elInfo.id}).length;return elInfo.def.maxConnections>0&&targetCount>=elInfo.def.maxConnections;},element:elInfo.el,elementId:elInfo.id,isSource:isSource,isTarget:isTarget,addClass:function addClass(clazz){_currentInstance.addClass(elInfo.el,clazz);},removeClass:function removeClass(clazz){_currentInstance.removeClass(elInfo.el,clazz);},onDrop:function onDrop(jpc){var source=jpc.endpoints[0];source.anchor.locked=false;},isDropAllowed:function isDropAllowed(){return proxyComponent.isDropAllowed.apply(proxyComponent,arguments);},isRedrop:function isRedrop(jpc){return jpc.suspendedElement!=null&&jpc.suspendedEndpoint!=null&&jpc.suspendedEndpoint.element===elInfo.el;},getEndpoint:function getEndpoint(jpc){// make a new Endpoint for the target, or get it from the cache if uniqueEndpoint
+// is set. if its a redrop the new endpoint will be immediately cleaned up.
+var newEndpoint=elInfo.def.endpoint;// if no cached endpoint, or there was one but it has been cleaned up
+// (ie. detached), create a new one
+if(newEndpoint==null||newEndpoint._jsPlumb==null){var eps=_currentInstance.deriveEndpointAndAnchorSpec(jpc.getType().join(" "),true);var pp=eps.endpoints?root.jsPlumb.extend(p,{endpoint:elInfo.def.def.endpoint||eps.endpoints[1]}):p;if(eps.anchors){pp=root.jsPlumb.extend(pp,{anchor:elInfo.def.def.anchor||eps.anchors[1]});}newEndpoint=_currentInstance.addEndpoint(elInfo.el,pp);newEndpoint._mtNew=true;}if(p.uniqueEndpoint)elInfo.def.endpoint=newEndpoint;// may of course just store what it just pulled out. that's ok.
+// TODO test options to makeTarget to see if we should do this?
+newEndpoint._doNotDeleteOnDetach=false;// reset.
+newEndpoint._deleteOnDetach=true;// if connection is detachable, init the new endpoint to be draggable, to support that happening.
+if(jpc.isDetachable())newEndpoint.initDraggable();// if the anchor has a 'positionFinder' set, then delegate to that function to find
+// out where to locate the anchor.
+if(newEndpoint.anchor.positionFinder!=null){var dropPosition=_currentInstance.getUIPosition(arguments,_currentInstance.getZoom()),elPosition=_currentInstance.getOffset(elInfo.el),elSize=_currentInstance.getSize(elInfo.el),ap=dropPosition==null?[0,0]:newEndpoint.anchor.positionFinder(dropPosition,elPosition,elSize,newEndpoint.anchor.constructorParams);newEndpoint.anchor.x=ap[0];newEndpoint.anchor.y=ap[1];// now figure an orientation for it..kind of hard to know what to do actually. probably the best thing i can do is to
+// support specifying an orientation in the anchor's spec. if one is not supplied then i will make the orientation
+// be what will cause the most natural link to the source: it will be pointing at the source, but it needs to be
+// specified in one axis only, and so how to make that choice? i think i will use whichever axis is the one in which
+// the target is furthest away from the source.
+}return newEndpoint;},maybeCleanup:function maybeCleanup(ep){if(ep._mtNew&&ep.connections.length===0){_currentInstance.deleteObject({endpoint:ep});}else delete ep._mtNew;}});// wrap drop events as needed and initialise droppable
+var dropEvent=root.jsPlumb.dragEvents.drop;dropOptions.scope=dropOptions.scope||p.scope||_currentInstance.Defaults.Scope;dropOptions[dropEvent]=_ju.wrap(dropOptions[dropEvent],_drop,true);// if target, return true from the over event. this will cause katavorio to stop setting drops to hover
+// if multipleDrop is set to false.
+if(isTarget){dropOptions[root.jsPlumb.dragEvents.over]=function(){return true;};}// vanilla jsplumb only
+if(p.allowLoopback===false){dropOptions.canDrop=function(_drag){var de=_drag.getDragElement()._jsPlumbRelatedElement;return de!=elInfo.el;};}_currentInstance.initDroppable(elInfo.el,dropOptions,"internal");return _drop;};// see API docs
+this.makeTarget=function(el,params,referenceParams){// put jsplumb ref into params without altering the params passed in
+var p=root.jsPlumb.extend({_jsPlumb:this},referenceParams);root.jsPlumb.extend(p,params);// calculate appropriate paint styles and anchor from the params given
+_setEndpointPaintStylesAndAnchor(p,1,this);var maxConnections=p.maxConnections||-1,_doOne=function(el){// get the element's id and store the endpoint definition for it.  jsPlumb.connect calls will look for one of these,
+// and use the endpoint definition if found.
+// decode the info for this element (id and element)
+var elInfo=_info(el),elid=elInfo.id,dropOptions=root.jsPlumb.extend({},p.dropOptions||{}),type=p.connectionType||"default";this.targetEndpointDefinitions[elid]=this.targetEndpointDefinitions[elid]||{};_ensureContainer(elid);// if this is a group and the user has not mandated a rank, set to -1 so that Nodes takes
+// precedence.
+if(elInfo.el._isJsPlumbGroup&&dropOptions.rank==null){dropOptions.rank=-1;}// store the definition
+var _def={def:root.jsPlumb.extend({},p),uniqueEndpoint:p.uniqueEndpoint,maxConnections:maxConnections,enabled:true};elInfo.def=_def;this.targetEndpointDefinitions[elid][type]=_def;_makeElementDropHandler(elInfo,p,dropOptions,p.isSource===true,true);// stash the definition on the drop
+elInfo.el._katavorioDrop[elInfo.el._katavorioDrop.length-1].targetDef=_def;}.bind(this);// make an array if only given one element
+var inputs=el.length&&el.constructor!=String?el:[el];// register each one in the list.
+for(var i=0,ii=inputs.length;i<ii;i++){_doOne(inputs[i]);}return this;};// see api docs
+this.unmakeTarget=function(el,doNotClearArrays){var info=_info(el);_currentInstance.destroyDroppable(info.el,"internal");if(!doNotClearArrays){delete this.targetEndpointDefinitions[info.id];}return this;};// see api docs
+this.makeSource=function(el,params,referenceParams){var p=root.jsPlumb.extend({_jsPlumb:this},referenceParams);root.jsPlumb.extend(p,params);var type=p.connectionType||"default";var aae=_currentInstance.deriveEndpointAndAnchorSpec(type);p.endpoint=p.endpoint||aae.endpoints[0];p.anchor=p.anchor||aae.anchors[0];_setEndpointPaintStylesAndAnchor(p,0,this);var maxConnections=p.maxConnections||-1,onMaxConnections=p.onMaxConnections,_doOne=function(elInfo){// get the element's id and store the endpoint definition for it.  jsPlumb.connect calls will look for one of these,
+// and use the endpoint definition if found.
+var elid=elInfo.id,_del=this.getElement(elInfo.el);this.sourceEndpointDefinitions[elid]=this.sourceEndpointDefinitions[elid]||{};_ensureContainer(elid);var _def={def:root.jsPlumb.extend({},p),uniqueEndpoint:p.uniqueEndpoint,maxConnections:maxConnections,enabled:true};this.sourceEndpointDefinitions[elid][type]=_def;elInfo.def=_def;var stopEvent=root.jsPlumb.dragEvents.stop,dragEvent=root.jsPlumb.dragEvents.drag,dragOptions=root.jsPlumb.extend({},p.dragOptions||{}),existingDrag=dragOptions.drag,existingStop=dragOptions.stop,ep=null,endpointAddedButNoDragYet=false;// set scope if its not set in dragOptions but was passed in in params
+dragOptions.scope=dragOptions.scope||p.scope;dragOptions[dragEvent]=_ju.wrap(dragOptions[dragEvent],function(){if(existingDrag)existingDrag.apply(this,arguments);endpointAddedButNoDragYet=false;});dragOptions[stopEvent]=_ju.wrap(dragOptions[stopEvent],function(){if(existingStop)existingStop.apply(this,arguments);this.currentlyDragging=false;if(ep._jsPlumb!=null){// if not cleaned up...
+// reset the anchor to the anchor that was initially provided. the one we were using to drag
+// the connection was just a placeholder that was located at the place the user pressed the
+// mouse button to initiate the drag.
+var anchorDef=p.anchor||this.Defaults.Anchor,oldAnchor=ep.anchor,oldConnection=ep.connections[0];var newAnchor=this.makeAnchor(anchorDef,elid,this),_el=ep.element;// if the anchor has a 'positionFinder' set, then delegate to that function to find
+// out where to locate the anchor. issue 117.
+if(newAnchor.positionFinder!=null){var elPosition=_currentInstance.getOffset(_el),elSize=this.getSize(_el),dropPosition={left:elPosition.left+oldAnchor.x*elSize[0],top:elPosition.top+oldAnchor.y*elSize[1]},ap=newAnchor.positionFinder(dropPosition,elPosition,elSize,newAnchor.constructorParams);newAnchor.x=ap[0];newAnchor.y=ap[1];}ep.setAnchor(newAnchor,true);ep.repaint();this.repaint(ep.elementId);if(oldConnection!=null)this.repaint(oldConnection.targetId);}}.bind(this));// when the user presses the mouse, add an Endpoint, if we are enabled.
+var mouseDownListener=function(e){// on right mouse button, abort.
+if(e.which===3||e.button===2)return;// TODO store def on element.
+var def=this.sourceEndpointDefinitions[elid][type];// if disabled, return.
+if(!def.enabled)return;elid=this.getId(this.getElement(elInfo.el));// elid might have changed since this method was called to configure the element.
+// if a filter was given, run it, and return if it says no.
+if(p.filter){var r=_ju.isString(p.filter)?selectorFilter(e,elInfo.el,p.filter,this,p.filterExclude):p.filter(e,elInfo.el);if(r===false)return;}// if maxConnections reached
+var sourceCount=this.select({source:elid}).length;if(def.maxConnections>=0&&sourceCount>=def.maxConnections){if(onMaxConnections){onMaxConnections({element:elInfo.el,maxConnections:maxConnections},e);}return false;}// find the position on the element at which the mouse was pressed; this is where the endpoint
+// will be located.
+var elxy=root.jsPlumb.getPositionOnElement(e,_del,_zoom);// we need to override the anchor in here, and force 'isSource', but we don't want to mess with
+// the params passed in, because after a connection is established we're going to reset the endpoint
+// to have the anchor we were given.
+var tempEndpointParams={};root.jsPlumb.extend(tempEndpointParams,p);tempEndpointParams.isTemporarySource=true;tempEndpointParams.anchor=[elxy[0],elxy[1],0,0];tempEndpointParams.dragOptions=dragOptions;if(def.def.scope)tempEndpointParams.scope=def.def.scope;ep=this.addEndpoint(elid,tempEndpointParams);endpointAddedButNoDragYet=true;ep._doNotDeleteOnDetach=false;// reset.
+ep._deleteOnDetach=true;// if unique endpoint and it's already been created, push it onto the endpoint we create. at the end
+// of a successful connection we'll switch to that endpoint.
+// TODO this is the same code as the programmatic endpoints create on line 1050 ish
+if(def.uniqueEndpoint){if(!def.endpoint){def.endpoint=ep;ep._deleteOnDetach=false;ep._doNotDeleteOnDetach=true;}else ep.finalEndpoint=def.endpoint;}var _delTempEndpoint=function _delTempEndpoint(){// this mouseup event is fired only if no dragging occurred, by jquery and yui, but for mootools
+// it is fired even if dragging has occurred, in which case we would blow away a perfectly
+// legitimate endpoint, were it not for this check.  the flag is set after adding an
+// endpoint and cleared in a drag listener we set in the dragOptions above.
+_currentInstance.off(ep.canvas,"mouseup",_delTempEndpoint);_currentInstance.off(elInfo.el,"mouseup",_delTempEndpoint);if(endpointAddedButNoDragYet){endpointAddedButNoDragYet=false;_currentInstance.deleteEndpoint(ep);}};_currentInstance.on(ep.canvas,"mouseup",_delTempEndpoint);_currentInstance.on(elInfo.el,"mouseup",_delTempEndpoint);// optionally check for attributes to extract from the source element
+var payload={};if(def.def.extract){for(var att in def.def.extract){var v=(e.srcElement||e.target).getAttribute(att);if(v){payload[def.def.extract[att]]=v;}}}// and then trigger its mousedown event, which will kick off a drag, which will start dragging
+// a new connection from this endpoint.
+_currentInstance.trigger(ep.canvas,"mousedown",e,payload);_ju.consume(e);}.bind(this);this.on(elInfo.el,"mousedown",mouseDownListener);_def.trigger=mouseDownListener;// if a filter was provided, set it as a dragFilter on the element,
+// to prevent the element drag function from kicking in when we want to
+// drag a new connection
+if(p.filter&&(_ju.isString(p.filter)||_ju.isFunction(p.filter))){_currentInstance.setDragFilter(elInfo.el,p.filter);}var dropOptions=root.jsPlumb.extend({},p.dropOptions||{});_makeElementDropHandler(elInfo,p,dropOptions,true,p.isTarget===true);}.bind(this);var inputs=el.length&&el.constructor!=String?el:[el];for(var i=0,ii=inputs.length;i<ii;i++){_doOne(_info(inputs[i]));}return this;};// see api docs
+this.unmakeSource=function(el,connectionType,doNotClearArrays){var info=_info(el);_currentInstance.destroyDroppable(info.el,"internal");var eldefs=this.sourceEndpointDefinitions[info.id];if(eldefs){for(var def in eldefs){if(connectionType==null||connectionType===def){var mouseDownListener=eldefs[def].trigger;if(mouseDownListener)_currentInstance.off(info.el,"mousedown",mouseDownListener);if(!doNotClearArrays){delete this.sourceEndpointDefinitions[info.id][def];}}}}return this;};// see api docs
+this.unmakeEverySource=function(){for(var i in this.sourceEndpointDefinitions){_currentInstance.unmakeSource(i,null,true);}this.sourceEndpointDefinitions={};return this;};var _getScope=function(el,types,connectionType){types=_ju.isArray(types)?types:[types];var id=_getId(el);connectionType=connectionType||"default";for(var i=0;i<types.length;i++){var eldefs=this[types[i]][id];if(eldefs&&eldefs[connectionType])return eldefs[connectionType].def.scope||this.Defaults.Scope;}}.bind(this);var _setScope=function(el,scope,types,connectionType){types=_ju.isArray(types)?types:[types];var id=_getId(el);connectionType=connectionType||"default";for(var i=0;i<types.length;i++){var eldefs=this[types[i]][id];if(eldefs&&eldefs[connectionType]){eldefs[connectionType].def.scope=scope;}}}.bind(this);this.getScope=function(el,scope){return _getScope(el,["sourceEndpointDefinitions","targetEndpointDefinitions"]);};this.getSourceScope=function(el){return _getScope(el,"sourceEndpointDefinitions");};this.getTargetScope=function(el){return _getScope(el,"targetEndpointDefinitions");};this.setScope=function(el,scope,connectionType){this.setSourceScope(el,scope,connectionType);this.setTargetScope(el,scope,connectionType);};this.setSourceScope=function(el,scope,connectionType){_setScope(el,scope,"sourceEndpointDefinitions",connectionType);// we get the source scope during the mousedown event, but we also want to set this.
+this.setDragScope(el,scope);};this.setTargetScope=function(el,scope,connectionType){_setScope(el,scope,"targetEndpointDefinitions",connectionType);this.setDropScope(el,scope);};// see api docs
+this.unmakeEveryTarget=function(){for(var i in this.targetEndpointDefinitions){_currentInstance.unmakeTarget(i,true);}this.targetEndpointDefinitions={};return this;};// does the work of setting a source enabled or disabled.
+var _setEnabled=function(type,el,state,toggle,connectionType){var a=type=="source"?this.sourceEndpointDefinitions:this.targetEndpointDefinitions,originalState,info,newState;connectionType=connectionType||"default";// a selector or an array
+if(el.length&&!_ju.isString(el)){originalState=[];for(var i=0,ii=el.length;i<ii;i++){info=_info(el[i]);if(a[info.id]&&a[info.id][connectionType]){originalState[i]=a[info.id][connectionType].enabled;newState=toggle?!originalState[i]:state;a[info.id][connectionType].enabled=newState;_currentInstance[newState?"removeClass":"addClass"](info.el,"jtk-"+type+"-disabled");}}}// otherwise a DOM element or a String ID.
+else{info=_info(el);var id=info.id;if(a[id]&&a[id][connectionType]){originalState=a[id][connectionType].enabled;newState=toggle?!originalState:state;a[id][connectionType].enabled=newState;_currentInstance[newState?"removeClass":"addClass"](info.el,"jtk-"+type+"-disabled");}}return originalState;}.bind(this);var _first=function(el,fn){if(_ju.isString(el)||!el.length)return fn.apply(this,[el]);else if(el.length)return fn.apply(this,[el[0]]);}.bind(this);this.toggleSourceEnabled=function(el,connectionType){_setEnabled("source",el,null,true,connectionType);return this.isSourceEnabled(el,connectionType);};this.setSourceEnabled=function(el,state,connectionType){return _setEnabled("source",el,state,null,connectionType);};this.isSource=function(el,connectionType){connectionType=connectionType||"default";return _first(el,function(_el){var eldefs=this.sourceEndpointDefinitions[_info(_el).id];return eldefs!=null&&eldefs[connectionType]!=null;}.bind(this));};this.isSourceEnabled=function(el,connectionType){connectionType=connectionType||"default";return _first(el,function(_el){var sep=this.sourceEndpointDefinitions[_info(_el).id];return sep&&sep[connectionType]&&sep[connectionType].enabled===true;}.bind(this));};this.toggleTargetEnabled=function(el,connectionType){_setEnabled("target",el,null,true,connectionType);return this.isTargetEnabled(el,connectionType);};this.isTarget=function(el,connectionType){connectionType=connectionType||"default";return _first(el,function(_el){var eldefs=this.targetEndpointDefinitions[_info(_el).id];return eldefs!=null&&eldefs[connectionType]!=null;}.bind(this));};this.isTargetEnabled=function(el,connectionType){connectionType=connectionType||"default";return _first(el,function(_el){var tep=this.targetEndpointDefinitions[_info(_el).id];return tep&&tep[connectionType]&&tep[connectionType].enabled===true;}.bind(this));};this.setTargetEnabled=function(el,state,connectionType){return _setEnabled("target",el,state,null,connectionType);};// --------------------- end makeSource/makeTarget ---------------------------------------------- 				
+this.ready=function(fn){_currentInstance.bind("ready",fn);};var _elEach=function _elEach(el,fn){// support both lists...
+if((typeof el==="undefined"?"undefined":_typeof(el))=='object'&&el.length)for(var i=0,ii=el.length;i<ii;i++){fn(el[i]);}else// ...and single strings or elements.
+fn(el);return _currentInstance;};// repaint some element's endpoints and connections
+this.repaint=function(el,ui,timestamp){return _elEach(el,function(_el){_draw(_el,ui,timestamp);});};this.revalidate=function(el,timestamp,isIdAlready){return _elEach(el,function(_el){var elId=isIdAlready?_el:_currentInstance.getId(_el);_currentInstance.updateOffset({elId:elId,recalc:true,timestamp:timestamp});_currentInstance.repaint(_el);});};// repaint every endpoint and connection.
+this.repaintEverything=function(){// TODO this timestamp causes continuous anchors to not repaint properly.
+// fix this. do not just take out the timestamp. it runs a lot faster with
+// the timestamp included.
+var timestamp=_timestamp(),elId;for(elId in endpointsByElement){_currentInstance.updateOffset({elId:elId,recalc:true,timestamp:timestamp});}for(elId in endpointsByElement){_draw(elId,null,timestamp);}return this;};this.removeAllEndpoints=function(el,recurse,affectedElements){affectedElements=affectedElements||[];var _one=function _one(_el){var info=_info(_el),ebe=endpointsByElement[info.id],i,ii;if(ebe){affectedElements.push(info);for(i=0,ii=ebe.length;i<ii;i++){_currentInstance.deleteEndpoint(ebe[i],false);}}delete endpointsByElement[info.id];if(recurse){if(info.el&&info.el.nodeType!=3&&info.el.nodeType!=8){for(i=0,ii=info.el.childNodes.length;i<ii;i++){_one(info.el.childNodes[i]);}}}};_one(el);return this;};var _doRemove=function _doRemove(info,affectedElements){_currentInstance.removeAllEndpoints(info.id,true,affectedElements);var _one=function _one(_info){_currentInstance.getDragManager().elementRemoved(_info.id);_currentInstance.anchorManager.clearFor(_info.id);_currentInstance.anchorManager.removeFloatingConnection(_info.id);if(_currentInstance.isSource(_info.el))_currentInstance.unmakeSource(_info.el);if(_currentInstance.isTarget(_info.el))_currentInstance.unmakeTarget(_info.el);_currentInstance.destroyDraggable(_info.el);_currentInstance.destroyDroppable(_info.el);delete _currentInstance.floatingConnections[_info.id];delete managedElements[_info.id];delete offsets[_info.id];if(_info.el){_currentInstance.removeElement(_info.el);_info.el._jsPlumb=null;}};// remove all affected child elements
+for(var ae=1;ae<affectedElements.length;ae++){_one(affectedElements[ae]);}// and always remove the requested one from the dom.
+_one(info);};/**
+         * Remove the given element, including cleaning up all endpoints registered for it.
+         * This is exposed in the public API but also used internally by jsPlumb when removing the
+         * element associated with a connection drag.
+         */this.remove=function(el,doNotRepaint){var info=_info(el),affectedElements=[];if(info.text){info.el.parentNode.removeChild(info.el);}else if(info.id){_currentInstance.batch(function(){_doRemove(info,affectedElements);},doNotRepaint===false);}return _currentInstance;};this.empty=function(el,doNotRepaint){var affectedElements=[];var _one=function _one(el,dontRemoveFocus){var info=_info(el);if(info.text){info.el.parentNode.removeChild(info.el);}else if(info.el){while(info.el.childNodes.length>0){_one(info.el.childNodes[0]);}if(!dontRemoveFocus)_doRemove(info,affectedElements);}};_currentInstance.batch(function(){_one(el,true);},doNotRepaint===false);return _currentInstance;};this.reset=function(){_currentInstance.silently(function(){_hoverSuspended=false;_currentInstance.removeAllGroups();_currentInstance.removeGroupManager();_currentInstance.deleteEveryEndpoint();_currentInstance.unbind();this.targetEndpointDefinitions={};this.sourceEndpointDefinitions={};connections.length=0;if(this.doReset)this.doReset();}.bind(this));};var _clearObject=function _clearObject(obj){if(obj.canvas&&obj.canvas.parentNode)obj.canvas.parentNode.removeChild(obj.canvas);obj.cleanup();obj.destroy();};this.clear=function(){_currentInstance.select().each(_clearObject);_currentInstance.selectEndpoints().each(_clearObject);endpointsByElement={};endpointsByUUID={};};this.setDefaultScope=function(scope){DEFAULT_SCOPE=scope;return _currentInstance;};// sets whether or not some element should be currently draggable.
+this.setDraggable=_setDraggable;this.deriveEndpointAndAnchorSpec=function(type,dontPrependDefault){var bits=((dontPrependDefault?"":"default ")+type).split(/[\s]/),eps=null,ep=null,a=null,as=null;for(var i=0;i<bits.length;i++){var _t=_currentInstance.getType(bits[i],"connection");if(_t){if(_t.endpoints)eps=_t.endpoints;if(_t.endpoint)ep=_t.endpoint;if(_t.anchors)as=_t.anchors;if(_t.anchor)a=_t.anchor;}}return{endpoints:eps?eps:[ep,ep],anchors:as?as:[a,a]};};// sets the id of some element, changing whatever we need to to keep track.
+this.setId=function(el,newId,doNotSetAttribute){//
+var id;if(_ju.isString(el)){id=el;}else{el=this.getElement(el);id=this.getId(el);}var sConns=this.getConnections({source:id,scope:'*'},true),tConns=this.getConnections({target:id,scope:'*'},true);newId=""+newId;if(!doNotSetAttribute){el=this.getElement(id);this.setAttribute(el,"id",newId);}else el=this.getElement(newId);endpointsByElement[newId]=endpointsByElement[id]||[];for(var i=0,ii=endpointsByElement[newId].length;i<ii;i++){endpointsByElement[newId][i].setElementId(newId);endpointsByElement[newId][i].setReferenceElement(el);}delete endpointsByElement[id];this.sourceEndpointDefinitions[newId]=this.sourceEndpointDefinitions[id];delete this.sourceEndpointDefinitions[id];this.targetEndpointDefinitions[newId]=this.targetEndpointDefinitions[id];delete this.targetEndpointDefinitions[id];this.anchorManager.changeId(id,newId);this.getDragManager().changeId(id,newId);managedElements[newId]=managedElements[id];delete managedElements[id];var _conns=function _conns(list,epIdx,type){for(var i=0,ii=list.length;i<ii;i++){list[i].endpoints[epIdx].setElementId(newId);list[i].endpoints[epIdx].setReferenceElement(el);list[i][type+"Id"]=newId;list[i][type]=el;}};_conns(sConns,0,"source");_conns(tConns,1,"target");this.repaint(newId);};this.setDebugLog=function(debugLog){log=debugLog;};this.setSuspendDrawing=function(val,repaintAfterwards){var curVal=_suspendDrawing;_suspendDrawing=val;if(val)_suspendedAt=new Date().getTime();else _suspendedAt=null;if(repaintAfterwards)this.repaintEverything();return curVal;};// returns whether or not drawing is currently suspended.
+this.isSuspendDrawing=function(){return _suspendDrawing;};// return timestamp for when drawing was suspended.
+this.getSuspendedAt=function(){return _suspendedAt;};this.batch=function(fn,doNotRepaintAfterwards){var _wasSuspended=this.isSuspendDrawing();if(!_wasSuspended)this.setSuspendDrawing(true);try{fn();}catch(e){_ju.log("Function run while suspended failed",e);}if(!_wasSuspended)this.setSuspendDrawing(false,!doNotRepaintAfterwards);};this.doWhileSuspended=this.batch;this.getCachedData=_getCachedData;this.timestamp=_timestamp;this.show=function(el,changeEndpoints){_setVisible(el,"block",changeEndpoints);return _currentInstance;};// TODO: update this method to return the current state.
+this.toggleVisible=_toggleVisible;this.toggleDraggable=_toggleDraggable;this.addListener=this.bind;};_ju.extend(root.jsPlumbInstance,_ju.EventGenerator,{setAttribute:function setAttribute(el,a,v){this.setAttribute(el,a,v);},getAttribute:function getAttribute(el,a){return this.getAttribute(root.jsPlumb.getElement(el),a);},convertToFullOverlaySpec:function convertToFullOverlaySpec(spec){if(_ju.isString(spec)){spec=[spec,{}];}spec[1].id=spec[1].id||_ju.uuid();return spec;},registerConnectionType:function registerConnectionType(id,type){this._connectionTypes[id]=root.jsPlumb.extend({},type);if(type.overlays){var to={};for(var i=0;i<type.overlays.length;i++){// if a string, convert to object representation so that we can store the typeid on it.
+// also assign an id.
+var fo=this.convertToFullOverlaySpec(type.overlays[i]);to[fo[1].id]=fo;}this._connectionTypes[id].overlays=to;}},registerConnectionTypes:function registerConnectionTypes(types){for(var i in types){this.registerConnectionType(i,types[i]);}},registerEndpointType:function registerEndpointType(id,type){this._endpointTypes[id]=root.jsPlumb.extend({},type);if(type.overlays){var to={};for(var i=0;i<type.overlays.length;i++){// if a string, convert to object representation so that we can store the typeid on it.
+// also assign an id.
+var fo=this.convertToFullOverlaySpec(type.overlays[i]);to[fo[1].id]=fo;}this._endpointTypes[id].overlays=to;}},registerEndpointTypes:function registerEndpointTypes(types){for(var i in types){//this._endpointTypes[i] = jsPlumb.extend({}, types[i]);
+this.registerEndpointType(i,types[i]);}},getType:function getType(id,typeDescriptor){return typeDescriptor==="connection"?this._connectionTypes[id]:this._endpointTypes[id];},setIdChanged:function setIdChanged(oldId,newId){this.setId(oldId,newId,true);},// set parent: change the parent for some node and update all the registrations we need to.
+setParent:function setParent(el,newParent){var _dom=this.getElement(el),_id=this.getId(_dom),_pdom=this.getElement(newParent),_pid=this.getId(_pdom);_dom.parentNode.removeChild(_dom);_pdom.appendChild(_dom);this.getDragManager().setParent(_dom,_id,_pdom,_pid);},extend:function extend(o1,o2,names){var i;if(names){for(i=0;i<names.length;i++){o1[names[i]]=o2[names[i]];}}else for(i in o2){o1[i]=o2[i];}return o1;},floatingConnections:{},getFloatingAnchorIndex:function getFloatingAnchorIndex(jpc){return jpc.endpoints[0].isFloating()?0:jpc.endpoints[1].isFloating()?1:-1;}});jsPlumbInstance.prototype.Defaults={Anchor:"Bottom",Anchors:[null,null],ConnectionsDetachable:true,ConnectionOverlays:[],Connector:"Bezier",Container:null,DoNotThrowErrors:false,DragOptions:{},DropOptions:{},Endpoint:"Dot",EndpointOverlays:[],Endpoints:[null,null],EndpointStyle:{fill:"#456"},EndpointStyles:[null,null],EndpointHoverStyle:null,EndpointHoverStyles:[null,null],HoverPaintStyle:null,LabelStyle:{color:"black"},LogEnabled:false,Overlays:[],MaxConnections:1,PaintStyle:{"stroke-width":4,stroke:"#456"},ReattachConnections:false,RenderMode:"svg",Scope:"jsPlumb_DefaultScope"};// --------------------- static instance + module registration -------------------------------------------
+// create static instance and assign to window if window exists.	
+var jsPlumb=new jsPlumbInstance();// register on 'root' (lets us run on server or browser)
+root.jsPlumb=jsPlumb;// add 'getInstance' method to static instance
+jsPlumb.getInstance=function(_defaults,overrideFns){var j=new jsPlumbInstance(_defaults);if(overrideFns){for(var ovf in overrideFns){j[ovf]=overrideFns[ovf];}}j.init();return j;};jsPlumb.each=function(spec,fn){if(spec==null)return;if(typeof spec==="string")fn(jsPlumb.getElement(spec));else if(spec.length!=null){for(var i=0;i<spec.length;i++){fn(jsPlumb.getElement(spec[i]));}}else fn(spec);// assume it's an element.
+};// CommonJS
+{exports.jsPlumb=jsPlumb;}// --------------------- end static instance + AMD registration -------------------------------------------		
+}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ *
+ * Title:jsPlumb 2.3.0
+ *
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ *
+ * This file contains the base functionality for DOM type adapters.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ *
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){var root=this,_ju=root.jsPlumbUtil;var _genLoc=function _genLoc(prefix,e){if(e==null)return[0,0];var ts=_touches(e),t=_getTouch(ts,0);return[t[prefix+"X"],t[prefix+"Y"]];},_pageLocation=_genLoc.bind(this,"page"),_screenLocation=_genLoc.bind(this,"screen"),_clientLocation=_genLoc.bind(this,"client"),_getTouch=function _getTouch(touches,idx){return touches.item?touches.item(idx):touches[idx];},_touches=function _touches(e){return e.touches&&e.touches.length>0?e.touches:e.changedTouches&&e.changedTouches.length>0?e.changedTouches:e.targetTouches&&e.targetTouches.length>0?e.targetTouches:[e];};/**
+     Manages dragging for some instance of jsPlumb.
+
+     TODO instead of this being accessed directly, it should subscribe to events on the jsPlumb instance: every method
+     in here is called directly by jsPlumb. But what should happen is that we have unpublished events that this listens
+     to.  The only trick is getting one of these instantiated with every jsPlumb instance: it needs to have a hook somehow.
+     Basically the general idea is to pull ALL the drag code out (prototype method registrations plus this) into a
+     dedicated drag script), that does not necessarily need to be included.
+
+
+     */var DragManager=function DragManager(_currentInstance){var _draggables={},_dlist=[],_delements={},_elementsWithEndpoints={},// elementids mapped to the draggable to which they belong.
+_draggablesForElements={};/**
+         register some element as draggable.  right now the drag init stuff is done elsewhere, and it is
+         possible that will continue to be the case.
+         */this.register=function(el){var id=_currentInstance.getId(el),parentOffset=_currentInstance.getOffset(el);if(!_draggables[id]){_draggables[id]=el;_dlist.push(el);_delements[id]={};}// look for child elements that have endpoints and register them against this draggable.
+var _oneLevel=function _oneLevel(p){if(p){for(var i=0;i<p.childNodes.length;i++){if(p.childNodes[i].nodeType!=3&&p.childNodes[i].nodeType!=8){var cEl=jsPlumb.getElement(p.childNodes[i]),cid=_currentInstance.getId(p.childNodes[i],null,true);if(cid&&_elementsWithEndpoints[cid]&&_elementsWithEndpoints[cid]>0){var cOff=_currentInstance.getOffset(cEl);_delements[id][cid]={id:cid,offset:{left:cOff.left-parentOffset.left,top:cOff.top-parentOffset.top}};_draggablesForElements[cid]=id;}_oneLevel(p.childNodes[i]);}}}};_oneLevel(el);};// refresh the offsets for child elements of this element.
+this.updateOffsets=function(elId,childOffsetOverrides){if(elId!=null){childOffsetOverrides=childOffsetOverrides||{};var domEl=jsPlumb.getElement(elId),id=_currentInstance.getId(domEl),children=_delements[id],parentOffset=_currentInstance.getOffset(domEl);if(children){for(var i in children){if(children.hasOwnProperty(i)){var cel=jsPlumb.getElement(i),cOff=childOffsetOverrides[i]||_currentInstance.getOffset(cel);// do not update if we have a value already and we'd just be writing 0,0
+if(cel.offsetParent==null&&_delements[id][i]!=null)continue;_delements[id][i]={id:i,offset:{left:cOff.left-parentOffset.left,top:cOff.top-parentOffset.top}};_draggablesForElements[i]=id;}}}}};/**
+         notification that an endpoint was added to the given el.  we go up from that el's parent
+         node, looking for a parent that has been registered as a draggable. if we find one, we add this
+         el to that parent's list of elements to update on drag (if it is not there already)
+         */this.endpointAdded=function(el,id){id=id||_currentInstance.getId(el);var b=document.body,p=el.parentNode;_elementsWithEndpoints[id]=_elementsWithEndpoints[id]?_elementsWithEndpoints[id]+1:1;while(p!=null&&p!=b){var pid=_currentInstance.getId(p,null,true);if(pid&&_draggables[pid]){var pLoc=_currentInstance.getOffset(p);if(_delements[pid][id]==null){var cLoc=_currentInstance.getOffset(el);_delements[pid][id]={id:id,offset:{left:cLoc.left-pLoc.left,top:cLoc.top-pLoc.top}};_draggablesForElements[id]=pid;}break;}p=p.parentNode;}};this.endpointDeleted=function(endpoint){if(_elementsWithEndpoints[endpoint.elementId]){_elementsWithEndpoints[endpoint.elementId]--;if(_elementsWithEndpoints[endpoint.elementId]<=0){for(var i in _delements){if(_delements.hasOwnProperty(i)&&_delements[i]){delete _delements[i][endpoint.elementId];delete _draggablesForElements[endpoint.elementId];}}}}};this.changeId=function(oldId,newId){_delements[newId]=_delements[oldId];_delements[oldId]={};_draggablesForElements[newId]=_draggablesForElements[oldId];_draggablesForElements[oldId]=null;};this.getElementsForDraggable=function(id){return _delements[id];};this.elementRemoved=function(elementId){var elId=_draggablesForElements[elementId];if(elId){delete _delements[elId][elementId];delete _draggablesForElements[elementId];}};this.reset=function(){_draggables={};_dlist=[];_delements={};_elementsWithEndpoints={};};//
+// notification drag ended. We check automatically if need to update some
+// ancestor's offsets.
+//
+this.dragEnded=function(el){if(el.offsetParent!=null){var id=_currentInstance.getId(el),ancestor=_draggablesForElements[id];if(ancestor)this.updateOffsets(ancestor);}};this.setParent=function(el,elId,p,pId,currentChildLocation){var current=_draggablesForElements[elId];if(!_delements[pId]){_delements[pId]={};}var pLoc=_currentInstance.getOffset(p),cLoc=currentChildLocation||_currentInstance.getOffset(el);if(current){delete _delements[current][elId];}_delements[pId][elId]={id:elId,offset:{left:cLoc.left-pLoc.left,top:cLoc.top-pLoc.top}};_draggablesForElements[elId]=pId;};this.clearParent=function(el,elId){var current=_draggablesForElements[elId];if(current){delete _delements[current][elId];delete _draggablesForElements[elId];}};this.revalidateParent=function(el,elId,childOffset){var current=_draggablesForElements[elId];if(current){var co={};co[elId]=childOffset;this.updateOffsets(current,co);_currentInstance.revalidate(current);}};this.getDragAncestor=function(el){var de=jsPlumb.getElement(el),id=_currentInstance.getId(de),aid=_draggablesForElements[id];if(aid)return jsPlumb.getElement(aid);else return null;};};var trim=function trim(str){return str==null?null:str.replace(/^\s\s*/,'').replace(/\s\s*$/,'');},_setClassName=function _setClassName(el,cn){cn=trim(cn);if(typeof el.className.baseVal!="undefined")// SVG
+el.className.baseVal=cn;else el.className=cn;},_getClassName=function _getClassName(el){return typeof el.className.baseVal=="undefined"?el.className:el.className.baseVal;},_classManip=function _classManip(el,classesToAdd,classesToRemove){classesToAdd=classesToAdd==null?[]:_ju.isArray(classesToAdd)?classesToAdd:classesToAdd.split(/\s+/);classesToRemove=classesToRemove==null?[]:_ju.isArray(classesToRemove)?classesToRemove:classesToRemove.split(/\s+/);var className=_getClassName(el),curClasses=className.split(/\s+/);var _oneSet=function _oneSet(add,classes){for(var i=0;i<classes.length;i++){if(add){if(curClasses.indexOf(classes[i])==-1)curClasses.push(classes[i]);}else{var idx=curClasses.indexOf(classes[i]);if(idx!=-1)curClasses.splice(idx,1);}}};_oneSet(true,classesToAdd);_oneSet(false,classesToRemove);_setClassName(el,curClasses.join(" "));};root.jsPlumb.extend(root.jsPlumbInstance.prototype,{headless:false,pageLocation:_pageLocation,screenLocation:_screenLocation,clientLocation:_clientLocation,getDragManager:function getDragManager(){if(this.dragManager==null)this.dragManager=new DragManager(this);return this.dragManager;},recalculateOffsets:function recalculateOffsets(elId){this.getDragManager().updateOffsets(elId);},createElement:function createElement(tag,style,clazz,atts){return this.createElementNS(null,tag,style,clazz,atts);},createElementNS:function createElementNS(ns,tag,style,clazz,atts){var e=ns==null?document.createElement(tag):document.createElementNS(ns,tag);var i;style=style||{};for(i in style){e.style[i]=style[i];}if(clazz)e.className=clazz;atts=atts||{};for(i in atts){e.setAttribute(i,""+atts[i]);}return e;},getAttribute:function getAttribute(el,attName){return el.getAttribute!=null?el.getAttribute(attName):null;},setAttribute:function setAttribute(el,a,v){if(el.setAttribute!=null)el.setAttribute(a,v);},setAttributes:function setAttributes(el,atts){for(var i in atts){if(atts.hasOwnProperty(i))el.setAttribute(i,atts[i]);}},appendToRoot:function appendToRoot(node){document.body.appendChild(node);},getRenderModes:function getRenderModes(){return["svg"];},getClass:_getClassName,addClass:function addClass(el,clazz){jsPlumb.each(el,function(e){_classManip(e,clazz);});},hasClass:function hasClass(el,clazz){el=jsPlumb.getElement(el);if(el.classList)return el.classList.contains(clazz);else{return _getClassName(el).indexOf(clazz)!=-1;}},removeClass:function removeClass(el,clazz){jsPlumb.each(el,function(e){_classManip(e,null,clazz);});},updateClasses:function updateClasses(el,toAdd,toRemove){jsPlumb.each(el,function(e){_classManip(e,toAdd,toRemove);});},setClass:function setClass(el,clazz){jsPlumb.each(el,function(e){_setClassName(e,clazz);});},setPosition:function setPosition(el,p){el.style.left=p.left+"px";el.style.top=p.top+"px";},getPosition:function getPosition(el){var _one=function _one(prop){var v=el.style[prop];return v?v.substring(0,v.length-2):0;};return{left:_one("left"),top:_one("top")};},getStyle:function getStyle(el,prop){if(typeof window.getComputedStyle!=='undefined'){return getComputedStyle(el,null).getPropertyValue(prop);}else{return el.currentStyle[prop];}},getSelector:function getSelector(ctx,spec){var sel=null;if(arguments.length==1){sel=ctx.nodeType!=null?ctx:document.querySelectorAll(ctx);}else sel=ctx.querySelectorAll(spec);return sel;},getOffset:function getOffset(el,relativeToRoot,container){el=jsPlumb.getElement(el);container=container||this.getContainer();var out={left:el.offsetLeft,top:el.offsetTop},op=relativeToRoot||container!=null&&el!=container&&el.offsetParent!=container?el.offsetParent:null,_maybeAdjustScroll=function(offsetParent){if(offsetParent!=null&&offsetParent!==document.body&&(offsetParent.scrollTop>0||offsetParent.scrollLeft>0)){out.left-=offsetParent.scrollLeft;out.top-=offsetParent.scrollTop;}}.bind(this);while(op!=null){out.left+=op.offsetLeft;out.top+=op.offsetTop;_maybeAdjustScroll(op);op=relativeToRoot?op.offsetParent:op.offsetParent==container?null:op.offsetParent;}// if container is scrolled and the element (or its offset parent) is not absolute or fixed, adjust accordingly.
+if(container!=null&&!relativeToRoot&&(container.scrollTop>0||container.scrollLeft>0)){var pp=el.offsetParent!=null?this.getStyle(el.offsetParent,"position"):"static",p=this.getStyle(el,"position");if(p!=="absolute"&&p!=="fixed"&&pp!=="absolute"&&pp!="fixed"){out.left-=container.scrollLeft;out.top-=container.scrollTop;}}return out;},//
+// return x+y proportion of the given element's size corresponding to the location of the given event.
+//
+getPositionOnElement:function getPositionOnElement(evt,el,zoom){var box=typeof el.getBoundingClientRect!=="undefined"?el.getBoundingClientRect():{left:0,top:0,width:0,height:0},body=document.body,docElem=document.documentElement,scrollTop=window.pageYOffset||docElem.scrollTop||body.scrollTop,scrollLeft=window.pageXOffset||docElem.scrollLeft||body.scrollLeft,clientTop=docElem.clientTop||body.clientTop||0,clientLeft=docElem.clientLeft||body.clientLeft||0,pst=0,psl=0,top=box.top+scrollTop-clientTop+pst*zoom,left=box.left+scrollLeft-clientLeft+psl*zoom,cl=jsPlumb.pageLocation(evt),w=box.width||el.offsetWidth*zoom,h=box.height||el.offsetHeight*zoom,x=(cl[0]-left)/w,y=(cl[1]-top)/h;return[x,y];},/**
+         * Gets the absolute position of some element as read from the left/top properties in its style.
+         * @method getAbsolutePosition
+         * @param {Element} el The element to retrieve the absolute coordinates from. **Note** this is a DOM element, not a selector from the underlying library.
+         * @return {Number[]} [left, top] pixel values.
+         */getAbsolutePosition:function getAbsolutePosition(el){var _one=function _one(s){var ss=el.style[s];if(ss)return parseFloat(ss.substring(0,ss.length-2));};return[_one("left"),_one("top")];},/**
+         * Sets the absolute position of some element by setting the left/top properties in its style.
+         * @method setAbsolutePosition
+         * @param {Element} el The element to set the absolute coordinates on. **Note** this is a DOM element, not a selector from the underlying library.
+         * @param {Number[]} xy x and y coordinates
+         * @param {Number[]} [animateFrom] Optional previous xy to animate from.
+         * @param {Object} [animateOptions] Options for the animation.
+         */setAbsolutePosition:function setAbsolutePosition(el,xy,animateFrom,animateOptions){if(animateFrom){this.animate(el,{left:"+="+(xy[0]-animateFrom[0]),top:"+="+(xy[1]-animateFrom[1])},animateOptions);}else{el.style.left=xy[0]+"px";el.style.top=xy[1]+"px";}},/**
+         * gets the size for the element, in an array : [ width, height ].
+         */getSize:function getSize(el){return[el.offsetWidth,el.offsetHeight];},getWidth:function getWidth(el){return el.offsetWidth;},getHeight:function getHeight(el){return el.offsetHeight;},getRenderMode:function getRenderMode(){return"svg";}});}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ *
+ * Title:jsPlumb 2.3.0
+ *
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ *
+ * This file contains code for components that support overlays.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ *
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil;// ------------------------------ BEGIN OverlayCapablejsPlumbUIComponent --------------------------------------------
+var _internalLabelOverlayId="__label",// this is a shortcut helper method to let people add a label as
+// overlay.
+_makeLabelOverlay=function _makeLabelOverlay(component,params){var _params={cssClass:params.cssClass,labelStyle:component.labelStyle,id:_internalLabelOverlayId,component:component,_jsPlumb:component._jsPlumb.instance// TODO not necessary, since the instance can be accessed through the component.
+},mergedParams=_jp.extend(_params,params);return new _jp.Overlays[component._jsPlumb.instance.getRenderMode()].Label(mergedParams);},_processOverlay=function _processOverlay(component,o){var _newOverlay=null;if(_ju.isArray(o)){// this is for the shorthand ["Arrow", { width:50 }] syntax
+// there's also a three arg version:
+// ["Arrow", { width:50 }, {location:0.7}]
+// which merges the 3rd arg into the 2nd.
+var type=o[0],// make a copy of the object so as not to mess up anyone else's reference...
+p=_jp.extend({component:component,_jsPlumb:component._jsPlumb.instance},o[1]);if(o.length==3)_jp.extend(p,o[2]);_newOverlay=new _jp.Overlays[component._jsPlumb.instance.getRenderMode()][type](p);}else if(o.constructor==String){_newOverlay=new _jp.Overlays[component._jsPlumb.instance.getRenderMode()][o]({component:component,_jsPlumb:component._jsPlumb.instance});}else{_newOverlay=o;}_newOverlay.id=_newOverlay.id||_ju.uuid();component.cacheTypeItem("overlay",_newOverlay,_newOverlay.id);//component._jsPlumb.overlays.push(_newOverlay);
+component._jsPlumb.overlays[_newOverlay.id]=_newOverlay;return _newOverlay;};_jp.OverlayCapableJsPlumbUIComponent=function(params){root.jsPlumbUIComponent.apply(this,arguments);this._jsPlumb.overlays={};this._jsPlumb.overlayPositions={};if(params.label){this.getDefaultType().overlays[_internalLabelOverlayId]=["Label",{label:params.label,location:params.labelLocation||this.defaultLabelLocation||0.5,labelStyle:params.labelStyle||this._jsPlumb.instance.Defaults.LabelStyle,id:_internalLabelOverlayId}];}this.setListenerComponent=function(c){if(this._jsPlumb){for(var i in this._jsPlumb.overlays){this._jsPlumb.overlays[i].setListenerComponent(c);}}};};_jp.OverlayCapableJsPlumbUIComponent.applyType=function(component,t){if(t.overlays){// loop through the ones in the type. if already present on the component,
+// dont remove or re-add.
+var keep={},i;for(i in t.overlays){var existing=component._jsPlumb.overlays[t.overlays[i][1].id];if(existing){// maybe update from data, if there were parameterised values for instance.
+existing.updateFrom(t.overlays[i][1]);keep[t.overlays[i][1].id]=true;}else{var c=component.getCachedTypeItem("overlay",t.overlays[i][1].id);if(c!=null){c.reattach(component._jsPlumb.instance);c.setVisible(true);// maybe update from data, if there were parameterised values for instance.
+c.updateFrom(t.overlays[i][1]);component._jsPlumb.overlays[c.id]=c;}else{c=component.addOverlay(t.overlays[i],true);}keep[c.id]=true;}}// now loop through the full overlays and remove those that we dont want to keep
+for(i in component._jsPlumb.overlays){if(keep[component._jsPlumb.overlays[i].id]==null)component.removeOverlay(component._jsPlumb.overlays[i].id,true);// remove overlay but dont clean it up.
+// that would remove event listeners etc; overlays are never discarded by the types stuff, they are
+// just detached/reattached.
+}}};_ju.extend(_jp.OverlayCapableJsPlumbUIComponent,root.jsPlumbUIComponent,{setHover:function setHover(hover,ignoreAttachedElements){if(this._jsPlumb&&!this._jsPlumb.instance.isConnectionBeingDragged()){for(var i in this._jsPlumb.overlays){this._jsPlumb.overlays[i][hover?"addClass":"removeClass"](this._jsPlumb.instance.hoverClass);}}},addOverlay:function addOverlay(overlay,doNotRepaint){var o=_processOverlay(this,overlay);if(!doNotRepaint)this.repaint();return o;},getOverlay:function getOverlay(id){return this._jsPlumb.overlays[id];},getOverlays:function getOverlays(){return this._jsPlumb.overlays;},hideOverlay:function hideOverlay(id){var o=this.getOverlay(id);if(o)o.hide();},hideOverlays:function hideOverlays(){for(var i in this._jsPlumb.overlays){this._jsPlumb.overlays[i].hide();}},showOverlay:function showOverlay(id){var o=this.getOverlay(id);if(o)o.show();},showOverlays:function showOverlays(){for(var i in this._jsPlumb.overlays){this._jsPlumb.overlays[i].show();}},removeAllOverlays:function removeAllOverlays(doNotRepaint){for(var i in this._jsPlumb.overlays){if(this._jsPlumb.overlays[i].cleanup)this._jsPlumb.overlays[i].cleanup();}this._jsPlumb.overlays={};this._jsPlumb.overlayPositions=null;if(!doNotRepaint)this.repaint();},removeOverlay:function removeOverlay(overlayId,dontCleanup){var o=this._jsPlumb.overlays[overlayId];if(o){o.setVisible(false);if(!dontCleanup&&o.cleanup)o.cleanup();delete this._jsPlumb.overlays[overlayId];if(this._jsPlumb.overlayPositions)delete this._jsPlumb.overlayPositions[overlayId];}},removeOverlays:function removeOverlays(){for(var i=0,j=arguments.length;i<j;i++){this.removeOverlay(arguments[i]);}},moveParent:function moveParent(newParent){if(this.bgCanvas){this.bgCanvas.parentNode.removeChild(this.bgCanvas);newParent.appendChild(this.bgCanvas);}if(this.canvas&&this.canvas.parentNode){this.canvas.parentNode.removeChild(this.canvas);newParent.appendChild(this.canvas);for(var i in this._jsPlumb.overlays){if(this._jsPlumb.overlays[i].isAppendedAtTopLevel){var el=this._jsPlumb.overlays[i].getElement();el.parentNode.removeChild(el);newParent.appendChild(el);}}}},getLabel:function getLabel(){var lo=this.getOverlay(_internalLabelOverlayId);return lo!=null?lo.getLabel():null;},getLabelOverlay:function getLabelOverlay(){return this.getOverlay(_internalLabelOverlayId);},setLabel:function setLabel(l){var lo=this.getOverlay(_internalLabelOverlayId);if(!lo){var params=l.constructor==String||l.constructor==Function?{label:l}:l;lo=_makeLabelOverlay(this,params);this._jsPlumb.overlays[_internalLabelOverlayId]=lo;}else{if(l.constructor==String||l.constructor==Function)lo.setLabel(l);else{if(l.label)lo.setLabel(l.label);if(l.location)lo.setLocation(l.location);}}if(!this._jsPlumb.instance.isSuspendDrawing())this.repaint();},cleanup:function cleanup(force){for(var i in this._jsPlumb.overlays){this._jsPlumb.overlays[i].cleanup(force);this._jsPlumb.overlays[i].destroy(force);}if(force){this._jsPlumb.overlays={};this._jsPlumb.overlayPositions=null;}},setVisible:function setVisible(v){this[v?"showOverlays":"hideOverlays"]();},setAbsoluteOverlayPosition:function setAbsoluteOverlayPosition(overlay,xy){this._jsPlumb.overlayPositions[overlay.id]=xy;},getAbsoluteOverlayPosition:function getAbsoluteOverlayPosition(overlay){return this._jsPlumb.overlayPositions?this._jsPlumb.overlayPositions[overlay.id]:null;},_clazzManip:function _clazzManip(action,clazz,dontUpdateOverlays){if(!dontUpdateOverlays){for(var i in this._jsPlumb.overlays){this._jsPlumb.overlays[i][action+"Class"](clazz);}}},addClass:function addClass(clazz,dontUpdateOverlays){this._clazzManip("add",clazz,dontUpdateOverlays);},removeClass:function removeClass(clazz,dontUpdateOverlays){this._clazzManip("remove",clazz,dontUpdateOverlays);}});// ------------------------------ END OverlayCapablejsPlumbUIComponent --------------------------------------------
+}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ * 
+ * Title:jsPlumb 2.3.0
+ * 
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ * 
+ * This file contains the code for Endpoints.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ * 
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil;// create the drag handler for a connection
+var _makeConnectionDragHandler=function _makeConnectionDragHandler(endpoint,placeholder,_jsPlumb){var stopped=false;return{drag:function drag(){if(stopped){stopped=false;return true;}if(placeholder.element){var _ui=_jsPlumb.getUIPosition(arguments,_jsPlumb.getZoom());if(_ui!=null)jsPlumb.setPosition(placeholder.element,_ui);_jsPlumb.repaint(placeholder.element,_ui);// always repaint the source endpoint, because only continuous/dynamic anchors cause the endpoint
+// to be repainted, so static anchors need to be told (or the endpoint gets dragged around)
+endpoint.paint({anchorPoint:endpoint.anchor.getCurrentLocation({element:endpoint})});}},stopDrag:function stopDrag(){stopped=true;}};};// creates a placeholder div for dragging purposes, adds it, and pre-computes its offset.
+var _makeDraggablePlaceholder=function _makeDraggablePlaceholder(placeholder,_jsPlumb,ipco,ips){var n=jsPlumb.createElement("div",{position:"absolute"});_jsPlumb.appendElement(n);var id=_jsPlumb.getId(n);jsPlumb.setPosition(n,ipco);n.style.width=ips[0]+"px";n.style.height=ips[1]+"px";_jsPlumb.manage(id,n,true);// TRANSIENT MANAGE
+// create and assign an id, and initialize the offset.
+placeholder.id=id;placeholder.element=n;};// create a floating endpoint (for drag connections)
+var _makeFloatingEndpoint=function _makeFloatingEndpoint(paintStyle,referenceAnchor,endpoint,referenceCanvas,sourceElement,_jsPlumb,_newEndpoint,scope){var floatingAnchor=new _jp.FloatingAnchor({reference:referenceAnchor,referenceCanvas:referenceCanvas,jsPlumbInstance:_jsPlumb});//setting the scope here should not be the way to fix that mootools issue.  it should be fixed by not
+// adding the floating endpoint as a droppable.  that makes more sense anyway!
+// TRANSIENT MANAGE
+return _newEndpoint({paintStyle:paintStyle,endpoint:endpoint,anchor:floatingAnchor,source:sourceElement,scope:scope});};var typeParameters=["connectorStyle","connectorHoverStyle","connectorOverlays","connector","connectionType","connectorClass","connectorHoverClass"];// a helper function that tries to find a connection to the given element, and returns it if so. if elementWithPrecedence is null,
+// or no connection to it is found, we return the first connection in our list.
+var findConnectionToUseForDynamicAnchor=function findConnectionToUseForDynamicAnchor(ep,elementWithPrecedence){var idx=0;if(elementWithPrecedence!=null){for(var i=0;i<ep.connections.length;i++){if(ep.connections[i].sourceId==elementWithPrecedence||ep.connections[i].targetId==elementWithPrecedence){idx=i;break;}}}return ep.connections[idx];};_jp.Endpoint=function(params){var _jsPlumb=params._jsPlumb,_newConnection=params.newConnection,_newEndpoint=params.newEndpoint;this.idPrefix="_jsplumb_e_";this.defaultLabelLocation=[0.5,0.5];this.defaultOverlayKeys=["Overlays","EndpointOverlays"];_jp.OverlayCapableJsPlumbUIComponent.apply(this,arguments);// TYPE
+this.appendToDefaultType({connectionType:params.connectionType,maxConnections:params.maxConnections==null?this._jsPlumb.instance.Defaults.MaxConnections:params.maxConnections,// maximum number of connections this endpoint can be the source of.,
+paintStyle:params.endpointStyle||params.paintStyle||params.style||this._jsPlumb.instance.Defaults.EndpointStyle||_jp.Defaults.EndpointStyle,hoverPaintStyle:params.endpointHoverStyle||params.hoverPaintStyle||this._jsPlumb.instance.Defaults.EndpointHoverStyle||_jp.Defaults.EndpointHoverStyle,connectorStyle:params.connectorStyle,connectorHoverStyle:params.connectorHoverStyle,connectorClass:params.connectorClass,connectorHoverClass:params.connectorHoverClass,connectorOverlays:params.connectorOverlays,connector:params.connector,connectorTooltip:params.connectorTooltip});// END TYPE
+this._jsPlumb.enabled=!(params.enabled===false);this._jsPlumb.visible=true;this.element=_jp.getElement(params.source);this._jsPlumb.uuid=params.uuid;this._jsPlumb.floatingEndpoint=null;var inPlaceCopy=null;if(this._jsPlumb.uuid)params.endpointsByUUID[this._jsPlumb.uuid]=this;this.elementId=params.elementId;this.dragProxy=params.dragProxy;this._jsPlumb.connectionCost=params.connectionCost;this._jsPlumb.connectionsDirected=params.connectionsDirected;this._jsPlumb.currentAnchorClass="";this._jsPlumb.events={};var _updateAnchorClass=function(){// stash old, get new
+var oldAnchorClass=_jsPlumb.endpointAnchorClassPrefix+"-"+this._jsPlumb.currentAnchorClass;this._jsPlumb.currentAnchorClass=this.anchor.getCssClass();var anchorClass=_jsPlumb.endpointAnchorClassPrefix+(this._jsPlumb.currentAnchorClass?"-"+this._jsPlumb.currentAnchorClass:"");this.removeClass(oldAnchorClass);this.addClass(anchorClass);// add and remove at the same time to reduce the number of reflows.
+_jp.updateClasses(this.element,anchorClass,oldAnchorClass);}.bind(this);this.prepareAnchor=function(anchorParams){var a=this._jsPlumb.instance.makeAnchor(anchorParams,this.elementId,_jsPlumb);a.bind("anchorChanged",function(currentAnchor){this.fire("anchorChanged",{endpoint:this,anchor:currentAnchor});_updateAnchorClass();}.bind(this));return a;};this.setPreparedAnchor=function(anchor,doNotRepaint){this._jsPlumb.instance.continuousAnchorFactory.clear(this.elementId);this.anchor=anchor;_updateAnchorClass();if(!doNotRepaint)this._jsPlumb.instance.repaint(this.elementId);return this;};this.setAnchor=function(anchorParams,doNotRepaint){var a=this.prepareAnchor(anchorParams);this.setPreparedAnchor(a,doNotRepaint);return this;};var internalHover=function(state){if(this.connections.length>0){for(var i=0;i<this.connections.length;i++){this.connections[i].setHover(state,false);}}else this.setHover(state);}.bind(this);this.bind("mouseover",function(){internalHover(true);});this.bind("mouseout",function(){internalHover(false);});// ANCHOR MANAGER
+if(!params._transient)// in place copies, for example, are transient.  they will never need to be retrieved during a paint cycle, because they dont move, and then they are deleted.
+this._jsPlumb.instance.anchorManager.add(this,this.elementId);this.prepareEndpoint=function(ep,typeId){var _e=function _e(t,p){var rm=_jsPlumb.getRenderMode();if(_jp.Endpoints[rm][t])return new _jp.Endpoints[rm][t](p);if(!_jsPlumb.Defaults.DoNotThrowErrors)throw{msg:"jsPlumb: unknown endpoint type '"+t+"'"};};var endpointArgs={_jsPlumb:this._jsPlumb.instance,cssClass:params.cssClass,container:params.container,tooltip:params.tooltip,connectorTooltip:params.connectorTooltip,endpoint:this};var endpoint;if(_ju.isString(ep))endpoint=_e(ep,endpointArgs);else if(_ju.isArray(ep)){endpointArgs=_ju.merge(ep[1],endpointArgs);endpoint=_e(ep[0],endpointArgs);}else{endpoint=ep.clone();}// assign a clone function using a copy of endpointArgs. this is used when a drag starts: the endpoint that was dragged is cloned,
+// and the clone is left in its place while the original one goes off on a magical journey.
+// the copy is to get around a closure problem, in which endpointArgs ends up getting shared by
+// the whole world.
+//var argsForClone = jsPlumb.extend({}, endpointArgs);
+endpoint.clone=function(){// TODO this, and the code above, can be refactored to be more dry.
+if(_ju.isString(ep))return _e(ep,endpointArgs);else if(_ju.isArray(ep)){endpointArgs=_ju.merge(ep[1],endpointArgs);return _e(ep[0],endpointArgs);}}.bind(this);endpoint.typeId=typeId;return endpoint;};this.setEndpoint=function(ep,doNotRepaint){var _ep=this.prepareEndpoint(ep);this.setPreparedEndpoint(_ep,true);};this.setPreparedEndpoint=function(ep,doNotRepaint){if(this.endpoint!=null){this.endpoint.cleanup();this.endpoint.destroy();}this.endpoint=ep;this.type=this.endpoint.type;this.canvas=this.endpoint.canvas;};_jp.extend(this,params,typeParameters);this.isSource=params.isSource||false;this.isTemporarySource=params.isTemporarySource||false;this.isTarget=params.isTarget||false;this.connections=params.connections||[];this.connectorPointerEvents=params["connector-pointer-events"];this.scope=params.scope||_jsPlumb.getDefaultScope();this.timestamp=null;this.reattachConnections=params.reattach||_jsPlumb.Defaults.ReattachConnections;this.connectionsDetachable=_jsPlumb.Defaults.ConnectionsDetachable;if(params.connectionsDetachable===false||params.detachable===false)this.connectionsDetachable=false;this.dragAllowedWhenFull=params.dragAllowedWhenFull!==false;if(params.onMaxConnections)this.bind("maxConnections",params.onMaxConnections);//
+// add a connection. not part of public API.
+//
+this.addConnection=function(connection){this.connections.push(connection);this[(this.connections.length>0?"add":"remove")+"Class"](_jsPlumb.endpointConnectedClass);this[(this.isFull()?"add":"remove")+"Class"](_jsPlumb.endpointFullClass);};this.detachFromConnection=function(connection,idx,doNotCleanup){idx=idx==null?this.connections.indexOf(connection):idx;if(idx>=0){this.connections.splice(idx,1);this[(this.connections.length>0?"add":"remove")+"Class"](_jsPlumb.endpointConnectedClass);this[(this.isFull()?"add":"remove")+"Class"](_jsPlumb.endpointFullClass);}if((this._forceDeleteOnDetach||!doNotCleanup&&this._deleteOnDetach)&&this.connections.length===0){_jsPlumb.deleteObject({endpoint:this,fireEvent:false,//deleteAttachedObjects: false
+deleteAttachedObjects:doNotCleanup!==true});}};//this.detach = function (connection, ignoreTarget, forceDetach, fireEvent, originalEvent, endpointBeingDeleted, connectionIndex) {
+this.detach=function(params){var connectionIndex=params.connectionIndex,connection=params.connection,ignoreTarget=params.ignoreTarget,fireEvent=params.fireEvent,originalEvent=params.originalEvent,endpointBeingDeleted=params.endpointBeingDeleted,forceDetach=params.forceDetach;var idx=connectionIndex==null?this.connections.indexOf(connection):connectionIndex,actuallyDetached=false;fireEvent=fireEvent!==false;if(idx>=0){if(forceDetach||connection._forceDetach||connection.isDetachable()&&connection.isDetachAllowed(connection)&&this.isDetachAllowed(connection)&&_jsPlumb.checkCondition("beforeDetach",connection,endpointBeingDeleted)){_jsPlumb.deleteObject({connection:connection,fireEvent:!ignoreTarget&&fireEvent,originalEvent:originalEvent,deleteAttachedObjects:params.deleteAttachedObjects//deleteAttachedObjects:null
+});actuallyDetached=true;}}return actuallyDetached;};this.detachAll=function(fireEvent,forceDetach){var unaffectedConns=[];while(this.connections.length>0){// TODO this could pass the index in to the detach method to save some time (index will always be zero in this while loop)
+var actuallyDetached=this.detach({connection:this.connections[0],ignoreTarget:false,forceDetach:forceDetach===true,fireEvent:fireEvent!==false,originalEvent:null,endpointBeingDeleted:this,connectionIndex:0});if(!actuallyDetached){unaffectedConns.push(this.connections[0]);this.connections.splice(0,1);}}this.connections=unaffectedConns;return this;};this.detachFrom=function(targetEndpoint,fireEvent,originalEvent){var c=[];for(var i=0;i<this.connections.length;i++){if(this.connections[i].endpoints[1]==targetEndpoint||this.connections[i].endpoints[0]==targetEndpoint){c.push(this.connections[i]);}}for(var j=0;j<c.length;j++){this.detach({connection:c[j],ignoreTarget:false,forceDetach:true,fireEvent:fireEvent,originalEvent:originalEvent});}return this;};this.getElement=function(){return this.element;};this.setElement=function(el){var parentId=this._jsPlumb.instance.getId(el),curId=this.elementId;// remove the endpoint from the list for the current endpoint's element
+_ju.removeWithFunction(params.endpointsByElement[this.elementId],function(e){return e.id==this.id;}.bind(this));this.element=_jp.getElement(el);this.elementId=_jsPlumb.getId(this.element);_jsPlumb.anchorManager.rehomeEndpoint(this,curId,this.element);_jsPlumb.dragManager.endpointAdded(this.element);_ju.addToList(params.endpointsByElement,parentId,this);return this;};/**
+         * private but must be exposed.
+         */this.makeInPlaceCopy=function(){var loc=this.anchor.getCurrentLocation({element:this}),o=this.anchor.getOrientation(this),acc=this.anchor.getCssClass(),inPlaceAnchor={bind:function bind(){},compute:function compute(){return[loc[0],loc[1]];},getCurrentLocation:function getCurrentLocation(){return[loc[0],loc[1]];},getOrientation:function getOrientation(){return o;},getCssClass:function getCssClass(){return acc;}};return _newEndpoint({dropOptions:params.dropOptions,anchor:inPlaceAnchor,source:this.element,paintStyle:this.getPaintStyle(),endpoint:params.hideOnDrag?"Blank":this.endpoint,_transient:true,scope:this.scope,reference:this});};/**
+         * returns a connection from the pool; used when dragging starts.  just gets the head of the array if it can.
+         */this.connectorSelector=function(){var candidate=this.connections[0];// SP target source refactor
+if(/*this.isTarget && */candidate)return candidate;else{return this.connections.length<this._jsPlumb.maxConnections||this._jsPlumb.maxConnections==-1?null:candidate;}};this.setStyle=this.setPaintStyle;this.paint=function(params){params=params||{};var timestamp=params.timestamp,recalc=!(params.recalc===false);if(!timestamp||this.timestamp!==timestamp){var info=_jsPlumb.updateOffset({elId:this.elementId,timestamp:timestamp});var xy=params.offset?params.offset.o:info.o;if(xy!=null){var ap=params.anchorPoint,connectorPaintStyle=params.connectorPaintStyle;if(ap==null){var wh=params.dimensions||info.s,anchorParams={xy:[xy.left,xy.top],wh:wh,element:this,timestamp:timestamp};if(recalc&&this.anchor.isDynamic&&this.connections.length>0){var c=findConnectionToUseForDynamicAnchor(this,params.elementWithPrecedence),oIdx=c.endpoints[0]==this?1:0,oId=oIdx===0?c.sourceId:c.targetId,oInfo=_jsPlumb.getCachedData(oId),oOffset=oInfo.o,oWH=oInfo.s;anchorParams.txy=[oOffset.left,oOffset.top];anchorParams.twh=oWH;anchorParams.tElement=c.endpoints[oIdx];}ap=this.anchor.compute(anchorParams);}this.endpoint.compute(ap,this.anchor.getOrientation(this),this._jsPlumb.paintStyleInUse,connectorPaintStyle||this.paintStyleInUse);this.endpoint.paint(this._jsPlumb.paintStyleInUse,this.anchor);this.timestamp=timestamp;// paint overlays
+for(var i in this._jsPlumb.overlays){if(this._jsPlumb.overlays.hasOwnProperty(i)){var o=this._jsPlumb.overlays[i];if(o.isVisible()){this._jsPlumb.overlayPlacements[i]=o.draw(this.endpoint,this._jsPlumb.paintStyleInUse);o.paint(this._jsPlumb.overlayPlacements[i]);}}}}}};this.getTypeDescriptor=function(){return"endpoint";};this.isVisible=function(){return this._jsPlumb.visible;};this.repaint=this.paint;var draggingInitialised=false;this.initDraggable=function(){// is this a connection source? we make it draggable and have the
+// drag listener maintain a connection with a floating endpoint.
+if(!draggingInitialised&&_jp.isDragSupported(this.element)){var placeholderInfo={id:null,element:null},jpc=null,existingJpc=false,existingJpcParams=null,_dragHandler=_makeConnectionDragHandler(this,placeholderInfo,_jsPlumb),dragOptions=params.dragOptions||{},defaultOpts={},startEvent=_jp.dragEvents.start,stopEvent=_jp.dragEvents.stop,dragEvent=_jp.dragEvents.drag,beforeStartEvent=_jp.dragEvents.beforeStart,payload;// respond to beforeStart from katavorio; this will have, optionally, a payload of attribute values
+// that were placed there by the makeSource mousedown listener.
+var beforeStart=function beforeStart(beforeStartParams){payload=beforeStartParams.e.payload||{};};var start=function(startParams){// -------------   first, get a connection to drag. this may be null, in which case we are dragging a new one.
+jpc=this.connectorSelector();// -------------------------------- now a bunch of tests about whether or not to proceed -------------------------
+var _continue=true;// if not enabled, return
+if(!this.isEnabled())_continue=false;// if no connection and we're not a source - or temporarily a source, as is the case with makeSource - return.
+if(jpc==null&&!this.isSource&&!this.isTemporarySource)_continue=false;// otherwise if we're full and not allowed to drag, also return false.
+if(this.isSource&&this.isFull()&&!(jpc!=null&&this.dragAllowedWhenFull))_continue=false;// if the connection was setup as not detachable or one of its endpoints
+// was setup as connectionsDetachable = false, or Defaults.ConnectionsDetachable
+// is set to false...
+if(jpc!=null&&!jpc.isDetachable(this))_continue=false;var beforeDrag=_jsPlumb.checkCondition(jpc==null?"beforeDrag":"beforeStartDetach",{endpoint:this,source:this.element,sourceId:this.elementId,connection:jpc});if(beforeDrag===false)_continue=false;// else we might have been given some data. we'll pass it in to a new connection as 'data'.
+// here we also merge in the optional payload we were given on mousedown.
+else if((typeof beforeDrag==="undefined"?"undefined":_typeof(beforeDrag))==="object"){_jp.extend(beforeDrag,payload||{});}else// or if no beforeDrag data, maybe use the payload on its own.
+beforeDrag=payload||{};if(_continue===false){// this is for mootools and yui. returning false from this causes jquery to stop drag.
+// the events are wrapped in both mootools and yui anyway, but i don't think returning
+// false from the start callback would stop a drag.
+if(_jsPlumb.stopDrag)_jsPlumb.stopDrag(this.canvas);_dragHandler.stopDrag();return false;}// ---------------------------------------------------------------------------------------------------------------------
+// ok to proceed.
+// clear hover for all connections for this endpoint before continuing.
+for(var i=0;i<this.connections.length;i++){this.connections[i].setHover(false);}this.addClass("endpointDrag");_jsPlumb.setConnectionBeingDragged(true);// if we're not full but there was a connection, make it null. we'll create a new one.
+if(jpc&&!this.isFull()&&this.isSource)jpc=null;_jsPlumb.updateOffset({elId:this.elementId});// ----------------    make the element we will drag around, and position it -----------------------------
+var ipco=this._jsPlumb.instance.getOffset(this.canvas),canvasElement=this.canvas,ips=this._jsPlumb.instance.getSize(this.canvas);_makeDraggablePlaceholder(placeholderInfo,_jsPlumb,ipco,ips);// store the id of the dragging div and the source element. the drop function will pick these up.                   
+_jsPlumb.setAttributes(this.canvas,{"dragId":placeholderInfo.id,"elId":this.elementId});// ------------------- create an endpoint that will be our floating endpoint ------------------------------------
+var endpointToFloat=this.dragProxy||this.endpoint;if(this.dragProxy==null&&this.connectionType!=null){var aae=this._jsPlumb.instance.deriveEndpointAndAnchorSpec(this.connectionType);if(aae.endpoints[1])endpointToFloat=aae.endpoints[1];}var centerAnchor=this._jsPlumb.instance.makeAnchor("Center");centerAnchor.isFloating=true;this._jsPlumb.floatingEndpoint=_makeFloatingEndpoint(this.getPaintStyle(),centerAnchor,endpointToFloat,this.canvas,placeholderInfo.element,_jsPlumb,_newEndpoint,this.scope);var _savedAnchor=this._jsPlumb.floatingEndpoint.anchor;if(jpc==null){this.setHover(false,false);// create a connection. one end is this endpoint, the other is a floating endpoint.                    
+jpc=_newConnection({sourceEndpoint:this,targetEndpoint:this._jsPlumb.floatingEndpoint,source:this.element,// for makeSource with parent option.  ensure source element is represented correctly.
+target:placeholderInfo.element,anchors:[this.anchor,this._jsPlumb.floatingEndpoint.anchor],paintStyle:params.connectorStyle,// this can be null. Connection will use the default.
+hoverPaintStyle:params.connectorHoverStyle,connector:params.connector,// this can also be null. Connection will use the default.
+overlays:params.connectorOverlays,type:this.connectionType,cssClass:this.connectorClass,hoverClass:this.connectorHoverClass,scope:params.scope,data:beforeDrag});jpc.pending=true;jpc.addClass(_jsPlumb.draggingClass);this._jsPlumb.floatingEndpoint.addClass(_jsPlumb.draggingClass);this._jsPlumb.floatingEndpoint.anchor=_savedAnchor;// fire an event that informs that a connection is being dragged
+_jsPlumb.fire("connectionDrag",jpc);// register the new connection on the drag manager. This connection, at this point, is 'pending',
+// and has as its target a temporary element (the 'placeholder'). If the connection subsequently
+// becomes established, the anchor manager is informed that the target of the connection has
+// changed.
+_jsPlumb.anchorManager.newConnection(jpc);}else{existingJpc=true;jpc.setHover(false);// new anchor idx
+var anchorIdx=jpc.endpoints[0].id==this.id?0:1;this.detachFromConnection(jpc,null,true);// detach from the connection while dragging is occurring. but dont cleanup automatically.
+// store the original scope (issue 57)
+var dragScope=_jsPlumb.getDragScope(canvasElement);_jsPlumb.setAttribute(this.canvas,"originalScope",dragScope);// fire an event that informs that a connection is being dragged. we do this before
+// replacing the original target with the floating element info.
+_jsPlumb.fire("connectionDrag",jpc);// now we replace ourselves with the temporary div we created above:
+if(anchorIdx===0){existingJpcParams=[jpc.source,jpc.sourceId,canvasElement,dragScope];_jsPlumb.anchorManager.sourceChanged(jpc.endpoints[anchorIdx].elementId,placeholderInfo.id,jpc,placeholderInfo.element);}else{existingJpcParams=[jpc.target,jpc.targetId,canvasElement,dragScope];jpc.target=placeholderInfo.element;jpc.targetId=placeholderInfo.id;_jsPlumb.anchorManager.updateOtherEndpoint(jpc.sourceId,jpc.endpoints[anchorIdx].elementId,jpc.targetId,jpc);}// store the original endpoint and assign the new floating endpoint for the drag.
+jpc.suspendedEndpoint=jpc.endpoints[anchorIdx];// PROVIDE THE SUSPENDED ELEMENT, BE IT A SOURCE OR TARGET (ISSUE 39)
+jpc.suspendedElement=jpc.endpoints[anchorIdx].getElement();jpc.suspendedElementId=jpc.endpoints[anchorIdx].elementId;jpc.suspendedElementType=anchorIdx===0?"source":"target";jpc.suspendedEndpoint.setHover(false);this._jsPlumb.floatingEndpoint.referenceEndpoint=jpc.suspendedEndpoint;jpc.endpoints[anchorIdx]=this._jsPlumb.floatingEndpoint;jpc.addClass(_jsPlumb.draggingClass);this._jsPlumb.floatingEndpoint.addClass(_jsPlumb.draggingClass);}// register it and register connection on it.
+_jsPlumb.floatingConnections[placeholderInfo.id]=jpc;// only register for the target endpoint; we will not be dragging the source at any time
+// before this connection is either discarded or made into a permanent connection.
+_ju.addToList(params.endpointsByElement,placeholderInfo.id,this._jsPlumb.floatingEndpoint);// tell jsplumb about it
+_jsPlumb.currentlyDragging=true;}.bind(this);var stop=function(){_jsPlumb.setConnectionBeingDragged(false);if(jpc&&jpc.endpoints!=null){// get the actual drop event (decode from library args to stop function)
+var originalEvent=_jsPlumb.getDropEvent(arguments);// unlock the other endpoint (if it is dynamic, it would have been locked at drag start)
+var idx=_jsPlumb.getFloatingAnchorIndex(jpc);jpc.endpoints[idx===0?1:0].anchor.locked=false;// TODO: Dont want to know about css classes inside jsplumb, ideally.
+jpc.removeClass(_jsPlumb.draggingClass);// if we have the floating endpoint then the connection has not been dropped
+// on another endpoint.  If it is a new connection we throw it away. If it is an
+// existing connection we check to see if we should reattach it, throwing it away
+// if not.
+if(this._jsPlumb&&(jpc.deleteConnectionNow||jpc.endpoints[idx]==this._jsPlumb.floatingEndpoint)){// 6a. if the connection was an existing one...
+if(existingJpc&&jpc.suspendedEndpoint){// fix for issue35, thanks Sylvain Gizard: when firing the detach event make sure the
+// floating endpoint has been replaced.
+if(idx===0){jpc.floatingElement=jpc.source;jpc.floatingId=jpc.sourceId;jpc.floatingEndpoint=jpc.endpoints[0];jpc.floatingIndex=0;jpc.source=existingJpcParams[0];jpc.sourceId=existingJpcParams[1];}else{// keep a copy of the floating element; the anchor manager will want to clean up.
+jpc.floatingElement=jpc.target;jpc.floatingId=jpc.targetId;jpc.floatingEndpoint=jpc.endpoints[1];jpc.floatingIndex=1;jpc.target=existingJpcParams[0];jpc.targetId=existingJpcParams[1];}var fe=this._jsPlumb.floatingEndpoint;// store for later removal.
+// restore the original scope (issue 57)
+_jsPlumb.setDragScope(existingJpcParams[2],existingJpcParams[3]);jpc.endpoints[idx]=jpc.suspendedEndpoint;// IF the connection should be reattached, or the other endpoint refuses detach, then
+// reset the connection to its original state
+if(jpc.isReattach()||jpc._forceReattach||jpc._forceDetach||!jpc.endpoints[idx===0?1:0].detach({connection:jpc,ignoreTarget:false,forceDetach:false,fireEvent:true,originalEvent:originalEvent,endpointBeingDeleted:true})){jpc.setHover(false);jpc._forceDetach=null;jpc._forceReattach=null;this._jsPlumb.floatingEndpoint.detachFromConnection(jpc);jpc.suspendedEndpoint.addConnection(jpc);// TODO this code is duplicated in lots of places...and there is nothing external
+// in the code; it all refers to the connection itself. we could add a
+// `checkSanity(connection)` method to anchorManager that did this.
+if(idx==1){_jsPlumb.anchorManager.updateOtherEndpoint(jpc.sourceId,jpc.floatingId,jpc.targetId,jpc);}else{_jsPlumb.anchorManager.sourceChanged(jpc.floatingId,jpc.sourceId,jpc,jpc.source);}_jsPlumb.repaint(existingJpcParams[1]);}else{_jsPlumb.deleteObject({endpoint:fe});}}}// makeTargets sets this flag, to tell us we have been replaced and should delete this object.
+if(this.deleteAfterDragStop){_jsPlumb.deleteObject({endpoint:this});}else{if(this._jsPlumb){this.paint({recalc:false});}}// although the connection is no longer valid, there are use cases where this is useful.
+_jsPlumb.fire("connectionDragStop",jpc,originalEvent);// fire this event to give people more fine-grained control (connectionDragStop fires a lot)
+if(jpc.pending){_jsPlumb.fire("connectionAborted",jpc,originalEvent);}// tell jsplumb that dragging is finished.
+_jsPlumb.currentlyDragging=false;jpc.suspendedElement=null;jpc.suspendedEndpoint=null;jpc=null;}// if no endpoints, jpc already cleaned up. but still we want to ensure we're reset properly.
+// remove the element associated with the floating endpoint
+// (and its associated floating endpoint and visual artefacts)
+if(placeholderInfo&&placeholderInfo.element){_jsPlumb.remove(placeholderInfo.element,false,false);}// remove the inplace copy
+if(inPlaceCopy){_jsPlumb.deleteObject({endpoint:inPlaceCopy});}if(this._jsPlumb){// make our canvas visible (TODO: hand off to library; we should not know about DOM)
+this.canvas.style.visibility="visible";// unlock our anchor
+this.anchor.locked=false;// clear floating anchor.
+this._jsPlumb.floatingEndpoint=null;}}.bind(this);dragOptions=_jp.extend(defaultOpts,dragOptions);dragOptions.scope=this.scope||dragOptions.scope;dragOptions[beforeStartEvent]=_ju.wrap(dragOptions[beforeStartEvent],beforeStart,false);dragOptions[startEvent]=_ju.wrap(dragOptions[startEvent],start,false);// extracted drag handler function so can be used by makeSource
+dragOptions[dragEvent]=_ju.wrap(dragOptions[dragEvent],_dragHandler.drag);dragOptions[stopEvent]=_ju.wrap(dragOptions[stopEvent],stop);dragOptions.multipleDrop=false;dragOptions.canDrag=function(){return this.isSource||this.isTemporarySource||/*(this.isTarget && */this.connections.length>0/*)*/;}.bind(this);_jsPlumb.initDraggable(this.canvas,dragOptions,"internal");this.canvas._jsPlumbRelatedElement=this.element;draggingInitialised=true;}};var ep=params.endpoint||this._jsPlumb.instance.Defaults.Endpoint||_jp.Defaults.Endpoint;this.setEndpoint(ep,true);var anchorParamsToUse=params.anchor?params.anchor:params.anchors?params.anchors:_jsPlumb.Defaults.Anchor||"Top";this.setAnchor(anchorParamsToUse,true);// finally, set type if it was provided
+var type=["default",params.type||""].join(" ");this.addType(type,params.data,true);this.canvas=this.endpoint.canvas;this.canvas._jsPlumb=this;this.initDraggable();// pulled this out into a function so we can reuse it for the inPlaceCopy canvas; you can now drop detached connections
+// back onto the endpoint you detached it from.
+var _initDropTarget=function(canvas,isTransient,endpoint,referenceEndpoint){if(_jp.isDropSupported(this.element)){var dropOptions=params.dropOptions||_jsPlumb.Defaults.DropOptions||_jp.Defaults.DropOptions;dropOptions=_jp.extend({},dropOptions);dropOptions.scope=dropOptions.scope||this.scope;var dropEvent=_jp.dragEvents.drop,overEvent=_jp.dragEvents.over,outEvent=_jp.dragEvents.out,_ep=this,drop=_jsPlumb.EndpointDropHandler({getEndpoint:function getEndpoint(){return _ep;},jsPlumb:_jsPlumb,enabled:function enabled(){return endpoint!=null?endpoint.isEnabled():true;},isFull:function isFull(){return endpoint.isFull();},element:this.element,elementId:this.elementId,isSource:this.isSource,isTarget:this.isTarget,addClass:function addClass(clazz){_ep.addClass(clazz);},removeClass:function removeClass(clazz){_ep.removeClass(clazz);},isDropAllowed:function isDropAllowed(){return _ep.isDropAllowed.apply(_ep,arguments);},reference:referenceEndpoint,isRedrop:function isRedrop(jpc,dhParams){return jpc.suspendedEndpoint&&dhParams.reference&&jpc.suspendedEndpoint.id===dhParams.reference.id;}});dropOptions[dropEvent]=_ju.wrap(dropOptions[dropEvent],drop,true);dropOptions[overEvent]=_ju.wrap(dropOptions[overEvent],function(){var draggable=_jp.getDragObject(arguments),id=_jsPlumb.getAttribute(_jp.getElement(draggable),"dragId"),_jpc=_jsPlumb.floatingConnections[id];if(_jpc!=null){var idx=_jsPlumb.getFloatingAnchorIndex(_jpc);// here we should fire the 'over' event if we are a target and this is a new connection,
+// or we are the same as the floating endpoint.
+var _cont=this.isTarget&&idx!==0||_jpc.suspendedEndpoint&&this.referenceEndpoint&&this.referenceEndpoint.id==_jpc.suspendedEndpoint.id;if(_cont){var bb=_jsPlumb.checkCondition("checkDropAllowed",{sourceEndpoint:_jpc.endpoints[idx],targetEndpoint:this,connection:_jpc});this[(bb?"add":"remove")+"Class"](_jsPlumb.endpointDropAllowedClass);this[(bb?"remove":"add")+"Class"](_jsPlumb.endpointDropForbiddenClass);_jpc.endpoints[idx].anchor.over(this.anchor,this);}}}.bind(this));dropOptions[outEvent]=_ju.wrap(dropOptions[outEvent],function(){var draggable=_jp.getDragObject(arguments),id=draggable==null?null:_jsPlumb.getAttribute(_jp.getElement(draggable),"dragId"),_jpc=id?_jsPlumb.floatingConnections[id]:null;if(_jpc!=null){var idx=_jsPlumb.getFloatingAnchorIndex(_jpc);var _cont=this.isTarget&&idx!==0||_jpc.suspendedEndpoint&&this.referenceEndpoint&&this.referenceEndpoint.id==_jpc.suspendedEndpoint.id;if(_cont){this.removeClass(_jsPlumb.endpointDropAllowedClass);this.removeClass(_jsPlumb.endpointDropForbiddenClass);_jpc.endpoints[idx].anchor.out();}}}.bind(this));_jsPlumb.initDroppable(canvas,dropOptions,"internal",isTransient);}}.bind(this);// Initialise the endpoint's canvas as a drop target. The drop handler will take care of the logic of whether
+// something can actually be dropped.
+if(!this.anchor.isFloating)_initDropTarget(this.canvas,!(params._transient||this.anchor.isFloating),this,params.reference);return this;};_ju.extend(_jp.Endpoint,_jp.OverlayCapableJsPlumbUIComponent,{setVisible:function setVisible(v,doNotChangeConnections,doNotNotifyOtherEndpoint){this._jsPlumb.visible=v;if(this.canvas)this.canvas.style.display=v?"block":"none";this[v?"showOverlays":"hideOverlays"]();if(!doNotChangeConnections){for(var i=0;i<this.connections.length;i++){this.connections[i].setVisible(v);if(!doNotNotifyOtherEndpoint){var oIdx=this===this.connections[i].endpoints[0]?1:0;// only change the other endpoint if this is its only connection.
+if(this.connections[i].endpoints[oIdx].connections.length==1)this.connections[i].endpoints[oIdx].setVisible(v,true,true);}}}},getAttachedElements:function getAttachedElements(){return this.connections;},applyType:function applyType(t,doNotRepaint){this.setPaintStyle(t.endpointStyle||t.paintStyle,doNotRepaint);this.setHoverPaintStyle(t.endpointHoverStyle||t.hoverPaintStyle,doNotRepaint);if(t.maxConnections!=null)this._jsPlumb.maxConnections=t.maxConnections;if(t.scope)this.scope=t.scope;_jp.extend(this,t,typeParameters);if(t.cssClass!=null&&this.canvas)this._jsPlumb.instance.addClass(this.canvas,t.cssClass);_jp.OverlayCapableJsPlumbUIComponent.applyType(this,t);},isEnabled:function isEnabled(){return this._jsPlumb.enabled;},setEnabled:function setEnabled(e){this._jsPlumb.enabled=e;},cleanup:function cleanup(){var anchorClass=this._jsPlumb.instance.endpointAnchorClassPrefix+(this._jsPlumb.currentAnchorClass?"-"+this._jsPlumb.currentAnchorClass:"");_jp.removeClass(this.element,anchorClass);this.anchor=null;this.endpoint.cleanup(true);this.endpoint.destroy();this.endpoint=null;// drag/drop
+this._jsPlumb.instance.destroyDraggable(this.canvas,"internal");this._jsPlumb.instance.destroyDroppable(this.canvas,"internal");},setHover:function setHover(h){if(this.endpoint&&this._jsPlumb&&!this._jsPlumb.instance.isConnectionBeingDragged())this.endpoint.setHover(h);},isFull:function isFull(){return this._jsPlumb.maxConnections===0?true:!(this.isFloating()||this._jsPlumb.maxConnections<0||this.connections.length<this._jsPlumb.maxConnections);},/**
+         * private but needs to be exposed.
+         */isFloating:function isFloating(){return this.anchor!=null&&this.anchor.isFloating;},isConnectedTo:function isConnectedTo(endpoint){var found=false;if(endpoint){for(var i=0;i<this.connections.length;i++){if(this.connections[i].endpoints[1]==endpoint||this.connections[i].endpoints[0]==endpoint){found=true;break;}}}return found;},getConnectionCost:function getConnectionCost(){return this._jsPlumb.connectionCost;},setConnectionCost:function setConnectionCost(c){this._jsPlumb.connectionCost=c;},areConnectionsDirected:function areConnectionsDirected(){return this._jsPlumb.connectionsDirected;},setConnectionsDirected:function setConnectionsDirected(b){this._jsPlumb.connectionsDirected=b;},setElementId:function setElementId(_elId){this.elementId=_elId;this.anchor.elementId=_elId;},setReferenceElement:function setReferenceElement(_el){this.element=_jp.getElement(_el);},setDragAllowedWhenFull:function setDragAllowedWhenFull(allowed){this.dragAllowedWhenFull=allowed;},equals:function equals(endpoint){return this.anchor.equals(endpoint.anchor);},getUuid:function getUuid(){return this._jsPlumb.uuid;},computeAnchor:function computeAnchor(params){return this.anchor.compute(params);}});root.jsPlumbInstance.prototype.EndpointDropHandler=function(dhParams){return function(e){var _jsPlumb=dhParams.jsPlumb;// remove the classes that are added dynamically. drop is neither forbidden nor allowed now that
+// the drop is finishing.
+dhParams.removeClass(_jsPlumb.endpointDropAllowedClass);dhParams.removeClass(_jsPlumb.endpointDropForbiddenClass);var originalEvent=_jsPlumb.getDropEvent(arguments),draggable=_jsPlumb.getDragObject(arguments),id=_jsPlumb.getAttribute(draggable,"dragId"),elId=_jsPlumb.getAttribute(draggable,"elId"),scope=_jsPlumb.getAttribute(draggable,"originalScope"),jpc=_jsPlumb.floatingConnections[id];// if no active connection, bail.
+if(jpc==null)return;// calculate if this is an existing connection.
+var existingConnection=jpc.suspendedEndpoint!=null;// if suspended endpoint exists but has been cleaned up, bail. This means it's an existing connection
+// that has been detached and will shortly be discarded.
+if(existingConnection&&jpc.suspendedEndpoint._jsPlumb==null)return;// get the drop endpoint. for a normal connection this is just the one that would replace the currently
+// floating endpoint. for a makeTarget this is a new endpoint that is created on drop. But we leave that to
+// the handler to figure out.
+var _ep=dhParams.getEndpoint(jpc);// If we're not given an endpoint to use, bail.
+if(_ep==null)return;// if this is a drop back where the connection came from, mark it force reattach and
+// return; the stop handler will reattach. without firing an event.
+if(dhParams.isRedrop(jpc,dhParams)){jpc._forceReattach=true;jpc.setHover(false);if(dhParams.maybeCleanup)dhParams.maybeCleanup(_ep);return;}// ensure we dont bother trying to drop sources on non-source eps, and same for target.
+var idx=_jsPlumb.getFloatingAnchorIndex(jpc);if(idx===0&&!dhParams.isSource||idx===1&&!dhParams.isTarget){if(dhParams.maybeCleanup)dhParams.maybeCleanup(_ep);return;}if(dhParams.onDrop)dhParams.onDrop(jpc);// restore the original scope if necessary (issue 57)
+if(scope)_jsPlumb.setDragScope(draggable,scope);// if the target of the drop is full, fire an event (we abort below)
+// makeTarget: keep.
+var isFull=dhParams.isFull(e);if(isFull){_ep.fire("maxConnections",{endpoint:this,connection:jpc,maxConnections:_ep._jsPlumb.maxConnections},originalEvent);}//
+// if endpoint enabled, not full, and matches the index of the floating endpoint...
+if(!isFull&&dhParams.enabled()){var _doContinue=true;// before testing for beforeDrop, reset the connection's source/target to be the actual DOM elements
+// involved (that is, stash any temporary stuff used for dragging. but we need to keep it around in
+// order that the anchor manager can clean things up properly).
+if(idx===0){jpc.floatingElement=jpc.source;jpc.floatingId=jpc.sourceId;jpc.floatingEndpoint=jpc.endpoints[0];jpc.floatingIndex=0;jpc.source=dhParams.element;jpc.sourceId=dhParams.elementId;}else{jpc.floatingElement=jpc.target;jpc.floatingId=jpc.targetId;jpc.floatingEndpoint=jpc.endpoints[1];jpc.floatingIndex=1;jpc.target=dhParams.element;jpc.targetId=dhParams.elementId;}// if this is an existing connection and detach is not allowed we won't continue. The connection's
+// endpoints have been reinstated; everything is back to how it was.
+if(existingConnection&&jpc.suspendedEndpoint.id!=_ep.id){if(!jpc.isDetachAllowed(jpc)||!jpc.endpoints[idx].isDetachAllowed(jpc)||!jpc.suspendedEndpoint.isDetachAllowed(jpc)||!_jsPlumb.checkCondition("beforeDetach",jpc))_doContinue=false;}// ------------ wrap the execution path in a function so we can support asynchronous beforeDrop
+var continueFunction=function(optionalData){// remove this jpc from the current endpoint, which is a floating endpoint that we will
+// subsequently discard.
+jpc.endpoints[idx].detachFromConnection(jpc);// if there's a suspended endpoint, detach it from the connection.
+if(jpc.suspendedEndpoint)jpc.suspendedEndpoint.detachFromConnection(jpc);jpc.endpoints[idx]=_ep;_ep.addConnection(jpc);// copy our parameters in to the connection:
+var params=_ep.getParameters();for(var aParam in params){jpc.setParameter(aParam,params[aParam]);}if(!existingConnection){// if not an existing connection and
+if(params.draggable)_jsPlumb.initDraggable(this.element,dragOptions,"internal",_jsPlumb);}else{var suspendedElementId=jpc.suspendedEndpoint.elementId;_jsPlumb.fireMoveEvent({index:idx,originalSourceId:idx===0?suspendedElementId:jpc.sourceId,newSourceId:idx===0?_ep.elementId:jpc.sourceId,originalTargetId:idx==1?suspendedElementId:jpc.targetId,newTargetId:idx==1?_ep.elementId:jpc.targetId,originalSourceEndpoint:idx===0?jpc.suspendedEndpoint:jpc.endpoints[0],newSourceEndpoint:idx===0?_ep:jpc.endpoints[0],originalTargetEndpoint:idx==1?jpc.suspendedEndpoint:jpc.endpoints[1],newTargetEndpoint:idx==1?_ep:jpc.endpoints[1],connection:jpc},originalEvent);}if(idx==1){_jsPlumb.anchorManager.updateOtherEndpoint(jpc.sourceId,jpc.floatingId,jpc.targetId,jpc);}else{_jsPlumb.anchorManager.sourceChanged(jpc.floatingId,jpc.sourceId,jpc,jpc.source);}// when makeSource has uniqueEndpoint:true, we want to create connections with new endpoints
+// that are subsequently deleted. So makeSource sets `finalEndpoint`, which is the Endpoint to
+// which the connection should be attached. The `detachFromConnection` call below results in the
+// temporary endpoint being cleaned up.
+if(jpc.endpoints[0].finalEndpoint){var _toDelete=jpc.endpoints[0];_toDelete.detachFromConnection(jpc);jpc.endpoints[0]=jpc.endpoints[0].finalEndpoint;jpc.endpoints[0].addConnection(jpc);}// if optionalData was given, merge it onto the connection's data.
+if(_ju.isObject(optionalData)){jpc.mergeData(optionalData);}// finalise will inform the anchor manager and also add to
+// connectionsByScope if necessary.
+_jsPlumb.finaliseConnection(jpc,null,originalEvent,false);jpc.setHover(false);}.bind(this);var dontContinueFunction=function dontContinueFunction(){// otherwise just put it back on the endpoint it was on before the drag.
+if(jpc.suspendedEndpoint){jpc.endpoints[idx]=jpc.suspendedEndpoint;jpc.setHover(false);jpc._forceDetach=true;if(idx===0){jpc.source=jpc.suspendedEndpoint.element;jpc.sourceId=jpc.suspendedEndpoint.elementId;}else{jpc.target=jpc.suspendedEndpoint.element;jpc.targetId=jpc.suspendedEndpoint.elementId;}jpc.suspendedEndpoint.addConnection(jpc);// TODO checkSanity
+if(idx==1){_jsPlumb.anchorManager.updateOtherEndpoint(jpc.sourceId,jpc.floatingId,jpc.targetId,jpc);}else{_jsPlumb.anchorManager.sourceChanged(jpc.floatingId,jpc.sourceId,jpc,jpc.source);}_jsPlumb.repaint(jpc.sourceId);jpc._forceDetach=false;}};// --------------------------------------
+// now check beforeDrop.  this will be available only on Endpoints that are setup to
+// have a beforeDrop condition (although, secretly, under the hood all Endpoints and
+// the Connection have them, because they are on jsPlumbUIComponent.  shhh!), because
+// it only makes sense to have it on a target endpoint.
+_doContinue=_doContinue&&dhParams.isDropAllowed(jpc.sourceId,jpc.targetId,jpc.scope,jpc,_ep);// && jpc.pending;
+if(_doContinue){continueFunction(_doContinue);return true;}else{dontContinueFunction();}}if(dhParams.maybeCleanup)dhParams.maybeCleanup(_ep);_jsPlumb.currentlyDragging=false;};};}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ * 
+ * Title:jsPlumb 2.3.0
+ * 
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ * 
+ * This file contains the code for Connections.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ * 
+ * https://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil;var makeConnector=function makeConnector(_jsPlumb,renderMode,connectorName,connectorArgs,forComponent){if(!_jsPlumb.Defaults.DoNotThrowErrors&&_jp.Connectors[renderMode][connectorName]==null)throw{msg:"jsPlumb: unknown connector type '"+connectorName+"'"};return new _jp.Connectors[renderMode][connectorName](connectorArgs,forComponent);},_makeAnchor=function _makeAnchor(anchorParams,elementId,_jsPlumb){return anchorParams?_jsPlumb.makeAnchor(anchorParams,elementId,_jsPlumb):null;},_updateConnectedClass=function _updateConnectedClass(conn,element,_jsPlumb,remove){if(element!=null){element._jsPlumbConnections=element._jsPlumbConnections||{};if(remove)delete element._jsPlumbConnections[conn.id];else element._jsPlumbConnections[conn.id]=true;if(_ju.isEmpty(element._jsPlumbConnections)){_jsPlumb.removeClass(element,_jsPlumb.connectedClass);}else _jsPlumb.addClass(element,_jsPlumb.connectedClass);}};_jp.Connection=function(params){var _newEndpoint=params.newEndpoint;this.id=params.id;this.connector=null;this.idPrefix="_jsplumb_c_";this.defaultLabelLocation=0.5;this.defaultOverlayKeys=["Overlays","ConnectionOverlays"];// if a new connection is the result of moving some existing connection, params.previousConnection
+// will have that Connection in it. listeners for the jsPlumbConnection event can look for that
+// member and take action if they need to.
+this.previousConnection=params.previousConnection;this.source=_jp.getElement(params.source);this.target=_jp.getElement(params.target);// sourceEndpoint and targetEndpoint override source/target, if they are present. but 
+// source is not overridden if the Endpoint has declared it is not the final target of a connection;
+// instead we use the source that the Endpoint declares will be the final source element.
+if(params.sourceEndpoint)this.source=params.sourceEndpoint.getElement();if(params.targetEndpoint)this.target=params.targetEndpoint.getElement();_jp.OverlayCapableJsPlumbUIComponent.apply(this,arguments);this.sourceId=this._jsPlumb.instance.getId(this.source);this.targetId=this._jsPlumb.instance.getId(this.target);this.scope=params.scope;// scope may have been passed in to the connect call. if it wasn't, we will pull it from the source endpoint, after having initialised the endpoints.            
+this.endpoints=[];this.endpointStyles=[];var _jsPlumb=this._jsPlumb.instance;_jsPlumb.manage(this.sourceId,this.source);_jsPlumb.manage(this.targetId,this.target);this._jsPlumb.visible=true;this._jsPlumb.editable=params.editable===true;this._jsPlumb.params={cssClass:params.cssClass,container:params.container,"pointer-events":params["pointer-events"],editorParams:params.editorParams,overlays:params.overlays};this._jsPlumb.lastPaintedAt=null;// listen to mouseover and mouseout events passed from the container delegate.
+this.bind("mouseover",function(){this.setHover(true);}.bind(this));this.bind("mouseout",function(){this.setHover(false);}.bind(this));this.editableRequested=params.editable!==false;this.setEditable=function(e){return this.connector?this.connector.setEditable(e):false;};this.isEditable=function(){return this.connector?this.connector.isEditable():false;};this.isEditing=function(){return this.connector?this.connector.isEditing():false;};// INITIALISATION CODE
+this.makeEndpoint=function(isSource,el,elId,ep){elId=elId||this._jsPlumb.instance.getId(el);return this.prepareEndpoint(_jsPlumb,_newEndpoint,this,ep,isSource?0:1,params,el,elId);};// if type given, get the endpoint definitions mapping to that type from the jsplumb instance, and use those.
+// we apply types at the end of this constructor but endpoints are only honoured in a type definition at
+// create time.
+if(params.type){params.endpoints=this._jsPlumb.instance.deriveEndpointAndAnchorSpec(params.type).endpoints;}var eS=this.makeEndpoint(true,this.source,this.sourceId,params.sourceEndpoint),eT=this.makeEndpoint(false,this.target,this.targetId,params.targetEndpoint);if(eS)_ju.addToList(params.endpointsByElement,this.sourceId,eS);if(eT)_ju.addToList(params.endpointsByElement,this.targetId,eT);// if scope not set, set it to be the scope for the source endpoint.
+if(!this.scope)this.scope=this.endpoints[0].scope;// if explicitly told to (or not to) delete endpoints on detach, override endpoint's preferences
+if(params.deleteEndpointsOnDetach!=null){this.endpoints[0]._deleteOnDetach=params.deleteEndpointsOnDetach;this.endpoints[1]._deleteOnDetach=params.deleteEndpointsOnDetach;}else{// otherwise, unless the endpoints say otherwise, mark them for deletion.
+if(!this.endpoints[0]._doNotDeleteOnDetach)this.endpoints[0]._deleteOnDetach=true;if(!this.endpoints[1]._doNotDeleteOnDetach)this.endpoints[1]._deleteOnDetach=true;}// -------------------------- DEFAULT TYPE ---------------------------------------------
+// DETACHABLE
+var _detachable=_jsPlumb.Defaults.ConnectionsDetachable;if(params.detachable===false)_detachable=false;if(this.endpoints[0].connectionsDetachable===false)_detachable=false;if(this.endpoints[1].connectionsDetachable===false)_detachable=false;// REATTACH
+var _reattach=params.reattach||this.endpoints[0].reattachConnections||this.endpoints[1].reattachConnections||_jsPlumb.Defaults.ReattachConnections;this.appendToDefaultType({detachable:_detachable,reattach:_reattach,paintStyle:this.endpoints[0].connectorStyle||this.endpoints[1].connectorStyle||params.paintStyle||_jsPlumb.Defaults.PaintStyle||_jp.Defaults.PaintStyle,hoverPaintStyle:this.endpoints[0].connectorHoverStyle||this.endpoints[1].connectorHoverStyle||params.hoverPaintStyle||_jsPlumb.Defaults.HoverPaintStyle||_jp.Defaults.HoverPaintStyle});var _suspendedAt=_jsPlumb.getSuspendedAt();if(!_jsPlumb.isSuspendDrawing()){// paint the endpoints
+var myInfo=_jsPlumb.getCachedData(this.sourceId),myOffset=myInfo.o,myWH=myInfo.s,otherInfo=_jsPlumb.getCachedData(this.targetId),otherOffset=otherInfo.o,otherWH=otherInfo.s,initialTimestamp=_suspendedAt||_jsPlumb.timestamp(),anchorLoc=this.endpoints[0].anchor.compute({xy:[myOffset.left,myOffset.top],wh:myWH,element:this.endpoints[0],elementId:this.endpoints[0].elementId,txy:[otherOffset.left,otherOffset.top],twh:otherWH,tElement:this.endpoints[1],timestamp:initialTimestamp});this.endpoints[0].paint({anchorLoc:anchorLoc,timestamp:initialTimestamp});anchorLoc=this.endpoints[1].anchor.compute({xy:[otherOffset.left,otherOffset.top],wh:otherWH,element:this.endpoints[1],elementId:this.endpoints[1].elementId,txy:[myOffset.left,myOffset.top],twh:myWH,tElement:this.endpoints[0],timestamp:initialTimestamp});this.endpoints[1].paint({anchorLoc:anchorLoc,timestamp:initialTimestamp});}this.getTypeDescriptor=function(){return"connection";};this.getAttachedElements=function(){return this.endpoints;};this.isDetachable=function(){return this._jsPlumb.detachable===true;};this.setDetachable=function(detachable){this._jsPlumb.detachable=detachable===true;};this.isReattach=function(){return this._jsPlumb.reattach===true||this.endpoints[0].reattachConnections===true||this.endpoints[1].reattachConnections===true;};this.setReattach=function(reattach){this._jsPlumb.reattach=reattach===true;};// END INITIALISATION CODE
+// COST + DIRECTIONALITY
+// if cost not supplied, try to inherit from source endpoint
+this._jsPlumb.cost=params.cost||this.endpoints[0].getConnectionCost();this._jsPlumb.directed=params.directed;// inherit directed flag if set no source endpoint
+if(params.directed==null)this._jsPlumb.directed=this.endpoints[0].areConnectionsDirected();// END COST + DIRECTIONALITY
+// PARAMETERS
+// merge all the parameters objects into the connection.  parameters set
+// on the connection take precedence; then source endpoint params, then
+// finally target endpoint params.
+var _p=_jp.extend({},this.endpoints[1].getParameters());_jp.extend(_p,this.endpoints[0].getParameters());_jp.extend(_p,this.getParameters());this.setParameters(_p);// END PARAMETERS
+// PAINTING
+this.setConnector(this.endpoints[0].connector||this.endpoints[1].connector||params.connector||_jsPlumb.Defaults.Connector||_jp.Defaults.Connector,true);if(params.geometry){this.connector.setGeometry(params.geometry);}var data=params.data==null||!_ju.isObject(params.data)?{}:params.data;this.getData=function(){return data;};this.setData=function(d){data=d||{};};this.mergeData=function(d){data=_jp.extend(data,d);};// the very last thing we do is apply types, if there are any.
+var _types=["default",this.endpoints[0].connectionType,this.endpoints[1].connectionType,params.type].join(" ");if(/[^\s]/.test(_types))this.addType(_types,params.data,true);this.updateConnectedClass();// END PAINTING    
+};_ju.extend(_jp.Connection,_jp.OverlayCapableJsPlumbUIComponent,{applyType:function applyType(t,doNotRepaint,typeMap){// none of these things result in the creation of objects so can be ignored.
+if(t.detachable!=null)this.setDetachable(t.detachable);if(t.reattach!=null)this.setReattach(t.reattach);if(t.scope)this.scope=t.scope;if(t.cssClass!=null&&this.canvas)this._jsPlumb.instance.addClass(this.canvas,t.cssClass);var _anchors=null;// this also results in the creation of objects.
+if(t.anchor){// note that even if the param was anchor, we store `anchors`.
+_anchors=this.getCachedTypeItem("anchors",typeMap.anchor);if(_anchors==null){_anchors=[this._jsPlumb.instance.makeAnchor(t.anchor),this._jsPlumb.instance.makeAnchor(t.anchor)];this.cacheTypeItem("anchors",_anchors,typeMap.anchor);}}else if(t.anchors){_anchors=this.getCachedTypeItem("anchors",typeMap.anchors);if(_anchors==null){_anchors=[this._jsPlumb.instance.makeAnchor(t.anchors[0]),this._jsPlumb.instance.makeAnchor(t.anchors[1])];this.cacheTypeItem("anchors",_anchors,typeMap.anchors);}}if(_anchors!=null){this.endpoints[0].anchor=_anchors[0];this.endpoints[1].anchor=_anchors[1];if(this.endpoints[1].anchor.isDynamic)this._jsPlumb.instance.repaint(this.endpoints[1].elementId);}_jp.OverlayCapableJsPlumbUIComponent.applyType(this,t);},addClass:function addClass(c,informEndpoints){if(informEndpoints){this.endpoints[0].addClass(c);this.endpoints[1].addClass(c);if(this.suspendedEndpoint)this.suspendedEndpoint.addClass(c);}if(this.connector){this.connector.addClass(c);}},removeClass:function removeClass(c,informEndpoints){if(informEndpoints){this.endpoints[0].removeClass(c);this.endpoints[1].removeClass(c);if(this.suspendedEndpoint)this.suspendedEndpoint.removeClass(c);}if(this.connector){this.connector.removeClass(c);}},isVisible:function isVisible(){return this._jsPlumb.visible;},setVisible:function setVisible(v){this._jsPlumb.visible=v;if(this.connector)this.connector.setVisible(v);this.repaint();},cleanup:function cleanup(){this.updateConnectedClass(true);this.endpoints=null;this.source=null;this.target=null;if(this.connector!=null){this.connector.cleanup(true);this.connector.destroy(true);}this.connector=null;},updateConnectedClass:function updateConnectedClass(remove){if(this._jsPlumb){_updateConnectedClass(this,this.source,this._jsPlumb.instance,remove);_updateConnectedClass(this,this.target,this._jsPlumb.instance,remove);}},setHover:function setHover(state){if(this.connector&&this._jsPlumb&&!this._jsPlumb.instance.isConnectionBeingDragged()){this.connector.setHover(state);root.jsPlumb[state?"addClass":"removeClass"](this.source,this._jsPlumb.instance.hoverSourceClass);root.jsPlumb[state?"addClass":"removeClass"](this.target,this._jsPlumb.instance.hoverTargetClass);}},getUuids:function getUuids(){return[this.endpoints[0].getUuid(),this.endpoints[1].getUuid()];},getCost:function getCost(){return this._jsPlumb?this._jsPlumb.cost:-Infinity;},setCost:function setCost(c){this._jsPlumb.cost=c;},isDirected:function isDirected(){return this._jsPlumb.directed===true;},getConnector:function getConnector(){return this.connector;},getGeometry:function getGeometry(){return this.connector?this.connector.getGeometry():null;},setGeometry:function setGeometry(g){if(this.connector)this.connector.setGeometry(g);},prepareConnector:function prepareConnector(connectorSpec,typeId){var connectorArgs={_jsPlumb:this._jsPlumb.instance,cssClass:(this._jsPlumb.params.cssClass||"")+(this.isEditable()?this._jsPlumb.instance.editableConnectorClass:""),container:this._jsPlumb.params.container,"pointer-events":this._jsPlumb.params["pointer-events"],editable:this.editableRequested},renderMode=this._jsPlumb.instance.getRenderMode(),connector;if(_ju.isString(connectorSpec))connector=makeConnector(this._jsPlumb.instance,renderMode,connectorSpec,connectorArgs,this);// lets you use a string as shorthand.
+else if(_ju.isArray(connectorSpec)){if(connectorSpec.length==1)connector=makeConnector(this._jsPlumb.instance,renderMode,connectorSpec[0],connectorArgs,this);else connector=makeConnector(this._jsPlumb.instance,renderMode,connectorSpec[0],_ju.merge(connectorSpec[1],connectorArgs),this);}if(typeId!=null)connector.typeId=typeId;return connector;},setPreparedConnector:function setPreparedConnector(connector,doNotRepaint,doNotChangeListenerComponent,typeId){var previous,previousClasses="";// the connector will not be cleaned up if it was set as part of a type, because `typeId` will be set on it
+// and we havent passed in `true` for "force" here.
+if(this.connector!=null){previous=this.connector;previousClasses=previous.getClass();this.connector.cleanup();this.connector.destroy();}this.connector=connector;if(typeId){this.cacheTypeItem("connector",connector,typeId);}this.canvas=this.connector.canvas;this.bgCanvas=this.connector.bgCanvas;// put classes from prior connector onto the canvas
+this.addClass(previousClasses);// new: instead of binding listeners per connector, we now just have one delegate on the container.
+// so for that handler we set the connection as the '_jsPlumb' member of the canvas element, and
+// bgCanvas, if it exists, which it does right now in the VML renderer, so it won't from v 2.0.0 onwards.
+if(this.canvas)this.canvas._jsPlumb=this;if(this.bgCanvas)this.bgCanvas._jsPlumb=this;if(previous!=null){var o=this.getOverlays();for(var i=0;i<o.length;i++){if(o[i].transfer)o[i].transfer(this.connector);}}if(!doNotChangeListenerComponent)this.setListenerComponent(this.connector);if(!doNotRepaint)this.repaint();},setConnector:function setConnector(connectorSpec,doNotRepaint,doNotChangeListenerComponent,typeId){var connector=this.prepareConnector(connectorSpec,typeId);this.setPreparedConnector(connector,doNotRepaint,doNotChangeListenerComponent,typeId);},paint:function paint(params){if(!this._jsPlumb.instance.isSuspendDrawing()&&this._jsPlumb.visible){params=params||{};var timestamp=params.timestamp,// if the moving object is not the source we must transpose the two references.
+swap=false,tId=swap?this.sourceId:this.targetId,sId=swap?this.targetId:this.sourceId,tIdx=swap?0:1,sIdx=swap?1:0;if(timestamp==null||timestamp!=this._jsPlumb.lastPaintedAt){var sourceInfo=this._jsPlumb.instance.updateOffset({elId:sId}).o,targetInfo=this._jsPlumb.instance.updateOffset({elId:tId}).o,sE=this.endpoints[sIdx],tE=this.endpoints[tIdx];var sAnchorP=sE.anchor.getCurrentLocation({xy:[sourceInfo.left,sourceInfo.top],wh:[sourceInfo.width,sourceInfo.height],element:sE,timestamp:timestamp}),tAnchorP=tE.anchor.getCurrentLocation({xy:[targetInfo.left,targetInfo.top],wh:[targetInfo.width,targetInfo.height],element:tE,timestamp:timestamp});this.connector.resetBounds();this.connector.compute({sourcePos:sAnchorP,targetPos:tAnchorP,sourceEndpoint:this.endpoints[sIdx],targetEndpoint:this.endpoints[tIdx],"stroke-width":this._jsPlumb.paintStyleInUse.strokeWidth,sourceInfo:sourceInfo,targetInfo:targetInfo});var overlayExtents={minX:Infinity,minY:Infinity,maxX:-Infinity,maxY:-Infinity};// compute overlays. we do this first so we can get their placements, and adjust the
+// container if needs be (if an overlay would be clipped)
+for(var i in this._jsPlumb.overlays){if(this._jsPlumb.overlays.hasOwnProperty(i)){var o=this._jsPlumb.overlays[i];if(o.isVisible()){this._jsPlumb.overlayPlacements[i]=o.draw(this.connector,this._jsPlumb.paintStyleInUse,this.getAbsoluteOverlayPosition(o));overlayExtents.minX=Math.min(overlayExtents.minX,this._jsPlumb.overlayPlacements[i].minX);overlayExtents.maxX=Math.max(overlayExtents.maxX,this._jsPlumb.overlayPlacements[i].maxX);overlayExtents.minY=Math.min(overlayExtents.minY,this._jsPlumb.overlayPlacements[i].minY);overlayExtents.maxY=Math.max(overlayExtents.maxY,this._jsPlumb.overlayPlacements[i].maxY);}}}var lineWidth=parseFloat(this._jsPlumb.paintStyleInUse.strokeWidth||1)/2,outlineWidth=parseFloat(this._jsPlumb.paintStyleInUse.strokeWidth||0),extents={xmin:Math.min(this.connector.bounds.minX-(lineWidth+outlineWidth),overlayExtents.minX),ymin:Math.min(this.connector.bounds.minY-(lineWidth+outlineWidth),overlayExtents.minY),xmax:Math.max(this.connector.bounds.maxX+(lineWidth+outlineWidth),overlayExtents.maxX),ymax:Math.max(this.connector.bounds.maxY+(lineWidth+outlineWidth),overlayExtents.maxY)};// paint the connector.
+this.connector.paint(this._jsPlumb.paintStyleInUse,null,extents);// and then the overlays
+for(var j in this._jsPlumb.overlays){if(this._jsPlumb.overlays.hasOwnProperty(j)){var p=this._jsPlumb.overlays[j];if(p.isVisible()){p.paint(this._jsPlumb.overlayPlacements[j],extents);}}}}this._jsPlumb.lastPaintedAt=timestamp;}},repaint:function repaint(params){params=params||{};this.paint({elId:this.sourceId,recalc:!(params.recalc===false),timestamp:params.timestamp});},prepareEndpoint:function prepareEndpoint(_jsPlumb,_newEndpoint,conn,existing,index,params,element,elementId){var e;if(existing){conn.endpoints[index]=existing;existing.addConnection(conn);}else{if(!params.endpoints)params.endpoints=[null,null];var ep=params.endpoints[index]||params.endpoint||_jsPlumb.Defaults.Endpoints[index]||_jp.Defaults.Endpoints[index]||_jsPlumb.Defaults.Endpoint||_jp.Defaults.Endpoint;if(!params.endpointStyles)params.endpointStyles=[null,null];if(!params.endpointHoverStyles)params.endpointHoverStyles=[null,null];var es=params.endpointStyles[index]||params.endpointStyle||_jsPlumb.Defaults.EndpointStyles[index]||_jp.Defaults.EndpointStyles[index]||_jsPlumb.Defaults.EndpointStyle||_jp.Defaults.EndpointStyle;// Endpoints derive their fill from the connector's stroke, if no fill was specified.
+if(es.fill==null&&params.paintStyle!=null)es.fill=params.paintStyle.stroke;if(es.outlineStroke==null&&params.paintStyle!=null)es.outlineStroke=params.paintStyle.outlineStroke;if(es.outlineWidth==null&&params.paintStyle!=null)es.outlineWidth=params.paintStyle.outlineWidth;var ehs=params.endpointHoverStyles[index]||params.endpointHoverStyle||_jsPlumb.Defaults.EndpointHoverStyles[index]||_jp.Defaults.EndpointHoverStyles[index]||_jsPlumb.Defaults.EndpointHoverStyle||_jp.Defaults.EndpointHoverStyle;// endpoint hover fill style is derived from connector's hover stroke style
+if(params.hoverPaintStyle!=null){if(ehs==null)ehs={};if(ehs.fill==null){ehs.fill=params.hoverPaintStyle.stroke;}}var a=params.anchors?params.anchors[index]:params.anchor?params.anchor:_makeAnchor(_jsPlumb.Defaults.Anchors[index],elementId,_jsPlumb)||_makeAnchor(_jp.Defaults.Anchors[index],elementId,_jsPlumb)||_makeAnchor(_jsPlumb.Defaults.Anchor,elementId,_jsPlumb)||_makeAnchor(_jp.Defaults.Anchor,elementId,_jsPlumb),u=params.uuids?params.uuids[index]:null;e=_newEndpoint({paintStyle:es,hoverPaintStyle:ehs,endpoint:ep,connections:[conn],uuid:u,anchor:a,source:element,scope:params.scope,reattach:params.reattach||_jsPlumb.Defaults.ReattachConnections,detachable:params.detachable||_jsPlumb.Defaults.ConnectionsDetachable});conn.endpoints[index]=e;if(params.drawEndpoints===false)e.setVisible(false,true,true);}return e;}});// END Connection class            
+}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ * 
+ * Title:jsPlumb 2.3.0
+ * 
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ * 
+ * This file contains the code for creating and manipulating anchors.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ * 
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_ju=root.jsPlumbUtil,_jp=root.jsPlumb;//
+// manages anchors for all elements.
+//
+_jp.AnchorManager=function(params){var _amEndpoints={},continuousAnchorLocations={},userDefinedContinuousAnchorLocations={},continuousAnchorOrientations={},Orientation={HORIZONTAL:"horizontal",VERTICAL:"vertical",DIAGONAL:"diagonal",IDENTITY:"identity"},axes=["left","top","right","bottom"],connectionsByElementId={},self=this,anchorLists={},jsPlumbInstance=params.jsPlumbInstance,floatingConnections={},calculateOrientation=function calculateOrientation(sourceId,targetId,sd,td,sourceAnchor,targetAnchor){if(sourceId===targetId)return{orientation:Orientation.IDENTITY,a:["top","top"]};var theta=Math.atan2(td.centery-sd.centery,td.centerx-sd.centerx),theta2=Math.atan2(sd.centery-td.centery,sd.centerx-td.centerx);// --------------------------------------------------------------------------------------
+// improved face calculation. get midpoints of each face for source and target, then put in an array with all combinations of
+// source/target faces. sort this array by distance between midpoints. the entry at index 0 is our preferred option. we can
+// go through the array one by one until we find an entry in which each requested face is supported.
+var candidates=[],midpoints={};(function(types,dim){for(var i=0;i<types.length;i++){midpoints[types[i]]={"left":[dim[i].left,dim[i].centery],"right":[dim[i].right,dim[i].centery],"top":[dim[i].centerx,dim[i].top],"bottom":[dim[i].centerx,dim[i].bottom]};}})(["source","target"],[sd,td]);for(var sf=0;sf<axes.length;sf++){for(var tf=0;tf<axes.length;tf++){candidates.push({source:axes[sf],target:axes[tf],dist:Biltong.lineLength(midpoints.source[axes[sf]],midpoints.target[axes[tf]])});}}candidates.sort(function(a,b){return a.dist<b.dist?-1:a.dist>b.dist?1:0;});// now go through this list and try to get an entry that satisfies both (there will be one, unless one of the anchors
+// declares no available faces)
+var sourceEdge=candidates[0].source,targetEdge=candidates[0].target;for(var i=0;i<candidates.length;i++){if(!sourceAnchor.isContinuous||sourceAnchor.isEdgeSupported(candidates[i].source))sourceEdge=candidates[i].source;else sourceEdge=null;if(!targetAnchor.isContinuous||targetAnchor.isEdgeSupported(candidates[i].target))targetEdge=candidates[i].target;else{targetEdge=null;}if(sourceEdge!=null&&targetEdge!=null)break;}// --------------------------------------------------------------------------------------
+return{a:[sourceEdge,targetEdge],theta:theta,theta2:theta2};},// used by placeAnchors function
+placeAnchorsOnLine=function placeAnchorsOnLine(desc,elementDimensions,elementPosition,connections,horizontal,otherMultiplier,reverse){var a=[],step=elementDimensions[horizontal?0:1]/(connections.length+1);for(var i=0;i<connections.length;i++){var val=(i+1)*step,other=otherMultiplier*elementDimensions[horizontal?1:0];if(reverse)val=elementDimensions[horizontal?0:1]-val;var dx=horizontal?val:other,x=elementPosition[0]+dx,xp=dx/elementDimensions[0],dy=horizontal?other:val,y=elementPosition[1]+dy,yp=dy/elementDimensions[1];a.push([x,y,xp,yp,connections[i][1],connections[i][2]]);}return a;},// used by edgeSortFunctions
+currySort=function currySort(reverseAngles){return function(a,b){var r=true;if(reverseAngles){r=a[0][0]<b[0][0];}else{r=a[0][0]>b[0][0];}return r===false?-1:1;};},// used by edgeSortFunctions
+leftSort=function leftSort(a,b){// first get adjusted values
+var p1=a[0][0]<0?-Math.PI-a[0][0]:Math.PI-a[0][0],p2=b[0][0]<0?-Math.PI-b[0][0]:Math.PI-b[0][0];if(p1>p2)return 1;else return-1;},// used by placeAnchors
+edgeSortFunctions={"top":function top(a,b){return a[0]>b[0]?1:-1;},"right":currySort(true),"bottom":currySort(true),"left":leftSort},// used by placeAnchors
+_sortHelper=function _sortHelper(_array,_fn){return _array.sort(_fn);},// used by AnchorManager.redraw
+placeAnchors=function placeAnchors(elementId,_anchorLists){var cd=jsPlumbInstance.getCachedData(elementId),sS=cd.s,sO=cd.o,placeSomeAnchors=function placeSomeAnchors(desc,elementDimensions,elementPosition,unsortedConnections,isHorizontal,otherMultiplier,orientation){if(unsortedConnections.length>0){var sc=_sortHelper(unsortedConnections,edgeSortFunctions[desc]),// puts them in order based on the target element's pos on screen
+reverse=desc==="right"||desc==="top",anchors=placeAnchorsOnLine(desc,elementDimensions,elementPosition,sc,isHorizontal,otherMultiplier,reverse);// takes a computed anchor position and adjusts it for parent offset and scroll, then stores it.
+var _setAnchorLocation=function _setAnchorLocation(endpoint,anchorPos){continuousAnchorLocations[endpoint.id]=[anchorPos[0],anchorPos[1],anchorPos[2],anchorPos[3]];continuousAnchorOrientations[endpoint.id]=orientation;};for(var i=0;i<anchors.length;i++){var c=anchors[i][4],weAreSource=c.endpoints[0].elementId===elementId,weAreTarget=c.endpoints[1].elementId===elementId;if(weAreSource)_setAnchorLocation(c.endpoints[0],anchors[i]);if(weAreTarget)_setAnchorLocation(c.endpoints[1],anchors[i]);}}};placeSomeAnchors("bottom",sS,[sO.left,sO.top],_anchorLists.bottom,true,1,[0,1]);placeSomeAnchors("top",sS,[sO.left,sO.top],_anchorLists.top,true,0,[0,-1]);placeSomeAnchors("left",sS,[sO.left,sO.top],_anchorLists.left,false,0,[-1,0]);placeSomeAnchors("right",sS,[sO.left,sO.top],_anchorLists.right,false,1,[1,0]);};this.reset=function(){_amEndpoints={};connectionsByElementId={};anchorLists={};};this.addFloatingConnection=function(key,conn){floatingConnections[key]=conn;};this.removeFloatingConnection=function(key){delete floatingConnections[key];};this.newConnection=function(conn){var sourceId=conn.sourceId,targetId=conn.targetId,ep=conn.endpoints,doRegisterTarget=true,registerConnection=function registerConnection(otherIndex,otherEndpoint,otherAnchor,elId,c){if(sourceId==targetId&&otherAnchor.isContinuous){// remove the target endpoint's canvas.  we dont need it.
+conn._jsPlumb.instance.removeElement(ep[1].canvas);doRegisterTarget=false;}_ju.addToList(connectionsByElementId,elId,[c,otherEndpoint,otherAnchor.constructor==_jp.DynamicAnchor]);};registerConnection(0,ep[0],ep[0].anchor,targetId,conn);if(doRegisterTarget)registerConnection(1,ep[1],ep[1].anchor,sourceId,conn);};var removeEndpointFromAnchorLists=function removeEndpointFromAnchorLists(endpoint){(function(list,eId){if(list){// transient anchors dont get entries in this list.
+var f=function f(e){return e[4]==eId;};_ju.removeWithFunction(list.top,f);_ju.removeWithFunction(list.left,f);_ju.removeWithFunction(list.bottom,f);_ju.removeWithFunction(list.right,f);}})(anchorLists[endpoint.elementId],endpoint.id);};this.connectionDetached=function(connInfo,doNotRedraw){var connection=connInfo.connection||connInfo,sourceId=connInfo.sourceId,targetId=connInfo.targetId,ep=connection.endpoints,removeConnection=function removeConnection(otherIndex,otherEndpoint,otherAnchor,elId,c){_ju.removeWithFunction(connectionsByElementId[elId],function(_c){return _c[0].id==c.id;});};removeConnection(1,ep[1],ep[1].anchor,sourceId,connection);removeConnection(0,ep[0],ep[0].anchor,targetId,connection);if(connection.floatingId){removeConnection(connection.floatingIndex,connection.floatingEndpoint,connection.floatingEndpoint.anchor,connection.floatingId,connection);removeEndpointFromAnchorLists(connection.floatingEndpoint);}// remove from anchorLists            
+removeEndpointFromAnchorLists(connection.endpoints[0]);removeEndpointFromAnchorLists(connection.endpoints[1]);if(!doNotRedraw){self.redraw(connection.sourceId);if(connection.targetId!==connection.sourceId)self.redraw(connection.targetId);}};this.add=function(endpoint,elementId){_ju.addToList(_amEndpoints,elementId,endpoint);};this.changeId=function(oldId,newId){connectionsByElementId[newId]=connectionsByElementId[oldId];_amEndpoints[newId]=_amEndpoints[oldId];delete connectionsByElementId[oldId];delete _amEndpoints[oldId];};this.getConnectionsFor=function(elementId){return connectionsByElementId[elementId]||[];};this.getEndpointsFor=function(elementId){return _amEndpoints[elementId]||[];};this.deleteEndpoint=function(endpoint){_ju.removeWithFunction(_amEndpoints[endpoint.elementId],function(e){return e.id==endpoint.id;});removeEndpointFromAnchorLists(endpoint);};this.clearFor=function(elementId){delete _amEndpoints[elementId];_amEndpoints[elementId]=[];};// updates the given anchor list by either updating an existing anchor's info, or adding it. this function
+// also removes the anchor from its previous list, if the edge it is on has changed.
+// all connections found along the way (those that are connected to one of the faces this function
+// operates on) are added to the connsToPaint list, as are their endpoints. in this way we know to repaint
+// them wthout having to calculate anything else about them.
+var _updateAnchorList=function _updateAnchorList(lists,theta,order,conn,aBoolean,otherElId,idx,reverse,edgeId,elId,connsToPaint,endpointsToPaint){// first try to find the exact match, but keep track of the first index of a matching element id along the way.s
+var exactIdx=-1,firstMatchingElIdx=-1,endpoint=conn.endpoints[idx],endpointId=endpoint.id,oIdx=[1,0][idx],values=[[theta,order],conn,aBoolean,otherElId,endpointId],listToAddTo=lists[edgeId],listToRemoveFrom=endpoint._continuousAnchorEdge?lists[endpoint._continuousAnchorEdge]:null,i,candidate;if(listToRemoveFrom){var rIdx=_ju.findWithFunction(listToRemoveFrom,function(e){return e[4]==endpointId;});if(rIdx!=-1){listToRemoveFrom.splice(rIdx,1);// get all connections from this list
+for(i=0;i<listToRemoveFrom.length;i++){candidate=listToRemoveFrom[i][1];_ju.addWithFunction(connsToPaint,candidate,function(c){return c.id==candidate.id;});_ju.addWithFunction(endpointsToPaint,listToRemoveFrom[i][1].endpoints[idx],function(e){return e.id==candidate.endpoints[idx].id;});_ju.addWithFunction(endpointsToPaint,listToRemoveFrom[i][1].endpoints[oIdx],function(e){return e.id==candidate.endpoints[oIdx].id;});}}}for(i=0;i<listToAddTo.length;i++){candidate=listToAddTo[i][1];if(params.idx==1&&listToAddTo[i][3]===otherElId&&firstMatchingElIdx==-1)firstMatchingElIdx=i;_ju.addWithFunction(connsToPaint,candidate,function(c){return c.id==candidate.id;});_ju.addWithFunction(endpointsToPaint,listToAddTo[i][1].endpoints[idx],function(e){return e.id==candidate.endpoints[idx].id;});_ju.addWithFunction(endpointsToPaint,listToAddTo[i][1].endpoints[oIdx],function(e){return e.id==candidate.endpoints[oIdx].id;});}if(exactIdx!=-1){listToAddTo[exactIdx]=values;}else{var insertIdx=reverse?firstMatchingElIdx!=-1?firstMatchingElIdx:0:listToAddTo.length;// of course we will get this from having looked through the array shortly.
+listToAddTo.splice(insertIdx,0,values);}// store this for next time.
+endpoint._continuousAnchorEdge=edgeId;};//
+// find the entry in an endpoint's list for this connection and update its target endpoint
+// with the current target in the connection.
+// This method and sourceChanged need to be folder into one.
+//
+this.updateOtherEndpoint=function(sourceElId,oldTargetId,newTargetId,connection){var sIndex=_ju.findWithFunction(connectionsByElementId[sourceElId],function(i){return i[0].id===connection.id;}),tIndex=_ju.findWithFunction(connectionsByElementId[oldTargetId],function(i){return i[0].id===connection.id;});// update or add data for source
+if(sIndex!=-1){connectionsByElementId[sourceElId][sIndex][0]=connection;connectionsByElementId[sourceElId][sIndex][1]=connection.endpoints[1];connectionsByElementId[sourceElId][sIndex][2]=connection.endpoints[1].anchor.constructor==_jp.DynamicAnchor;}// remove entry for previous target (if there)
+if(tIndex>-1){connectionsByElementId[oldTargetId].splice(tIndex,1);// add entry for new target
+_ju.addToList(connectionsByElementId,newTargetId,[connection,connection.endpoints[0],connection.endpoints[0].anchor.constructor==_jp.DynamicAnchor]);}connection.updateConnectedClass();};//
+// notification that the connection given has changed source from the originalId to the newId.
+// This involves:
+// 1. removing the connection from the list of connections stored for the originalId
+// 2. updating the source information for the target of the connection
+// 3. re-registering the connection in connectionsByElementId with the newId
+//
+this.sourceChanged=function(originalId,newId,connection,newElement){if(originalId!==newId){connection.sourceId=newId;connection.source=newElement;// remove the entry that points from the old source to the target
+_ju.removeWithFunction(connectionsByElementId[originalId],function(info){return info[0].id===connection.id;});// find entry for target and update it
+var tIdx=_ju.findWithFunction(connectionsByElementId[connection.targetId],function(i){return i[0].id===connection.id;});if(tIdx>-1){connectionsByElementId[connection.targetId][tIdx][0]=connection;connectionsByElementId[connection.targetId][tIdx][1]=connection.endpoints[0];connectionsByElementId[connection.targetId][tIdx][2]=connection.endpoints[0].anchor.constructor==_jp.DynamicAnchor;}// add entry for new source
+_ju.addToList(connectionsByElementId,newId,[connection,connection.endpoints[1],connection.endpoints[1].anchor.constructor==_jp.DynamicAnchor]);// TODO SP not final on this yet. when a user drags an existing connection and it turns into a self
+// loop, then this code hides the target endpoint (by removing it from the DOM) But I think this should
+// occur only if the anchor is Continuous
+if(connection.endpoints[1].anchor.isContinuous){if(connection.source===connection.target){connection._jsPlumb.instance.removeElement(connection.endpoints[1].canvas);}else{if(connection.endpoints[1].canvas.parentNode==null){connection._jsPlumb.instance.appendElement(connection.endpoints[1].canvas);}}}connection.updateConnectedClass();}};//
+// moves the given endpoint from `currentId` to `element`.
+// This involves:
+//
+// 1. changing the key in _amEndpoints under which the endpoint is stored
+// 2. changing the source or target values in all of the endpoint's connections
+// 3. changing the array in connectionsByElementId in which the endpoint's connections
+//    are stored (done by either sourceChanged or updateOtherEndpoint)
+//
+this.rehomeEndpoint=function(ep,currentId,element){var eps=_amEndpoints[currentId]||[],elementId=jsPlumbInstance.getId(element);if(elementId!==currentId){var idx=eps.indexOf(ep);if(idx>-1){var _ep=eps.splice(idx,1)[0];self.add(_ep,elementId);}}for(var i=0;i<ep.connections.length;i++){if(ep.connections[i].sourceId==currentId){//ep.connections[i].sourceId = ep.elementId;
+//ep.connections[i].source = ep.element;
+self.sourceChanged(currentId,ep.elementId,ep.connections[i],ep.element);}else if(ep.connections[i].targetId==currentId){ep.connections[i].targetId=ep.elementId;ep.connections[i].target=ep.element;self.updateOtherEndpoint(ep.connections[i].sourceId,currentId,ep.elementId,ep.connections[i]);}}};this.redraw=function(elementId,ui,timestamp,offsetToUI,clearEdits,doNotRecalcEndpoint){if(!jsPlumbInstance.isSuspendDrawing()){// get all the endpoints for this element
+var ep=_amEndpoints[elementId]||[],endpointConnections=connectionsByElementId[elementId]||[],connectionsToPaint=[],endpointsToPaint=[],anchorsToUpdate=[];timestamp=timestamp||jsPlumbInstance.timestamp();// offsetToUI are values that would have been calculated in the dragManager when registering
+// an endpoint for an element that had a parent (somewhere in the hierarchy) that had been
+// registered as draggable.
+offsetToUI=offsetToUI||{left:0,top:0};if(ui){ui={left:ui.left+offsetToUI.left,top:ui.top+offsetToUI.top};}// valid for one paint cycle.
+var myOffset=jsPlumbInstance.updateOffset({elId:elementId,offset:ui,recalc:false,timestamp:timestamp}),orientationCache={};// actually, first we should compute the orientation of this element to all other elements to which
+// this element is connected with a continuous anchor (whether both ends of the connection have
+// a continuous anchor or just one)
+for(var i=0;i<endpointConnections.length;i++){var conn=endpointConnections[i][0],sourceId=conn.sourceId,targetId=conn.targetId,sourceContinuous=conn.endpoints[0].anchor.isContinuous,targetContinuous=conn.endpoints[1].anchor.isContinuous;if(sourceContinuous||targetContinuous){var oKey=sourceId+"_"+targetId,o=orientationCache[oKey],oIdx=conn.sourceId==elementId?1:0;if(sourceContinuous&&!anchorLists[sourceId])anchorLists[sourceId]={top:[],right:[],bottom:[],left:[]};if(targetContinuous&&!anchorLists[targetId])anchorLists[targetId]={top:[],right:[],bottom:[],left:[]};if(elementId!=targetId)jsPlumbInstance.updateOffset({elId:targetId,timestamp:timestamp});if(elementId!=sourceId)jsPlumbInstance.updateOffset({elId:sourceId,timestamp:timestamp});var td=jsPlumbInstance.getCachedData(targetId),sd=jsPlumbInstance.getCachedData(sourceId);if(targetId==sourceId&&(sourceContinuous||targetContinuous)){// here we may want to improve this by somehow determining the face we'd like
+// to put the connector on.  ideally, when drawing, the face should be calculated
+// by determining which face is closest to the point at which the mouse button
+// was released.  for now, we're putting it on the top face.
+_updateAnchorList(anchorLists[sourceId],-Math.PI/2,0,conn,false,targetId,0,false,"top",sourceId,connectionsToPaint,endpointsToPaint);_updateAnchorList(anchorLists[targetId],-Math.PI/2,0,conn,false,sourceId,1,false,"top",targetId,connectionsToPaint,endpointsToPaint);}else{if(!o){o=calculateOrientation(sourceId,targetId,sd.o,td.o,conn.endpoints[0].anchor,conn.endpoints[1].anchor);orientationCache[oKey]=o;// this would be a performance enhancement, but the computed angles need to be clamped to
+//the (-PI/2 -> PI/2) range in order for the sorting to work properly.
+/*  orientationCache[oKey2] = {
+                                 orientation:o.orientation,
+                                 a:[o.a[1], o.a[0]],
+                                 theta:o.theta + Math.PI,
+                                 theta2:o.theta2 + Math.PI
+                                 };*/}if(sourceContinuous)_updateAnchorList(anchorLists[sourceId],o.theta,0,conn,false,targetId,0,false,o.a[0],sourceId,connectionsToPaint,endpointsToPaint);if(targetContinuous)_updateAnchorList(anchorLists[targetId],o.theta2,-1,conn,true,sourceId,1,true,o.a[1],targetId,connectionsToPaint,endpointsToPaint);}if(sourceContinuous)_ju.addWithFunction(anchorsToUpdate,sourceId,function(a){return a===sourceId;});if(targetContinuous)_ju.addWithFunction(anchorsToUpdate,targetId,function(a){return a===targetId;});_ju.addWithFunction(connectionsToPaint,conn,function(c){return c.id==conn.id;});if(sourceContinuous&&oIdx===0||targetContinuous&&oIdx===1)_ju.addWithFunction(endpointsToPaint,conn.endpoints[oIdx],function(e){return e.id==conn.endpoints[oIdx].id;});}}// place Endpoints whose anchors are continuous but have no Connections
+for(i=0;i<ep.length;i++){if(ep[i].connections.length===0&&ep[i].anchor.isContinuous){if(!anchorLists[elementId])anchorLists[elementId]={top:[],right:[],bottom:[],left:[]};_updateAnchorList(anchorLists[elementId],-Math.PI/2,0,{endpoints:[ep[i],ep[i]],paint:function paint(){}},false,elementId,0,false,ep[i].anchor.getDefaultFace(),elementId,connectionsToPaint,endpointsToPaint);_ju.addWithFunction(anchorsToUpdate,elementId,function(a){return a===elementId;});}}// now place all the continuous anchors we need to;
+for(i=0;i<anchorsToUpdate.length;i++){placeAnchors(anchorsToUpdate[i],anchorLists[anchorsToUpdate[i]]);}// now that continuous anchors have been placed, paint all the endpoints for this element
+// TODO performance: add the endpoint ids to a temp array, and then when iterating in the next
+// loop, check that we didn't just paint that endpoint. we can probably shave off a few more milliseconds this way.
+for(i=0;i<ep.length;i++){ep[i].paint({timestamp:timestamp,offset:myOffset,dimensions:myOffset.s,recalc:doNotRecalcEndpoint!==true});}// ... and any other endpoints we came across as a result of the continuous anchors.
+for(i=0;i<endpointsToPaint.length;i++){var cd=jsPlumbInstance.getCachedData(endpointsToPaint[i].elementId);endpointsToPaint[i].paint({timestamp:timestamp,offset:cd,dimensions:cd.s});}// paint all the standard and "dynamic connections", which are connections whose other anchor is
+// static and therefore does need to be recomputed; we make sure that happens only one time.
+// TODO we could have compiled a list of these in the first pass through connections; might save some time.
+for(i=0;i<endpointConnections.length;i++){var otherEndpoint=endpointConnections[i][1];if(otherEndpoint.anchor.constructor==_jp.DynamicAnchor){otherEndpoint.paint({elementWithPrecedence:elementId,timestamp:timestamp});_ju.addWithFunction(connectionsToPaint,endpointConnections[i][0],function(c){return c.id==endpointConnections[i][0].id;});// all the connections for the other endpoint now need to be repainted
+for(var k=0;k<otherEndpoint.connections.length;k++){if(otherEndpoint.connections[k]!==endpointConnections[i][0])_ju.addWithFunction(connectionsToPaint,otherEndpoint.connections[k],function(c){return c.id==otherEndpoint.connections[k].id;});}}else if(otherEndpoint.anchor.constructor==_jp.Anchor){_ju.addWithFunction(connectionsToPaint,endpointConnections[i][0],function(c){return c.id==endpointConnections[i][0].id;});}}// paint current floating connection for this element, if there is one.
+var fc=floatingConnections[elementId];if(fc)fc.paint({timestamp:timestamp,recalc:false,elId:elementId});// paint all the connections
+for(i=0;i<connectionsToPaint.length;i++){connectionsToPaint[i].paint({elId:elementId,timestamp:timestamp,recalc:false,clearEdits:clearEdits});}}};var ContinuousAnchor=function ContinuousAnchor(anchorParams){_ju.EventGenerator.apply(this);this.type="Continuous";this.isDynamic=true;this.isContinuous=true;var faces=anchorParams.faces||["top","right","bottom","left"],clockwise=!(anchorParams.clockwise===false),availableFaces={},opposites={"top":"bottom","right":"left","left":"right","bottom":"top"},clockwiseOptions={"top":"right","right":"bottom","left":"top","bottom":"left"},antiClockwiseOptions={"top":"left","right":"top","left":"bottom","bottom":"right"},secondBest=clockwise?clockwiseOptions:antiClockwiseOptions,lastChoice=clockwise?antiClockwiseOptions:clockwiseOptions,cssClass=anchorParams.cssClass||"";for(var i=0;i<faces.length;i++){availableFaces[faces[i]]=true;}this.getDefaultFace=function(){return faces.length===0?"top":faces[0];};// if the given edge is supported, returns it. otherwise looks for a substitute that _is_
+// supported. if none supported we also return the request edge.
+this.verifyEdge=function(edge){if(availableFaces[edge])return edge;else if(availableFaces[opposites[edge]])return opposites[edge];else if(availableFaces[secondBest[edge]])return secondBest[edge];else if(availableFaces[lastChoice[edge]])return lastChoice[edge];return edge;// we have to give them something.
+};this.isEdgeSupported=function(edge){return availableFaces[edge]===true;};this.compute=function(params){return userDefinedContinuousAnchorLocations[params.element.id]||continuousAnchorLocations[params.element.id]||[0,0];};this.getCurrentLocation=function(params){return userDefinedContinuousAnchorLocations[params.element.id]||continuousAnchorLocations[params.element.id]||[0,0];};this.getOrientation=function(endpoint){return continuousAnchorOrientations[endpoint.id]||[0,0];};this.clearUserDefinedLocation=function(){delete userDefinedContinuousAnchorLocations[anchorParams.elementId];};this.setUserDefinedLocation=function(loc){userDefinedContinuousAnchorLocations[anchorParams.elementId]=loc;};this.getCssClass=function(){return cssClass;};};// continuous anchors
+jsPlumbInstance.continuousAnchorFactory={get:function get$$1(params){return new ContinuousAnchor(params);},clear:function clear(elementId){delete userDefinedContinuousAnchorLocations[elementId];delete continuousAnchorLocations[elementId];}};};/**
+     * Anchors model a position on some element at which an Endpoint may be located.  They began as a first class citizen of jsPlumb, ie. a user
+     * was required to create these themselves, but over time this has been replaced by the concept of referring to them either by name (eg. "TopMiddle"),
+     * or by an array describing their coordinates (eg. [ 0, 0.5, 0, -1 ], which is the same as "TopMiddle").  jsPlumb now handles all of the
+     * creation of Anchors without user intervention.
+     */_jp.Anchor=function(params){this.x=params.x||0;this.y=params.y||0;this.elementId=params.elementId;this.cssClass=params.cssClass||"";this.userDefinedLocation=null;this.orientation=params.orientation||[0,0];this.lastReturnValue=null;this.offsets=params.offsets||[0,0];this.timestamp=null;_ju.EventGenerator.apply(this);this.compute=function(params){var xy=params.xy,wh=params.wh,timestamp=params.timestamp;if(params.clearUserDefinedLocation)this.userDefinedLocation=null;if(timestamp&&timestamp===this.timestamp)return this.lastReturnValue;if(this.userDefinedLocation!=null){this.lastReturnValue=this.userDefinedLocation;}else{this.lastReturnValue=[xy[0]+this.x*wh[0]+this.offsets[0],xy[1]+this.y*wh[1]+this.offsets[1]];}this.timestamp=timestamp;return this.lastReturnValue;};this.getCurrentLocation=function(params){params=params||{};return this.lastReturnValue==null||params.timestamp!=null&&this.timestamp!=params.timestamp?this.compute(params):this.lastReturnValue;};};_ju.extend(_jp.Anchor,_ju.EventGenerator,{equals:function equals(anchor){if(!anchor)return false;var ao=anchor.getOrientation(),o=this.getOrientation();return this.x==anchor.x&&this.y==anchor.y&&this.offsets[0]==anchor.offsets[0]&&this.offsets[1]==anchor.offsets[1]&&o[0]==ao[0]&&o[1]==ao[1];},getUserDefinedLocation:function getUserDefinedLocation(){return this.userDefinedLocation;},setUserDefinedLocation:function setUserDefinedLocation(l){this.userDefinedLocation=l;},clearUserDefinedLocation:function clearUserDefinedLocation(){this.userDefinedLocation=null;},getOrientation:function getOrientation(){return this.orientation;},getCssClass:function getCssClass(){return this.cssClass;}});/**
+     * An Anchor that floats. its orientation is computed dynamically from
+     * its position relative to the anchor it is floating relative to.  It is used when creating
+     * a connection through drag and drop.
+     *
+     * TODO FloatingAnchor could totally be refactored to extend Anchor just slightly.
+     */_jp.FloatingAnchor=function(params){_jp.Anchor.apply(this,arguments);// this is the anchor that this floating anchor is referenced to for
+// purposes of calculating the orientation.
+var ref=params.reference,// the canvas this refers to.
+refCanvas=params.referenceCanvas,size=_jp.getSize(refCanvas),// these are used to store the current relative position of our
+// anchor wrt the reference anchor. they only indicate
+// direction, so have a value of 1 or -1 (or, very rarely, 0). these
+// values are written by the compute method, and read
+// by the getOrientation method.
+xDir=0,yDir=0,// temporary member used to store an orientation when the floating
+// anchor is hovering over another anchor.
+orientation=null,_lastResult=null;// clear from parent. we want floating anchor orientation to always be computed.
+this.orientation=null;// set these to 0 each; they are used by certain types of connectors in the loopback case,
+// when the connector is trying to clear the element it is on. but for floating anchor it's not
+// very important.
+this.x=0;this.y=0;this.isFloating=true;this.compute=function(params){var xy=params.xy,result=[xy[0]+size[0]/2,xy[1]+size[1]/2];// return origin of the element. we may wish to improve this so that any object can be the drag proxy.
+_lastResult=result;return result;};this.getOrientation=function(_endpoint){if(orientation)return orientation;else{var o=ref.getOrientation(_endpoint);// here we take into account the orientation of the other
+// anchor: if it declares zero for some direction, we declare zero too. this might not be the most awesome. perhaps we can come
+// up with a better way. it's just so that the line we draw looks like it makes sense. maybe this wont make sense.
+return[Math.abs(o[0])*xDir*-1,Math.abs(o[1])*yDir*-1];}};/**
+         * notification the endpoint associated with this anchor is hovering
+         * over another anchor; we want to assume that anchor's orientation
+         * for the duration of the hover.
+         */this.over=function(anchor,endpoint){orientation=anchor.getOrientation(endpoint);};/**
+         * notification the endpoint associated with this anchor is no
+         * longer hovering over another anchor; we should resume calculating
+         * orientation as we normally do.
+         */this.out=function(){orientation=null;};this.getCurrentLocation=function(params){return _lastResult==null?this.compute(params):_lastResult;};};_ju.extend(_jp.FloatingAnchor,_jp.Anchor);var _convertAnchor=function _convertAnchor(anchor,jsPlumbInstance,elementId){return anchor.constructor==_jp.Anchor?anchor:jsPlumbInstance.makeAnchor(anchor,elementId,jsPlumbInstance);};/* 
+     * A DynamicAnchor is an Anchor that contains a list of other Anchors, which it cycles
+     * through at compute time to find the one that is located closest to
+     * the center of the target element, and returns that Anchor's compute
+     * method result. this causes endpoints to follow each other with
+     * respect to the orientation of their target elements, which is a useful
+     * feature for some applications.
+     * 
+     */_jp.DynamicAnchor=function(params){_jp.Anchor.apply(this,arguments);this.isDynamic=true;this.anchors=[];this.elementId=params.elementId;this.jsPlumbInstance=params.jsPlumbInstance;for(var i=0;i<params.anchors.length;i++){this.anchors[i]=_convertAnchor(params.anchors[i],this.jsPlumbInstance,this.elementId);}this.getAnchors=function(){return this.anchors;};this.locked=false;var _curAnchor=this.anchors.length>0?this.anchors[0]:null,_lastAnchor=_curAnchor,self=this,// helper method to calculate the distance between the centers of the two elements.
+_distance=function _distance(anchor,cx,cy,xy,wh){var ax=xy[0]+anchor.x*wh[0],ay=xy[1]+anchor.y*wh[1],acx=xy[0]+wh[0]/2,acy=xy[1]+wh[1]/2;return Math.sqrt(Math.pow(cx-ax,2)+Math.pow(cy-ay,2))+Math.sqrt(Math.pow(acx-ax,2)+Math.pow(acy-ay,2));},// default method uses distance between element centers.  you can provide your own method in the dynamic anchor
+// constructor (and also to jsPlumb.makeDynamicAnchor). the arguments to it are four arrays:
+// xy - xy loc of the anchor's element
+// wh - anchor's element's dimensions
+// txy - xy loc of the element of the other anchor in the connection
+// twh - dimensions of the element of the other anchor in the connection.
+// anchors - the list of selectable anchors
+_anchorSelector=params.selector||function(xy,wh,txy,twh,anchors){var cx=txy[0]+twh[0]/2,cy=txy[1]+twh[1]/2;var minIdx=-1,minDist=Infinity;for(var i=0;i<anchors.length;i++){var d=_distance(anchors[i],cx,cy,xy,wh);if(d<minDist){minIdx=i+0;minDist=d;}}return anchors[minIdx];};this.compute=function(params){var xy=params.xy,wh=params.wh,txy=params.txy,twh=params.twh;this.timestamp=params.timestamp;var udl=self.getUserDefinedLocation();if(udl!=null){return udl;}// if anchor is locked or an opposite element was not given, we
+// maintain our state. anchor will be locked
+// if it is the source of a drag and drop.
+if(this.locked||txy==null||twh==null)return _curAnchor.compute(params);else params.timestamp=null;// otherwise clear this, i think. we want the anchor to compute.
+_curAnchor=_anchorSelector(xy,wh,txy,twh,this.anchors);this.x=_curAnchor.x;this.y=_curAnchor.y;if(_curAnchor!=_lastAnchor)this.fire("anchorChanged",_curAnchor);_lastAnchor=_curAnchor;return _curAnchor.compute(params);};this.getCurrentLocation=function(params){return this.getUserDefinedLocation()||(_curAnchor!=null?_curAnchor.getCurrentLocation(params):null);};this.getOrientation=function(_endpoint){return _curAnchor!=null?_curAnchor.getOrientation(_endpoint):[0,0];};this.over=function(anchor,endpoint){if(_curAnchor!=null)_curAnchor.over(anchor,endpoint);};this.out=function(){if(_curAnchor!=null)_curAnchor.out();};this.getCssClass=function(){return _curAnchor&&_curAnchor.getCssClass()||"";};};_ju.extend(_jp.DynamicAnchor,_jp.Anchor);// -------- basic anchors ------------------    
+var _curryAnchor=function _curryAnchor(x,y,ox,oy,type,fnInit){_jp.Anchors[type]=function(params){var a=params.jsPlumbInstance.makeAnchor([x,y,ox,oy,0,0],params.elementId,params.jsPlumbInstance);a.type=type;if(fnInit)fnInit(a,params);return a;};};_curryAnchor(0.5,0,0,-1,"TopCenter");_curryAnchor(0.5,1,0,1,"BottomCenter");_curryAnchor(0,0.5,-1,0,"LeftMiddle");_curryAnchor(1,0.5,1,0,"RightMiddle");_curryAnchor(0.5,0,0,-1,"Top");_curryAnchor(0.5,1,0,1,"Bottom");_curryAnchor(0,0.5,-1,0,"Left");_curryAnchor(1,0.5,1,0,"Right");_curryAnchor(0.5,0.5,0,0,"Center");_curryAnchor(1,0,0,-1,"TopRight");_curryAnchor(1,1,0,1,"BottomRight");_curryAnchor(0,0,0,-1,"TopLeft");_curryAnchor(0,1,0,1,"BottomLeft");// ------- dynamic anchors -------------------    
+// default dynamic anchors chooses from Top, Right, Bottom, Left
+_jp.Defaults.DynamicAnchors=function(params){return params.jsPlumbInstance.makeAnchors(["TopCenter","RightMiddle","BottomCenter","LeftMiddle"],params.elementId,params.jsPlumbInstance);};// default dynamic anchors bound to name 'AutoDefault'
+_jp.Anchors.AutoDefault=function(params){var a=params.jsPlumbInstance.makeDynamicAnchor(_jp.Defaults.DynamicAnchors(params));a.type="AutoDefault";return a;};// ------- continuous anchors -------------------    
+var _curryContinuousAnchor=function _curryContinuousAnchor(type,faces){_jp.Anchors[type]=function(params){var a=params.jsPlumbInstance.makeAnchor(["Continuous",{faces:faces}],params.elementId,params.jsPlumbInstance);a.type=type;return a;};};_jp.Anchors.Continuous=function(params){return params.jsPlumbInstance.continuousAnchorFactory.get(params);};_curryContinuousAnchor("ContinuousLeft",["left"]);_curryContinuousAnchor("ContinuousTop",["top"]);_curryContinuousAnchor("ContinuousBottom",["bottom"]);_curryContinuousAnchor("ContinuousRight",["right"]);// ------- position assign anchors -------------------    
+// this anchor type lets you assign the position at connection time.
+_curryAnchor(0,0,0,0,"Assign",function(anchor,params){// find what to use as the "position finder". the user may have supplied a String which represents
+// the id of a position finder in jsPlumb.AnchorPositionFinders, or the user may have supplied the
+// position finder as a function.  we find out what to use and then set it on the anchor.
+var pf=params.position||"Fixed";anchor.positionFinder=pf.constructor==String?params.jsPlumbInstance.AnchorPositionFinders[pf]:pf;// always set the constructor params; the position finder might need them later (the Grid one does,
+// for example)
+anchor.constructorParams=params;});// these are the default anchor positions finders, which are used by the makeTarget function.  supplying
+// a position finder argument to that function allows you to specify where the resulting anchor will
+// be located
+root.jsPlumbInstance.prototype.AnchorPositionFinders={"Fixed":function Fixed(dp,ep,es){return[(dp.left-ep.left)/es[0],(dp.top-ep.top)/es[1]];},"Grid":function Grid(dp,ep,es,params){var dx=dp.left-ep.left,dy=dp.top-ep.top,gx=es[0]/params.grid[0],gy=es[1]/params.grid[1],mx=Math.floor(dx/gx),my=Math.floor(dy/gy);return[(mx*gx+gx/2)/es[0],(my*gy+gy/2)/es[1]];}};// ------- perimeter anchors -------------------    
+_jp.Anchors.Perimeter=function(params){params=params||{};var anchorCount=params.anchorCount||60,shape=params.shape;if(!shape)throw new Error("no shape supplied to Perimeter Anchor type");var _circle=function _circle(){var r=0.5,step=Math.PI*2/anchorCount,current=0,a=[];for(var i=0;i<anchorCount;i++){var x=r+r*Math.sin(current),y=r+r*Math.cos(current);a.push([x,y,0,0]);current+=step;}return a;},_path=function _path(segments){var anchorsPerFace=anchorCount/segments.length,a=[],_computeFace=function _computeFace(x1,y1,x2,y2,fractionalLength){anchorsPerFace=anchorCount*fractionalLength;var dx=(x2-x1)/anchorsPerFace,dy=(y2-y1)/anchorsPerFace;for(var i=0;i<anchorsPerFace;i++){a.push([x1+dx*i,y1+dy*i,0,0]);}};for(var i=0;i<segments.length;i++){_computeFace.apply(null,segments[i]);}return a;},_shape=function _shape(faces){var s=[];for(var i=0;i<faces.length;i++){s.push([faces[i][0],faces[i][1],faces[i][2],faces[i][3],1/faces.length]);}return _path(s);},_rectangle=function _rectangle(){return _shape([[0,0,1,0],[1,0,1,1],[1,1,0,1],[0,1,0,0]]);};var _shapes={"Circle":_circle,"Ellipse":_circle,"Diamond":function Diamond(){return _shape([[0.5,0,1,0.5],[1,0.5,0.5,1],[0.5,1,0,0.5],[0,0.5,0.5,0]]);},"Rectangle":_rectangle,"Square":_rectangle,"Triangle":function Triangle(){return _shape([[0.5,0,1,1],[1,1,0,1],[0,1,0.5,0]]);},"Path":function Path(params){var points=params.points,p=[],tl=0;for(var i=0;i<points.length-1;i++){var l=Math.sqrt(Math.pow(points[i][2]-points[i][0])+Math.pow(points[i][3]-points[i][1]));tl+=l;p.push([points[i][0],points[i][1],points[i+1][0],points[i+1][1],l]);}for(var j=0;j<p.length;j++){p[j][4]=p[j][4]/tl;}return _path(p);}},_rotate=function _rotate(points,amountInDegrees){var o=[],theta=amountInDegrees/180*Math.PI;for(var i=0;i<points.length;i++){var _x=points[i][0]-0.5,_y=points[i][1]-0.5;o.push([0.5+(_x*Math.cos(theta)-_y*Math.sin(theta)),0.5+(_x*Math.sin(theta)+_y*Math.cos(theta)),points[i][2],points[i][3]]);}return o;};if(!_shapes[shape])throw new Error("Shape ["+shape+"] is unknown by Perimeter Anchor type");var da=_shapes[shape](params);if(params.rotation)da=_rotate(da,params.rotation);var a=params.jsPlumbInstance.makeDynamicAnchor(da);a.type="Perimeter";return a;};}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ * 
+ * Title:jsPlumb 2.3.0
+ * 
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ * 
+ * This file contains the default Connectors, Endpoint and Overlay definitions.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ * 
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil,_jg=root.Biltong;_jp.Segments={/*
+         * Class: AbstractSegment
+         * A Connector is made up of 1..N Segments, each of which has a Type, such as 'Straight', 'Arc',
+         * 'Bezier'. This is new from 1.4.2, and gives us a lot more flexibility when drawing connections: things such
+         * as rounded corners for flowchart connectors, for example, or a straight line stub for Bezier connections, are
+         * much easier to do now.
+         *
+         * A Segment is responsible for providing coordinates for painting it, and also must be able to report its length.
+         * 
+         */AbstractSegment:function AbstractSegment(params){this.params=params;/**
+             * Function: findClosestPointOnPath
+             * Finds the closest point on this segment to the given [x, y],
+             * returning both the x and y of the point plus its distance from
+             * the supplied point, and its location along the length of the
+             * path inscribed by the segment.  This implementation returns
+             * Infinity for distance and null values for everything else;
+             * subclasses are expected to override.
+             */this.findClosestPointOnPath=function(x,y){return{d:Infinity,x:null,y:null,l:null};};this.getBounds=function(){return{minX:Math.min(params.x1,params.x2),minY:Math.min(params.y1,params.y2),maxX:Math.max(params.x1,params.x2),maxY:Math.max(params.y1,params.y2)};};},Straight:function Straight(params){var _super=_jp.Segments.AbstractSegment.apply(this,arguments),length,m,m2,x1,x2,y1,y2,_recalc=function _recalc(){length=Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2));m=_jg.gradient({x:x1,y:y1},{x:x2,y:y2});m2=-1/m;};this.type="Straight";this.getLength=function(){return length;};this.getGradient=function(){return m;};this.getCoordinates=function(){return{x1:x1,y1:y1,x2:x2,y2:y2};};this.setCoordinates=function(coords){x1=coords.x1;y1=coords.y1;x2=coords.x2;y2=coords.y2;_recalc();};this.setCoordinates({x1:params.x1,y1:params.y1,x2:params.x2,y2:params.y2});this.getBounds=function(){return{minX:Math.min(x1,x2),minY:Math.min(y1,y2),maxX:Math.max(x1,x2),maxY:Math.max(y1,y2)};};/**
+             * returns the point on the segment's path that is 'location' along the length of the path, where 'location' is a decimal from
+             * 0 to 1 inclusive. for the straight line segment this is simple maths.
+             */this.pointOnPath=function(location,absolute){if(location===0&&!absolute)return{x:x1,y:y1};else if(location==1&&!absolute)return{x:x2,y:y2};else{var l=absolute?location>0?location:length+location:location*length;return _jg.pointOnLine({x:x1,y:y1},{x:x2,y:y2},l);}};/**
+             * returns the gradient of the segment at the given point - which for us is constant.
+             */this.gradientAtPoint=function(_){return m;};/**
+             * returns the point on the segment's path that is 'distance' along the length of the path from 'location', where
+             * 'location' is a decimal from 0 to 1 inclusive, and 'distance' is a number of pixels.
+             * this hands off to jsPlumbUtil to do the maths, supplying two points and the distance.
+             */this.pointAlongPathFrom=function(location,distance,absolute){var p=this.pointOnPath(location,absolute),farAwayPoint=distance<=0?{x:x1,y:y1}:{x:x2,y:y2};/*
+                 location == 1 ? {
+                 x:x1 + ((x2 - x1) * 10),
+                 y:y1 + ((y1 - y2) * 10)
+                 } :
+                 */if(distance<=0&&Math.abs(distance)>1)distance*=-1;return _jg.pointOnLine(p,farAwayPoint,distance);};// is c between a and b?
+var within=function within(a,b,c){return c>=Math.min(a,b)&&c<=Math.max(a,b);};// find which of a and b is closest to c
+var closest=function closest(a,b,c){return Math.abs(c-a)<Math.abs(c-b)?a:b;};/**
+             Function: findClosestPointOnPath
+             Finds the closest point on this segment to [x,y]. See
+             notes on this method in AbstractSegment.
+             */this.findClosestPointOnPath=function(x,y){var out={d:Infinity,x:null,y:null,l:null,x1:x1,x2:x2,y1:y1,y2:y2};if(m===0){out.y=y1;out.x=within(x1,x2,x)?x:closest(x1,x2,x);}else if(m==Infinity||m==-Infinity){out.x=x1;out.y=within(y1,y2,y)?y:closest(y1,y2,y);}else{// closest point lies on normal from given point to this line.  
+var b=y1-m*x1,b2=y-m2*x,// y1 = m.x1 + b and y1 = m2.x1 + b2
+// so m.x1 + b = m2.x1 + b2
+// x1(m - m2) = b2 - b
+// x1 = (b2 - b) / (m - m2)
+_x1=(b2-b)/(m-m2),_y1=m*_x1+b;out.x=within(x1,x2,_x1)?_x1:closest(x1,x2,_x1);//_x1;
+out.y=within(y1,y2,_y1)?_y1:closest(y1,y2,_y1);//_y1;
+}var fractionInSegment=_jg.lineLength([out.x,out.y],[x1,y1]);out.d=_jg.lineLength([x,y],[out.x,out.y]);out.l=fractionInSegment/length;return out;};},/*
+         Arc Segment. You need to supply:
+
+         r   -   radius
+         cx  -   center x for the arc
+         cy  -   center y for the arc
+         ac  -   whether the arc is anticlockwise or not. default is clockwise.
+
+         and then either:
+
+         startAngle  -   startAngle for the arc.
+         endAngle    -   endAngle for the arc.
+
+         or:
+
+         x1          -   x for start point
+         y1          -   y for start point
+         x2          -   x for end point
+         y2          -   y for end point
+
+         */Arc:function Arc(params){var _super=_jp.Segments.AbstractSegment.apply(this,arguments),_calcAngle=function _calcAngle(_x,_y){return _jg.theta([params.cx,params.cy],[_x,_y]);},_calcAngleForLocation=function _calcAngleForLocation(segment,location){if(segment.anticlockwise){var sa=segment.startAngle<segment.endAngle?segment.startAngle+TWO_PI:segment.startAngle,s=Math.abs(sa-segment.endAngle);return sa-s*location;}else{var ea=segment.endAngle<segment.startAngle?segment.endAngle+TWO_PI:segment.endAngle,ss=Math.abs(ea-segment.startAngle);return segment.startAngle+ss*location;}},TWO_PI=2*Math.PI;this.radius=params.r;this.anticlockwise=params.ac;this.type="Arc";if(params.startAngle&&params.endAngle){this.startAngle=params.startAngle;this.endAngle=params.endAngle;this.x1=params.cx+this.radius*Math.cos(params.startAngle);this.y1=params.cy+this.radius*Math.sin(params.startAngle);this.x2=params.cx+this.radius*Math.cos(params.endAngle);this.y2=params.cy+this.radius*Math.sin(params.endAngle);}else{this.startAngle=_calcAngle(params.x1,params.y1);this.endAngle=_calcAngle(params.x2,params.y2);this.x1=params.x1;this.y1=params.y1;this.x2=params.x2;this.y2=params.y2;}if(this.endAngle<0)this.endAngle+=TWO_PI;if(this.startAngle<0)this.startAngle+=TWO_PI;// segment is used by vml     
+//this.segment = _jg.quadrant([this.x1, this.y1], [this.x2, this.y2]);
+// we now have startAngle and endAngle as positive numbers, meaning the
+// absolute difference (|d|) between them is the sweep (s) of this arc, unless the
+// arc is 'anticlockwise' in which case 's' is given by 2PI - |d|.
+var ea=this.endAngle<this.startAngle?this.endAngle+TWO_PI:this.endAngle;this.sweep=Math.abs(ea-this.startAngle);if(this.anticlockwise)this.sweep=TWO_PI-this.sweep;var circumference=2*Math.PI*this.radius,frac=this.sweep/TWO_PI,length=circumference*frac;this.getLength=function(){return length;};this.getBounds=function(){return{minX:params.cx-params.r,maxX:params.cx+params.r,minY:params.cy-params.r,maxY:params.cy+params.r};};var VERY_SMALL_VALUE=0.0000000001,gentleRound=function gentleRound(n){var f=Math.floor(n),r=Math.ceil(n);if(n-f<VERY_SMALL_VALUE)return f;else if(r-n<VERY_SMALL_VALUE)return r;return n;};/**
+             * returns the point on the segment's path that is 'location' along the length of the path, where 'location' is a decimal from
+             * 0 to 1 inclusive.
+             */this.pointOnPath=function(location,absolute){if(location===0){return{x:this.x1,y:this.y1,theta:this.startAngle};}else if(location==1){return{x:this.x2,y:this.y2,theta:this.endAngle};}if(absolute){location=location/length;}var angle=_calcAngleForLocation(this,location),_x=params.cx+params.r*Math.cos(angle),_y=params.cy+params.r*Math.sin(angle);return{x:gentleRound(_x),y:gentleRound(_y),theta:angle};};/**
+             * returns the gradient of the segment at the given point.
+             */this.gradientAtPoint=function(location,absolute){var p=this.pointOnPath(location,absolute);var m=_jg.normal([params.cx,params.cy],[p.x,p.y]);if(!this.anticlockwise&&(m==Infinity||m==-Infinity))m*=-1;return m;};this.pointAlongPathFrom=function(location,distance,absolute){var p=this.pointOnPath(location,absolute),arcSpan=distance/circumference*2*Math.PI,dir=this.anticlockwise?-1:1,startAngle=p.theta+dir*arcSpan,startX=params.cx+this.radius*Math.cos(startAngle),startY=params.cy+this.radius*Math.sin(startAngle);return{x:startX,y:startY};};},Bezier:function Bezier(params){this.curve=[{x:params.x1,y:params.y1},{x:params.cp1x,y:params.cp1y},{x:params.cp2x,y:params.cp2y},{x:params.x2,y:params.y2}];var _super=_jp.Segments.AbstractSegment.apply(this,arguments);// although this is not a strictly rigorous determination of bounds
+// of a bezier curve, it works for the types of curves that this segment
+// type produces.
+this.bounds={minX:Math.min(params.x1,params.x2,params.cp1x,params.cp2x),minY:Math.min(params.y1,params.y2,params.cp1y,params.cp2y),maxX:Math.max(params.x1,params.x2,params.cp1x,params.cp2x),maxY:Math.max(params.y1,params.y2,params.cp1y,params.cp2y)};this.type="Bezier";var _translateLocation=function _translateLocation(_curve,location,absolute){if(absolute)location=root.jsBezier.locationAlongCurveFrom(_curve,location>0?0:1,location);return location;};/**
+             * returns the point on the segment's path that is 'location' along the length of the path, where 'location' is a decimal from
+             * 0 to 1 inclusive.
+             */this.pointOnPath=function(location,absolute){location=_translateLocation(this.curve,location,absolute);return root.jsBezier.pointOnCurve(this.curve,location);};/**
+             * returns the gradient of the segment at the given point.
+             */this.gradientAtPoint=function(location,absolute){location=_translateLocation(this.curve,location,absolute);return root.jsBezier.gradientAtPoint(this.curve,location);};this.pointAlongPathFrom=function(location,distance,absolute){location=_translateLocation(this.curve,location,absolute);return root.jsBezier.pointAlongCurveFrom(this.curve,location,distance);};this.getLength=function(){return root.jsBezier.getLength(this.curve);};this.getBounds=function(){return this.bounds;};}};_jp.SegmentRenderer={getPath:function getPath(segment){return{"Straight":function Straight(){var d=segment.getCoordinates();return"M "+d.x1+" "+d.y1+" L "+d.x2+" "+d.y2;},"Bezier":function Bezier(){var d=segment.params;return"M "+d.x1+" "+d.y1+" C "+d.cp1x+" "+d.cp1y+" "+d.cp2x+" "+d.cp2y+" "+d.x2+" "+d.y2;},"Arc":function Arc(){var d=segment.params,laf=segment.sweep>Math.PI?1:0,sf=segment.anticlockwise?0:1;return"M"+segment.x1+" "+segment.y1+" A "+segment.radius+" "+d.r+" 0 "+laf+","+sf+" "+segment.x2+" "+segment.y2;}}[segment.type]();}};/*
+     Class: AbstractComponent
+     Superclass for AbstractConnector and AbstractEndpoint.
+     */var AbstractComponent=function AbstractComponent(){this.resetBounds=function(){this.bounds={minX:Infinity,minY:Infinity,maxX:-Infinity,maxY:-Infinity};};this.resetBounds();};/*
+     * Class: AbstractConnector
+     * Superclass for all Connectors; here is where Segments are managed.  This is exposed on jsPlumb just so it
+     * can be accessed from other files. You should not try to instantiate one of these directly.
+     *
+     * When this class is asked for a pointOnPath, or gradient etc, it must first figure out which segment to dispatch
+     * that request to. This is done by keeping track of the total connector length as segments are added, and also
+     * their cumulative ratios to the total length.  Then when the right segment is found it is a simple case of dispatching
+     * the request to it (and adjusting 'location' so that it is relative to the beginning of that segment.)
+     */_jp.Connectors.AbstractConnector=function(params){AbstractComponent.apply(this,arguments);var segments=[],totalLength=0,segmentProportions=[],segmentProportionalLengths=[],stub=params.stub||0,sourceStub=_ju.isArray(stub)?stub[0]:stub,targetStub=_ju.isArray(stub)?stub[1]:stub,gap=params.gap||0,sourceGap=_ju.isArray(gap)?gap[0]:gap,targetGap=_ju.isArray(gap)?gap[1]:gap,userProvidedSegments=null,edited=false,paintInfo=null,geometry=null,editable=params.editable!==false&&_jp.ConnectorEditors!=null&&_jp.ConnectorEditors[this.type]!=null;var _setGeometry=this.setGeometry=function(g,internallyComputed){edited=!internallyComputed;geometry=g;};var _getGeometry=this.getGeometry=function(){return geometry;};this.getPathData=function(){var p="";for(var i=0;i<segments.length;i++){p+=_jp.SegmentRenderer.getPath(segments[i]);p+=" ";}return p;};this.hasBeenEdited=function(){return edited;};this.isEditing=function(){return this.editor!=null&&this.editor.isActive();};this.setEditable=function(e){// if this connector has an editor already, or
+// if an editor for this connector's type is available, or
+// if the child declares an overrideSetEditable and it does not return false, editable is true.
+if(e&&_jp.ConnectorEditors!=null&&_jp.ConnectorEditors[this.type]!=null&&(this.overrideSetEditable==null||this.overrideSetEditable())){editable=e;}else{editable=false;}return editable;};this.isEditable=function(){return editable;};/**
+         * Function: findSegmentForPoint
+         * Returns the segment that is closest to the given [x,y],
+         * null if nothing found.  This function returns a JS
+         * object with:
+         *
+         *   d   -   distance from segment
+         *   l   -   proportional location in segment
+         *   x   -   x point on the segment
+         *   y   -   y point on the segment
+         *   s   -   the segment itself.
+         */this.findSegmentForPoint=function(x,y){var out={d:Infinity,s:null,x:null,y:null,l:null};for(var i=0;i<segments.length;i++){var _s=segments[i].findClosestPointOnPath(x,y);if(_s.d<out.d){out.d=_s.d;out.l=_s.l;out.x=_s.x;out.y=_s.y;out.s=segments[i];out.x1=_s.x1;out.x2=_s.x2;out.y1=_s.y1;out.y2=_s.y2;out.index=i;}}return out;};var _updateSegmentProportions=function _updateSegmentProportions(){var curLoc=0;for(var i=0;i<segments.length;i++){var sl=segments[i].getLength();segmentProportionalLengths[i]=sl/totalLength;segmentProportions[i]=[curLoc,curLoc+=sl/totalLength];}},/**
+             * returns [segment, proportion of travel in segment, segment index] for the segment
+             * that contains the point which is 'location' distance along the entire path, where
+             * 'location' is a decimal between 0 and 1 inclusive. in this connector type, paths
+             * are made up of a list of segments, each of which contributes some fraction to
+             * the total length.
+             * From 1.3.10 this also supports the 'absolute' property, which lets us specify a location
+             * as the absolute distance in pixels, rather than a proportion of the total path.
+             */_findSegmentForLocation=function _findSegmentForLocation(location,absolute){if(absolute){location=location>0?location/totalLength:(totalLength+location)/totalLength;}var idx=segmentProportions.length-1,inSegmentProportion=1;for(var i=0;i<segmentProportions.length;i++){if(segmentProportions[i][1]>=location){idx=i;// todo is this correct for all connector path types?
+inSegmentProportion=location==1?1:location===0?0:(location-segmentProportions[i][0])/segmentProportionalLengths[i];break;}}return{segment:segments[idx],proportion:inSegmentProportion,index:idx};},_addSegment=function _addSegment(conn,type,params){if(params.x1==params.x2&&params.y1==params.y2)return;var s=new _jp.Segments[type](params);segments.push(s);totalLength+=s.getLength();conn.updateBounds(s);},_clearSegments=function _clearSegments(){totalLength=segments.length=segmentProportions.length=segmentProportionalLengths.length=0;};this.setSegments=function(_segs){userProvidedSegments=[];totalLength=0;for(var i=0;i<_segs.length;i++){userProvidedSegments.push(_segs[i]);totalLength+=_segs[i].getLength();}};this.getLength=function(){return totalLength;};var _prepareCompute=function _prepareCompute(params){this.strokeWidth=params.strokeWidth;var segment=_jg.quadrant(params.sourcePos,params.targetPos),swapX=params.targetPos[0]<params.sourcePos[0],swapY=params.targetPos[1]<params.sourcePos[1],lw=params.strokeWidth||1,so=params.sourceEndpoint.anchor.getOrientation(params.sourceEndpoint),to=params.targetEndpoint.anchor.getOrientation(params.targetEndpoint),x=swapX?params.targetPos[0]:params.sourcePos[0],y=swapY?params.targetPos[1]:params.sourcePos[1],w=Math.abs(params.targetPos[0]-params.sourcePos[0]),h=Math.abs(params.targetPos[1]-params.sourcePos[1]);// if either anchor does not have an orientation set, we derive one from their relative
+// positions.  we fix the axis to be the one in which the two elements are further apart, and
+// point each anchor at the other element.  this is also used when dragging a new connection.
+if(so[0]===0&&so[1]===0||to[0]===0&&to[1]===0){var index=w>h?0:1,oIndex=[1,0][index];so=[];to=[];so[index]=params.sourcePos[index]>params.targetPos[index]?-1:1;to[index]=params.sourcePos[index]>params.targetPos[index]?1:-1;so[oIndex]=0;to[oIndex]=0;}var sx=swapX?w+sourceGap*so[0]:sourceGap*so[0],sy=swapY?h+sourceGap*so[1]:sourceGap*so[1],tx=swapX?targetGap*to[0]:w+targetGap*to[0],ty=swapY?targetGap*to[1]:h+targetGap*to[1],oProduct=so[0]*to[0]+so[1]*to[1];var result={sx:sx,sy:sy,tx:tx,ty:ty,lw:lw,xSpan:Math.abs(tx-sx),ySpan:Math.abs(ty-sy),mx:(sx+tx)/2,my:(sy+ty)/2,so:so,to:to,x:x,y:y,w:w,h:h,segment:segment,startStubX:sx+so[0]*sourceStub,startStubY:sy+so[1]*sourceStub,endStubX:tx+to[0]*targetStub,endStubY:ty+to[1]*targetStub,isXGreaterThanStubTimes2:Math.abs(sx-tx)>sourceStub+targetStub,isYGreaterThanStubTimes2:Math.abs(sy-ty)>sourceStub+targetStub,opposite:oProduct==-1,perpendicular:oProduct===0,orthogonal:oProduct==1,sourceAxis:so[0]===0?"y":"x",points:[x,y,w,h,sx,sy,tx,ty]};result.anchorOrientation=result.opposite?"opposite":result.orthogonal?"orthogonal":"perpendicular";return result;};this.getSegments=function(){return segments;};this.updateBounds=function(segment){var segBounds=segment.getBounds();this.bounds.minX=Math.min(this.bounds.minX,segBounds.minX);this.bounds.maxX=Math.max(this.bounds.maxX,segBounds.maxX);this.bounds.minY=Math.min(this.bounds.minY,segBounds.minY);this.bounds.maxY=Math.max(this.bounds.maxY,segBounds.maxY);};var dumpSegmentsToConsole=function dumpSegmentsToConsole(){console.log("SEGMENTS:");for(var i=0;i<segments.length;i++){console.log(segments[i].type,segments[i].getLength(),segmentProportions[i]);}};this.pointOnPath=function(location,absolute){var seg=_findSegmentForLocation(location,absolute);return seg.segment&&seg.segment.pointOnPath(seg.proportion,false)||[0,0];};this.gradientAtPoint=function(location,absolute){var seg=_findSegmentForLocation(location,absolute);return seg.segment&&seg.segment.gradientAtPoint(seg.proportion,false)||0;};this.pointAlongPathFrom=function(location,distance,absolute){var seg=_findSegmentForLocation(location,absolute);// TODO what happens if this crosses to the next segment?
+return seg.segment&&seg.segment.pointAlongPathFrom(seg.proportion,distance,false)||[0,0];};this.compute=function(params){paintInfo=_prepareCompute.call(this,params);_clearSegments();this._compute(paintInfo,params);this.x=paintInfo.points[0];this.y=paintInfo.points[1];this.w=paintInfo.points[2];this.h=paintInfo.points[3];this.segment=paintInfo.segment;_updateSegmentProportions();};return{addSegment:_addSegment,prepareCompute:_prepareCompute,sourceStub:sourceStub,targetStub:targetStub,maxStub:Math.max(sourceStub,targetStub),sourceGap:sourceGap,targetGap:targetGap,maxGap:Math.max(sourceGap,targetGap),setGeometry:_setGeometry,getGeometry:_getGeometry};};_ju.extend(_jp.Connectors.AbstractConnector,AbstractComponent);// ********************************* END OF CONNECTOR TYPES *******************************************************************
+// ********************************* ENDPOINT TYPES *******************************************************************
+_jp.Endpoints.AbstractEndpoint=function(params){AbstractComponent.apply(this,arguments);var compute=this.compute=function(anchorPoint,orientation,endpointStyle,connectorPaintStyle){var out=this._compute.apply(this,arguments);this.x=out[0];this.y=out[1];this.w=out[2];this.h=out[3];this.bounds.minX=this.x;this.bounds.minY=this.y;this.bounds.maxX=this.x+this.w;this.bounds.maxY=this.y+this.h;return out;};return{compute:compute,cssClass:params.cssClass};};_ju.extend(_jp.Endpoints.AbstractEndpoint,AbstractComponent);/**
+     * Class: Endpoints.Dot
+     * A round endpoint, with default radius 10 pixels.
+     *//**
+     * Function: Constructor
+     *
+     * Parameters:
+     *
+     *    radius    -    radius of the endpoint.  defaults to 10 pixels.
+     */_jp.Endpoints.Dot=function(params){this.type="Dot";var _super=_jp.Endpoints.AbstractEndpoint.apply(this,arguments);params=params||{};this.radius=params.radius||10;this.defaultOffset=0.5*this.radius;this.defaultInnerRadius=this.radius/3;this._compute=function(anchorPoint,orientation,endpointStyle,connectorPaintStyle){this.radius=endpointStyle.radius||this.radius;var x=anchorPoint[0]-this.radius,y=anchorPoint[1]-this.radius,w=this.radius*2,h=this.radius*2;if(endpointStyle.stroke){var lw=endpointStyle.strokeWidth||1;x-=lw;y-=lw;w+=lw*2;h+=lw*2;}return[x,y,w,h,this.radius];};};_ju.extend(_jp.Endpoints.Dot,_jp.Endpoints.AbstractEndpoint);_jp.Endpoints.Rectangle=function(params){this.type="Rectangle";var _super=_jp.Endpoints.AbstractEndpoint.apply(this,arguments);params=params||{};this.width=params.width||20;this.height=params.height||20;this._compute=function(anchorPoint,orientation,endpointStyle,connectorPaintStyle){var width=endpointStyle.width||this.width,height=endpointStyle.height||this.height,x=anchorPoint[0]-width/2,y=anchorPoint[1]-height/2;return[x,y,width,height];};};_ju.extend(_jp.Endpoints.Rectangle,_jp.Endpoints.AbstractEndpoint);var DOMElementEndpoint=function DOMElementEndpoint(params){_jp.jsPlumbUIComponent.apply(this,arguments);this._jsPlumb.displayElements=[];};_ju.extend(DOMElementEndpoint,_jp.jsPlumbUIComponent,{getDisplayElements:function getDisplayElements(){return this._jsPlumb.displayElements;},appendDisplayElement:function appendDisplayElement(el){this._jsPlumb.displayElements.push(el);}});/**
+     * Class: Endpoints.Image
+     * Draws an image as the Endpoint.
+     *//**
+     * Function: Constructor
+     *
+     * Parameters:
+     *
+     *    src    -    location of the image to use.
+
+     TODO: multiple references to self. not sure quite how to get rid of them entirely. perhaps self = null in the cleanup
+     function will suffice
+
+     TODO this class still might leak memory.
+
+     */_jp.Endpoints.Image=function(params){this.type="Image";DOMElementEndpoint.apply(this,arguments);_jp.Endpoints.AbstractEndpoint.apply(this,arguments);var _onload=params.onload,src=params.src||params.url,clazz=params.cssClass?" "+params.cssClass:"";this._jsPlumb.img=new Image();this._jsPlumb.ready=false;this._jsPlumb.initialized=false;this._jsPlumb.deleted=false;this._jsPlumb.widthToUse=params.width;this._jsPlumb.heightToUse=params.height;this._jsPlumb.endpoint=params.endpoint;this._jsPlumb.img.onload=function(){if(this._jsPlumb!=null){this._jsPlumb.ready=true;this._jsPlumb.widthToUse=this._jsPlumb.widthToUse||this._jsPlumb.img.width;this._jsPlumb.heightToUse=this._jsPlumb.heightToUse||this._jsPlumb.img.height;if(_onload){_onload(this);}}}.bind(this);/*
+         Function: setImage
+         Sets the Image to use in this Endpoint.
+
+         Parameters:
+         img         -   may be a URL or an Image object
+         onload      -   optional; a callback to execute once the image has loaded.
+         */this._jsPlumb.endpoint.setImage=function(_img,onload){var s=_img.constructor==String?_img:_img.src;_onload=onload;this._jsPlumb.img.src=s;if(this.canvas!=null)this.canvas.setAttribute("src",this._jsPlumb.img.src);}.bind(this);this._jsPlumb.endpoint.setImage(src,_onload);this._compute=function(anchorPoint,orientation,endpointStyle,connectorPaintStyle){this.anchorPoint=anchorPoint;if(this._jsPlumb.ready)return[anchorPoint[0]-this._jsPlumb.widthToUse/2,anchorPoint[1]-this._jsPlumb.heightToUse/2,this._jsPlumb.widthToUse,this._jsPlumb.heightToUse];else return[0,0,0,0];};this.canvas=_jp.createElement("img",{position:"absolute",margin:0,padding:0,outline:0},this._jsPlumb.instance.endpointClass+clazz);if(this._jsPlumb.widthToUse)this.canvas.setAttribute("width",this._jsPlumb.widthToUse);if(this._jsPlumb.heightToUse)this.canvas.setAttribute("height",this._jsPlumb.heightToUse);this._jsPlumb.instance.appendElement(this.canvas);this.actuallyPaint=function(d,style,anchor){if(!this._jsPlumb.deleted){if(!this._jsPlumb.initialized){this.canvas.setAttribute("src",this._jsPlumb.img.src);this.appendDisplayElement(this.canvas);this._jsPlumb.initialized=true;}var x=this.anchorPoint[0]-this._jsPlumb.widthToUse/2,y=this.anchorPoint[1]-this._jsPlumb.heightToUse/2;_ju.sizeElement(this.canvas,x,y,this._jsPlumb.widthToUse,this._jsPlumb.heightToUse);}};this.paint=function(style,anchor){if(this._jsPlumb!=null){// may have been deleted
+if(this._jsPlumb.ready){this.actuallyPaint(style,anchor);}else{root.setTimeout(function(){this.paint(style,anchor);}.bind(this),200);}}};};_ju.extend(_jp.Endpoints.Image,[DOMElementEndpoint,_jp.Endpoints.AbstractEndpoint],{cleanup:function cleanup(force){if(force){this._jsPlumb.deleted=true;if(this.canvas)this.canvas.parentNode.removeChild(this.canvas);this.canvas=null;}}});/*
+     * Class: Endpoints.Blank
+     * An Endpoint that paints nothing (visible) on the screen.  Supports cssClass and hoverClass parameters like all Endpoints.
+     */_jp.Endpoints.Blank=function(params){var _super=_jp.Endpoints.AbstractEndpoint.apply(this,arguments);this.type="Blank";DOMElementEndpoint.apply(this,arguments);this._compute=function(anchorPoint,orientation,endpointStyle,connectorPaintStyle){return[anchorPoint[0],anchorPoint[1],10,0];};var clazz=params.cssClass?" "+params.cssClass:"";this.canvas=_jp.createElement("div",{display:"block",width:"1px",height:"1px",background:"transparent",position:"absolute"},this._jsPlumb.instance.endpointClass+clazz);this._jsPlumb.instance.appendElement(this.canvas);this.paint=function(style,anchor){_ju.sizeElement(this.canvas,this.x,this.y,this.w,this.h);};};_ju.extend(_jp.Endpoints.Blank,[_jp.Endpoints.AbstractEndpoint,DOMElementEndpoint],{cleanup:function cleanup(){if(this.canvas&&this.canvas.parentNode){this.canvas.parentNode.removeChild(this.canvas);}}});/*
+     * Class: Endpoints.Triangle
+     * A triangular Endpoint.
+     *//*
+     * Function: Constructor
+     *
+     * Parameters:
+     *
+     * 	width	-	width of the triangle's base.  defaults to 55 pixels.
+     * 	height	-	height of the triangle from base to apex.  defaults to 55 pixels.
+     */_jp.Endpoints.Triangle=function(params){this.type="Triangle";_jp.Endpoints.AbstractEndpoint.apply(this,arguments);params=params||{};params.width=params.width||55;params.height=params.height||55;this.width=params.width;this.height=params.height;this._compute=function(anchorPoint,orientation,endpointStyle,connectorPaintStyle){var width=endpointStyle.width||self.width,height=endpointStyle.height||self.height,x=anchorPoint[0]-width/2,y=anchorPoint[1]-height/2;return[x,y,width,height];};};// ********************************* END OF ENDPOINT TYPES *******************************************************************
+// ********************************* OVERLAY DEFINITIONS ***********************************************************************    
+var AbstractOverlay=_jp.Overlays.AbstractOverlay=function(params){this.visible=true;this.isAppendedAtTopLevel=true;this.component=params.component;this.loc=params.location==null?0.5:params.location;this.endpointLoc=params.endpointLocation==null?[0.5,0.5]:params.endpointLocation;this.visible=params.visible!==false;};AbstractOverlay.prototype={cleanup:function cleanup(force){if(force){this.component=null;this.canvas=null;this.endpointLoc=null;}},reattach:function reattach(instance){},setVisible:function setVisible(val){this.visible=val;this.component.repaint();},isVisible:function isVisible(){return this.visible;},hide:function hide(){this.setVisible(false);},show:function show(){this.setVisible(true);},incrementLocation:function incrementLocation(amount){this.loc+=amount;this.component.repaint();},setLocation:function setLocation(l){this.loc=l;this.component.repaint();},getLocation:function getLocation(){return this.loc;},updateFrom:function updateFrom(){}};/*
+     * Class: Overlays.Arrow
+     *
+     * An arrow overlay, defined by four points: the head, the two sides of the tail, and a 'foldback' point at some distance along the length
+     * of the arrow that lines from each tail point converge into.  The foldback point is defined using a decimal that indicates some fraction
+     * of the length of the arrow and has a default value of 0.623.  A foldback point value of 1 would mean that the arrow had a straight line
+     * across the tail.
+     *//*
+     * @constructor
+     *
+     * @param {Object} params Constructor params.
+     * @param {Number} [params.length] Distance in pixels from head to tail baseline. default 20.
+     * @param {Number} [params.width] Width in pixels of the tail baseline. default 20.
+     * @param {String} [params.fill] Style to use when filling the arrow.  defaults to "black".
+     * @param {String} [params.stroke] Style to use when stroking the arrow. defaults to null, which means the arrow is not stroked.
+     * @param {Number} [params.stroke-width] Line width to use when stroking the arrow. defaults to 1, but only used if stroke is not null.
+     * @param {Number} [params.foldback] Distance (as a decimal from 0 to 1 inclusive) along the length of the arrow marking the point the tail points should fold back to.  defaults to 0.623.
+     * @param {Number} [params.location] Distance (as a decimal from 0 to 1 inclusive) marking where the arrow should sit on the connector. defaults to 0.5.
+     * @param {NUmber} [params.direction] Indicates the direction the arrow points in. valid values are -1 and 1; 1 is default.
+     */_jp.Overlays.Arrow=function(params){this.type="Arrow";AbstractOverlay.apply(this,arguments);this.isAppendedAtTopLevel=false;params=params||{};this.length=params.length||20;this.width=params.width||20;this.id=params.id;var direction=(params.direction||1)<0?-1:1,paintStyle=params.paintStyle||{"stroke-width":1},// how far along the arrow the lines folding back in come to. default is 62.3%.
+foldback=params.foldback||0.623;this.computeMaxSize=function(){return self.width*1.5;};this.elementCreated=function(p,component){this.path=p;if(params.events){for(var i in params.events){_jp.on(p,i,params.events[i]);}}};this.draw=function(component,currentConnectionPaintStyle){var hxy,mid,txy,tail,cxy;if(component.pointAlongPathFrom){if(_ju.isString(this.loc)||this.loc>1||this.loc<0){var l=parseInt(this.loc,10),fromLoc=this.loc<0?1:0;hxy=component.pointAlongPathFrom(fromLoc,l,false);mid=component.pointAlongPathFrom(fromLoc,l-direction*this.length/2,false);txy=_jg.pointOnLine(hxy,mid,this.length);}else if(this.loc==1){hxy=component.pointOnPath(this.loc);mid=component.pointAlongPathFrom(this.loc,-this.length);txy=_jg.pointOnLine(hxy,mid,this.length);if(direction==-1){var _=txy;txy=hxy;hxy=_;}}else if(this.loc===0){txy=component.pointOnPath(this.loc);mid=component.pointAlongPathFrom(this.loc,this.length);hxy=_jg.pointOnLine(txy,mid,this.length);if(direction==-1){var __=txy;txy=hxy;hxy=__;}}else{hxy=component.pointAlongPathFrom(this.loc,direction*this.length/2);mid=component.pointOnPath(this.loc);txy=_jg.pointOnLine(hxy,mid,this.length);}tail=_jg.perpendicularLineTo(hxy,txy,this.width);cxy=_jg.pointOnLine(hxy,txy,foldback*this.length);var d={hxy:hxy,tail:tail,cxy:cxy},stroke=paintStyle.stroke||currentConnectionPaintStyle.stroke,fill=paintStyle.fill||currentConnectionPaintStyle.stroke,lineWidth=paintStyle.strokeWidth||currentConnectionPaintStyle.strokeWidth;return{component:component,d:d,"stroke-width":lineWidth,stroke:stroke,fill:fill,minX:Math.min(hxy.x,tail[0].x,tail[1].x),maxX:Math.max(hxy.x,tail[0].x,tail[1].x),minY:Math.min(hxy.y,tail[0].y,tail[1].y),maxY:Math.max(hxy.y,tail[0].y,tail[1].y)};}else return{component:component,minX:0,maxX:0,minY:0,maxY:0};};};_ju.extend(_jp.Overlays.Arrow,AbstractOverlay,{updateFrom:function updateFrom(d){this.length=d.length||this.length;this.width=d.width||this.width;this.direction=d.direction!=null?d.direction:this.direction;this.foldback=d.foldback||this.foldback;}});/*
+     * Class: Overlays.PlainArrow
+     *
+     * A basic arrow.  This is in fact just one instance of the more generic case in which the tail folds back on itself to some
+     * point along the length of the arrow: in this case, that foldback point is the full length of the arrow.  so it just does
+     * a 'call' to Arrow with foldback set appropriately.
+     *//*
+     * Function: Constructor
+     * See <Overlays.Arrow> for allowed parameters for this overlay.
+     */_jp.Overlays.PlainArrow=function(params){params=params||{};var p=_jp.extend(params,{foldback:1});_jp.Overlays.Arrow.call(this,p);this.type="PlainArrow";};_ju.extend(_jp.Overlays.PlainArrow,_jp.Overlays.Arrow);/*
+     * Class: Overlays.Diamond
+     * 
+     * A diamond. Like PlainArrow, this is a concrete case of the more generic case of the tail points converging on some point...it just
+     * happens that in this case, that point is greater than the length of the the arrow.
+     *
+     *      this could probably do with some help with positioning...due to the way it reuses the Arrow paint code, what Arrow thinks is the
+     *      center is actually 1/4 of the way along for this guy.  but we don't have any knowledge of pixels at this point, so we're kind of
+     *      stuck when it comes to helping out the Arrow class. possibly we could pass in a 'transpose' parameter or something. the value
+     *      would be -l/4 in this case - move along one quarter of the total length.
+     *//*
+     * Function: Constructor
+     * See <Overlays.Arrow> for allowed parameters for this overlay.
+     */_jp.Overlays.Diamond=function(params){params=params||{};var l=params.length||40,p=_jp.extend(params,{length:l/2,foldback:2});_jp.Overlays.Arrow.call(this,p);this.type="Diamond";};_ju.extend(_jp.Overlays.Diamond,_jp.Overlays.Arrow);var _getDimensions=function _getDimensions(component,forceRefresh){if(component._jsPlumb.cachedDimensions==null||forceRefresh)component._jsPlumb.cachedDimensions=component.getDimensions();return component._jsPlumb.cachedDimensions;};// abstract superclass for overlays that add an element to the DOM.
+var AbstractDOMOverlay=function AbstractDOMOverlay(params){_jp.jsPlumbUIComponent.apply(this,arguments);AbstractOverlay.apply(this,arguments);// hand off fired events to associated component.
+var _f=this.fire;this.fire=function(){_f.apply(this,arguments);if(this.component)this.component.fire.apply(this.component,arguments);};this.detached=false;this.id=params.id;this._jsPlumb.div=null;this._jsPlumb.initialised=false;this._jsPlumb.component=params.component;this._jsPlumb.cachedDimensions=null;this._jsPlumb.create=params.create;this._jsPlumb.initiallyInvisible=params.visible===false;this.getElement=function(){if(this._jsPlumb.div==null){var div=this._jsPlumb.div=_jp.getElement(this._jsPlumb.create(this._jsPlumb.component));div.style.position="absolute";div.className=this._jsPlumb.instance.overlayClass+" "+(this.cssClass?this.cssClass:params.cssClass?params.cssClass:"");this._jsPlumb.instance.appendElement(div);this._jsPlumb.instance.getId(div);this.canvas=div;// in IE the top left corner is what it placed at the desired location.  This will not
+// be fixed. IE8 is not going to be supported for much longer.
+var ts="translate(-50%, -50%)";div.style.webkitTransform=ts;div.style.mozTransform=ts;div.style.msTransform=ts;div.style.oTransform=ts;div.style.transform=ts;// write the related component into the created element
+div._jsPlumb=this;if(params.visible===false)div.style.display="none";}return this._jsPlumb.div;};this.draw=function(component,currentConnectionPaintStyle,absolutePosition){var td=_getDimensions(this);if(td!=null&&td.length==2){var cxy={x:0,y:0};// absolutePosition would have been set by a call to connection.setAbsoluteOverlayPosition.
+if(absolutePosition){cxy={x:absolutePosition[0],y:absolutePosition[1]};}else if(component.pointOnPath){var loc=this.loc,absolute=false;if(_ju.isString(this.loc)||this.loc<0||this.loc>1){loc=parseInt(this.loc,10);absolute=true;}cxy=component.pointOnPath(loc,absolute);// a connection
+}else{var locToUse=this.loc.constructor==Array?this.loc:this.endpointLoc;cxy={x:locToUse[0]*component.w,y:locToUse[1]*component.h};}var minx=cxy.x-td[0]/2,miny=cxy.y-td[1]/2;return{component:component,d:{minx:minx,miny:miny,td:td,cxy:cxy},minX:minx,maxX:minx+td[0],minY:miny,maxY:miny+td[1]};}else return{minX:0,maxX:0,minY:0,maxY:0};};};_ju.extend(AbstractDOMOverlay,[_jp.jsPlumbUIComponent,AbstractOverlay],{getDimensions:function getDimensions(){return[1,1];},setVisible:function setVisible(state){if(this._jsPlumb.div){this._jsPlumb.div.style.display=state?"block":"none";// if initially invisible, dimensions are 0,0 and never get updated
+if(state&&this._jsPlumb.initiallyInvisible){_getDimensions(this,true);this.component.repaint();this._jsPlumb.initiallyInvisible=false;}}},/*
+         * Function: clearCachedDimensions
+         * Clears the cached dimensions for the label. As a performance enhancement, label dimensions are
+         * cached from 1.3.12 onwards. The cache is cleared when you change the label text, of course, but
+         * there are other reasons why the text dimensions might change - if you make a change through CSS, for
+         * example, you might change the font size.  in that case you should explicitly call this method.
+         */clearCachedDimensions:function clearCachedDimensions(){this._jsPlumb.cachedDimensions=null;},cleanup:function cleanup(force){if(force){if(this._jsPlumb.div!=null){this._jsPlumb.div._jsPlumb=null;this._jsPlumb.instance.removeElement(this._jsPlumb.div);}}else{// if not a forced cleanup, just detach child from parent for now.
+if(this._jsPlumb&&this._jsPlumb.div&&this._jsPlumb.div.parentNode)this._jsPlumb.div.parentNode.removeChild(this._jsPlumb.div);this.detached=true;}},reattach:function reattach(instance){if(this._jsPlumb.div!=null)instance.getContainer().appendChild(this._jsPlumb.div);this.detached=false;},computeMaxSize:function computeMaxSize(){var td=_getDimensions(this);return Math.max(td[0],td[1]);},paint:function paint(p,containerExtents){if(!this._jsPlumb.initialised){this.getElement();p.component.appendDisplayElement(this._jsPlumb.div);this._jsPlumb.initialised=true;if(this.detached)this._jsPlumb.div.parentNode.removeChild(this._jsPlumb.div);}this._jsPlumb.div.style.left=p.component.x+p.d.minx+"px";this._jsPlumb.div.style.top=p.component.y+p.d.miny+"px";}});/*
+     * Class: Overlays.Custom
+     * A Custom overlay. You supply a 'create' function which returns some DOM element, and jsPlumb positions it.
+     * The 'create' function is passed a Connection or Endpoint.
+     *//*
+     * Function: Constructor
+     * 
+     * Parameters:
+     * 	create - function for jsPlumb to call that returns a DOM element.
+     * 	location - distance (as a decimal from 0 to 1 inclusive) marking where the label should sit on the connector. defaults to 0.5.
+     * 	id - optional id to use for later retrieval of this overlay.
+     * 	
+     */_jp.Overlays.Custom=function(params){this.type="Custom";AbstractDOMOverlay.apply(this,arguments);};_ju.extend(_jp.Overlays.Custom,AbstractDOMOverlay);_jp.Overlays.GuideLines=function(){var self=this;self.length=50;self.strokeWidth=5;this.type="GuideLines";AbstractOverlay.apply(this,arguments);_jp.jsPlumbUIComponent.apply(this,arguments);this.draw=function(connector,currentConnectionPaintStyle){var head=connector.pointAlongPathFrom(self.loc,self.length/2),mid=connector.pointOnPath(self.loc),tail=_jg.pointOnLine(head,mid,self.length),tailLine=_jg.perpendicularLineTo(head,tail,40),headLine=_jg.perpendicularLineTo(tail,head,20);return{connector:connector,head:head,tail:tail,headLine:headLine,tailLine:tailLine,minX:Math.min(head.x,tail.x,headLine[0].x,headLine[1].x),minY:Math.min(head.y,tail.y,headLine[0].y,headLine[1].y),maxX:Math.max(head.x,tail.x,headLine[0].x,headLine[1].x),maxY:Math.max(head.y,tail.y,headLine[0].y,headLine[1].y)};};// this.cleanup = function() { };  // nothing to clean up for GuideLines
+};/*
+     * Class: Overlays.Label
+
+     *//*
+     * Function: Constructor
+     * 
+     * Parameters:
+     * 	cssClass - optional css class string to append to css class. This string is appended "as-is", so you can of course have multiple classes
+     *             defined.  This parameter is preferred to using labelStyle, borderWidth and borderStyle.
+     * 	label - the label to paint.  May be a string or a function that returns a string.  Nothing will be painted if your label is null or your
+     *         label function returns null.  empty strings _will_ be painted.
+     * 	location - distance (as a decimal from 0 to 1 inclusive) marking where the label should sit on the connector. defaults to 0.5.
+     * 	id - optional id to use for later retrieval of this overlay.
+     * 
+     * 	
+     */_jp.Overlays.Label=function(params){this.labelStyle=params.labelStyle;var labelWidth=null,labelHeight=null,labelText=null,labelPadding=null;this.cssClass=this.labelStyle!=null?this.labelStyle.cssClass:null;var p=_jp.extend({create:function create(){return _jp.createElement("div");}},params);_jp.Overlays.Custom.call(this,p);this.type="Label";this.label=params.label||"";this.labelText=null;if(this.labelStyle){var el=this.getElement();this.labelStyle.font=this.labelStyle.font||"12px sans-serif";el.style.font=this.labelStyle.font;el.style.color=this.labelStyle.color||"black";if(this.labelStyle.fill)el.style.background=this.labelStyle.fill;if(this.labelStyle.borderWidth>0){var dStyle=this.labelStyle.borderStyle?this.labelStyle.borderStyle:"black";el.style.border=this.labelStyle.borderWidth+"px solid "+dStyle;}if(this.labelStyle.padding)el.style.padding=this.labelStyle.padding;}};_ju.extend(_jp.Overlays.Label,_jp.Overlays.Custom,{cleanup:function cleanup(force){if(force){this.div=null;this.label=null;this.labelText=null;this.cssClass=null;this.labelStyle=null;}},getLabel:function getLabel(){return this.label;},/*
+         * Function: setLabel
+         * sets the label's, um, label.  you would think i'd call this function
+         * 'setText', but you can pass either a Function or a String to this, so
+         * it makes more sense as 'setLabel'. This uses innerHTML on the label div, so keep
+         * that in mind if you need escaped HTML.
+         */setLabel:function setLabel(l){this.label=l;this.labelText=null;this.clearCachedDimensions();this.update();this.component.repaint();},getDimensions:function getDimensions(){this.update();return AbstractDOMOverlay.prototype.getDimensions.apply(this,arguments);},update:function update(){if(typeof this.label=="function"){var lt=this.label(this);this.getElement().innerHTML=lt.replace(/\r\n/g,"<br/>");}else{if(this.labelText==null){this.labelText=this.label;this.getElement().innerHTML=this.labelText.replace(/\r\n/g,"<br/>");}}},updateFrom:function updateFrom(d){if(d.label!=null){this.setLabel(d.label);}}});// ********************************* END OF OVERLAY DEFINITIONS ***********************************************************************
+}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ *
+ * Title:jsPlumb 2.3.0
+ *
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ *
+ * This file contains the base class for library adapters.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ *
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb;var _getEventManager=function _getEventManager(instance){var e=instance._mottle;if(!e){e=instance._mottle=new root.Mottle();}return e;};_jp.extend(root.jsPlumbInstance.prototype,{getEventManager:function getEventManager(){return _getEventManager(this);},on:function on(el,event,callback){// TODO: here we would like to map the tap event if we know its
+// an internal bind to a click. we have to know its internal because only
+// then can we be sure that the UP event wont be consumed (tap is a synthesized
+// event from a mousedown followed by a mouseup).
+//event = { "click":"tap", "dblclick":"dbltap"}[event] || event;
+this.getEventManager().on.apply(this,arguments);return this;},off:function off(el,event,callback){this.getEventManager().off.apply(this,arguments);return this;}});}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ *
+ * Title:jsPlumb 2.3.0
+ *
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ *
+ * This file contains the code for working with Groups.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ *
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_ju=root.jsPlumbUtil,_jpi=root.jsPlumbInstance;var GROUP_COLLAPSED_CLASS="jtk-group-collapsed";var GROUP_EXPANDED_CLASS="jtk-group-expanded";var GROUP_CONTAINER_SELECTOR="[jtk-group-content]";var ELEMENT_DRAGGABLE_EVENT="elementDraggable";var STOP="stop";var REVERT="revert";var GROUP_MANAGER="_groupManager";var GROUP="_jsPlumbGroup";var GROUP_DRAG_SCOPE="_jsPlumbGroupDrag";var EVT_CHILD_ADDED="group:addMember";var EVT_CHILD_REMOVED="group:removeMember";var EVT_GROUP_ADDED="group:add";var EVT_GROUP_REMOVED="group:remove";var EVT_EXPAND="group:expand";var EVT_COLLAPSE="group:collapse";var GroupManager=function GroupManager(_jsPlumb){var _managedGroups={},_connectionSourceMap={},_connectionTargetMap={},self=this;_jsPlumb.bind("connection",function(p){if(p.source[GROUP]!=null&&p.target[GROUP]!=null&&p.source[GROUP]===p.target[GROUP]){_connectionSourceMap[p.connection.id]=p.source[GROUP];_connectionTargetMap[p.connection.id]=p.source[GROUP];}else{if(p.source[GROUP]!=null){_ju.suggest(p.source[GROUP].connections.source,p.connection);_connectionSourceMap[p.connection.id]=p.source[GROUP];}if(p.target[GROUP]!=null){_ju.suggest(p.target[GROUP].connections.target,p.connection);_connectionTargetMap[p.connection.id]=p.target[GROUP];}}});function _cleanupDetachedConnection(conn){delete conn.proxies;var group=_connectionSourceMap[conn.id],f;if(group!=null){f=function f(c){return c.id===conn.id;};_ju.removeWithFunction(group.connections.source,f);_ju.removeWithFunction(group.connections.target,f);delete _connectionSourceMap[conn.id];}group=_connectionTargetMap[conn.id];if(group!=null){f=function f(c){return c.id===conn.id;};_ju.removeWithFunction(group.connections.source,f);_ju.removeWithFunction(group.connections.target,f);delete _connectionTargetMap[conn.id];}}_jsPlumb.bind("internal.connectionDetached",function(p){_cleanupDetachedConnection(p.connection);});_jsPlumb.bind("connectionMoved",function(p){var connMap=p.index===0?_connectionSourceMap:_connectionTargetMap;var group=connMap[p.connection.id];if(group){var list=group.connections[p.index===0?"source":"target"];var idx=list.indexOf(p.connection);if(idx!=-1){list.splice(idx,1);}}});this.addGroup=function(group){_jsPlumb.addClass(group.getEl(),GROUP_EXPANDED_CLASS);_managedGroups[group.id]=group;group.manager=this;_updateConnectionsForGroup(group);_jsPlumb.fire(EVT_GROUP_ADDED,{group:group});};this.addToGroup=function(group,el,doNotFireEvent){group=this.getGroup(group);if(group){//group.add(el, doNotFireEvent);
+var groupEl=group.getEl();if(el._isJsPlumbGroup)return;var currentGroup=el._jsPlumbGroup;// if already a member of this group, do nothing
+if(currentGroup!==group){var elpos=_jsPlumb.getOffset(el,true);var cpos=group.collapsed?_jsPlumb.getOffset(groupEl,true):_jsPlumb.getOffset(group.getDragArea(),true);// otherwise, transfer to this group.
+if(currentGroup!=null){currentGroup.remove(el,doNotFireEvent);self.updateConnectionsForGroup(currentGroup);}group.add(el,doNotFireEvent);var handleDroppedConnections=function handleDroppedConnections(list,index){var oidx=index==0?1:0;list.each(function(c){c.setVisible(false);if(c.endpoints[oidx].element._jsPlumbGroup===group){c.endpoints[oidx].setVisible(false);self.expandConnection(c,oidx,group);}else{c.endpoints[index].setVisible(false);self.collapseConnection(c,index,group);}});};if(group.collapsed){handleDroppedConnections(_jsPlumb.select({source:el}),0);handleDroppedConnections(_jsPlumb.select({target:el}),1);}var elId=_jsPlumb.getId(el);_jsPlumb.dragManager.setParent(el,elId,groupEl,_jsPlumb.getId(groupEl),elpos);var newPosition={left:elpos.left-cpos.left,top:elpos.top-cpos.top};_jsPlumb.setPosition(el,newPosition);_jsPlumb.dragManager.revalidateParent(el,elId,elpos);self.updateConnectionsForGroup(group);_jsPlumb.revalidate(elId);setTimeout(function(){_jsPlumb.fire(EVT_CHILD_ADDED,{group:group,el:el});},0);}}};this.removeFromGroup=function(group,el,doNotFireEvent){group=this.getGroup(group);if(group){group.remove(el,null,doNotFireEvent);}};this.getGroup=function(groupId){var group=groupId;if(_ju.isString(groupId)){group=_managedGroups[groupId];if(group==null)throw new TypeError("No such group ["+groupId+"]");}return group;};this.getGroups=function(){var o=[];for(var g in _managedGroups){o.push(_managedGroups[g]);}return o;};this.removeGroup=function(group,deleteMembers,manipulateDOM,doNotFireEvent){group=this.getGroup(group);this.expandGroup(group,true);// this reinstates any original connections and removes all proxies, but does not fire an event.
+group[deleteMembers?"removeAll":"orphanAll"](manipulateDOM,doNotFireEvent);_jsPlumb.remove(group.getEl());delete _managedGroups[group.id];delete _jsPlumb._groups[group.id];_jsPlumb.fire(EVT_GROUP_REMOVED,{group:group});};this.removeAllGroups=function(deleteMembers,manipulateDOM,doNotFireEvent){for(var g in _managedGroups){this.removeGroup(_managedGroups[g],deleteMembers,manipulateDOM,doNotFireEvent);}};function _setVisible(group,state){var m=group.getMembers();for(var i=0;i<m.length;i++){_jsPlumb[state?"show":"hide"](m[i],true);}}var _collapseConnection=this.collapseConnection=function(c,index,group){var proxyEp,groupEl=group.getEl(),groupElId=_jsPlumb.getId(groupEl),originalElementId=c.endpoints[index].elementId;var otherEl=c.endpoints[index===0?1:0].element;if(otherEl[GROUP]&&!otherEl[GROUP].shouldProxy()&&otherEl[GROUP].collapsed){return;}c.proxies=c.proxies||[];if(c.proxies[index]){proxyEp=c.proxies[index].ep;}else{proxyEp=_jsPlumb.addEndpoint(groupEl,{endpoint:group.getEndpoint(c,index),anchor:group.getAnchor(c,index),parameters:{isProxyEndpoint:true}});proxyEp._forceDeleteOnDetach=true;}// for this index, stash proxy info: the new EP, the original EP.
+c.proxies[index]={ep:proxyEp,originalEp:c.endpoints[index]};// and advise the anchor manager
+if(index===0){// TODO why are there two differently named methods? Why is there not one method that says "some end of this
+// connection changed (you give the index), and here's the new element and element id."
+_jsPlumb.anchorManager.sourceChanged(originalElementId,groupElId,c,groupEl);}else{_jsPlumb.anchorManager.updateOtherEndpoint(c.endpoints[0].elementId,originalElementId,groupElId,c);c.target=groupEl;c.targetId=groupElId;}// detach the original EP from the connection.
+c.proxies[index].originalEp.detachFromConnection(c,null,true);// set the proxy as the new ep
+proxyEp.connections=[c];c.endpoints[index]=proxyEp;c.setVisible(true);};this.collapseGroup=function(group){group=this.getGroup(group);if(group==null||group.collapsed)return;var groupEl=group.getEl();// todo remove old proxy endpoints first, just in case?
+//group.proxies.length = 0;
+// hide all connections
+_setVisible(group,false);if(group.shouldProxy()){// collapses all connections in a group.
+var _collapseSet=function _collapseSet(conns,index){for(var i=0;i<conns.length;i++){var c=conns[i];_collapseConnection(c,index,group);}};// setup proxies for sources and targets
+_collapseSet(group.connections.source,0);_collapseSet(group.connections.target,1);}group.collapsed=true;_jsPlumb.removeClass(groupEl,GROUP_EXPANDED_CLASS);_jsPlumb.addClass(groupEl,GROUP_COLLAPSED_CLASS);_jsPlumb.revalidate(groupEl);_jsPlumb.fire(EVT_COLLAPSE,{group:group});};var _expandConnection=this.expandConnection=function(c,index,group){// if no proxies or none for this end of the connection, abort.
+if(c.proxies==null||c.proxies[index]==null)return;var groupElId=_jsPlumb.getId(group.getEl()),originalElement=c.proxies[index].originalEp.element,originalElementId=c.proxies[index].originalEp.elementId;c.endpoints[index]=c.proxies[index].originalEp;// and advise the anchor manager
+if(index===0){// TODO why are there two differently named methods? Why is there not one method that says "some end of this
+// connection changed (you give the index), and here's the new element and element id."
+_jsPlumb.anchorManager.sourceChanged(groupElId,originalElementId,c,originalElement);}else{_jsPlumb.anchorManager.updateOtherEndpoint(c.endpoints[0].elementId,groupElId,originalElementId,c);c.target=originalElement;c.targetId=originalElementId;}// detach the proxy EP from the connection.
+c.proxies[index].ep.detachFromConnection(c,null,true);c.proxies[index].originalEp.addConnection(c);// cleanup
+delete c.proxies[index];};this.expandGroup=function(group,doNotFireEvent){group=this.getGroup(group);if(group==null||!group.collapsed)return;var groupEl=group.getEl();_setVisible(group,true);if(group.shouldProxy()){// collapses all connections in a group.
+var _expandSet=function _expandSet(conns,index){for(var i=0;i<conns.length;i++){var c=conns[i];_expandConnection(c,index,group);}};// setup proxies for sources and targets
+_expandSet(group.connections.source,0);_expandSet(group.connections.target,1);}group.collapsed=false;_jsPlumb.addClass(groupEl,GROUP_EXPANDED_CLASS);_jsPlumb.removeClass(groupEl,GROUP_COLLAPSED_CLASS);_jsPlumb.revalidate(groupEl);this.repaintGroup(group);if(!doNotFireEvent){_jsPlumb.fire(EVT_EXPAND,{group:group});}};this.repaintGroup=function(group){group=this.getGroup(group);var m=group.getMembers();for(var i=0;i<m.length;i++){_jsPlumb.revalidate(m[i]);}};// TODO refactor this with the code that responds to `connection` events.
+function _updateConnectionsForGroup(group){var members=group.getMembers();var c1=_jsPlumb.getConnections({source:members},true);var c2=_jsPlumb.getConnections({target:members},true);var processed={};group.connections.source.length=0;group.connections.target.length=0;var oneSet=function oneSet(c){for(var i=0;i<c.length;i++){if(processed[c[i].id])continue;processed[c[i].id]=true;if(c[i].source._jsPlumbGroup===group){if(c[i].target._jsPlumbGroup!==group){group.connections.source.push(c[i]);}_connectionSourceMap[c[i].id]=group;}else if(c[i].target._jsPlumbGroup===group){group.connections.target.push(c[i]);_connectionTargetMap[c[i].id]=group;}}};oneSet(c1);oneSet(c2);}this.updateConnectionsForGroup=_updateConnectionsForGroup;this.refreshAllGroups=function(){for(var g in _managedGroups){_updateConnectionsForGroup(_managedGroups[g]);_jsPlumb.dragManager.updateOffsets(_jsPlumb.getId(_managedGroups[g].getEl()));}};};/**
+     *
+     * @param {jsPlumbInstance} _jsPlumb Associated jsPlumb instance.
+     * @param {Object} params
+     * @param {Element} params.el The DOM element representing the Group.
+     * @param {String} [params.id] Optional ID for the Group. A UUID will be assigned as the Group's ID if you do not provide one.
+     * @param {Boolean} [params.constrain=false] If true, child elements will not be able to be dragged outside of the Group container.
+     * @param {Boolean} [params.revert=true] By default, child elements revert to the container if dragged outside. You can change this by setting `revert:false`. This behaviour is also overridden if you set `orphan` or `prune`.
+     * @param {Boolean} [params.orphan=false] If true, child elements dropped outside of the Group container will be removed from the Group (but not from the DOM).
+     * @param {Boolean} [params.prune=false] If true, child elements dropped outside of the Group container will be removed from the Group and also from the DOM.
+     * @param {Boolean} [params.dropOverride=false] If true, a child element that has been dropped onto some other Group will not be subject to the controls imposed by `prune`, `revert` or `orphan`.
+     * @constructor
+     */var Group=function Group(_jsPlumb,params){var self=this;var el=params.el;this.getEl=function(){return el;};this.id=params.id||_ju.uuid();el._isJsPlumbGroup=true;var getDragArea=this.getDragArea=function(){var da=_jsPlumb.getSelector(el,GROUP_CONTAINER_SELECTOR);return da&&da.length>0?da[0]:el;};var ghost=params.ghost===true;var constrain=ghost||params.constrain===true;var revert=params.revert!==false;var orphan=params.orphan===true;var prune=params.prune===true;var dropOverride=params.dropOverride===true;var proxied=params.proxied!==false;var elements=[];this.connections={source:[],target:[],internal:[]};// this function, and getEndpoint below, are stubs for a future setup in which we can choose endpoint
+// and anchor based upon the connection and the index (source/target) of the endpoint to be proxied.
+this.getAnchor=function(conn,endpointIndex){return params.anchor||"Continuous";};this.getEndpoint=function(conn,endpointIndex){return params.endpoint||["Dot",{radius:10}];};this.collapsed=false;if(params.draggable!==false){var opts={stop:function stop(params){_jsPlumb.fire("groupDragStop",jsPlumb.extend(params,{group:self}));},scope:GROUP_DRAG_SCOPE};if(params.dragOptions){root.jsPlumb.extend(opts,params.dragOptions);}_jsPlumb.draggable(params.el,opts);}if(params.droppable!==false){_jsPlumb.droppable(params.el,{drop:function drop(p){var el=p.drag.el;if(el._isJsPlumbGroup)return;var currentGroup=el._jsPlumbGroup;if(currentGroup!==self){if(currentGroup!=null){if(currentGroup.overrideDrop(el,self)){return;}}_jsPlumb.getGroupManager().addToGroup(self,el,false);}}});}var _each=function _each(_el,fn){var els=_el.nodeType==null?_el:[_el];for(var i=0;i<els.length;i++){fn(els[i]);}};this.overrideDrop=function(_el,targetGroup){return dropOverride&&(revert||prune||orphan);};this.add=function(_el,doNotFireEvent){var dragArea=getDragArea();_each(_el,function(__el){if(__el._jsPlumbGroup!=null){if(__el._jsPlumbGroup===self){return;}else{__el._jsPlumbGroup.remove(__el,true,doNotFireEvent,false);}}__el._jsPlumbGroup=self;elements.push(__el);// test if draggable and add handlers if so.
+if(_jsPlumb.isAlreadyDraggable(__el)){_bindDragHandlers(__el);}if(__el.parentNode!=dragArea){dragArea.appendChild(__el);}if(!doNotFireEvent){_jsPlumb.fire(EVT_CHILD_ADDED,{group:self,el:__el});}});_jsPlumb.getGroupManager().updateConnectionsForGroup(self);};this.remove=function(el,manipulateDOM,doNotFireEvent,doNotUpdateConnections){_each(el,function(__el){delete __el._jsPlumbGroup;_ju.removeWithFunction(elements,function(e){return e===__el;});if(manipulateDOM){try{self.getDragArea().removeChild(__el);}catch(e){jsPlumbUtil.log("Could not remove element from Group "+e);}}_unbindDragHandlers(__el);if(!doNotFireEvent){_jsPlumb.fire(EVT_CHILD_REMOVED,{group:self,el:__el});}});if(!doNotUpdateConnections){_jsPlumb.getGroupManager().updateConnectionsForGroup(self);}};this.removeAll=function(manipulateDOM,doNotFireEvent){for(var i=0,l=elements.length;i<l;i++){self.remove(elements[0],manipulateDOM,doNotFireEvent,true);}elements.length=0;_jsPlumb.getGroupManager().updateConnectionsForGroup(self);};this.orphanAll=function(){for(var i=0;i<elements.length;i++){_orphan(elements[i]);}elements.length=0;};this.getMembers=function(){return elements;};el[GROUP]=this;_jsPlumb.bind(ELEMENT_DRAGGABLE_EVENT,function(dragParams){// if its for the current group,
+if(dragParams.el._jsPlumbGroup==this){_bindDragHandlers(dragParams.el);}}.bind(this));function _findParent(_el){return _el.offsetParent;}function _isInsideParent(_el,pos){var p=_findParent(_el),s=_jsPlumb.getSize(p),ss=_jsPlumb.getSize(_el),leftEdge=pos[0],rightEdge=leftEdge+ss[0],topEdge=pos[1],bottomEdge=topEdge+ss[1];return rightEdge>0&&leftEdge<s[0]&&bottomEdge>0&&topEdge<s[1];}//
+// orphaning an element means taking it out of the group and adding it to the main jsplumb container.
+//
+function _orphan(_el){var id=_jsPlumb.getId(_el);var pos=_jsPlumb.getOffset(_el);_el.parentNode.removeChild(_el);_jsPlumb.getContainer().appendChild(_el);_jsPlumb.setPosition(_el,pos);delete _el._jsPlumbGroup;_unbindDragHandlers(_el);_jsPlumb.dragManager.clearParent(_el,id);}//
+// remove an element from the group, then either prune it from the jsplumb instance, or just orphan it.
+//
+function _pruneOrOrphan(p){if(!_isInsideParent(p.el,p.pos)){p.el._jsPlumbGroup.remove(p.el);if(prune){_jsPlumb.remove(p.el);}else{_orphan(p.el);}}}//
+// redraws the element
+//
+function _revalidate(_el){var id=_jsPlumb.getId(_el);_jsPlumb.revalidate(_el);_jsPlumb.dragManager.revalidateParent(_el,id);}//
+// unbind the group specific drag/revert handlers.
+//
+function _unbindDragHandlers(_el){if(!_el._katavorioDrag)return;if(prune||orphan){_el._katavorioDrag.off(STOP,_pruneOrOrphan);}if(!prune&&!orphan&&revert){_el._katavorioDrag.off(REVERT,_revalidate);_el._katavorioDrag.setRevert(null);}}function _bindDragHandlers(_el){if(!_el._katavorioDrag)return;if(prune||orphan){_el._katavorioDrag.on(STOP,_pruneOrOrphan);}if(constrain){_el._katavorioDrag.setConstrain(true);}if(ghost){_el._katavorioDrag.setUseGhostProxy(true);}if(!prune&&!orphan&&revert){_el._katavorioDrag.on(REVERT,_revalidate);_el._katavorioDrag.setRevert(function(__el,pos){return!_isInsideParent(__el,pos);});}}this.shouldProxy=function(){return proxied;};_jsPlumb.getGroupManager().addGroup(this);};/**
+     * Adds a group to the jsPlumb instance.
+     * @method addGroup
+     * @param {Object} params
+     * @return {Group} The newly created Group.
+     */_jpi.prototype.addGroup=function(params){var j=this;j._groups=j._groups||{};if(j._groups[params.id]!=null){throw new TypeError("cannot create Group ["+params.id+"]; a Group with that ID exists");}if(params.el[GROUP]!=null){throw new TypeError("cannot create Group ["+params.id+"]; the given element is already a Group");}var group=new Group(j,params);j._groups[group.id]=group;return group;};/**
+     * Add an element to a group.
+     * @method addToGroup
+     * @param {String} group Group, or ID of the group, to add the element to.
+     * @param {Element} el Element to add to the group.
+     */_jpi.prototype.addToGroup=function(group,el,doNotFireEvent){var _one=function(_el){var id=this.getId(_el);this.manage(id,_el);this.getGroupManager().addToGroup(group,_el,doNotFireEvent);}.bind(this);if(Array.isArray(el)){for(var i=0;i<el.length;i++){_one(el[i]);}}else{_one(el);}};/**
+     * Remove an element from a group.
+     * @method removeFromGroup
+     * @param {String} group Group, or ID of the group, to remove the element from.
+     * @param {Element} el Element to add to the group.
+     */_jpi.prototype.removeFromGroup=function(group,el,doNotFireEvent){this.getGroupManager().removeFromGroup(group,el,doNotFireEvent);};/**
+     * Remove a group, and optionally remove its members from the jsPlumb instance.
+     * @method removeGroup
+     * @param {String|Group} group Group to delete, or ID of Group to delete.
+     * @param {Boolean} [deleteMembers=false] If true, group members will be removed along with the group. Otherwise they will
+     * just be 'orphaned' (returned to the main container).
+     */_jpi.prototype.removeGroup=function(group,deleteMembers,manipulateDOM,doNotFireEvent){this.getGroupManager().removeGroup(group,deleteMembers,manipulateDOM,doNotFireEvent);};/**
+     * Remove all groups, and optionally remove their members from the jsPlumb instance.
+     * @method removeAllGroup
+     * @param {Boolean} [deleteMembers=false] If true, group members will be removed along with the groups. Otherwise they will
+     * just be 'orphaned' (returned to the main container).
+     */_jpi.prototype.removeAllGroups=function(deleteMembers,manipulateDOM,doNotFireEvent){this.getGroupManager().removeAllGroups(deleteMembers,manipulateDOM,doNotFireEvent);};/**
+     * Get a Group
+     * @method getGroup
+     * @param {String} groupId ID of the group to get
+     * @return {Group} Group with the given ID, null if not found.
+     */_jpi.prototype.getGroup=function(groupId){return this.getGroupManager().getGroup(groupId);};/**
+     * Gets all the Groups managed by the jsPlumb instance.
+     * @returns {Group[]} List of Groups. Empty if none.
+     */_jpi.prototype.getGroups=function(){return this.getGroupManager().getGroups();};/**
+     * Expands a group element. jsPlumb doesn't do "everything" for you here, because what it means to expand a Group
+     * will vary from application to application. jsPlumb does these things:
+     *
+     * - Hides any connections that are internal to the group (connections between members, and connections from member of
+     * the group to the group itself)
+     * - Proxies all connections for which the source or target is a member of the group.
+     * - Hides the proxied connections.
+     * - Adds the jtk-group-expanded class to the group's element
+     * - Removes the jtk-group-collapsed class from the group's element.
+     *
+     * @method expandGroup
+     * @param {String|Group} group Group to expand, or ID of Group to expand.
+     */_jpi.prototype.expandGroup=function(group){this.getGroupManager().expandGroup(group);};/**
+     * Collapses a group element. jsPlumb doesn't do "everything" for you here, because what it means to collapse a Group
+     * will vary from application to application. jsPlumb does these things:
+     *
+     * - Shows any connections that are internal to the group (connections between members, and connections from member of
+     * the group to the group itself)
+     * - Removes proxies for all connections for which the source or target is a member of the group.
+     * - Shows the previously proxied connections.
+     * - Adds the jtk-group-collapsed class to the group's element
+     * - Removes the jtk-group-expanded class from the group's element.
+     *
+     * @method expandGroup
+     * @param {String|Group} group Group to expand, or ID of Group to expand.
+     */_jpi.prototype.collapseGroup=function(groupId){this.getGroupManager().collapseGroup(groupId);};_jpi.prototype.repaintGroup=function(group){this.getGroupManager().repaintGroup(group);};/**
+     * Collapses or expands a group element depending on its current state. See notes in the collapseGroup and expandGroup method.
+     *
+     * @method toggleGroup
+     * @param {String|Group} group Group to expand/collapse, or ID of Group to expand/collapse.
+     */_jpi.prototype.toggleGroup=function(group){group=this.getGroupManager().getGroup(group);if(group!=null){this.getGroupManager()[group.collapsed?"expandGroup":"collapseGroup"](group);}};//
+// lazy init a group manager for the given jsplumb instance.
+//
+_jpi.prototype.getGroupManager=function(){var mgr=this[GROUP_MANAGER];if(mgr==null){mgr=this[GROUP_MANAGER]=new GroupManager(this);}return mgr;};_jpi.prototype.removeGroupManager=function(){delete this[GROUP_MANAGER];};/**
+     * Gets the Group that the given element belongs to, null if none.
+     * @method getGroupFor
+     * @param {String|Element} el Element, or element ID.
+     * @returns {Group} A Group, if found, or null.
+     */_jpi.prototype.getGroupFor=function(el){el=this.getElement(el);if(el){return el[GROUP];}};}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ * 
+ * Title:jsPlumb 2.3.0
+ * 
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ * 
+ * This file contains the 'flowchart' connectors, consisting of vertical and horizontal line segments.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ * 
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil;var Flowchart=function Flowchart(params){this.type="Flowchart";params=params||{};params.stub=params.stub==null?30:params.stub;var segments,_super=_jp.Connectors.AbstractConnector.apply(this,arguments),midpoint=params.midpoint==null?0.5:params.midpoint,alwaysRespectStubs=params.alwaysRespectStubs===true,lastx=null,lasty=null,lastOrientation,cornerRadius=params.cornerRadius!=null?params.cornerRadius:0,// TODO now common between this and AbstractBezierEditor; refactor into superclass?
+loopbackRadius=params.loopbackRadius||25,isLoopbackCurrently=false,sgn=function sgn(n){return n<0?-1:n===0?0:1;},/**
+             * helper method to add a segment.
+             */addSegment=function addSegment(segments,x,y,paintInfo){if(lastx==x&&lasty==y)return;var lx=lastx==null?paintInfo.sx:lastx,ly=lasty==null?paintInfo.sy:lasty,o=lx==x?"v":"h",sgnx=sgn(x-lx),sgny=sgn(y-ly);lastx=x;lasty=y;segments.push([lx,ly,x,y,o,sgnx,sgny]);},segLength=function segLength(s){return Math.sqrt(Math.pow(s[0]-s[2],2)+Math.pow(s[1]-s[3],2));},_cloneArray=function _cloneArray(a){var _a=[];_a.push.apply(_a,a);return _a;},writeSegments=function writeSegments(conn,segments,paintInfo){var current=null,next;for(var i=0;i<segments.length-1;i++){current=current||_cloneArray(segments[i]);next=_cloneArray(segments[i+1]);if(cornerRadius>0&&current[4]!=next[4]){var radiusToUse=Math.min(cornerRadius,segLength(current),segLength(next));// right angle. adjust current segment's end point, and next segment's start point.
+current[2]-=current[5]*radiusToUse;current[3]-=current[6]*radiusToUse;next[0]+=next[5]*radiusToUse;next[1]+=next[6]*radiusToUse;var ac=current[6]==next[5]&&next[5]==1||current[6]==next[5]&&next[5]===0&&current[5]!=next[6]||current[6]==next[5]&&next[5]==-1,sgny=next[1]>current[3]?1:-1,sgnx=next[0]>current[2]?1:-1,sgnEqual=sgny==sgnx,cx=sgnEqual&&ac||!sgnEqual&&!ac?next[0]:current[2],cy=sgnEqual&&ac||!sgnEqual&&!ac?current[3]:next[1];_super.addSegment(conn,"Straight",{x1:current[0],y1:current[1],x2:current[2],y2:current[3]});_super.addSegment(conn,"Arc",{r:radiusToUse,x1:current[2],y1:current[3],x2:next[0],y2:next[1],cx:cx,cy:cy,ac:ac});}else{// dx + dy are used to adjust for line width.
+var dx=current[2]==current[0]?0:current[2]>current[0]?paintInfo.lw/2:-(paintInfo.lw/2),dy=current[3]==current[1]?0:current[3]>current[1]?paintInfo.lw/2:-(paintInfo.lw/2);_super.addSegment(conn,"Straight",{x1:current[0]-dx,y1:current[1]-dy,x2:current[2]+dx,y2:current[3]+dy});}current=next;}if(next!=null){// last segment
+_super.addSegment(conn,"Straight",{x1:next[0],y1:next[1],x2:next[2],y2:next[3]});}};this._compute=function(paintInfo,params){segments=[];lastx=null;lasty=null;lastOrientation=null;var commonStubCalculator=function commonStubCalculator(){return[paintInfo.startStubX,paintInfo.startStubY,paintInfo.endStubX,paintInfo.endStubY];},stubCalculators={perpendicular:commonStubCalculator,orthogonal:commonStubCalculator,opposite:function opposite(axis){var pi=paintInfo,idx=axis=="x"?0:1,areInProximity={"x":function x(){return pi.so[idx]==1&&(pi.startStubX>pi.endStubX&&pi.tx>pi.startStubX||pi.sx>pi.endStubX&&pi.tx>pi.sx)||pi.so[idx]==-1&&(pi.startStubX<pi.endStubX&&pi.tx<pi.startStubX||pi.sx<pi.endStubX&&pi.tx<pi.sx);},"y":function y(){return pi.so[idx]==1&&(pi.startStubY>pi.endStubY&&pi.ty>pi.startStubY||pi.sy>pi.endStubY&&pi.ty>pi.sy)||pi.so[idx]==-1&&(pi.startStubY<pi.endStubY&&pi.ty<pi.startStubY||pi.sy<pi.endStubY&&pi.ty<pi.sy);}};if(!alwaysRespectStubs&&areInProximity[axis]()){return{"x":[(paintInfo.sx+paintInfo.tx)/2,paintInfo.startStubY,(paintInfo.sx+paintInfo.tx)/2,paintInfo.endStubY],"y":[paintInfo.startStubX,(paintInfo.sy+paintInfo.ty)/2,paintInfo.endStubX,(paintInfo.sy+paintInfo.ty)/2]}[axis];}else{return[paintInfo.startStubX,paintInfo.startStubY,paintInfo.endStubX,paintInfo.endStubY];}}};// calculate Stubs.
+var stubs=stubCalculators[paintInfo.anchorOrientation](paintInfo.sourceAxis),idx=paintInfo.sourceAxis=="x"?0:1,oidx=paintInfo.sourceAxis=="x"?1:0,ss=stubs[idx],oss=stubs[oidx],es=stubs[idx+2],oes=stubs[oidx+2];// add the start stub segment. use stubs for loopback as it will look better, with the loop spaced
+// away from the element.
+addSegment(segments,stubs[0],stubs[1],paintInfo);// if its a loopback and we should treat it differently.
+if(false&&params.sourcePos[0]==params.targetPos[0]&&params.sourcePos[1]==params.targetPos[1]){// we use loopbackRadius here, as statemachine connectors do.
+// so we go radius to the left from stubs[0], then upwards by 2*radius, to the right by 2*radius,
+// down by 2*radius, left by radius.
+addSegment(segments,stubs[0]-loopbackRadius,stubs[1],paintInfo);addSegment(segments,stubs[0]-loopbackRadius,stubs[1]-2*loopbackRadius,paintInfo);addSegment(segments,stubs[0]+loopbackRadius,stubs[1]-2*loopbackRadius,paintInfo);addSegment(segments,stubs[0]+loopbackRadius,stubs[1],paintInfo);addSegment(segments,stubs[0],stubs[1],paintInfo);}else{var midx=paintInfo.startStubX+(paintInfo.endStubX-paintInfo.startStubX)*midpoint,midy=paintInfo.startStubY+(paintInfo.endStubY-paintInfo.startStubY)*midpoint;var orientations={x:[0,1],y:[1,0]},lineCalculators={perpendicular:function perpendicular(axis){var pi=paintInfo,sis={x:[[[1,2,3,4],null,[2,1,4,3]],null,[[4,3,2,1],null,[3,4,1,2]]],y:[[[3,2,1,4],null,[2,3,4,1]],null,[[4,1,2,3],null,[1,4,3,2]]]},stubs={x:[[pi.startStubX,pi.endStubX],null,[pi.endStubX,pi.startStubX]],y:[[pi.startStubY,pi.endStubY],null,[pi.endStubY,pi.startStubY]]},midLines={x:[[midx,pi.startStubY],[midx,pi.endStubY]],y:[[pi.startStubX,midy],[pi.endStubX,midy]]},linesToEnd={x:[[pi.endStubX,pi.startStubY]],y:[[pi.startStubX,pi.endStubY]]},startToEnd={x:[[pi.startStubX,pi.endStubY],[pi.endStubX,pi.endStubY]],y:[[pi.endStubX,pi.startStubY],[pi.endStubX,pi.endStubY]]},startToMidToEnd={x:[[pi.startStubX,midy],[pi.endStubX,midy],[pi.endStubX,pi.endStubY]],y:[[midx,pi.startStubY],[midx,pi.endStubY],[pi.endStubX,pi.endStubY]]},otherStubs={x:[pi.startStubY,pi.endStubY],y:[pi.startStubX,pi.endStubX]},soIdx=orientations[axis][0],toIdx=orientations[axis][1],_so=pi.so[soIdx]+1,_to=pi.to[toIdx]+1,otherFlipped=pi.to[toIdx]==-1&&otherStubs[axis][1]<otherStubs[axis][0]||pi.to[toIdx]==1&&otherStubs[axis][1]>otherStubs[axis][0],stub1=stubs[axis][_so][0],stub2=stubs[axis][_so][1],segmentIndexes=sis[axis][_so][_to];if(pi.segment==segmentIndexes[3]||pi.segment==segmentIndexes[2]&&otherFlipped){return midLines[axis];}else if(pi.segment==segmentIndexes[2]&&stub2<stub1){return linesToEnd[axis];}else if(pi.segment==segmentIndexes[2]&&stub2>=stub1||pi.segment==segmentIndexes[1]&&!otherFlipped){return startToMidToEnd[axis];}else if(pi.segment==segmentIndexes[0]||pi.segment==segmentIndexes[1]&&otherFlipped){return startToEnd[axis];}},orthogonal:function orthogonal(axis,startStub,otherStartStub,endStub,otherEndStub){var pi=paintInfo,extent={"x":pi.so[0]==-1?Math.min(startStub,endStub):Math.max(startStub,endStub),"y":pi.so[1]==-1?Math.min(startStub,endStub):Math.max(startStub,endStub)}[axis];return{"x":[[extent,otherStartStub],[extent,otherEndStub],[endStub,otherEndStub]],"y":[[otherStartStub,extent],[otherEndStub,extent],[otherEndStub,endStub]]}[axis];},opposite:function opposite(axis,ss,oss,es){var pi=paintInfo,otherAxis={"x":"y","y":"x"}[axis],dim={"x":"height","y":"width"}[axis],comparator=pi["is"+axis.toUpperCase()+"GreaterThanStubTimes2"];if(params.sourceEndpoint.elementId==params.targetEndpoint.elementId){var _val=oss+(1-params.sourceEndpoint.anchor[otherAxis])*params.sourceInfo[dim]+_super.maxStub;return{"x":[[ss,_val],[es,_val]],"y":[[_val,ss],[_val,es]]}[axis];}else if(!comparator||pi.so[idx]==1&&ss>es||pi.so[idx]==-1&&ss<es){return{"x":[[ss,midy],[es,midy]],"y":[[midx,ss],[midx,es]]}[axis];}else if(pi.so[idx]==1&&ss<es||pi.so[idx]==-1&&ss>es){return{"x":[[midx,pi.sy],[midx,pi.ty]],"y":[[pi.sx,midy],[pi.tx,midy]]}[axis];}}};// compute the rest of the line
+var p=lineCalculators[paintInfo.anchorOrientation](paintInfo.sourceAxis,ss,oss,es,oes);if(p){for(var i=0;i<p.length;i++){addSegment(segments,p[i][0],p[i][1],paintInfo);}}// line to end stub
+addSegment(segments,stubs[2],stubs[3],paintInfo);}// end stub to end (common)
+addSegment(segments,paintInfo.tx,paintInfo.ty,paintInfo);// write out the segments.
+writeSegments(this,segments,paintInfo);};/*this.getPath = function () {
+            var _last = null, _lastAxis = null, s = [], segs = segments;
+            for (var i = 0; i < segs.length; i++) {
+                var seg = segs[i], axis = seg[4], axisIndex = (axis == "v" ? 3 : 2);
+                if (_last != null && _lastAxis === axis) {
+                    _last[axisIndex] = seg[axisIndex];
+                }
+                else {
+                    if (seg[0] != seg[2] || seg[1] != seg[3]) {
+                        s.push({
+                            start: [ seg[0], seg[1] ],
+                            end: [ seg[2], seg[3] ]
+                        });
+                        _last = seg;
+                        _lastAxis = seg[4];
+                    }
+                }
+            }
+            return s;
+        };*/};_ju.extend(Flowchart,_jp.Connectors.AbstractConnector);_jp.registerConnectorType(Flowchart,"Flowchart");}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ *
+ * Title:jsPlumb 2.3.0
+ *
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ *
+ * This file contains the code for the Bezier connector type.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil;_jp.Connectors.AbstractBezierConnector=function(params){params=params||{};var showLoopback=params.showLoopback!==false,curviness=params.curviness||10,margin=params.margin||5,proximityLimit=params.proximityLimit||80,clockwise=params.orientation&&params.orientation==="clockwise",loopbackRadius=params.loopbackRadius||25,isLoopbackCurrently=false,_super;this.overrideSetEditable=function(){return!isLoopbackCurrently;};this._compute=function(paintInfo,p){var sp=p.sourcePos,tp=p.targetPos,_w=Math.abs(sp[0]-tp[0]),_h=Math.abs(sp[1]-tp[1]);if(!showLoopback||p.sourceEndpoint.elementId!==p.targetEndpoint.elementId){isLoopbackCurrently=false;this._computeBezier(paintInfo,p,sp,tp,_w,_h);}else{isLoopbackCurrently=true;// a loopback connector.  draw an arc from one anchor to the other.
+var x1=p.sourcePos[0],y1=p.sourcePos[1]-margin,cx=x1,cy=y1-loopbackRadius,// canvas sizing stuff, to ensure the whole painted area is visible.
+_x=cx-loopbackRadius,_y=cy-loopbackRadius;_w=2*loopbackRadius;_h=2*loopbackRadius;paintInfo.points[0]=_x;paintInfo.points[1]=_y;paintInfo.points[2]=_w;paintInfo.points[3]=_h;// ADD AN ARC SEGMENT.
+_super.addSegment(this,"Arc",{loopback:true,x1:x1-_x+4,y1:y1-_y,startAngle:0,endAngle:2*Math.PI,r:loopbackRadius,ac:!clockwise,x2:x1-_x-4,y2:y1-_y,cx:cx-_x,cy:cy-_y});}};_super=_jp.Connectors.AbstractConnector.apply(this,arguments);return _super;};_ju.extend(_jp.Connectors.AbstractBezierConnector,_jp.Connectors.AbstractConnector);var Bezier=function Bezier(params){params=params||{};this.type="Bezier";var _super=_jp.Connectors.AbstractBezierConnector.apply(this,arguments),majorAnchor=params.curviness||150,minorAnchor=10;this.getCurviness=function(){return majorAnchor;};this._findControlPoint=function(point,sourceAnchorPosition,targetAnchorPosition,sourceEndpoint,targetEndpoint,soo,too){// determine if the two anchors are perpendicular to each other in their orientation.  we swap the control
+// points around if so (code could be tightened up)
+var perpendicular=soo[0]!=too[0]||soo[1]==too[1],p=[];if(!perpendicular){if(soo[0]===0)// X
+p.push(sourceAnchorPosition[0]<targetAnchorPosition[0]?point[0]+minorAnchor:point[0]-minorAnchor);else p.push(point[0]-majorAnchor*soo[0]);if(soo[1]===0)// Y
+p.push(sourceAnchorPosition[1]<targetAnchorPosition[1]?point[1]+minorAnchor:point[1]-minorAnchor);else p.push(point[1]+majorAnchor*too[1]);}else{if(too[0]===0)// X
+p.push(targetAnchorPosition[0]<sourceAnchorPosition[0]?point[0]+minorAnchor:point[0]-minorAnchor);else p.push(point[0]+majorAnchor*too[0]);if(too[1]===0)// Y
+p.push(targetAnchorPosition[1]<sourceAnchorPosition[1]?point[1]+minorAnchor:point[1]-minorAnchor);else p.push(point[1]+majorAnchor*soo[1]);}return p;};this._computeBezier=function(paintInfo,p,sp,tp,_w,_h){var geometry=this.getGeometry(),_CP,_CP2,_sx=sp[0]<tp[0]?_w:0,_sy=sp[1]<tp[1]?_h:0,_tx=sp[0]<tp[0]?0:_w,_ty=sp[1]<tp[1]?0:_h;if((this.hasBeenEdited()||this.isEditing())&&geometry!=null&&geometry.controlPoints!=null&&geometry.controlPoints[0]!=null&&geometry.controlPoints[1]!=null){_CP=geometry.controlPoints[0];_CP2=geometry.controlPoints[1];}else{_CP=this._findControlPoint([_sx,_sy],sp,tp,p.sourceEndpoint,p.targetEndpoint,paintInfo.so,paintInfo.to);_CP2=this._findControlPoint([_tx,_ty],tp,sp,p.targetEndpoint,p.sourceEndpoint,paintInfo.to,paintInfo.so);}_super.setGeometry({controlPoints:[_CP,_CP2]},true);_super.addSegment(this,"Bezier",{x1:_sx,y1:_sy,x2:_tx,y2:_ty,cp1x:_CP[0],cp1y:_CP[1],cp2x:_CP2[0],cp2y:_CP2[1]});};};_ju.extend(Bezier,_jp.Connectors.AbstractBezierConnector);_jp.registerConnectorType(Bezier,"Bezier");}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ *
+ * Title:jsPlumb 2.3.0
+ *
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ *
+ * This file contains the state machine connectors, which extend AbstractBezierConnector.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil;var _segment=function _segment(x1,y1,x2,y2){if(x1<=x2&&y2<=y1)return 1;else if(x1<=x2&&y1<=y2)return 2;else if(x2<=x1&&y2>=y1)return 3;return 4;},// the control point we will use depends on the faces to which each end of the connection is assigned, specifically whether or not the
+// two faces are parallel or perpendicular.  if they are parallel then the control point lies on the midpoint of the axis in which they
+// are parellel and varies only in the other axis; this variation is proportional to the distance that the anchor points lie from the
+// center of that face.  if the two faces are perpendicular then the control point is at some distance from both the midpoints; the amount and
+// direction are dependent on the orientation of the two elements. 'seg', passed in to this method, tells you which segment the target element
+// lies in with respect to the source: 1 is top right, 2 is bottom right, 3 is bottom left, 4 is top left.
+//
+// sourcePos and targetPos are arrays of info about where on the source and target each anchor is located.  their contents are:
+//
+// 0 - absolute x
+// 1 - absolute y
+// 2 - proportional x in element (0 is left edge, 1 is right edge)
+// 3 - proportional y in element (0 is top edge, 1 is bottom edge)
+//
+_findControlPoint=function _findControlPoint(midx,midy,segment,sourceEdge,targetEdge,dx,dy,distance,proximityLimit){// TODO (maybe)
+// - if anchor pos is 0.5, make the control point take into account the relative position of the elements.
+if(distance<=proximityLimit)return[midx,midy];if(segment===1){if(sourceEdge[3]<=0&&targetEdge[3]>=1)return[midx+(sourceEdge[2]<0.5?-1*dx:dx),midy];else if(sourceEdge[2]>=1&&targetEdge[2]<=0)return[midx,midy+(sourceEdge[3]<0.5?-1*dy:dy)];else return[midx+-1*dx,midy+-1*dy];}else if(segment===2){if(sourceEdge[3]>=1&&targetEdge[3]<=0)return[midx+(sourceEdge[2]<0.5?-1*dx:dx),midy];else if(sourceEdge[2]>=1&&targetEdge[2]<=0)return[midx,midy+(sourceEdge[3]<0.5?-1*dy:dy)];else return[midx+dx,midy+-1*dy];}else if(segment===3){if(sourceEdge[3]>=1&&targetEdge[3]<=0)return[midx+(sourceEdge[2]<0.5?-1*dx:dx),midy];else if(sourceEdge[2]<=0&&targetEdge[2]>=1)return[midx,midy+(sourceEdge[3]<0.5?-1*dy:dy)];else return[midx+-1*dx,midy+-1*dy];}else if(segment===4){if(sourceEdge[3]<=0&&targetEdge[3]>=1)return[midx+(sourceEdge[2]<0.5?-1*dx:dx),midy];else if(sourceEdge[2]<=0&&targetEdge[2]>=1)return[midx,midy+(sourceEdge[3]<0.5?-1*dy:dy)];else return[midx+dx,midy+-1*dy];}};var StateMachine=function StateMachine(params){params=params||{};this.type="StateMachine";var _super=_jp.Connectors.AbstractBezierConnector.apply(this,arguments),curviness=params.curviness||10,margin=params.margin||5,proximityLimit=params.proximityLimit||80,clockwise=params.orientation&&params.orientation==="clockwise",_controlPoint;this._computeBezier=function(paintInfo,params,sp,tp,w,h){var _sx=params.sourcePos[0]<params.targetPos[0]?0:w,_sy=params.sourcePos[1]<params.targetPos[1]?0:h,_tx=params.sourcePos[0]<params.targetPos[0]?w:0,_ty=params.sourcePos[1]<params.targetPos[1]?h:0;// now adjust for the margin
+if(params.sourcePos[2]===0)_sx-=margin;if(params.sourcePos[2]===1)_sx+=margin;if(params.sourcePos[3]===0)_sy-=margin;if(params.sourcePos[3]===1)_sy+=margin;if(params.targetPos[2]===0)_tx-=margin;if(params.targetPos[2]===1)_tx+=margin;if(params.targetPos[3]===0)_ty-=margin;if(params.targetPos[3]===1)_ty+=margin;//
+// these connectors are quadratic bezier curves, having a single control point. if both anchors
+// are located at 0.5 on their respective faces, the control point is set to the midpoint and you
+// get a straight line.  this is also the case if the two anchors are within 'proximityLimit', since
+// it seems to make good aesthetic sense to do that. outside of that, the control point is positioned
+// at 'curviness' pixels away along the normal to the straight line connecting the two anchors.
+//
+// there may be two improvements to this.  firstly, we might actually support the notion of avoiding nodes
+// in the UI, or at least making a good effort at doing so.  if a connection would pass underneath some node,
+// for example, we might increase the distance the control point is away from the midpoint in a bid to
+// steer it around that node.  this will work within limits, but i think those limits would also be the likely
+// limits for, once again, aesthetic good sense in the layout of a chart using these connectors.
+//
+// the second possible change is actually two possible changes: firstly, it is possible we should gradually
+// decrease the 'curviness' as the distance between the anchors decreases; start tailing it off to 0 at some
+// point (which should be configurable).  secondly, we might slightly increase the 'curviness' for connectors
+// with respect to how far their anchor is from the center of its respective face. this could either look cool,
+// or stupid, and may indeed work only in a way that is so subtle as to have been a waste of time.
+//
+var _midx=(_sx+_tx)/2,_midy=(_sy+_ty)/2,segment=_segment(_sx,_sy,_tx,_ty),distance=Math.sqrt(Math.pow(_tx-_sx,2)+Math.pow(_ty-_sy,2)),cp1x,cp2x,cp1y,cp2y,geometry=_super.getGeometry();if((this.hasBeenEdited()||this.isEditing())&&geometry!=null){cp1x=geometry.controlPoints[0][0];cp1y=geometry.controlPoints[0][1];cp2x=geometry.controlPoints[1][0];cp2y=geometry.controlPoints[1][1];}else{// calculate the control point.  this code will be where we'll put in a rudimentary element avoidance scheme; it
+// will work by extending the control point to force the curve to be, um, curvier.
+_controlPoint=_findControlPoint(_midx,_midy,segment,params.sourcePos,params.targetPos,curviness,curviness,distance,proximityLimit);cp1x=_controlPoint[0];cp2x=_controlPoint[0];cp1y=_controlPoint[1];cp2y=_controlPoint[1];_super.setGeometry({controlPoints:[_controlPoint,_controlPoint]},true);}_super.addSegment(this,"Bezier",{x1:_tx,y1:_ty,x2:_sx,y2:_sy,cp1x:cp1x,cp1y:cp1y,cp2x:cp2x,cp2y:cp2y});};};_ju.extend(StateMachine,_jp.Connectors.AbstractBezierConnector);_jp.registerConnectorType(StateMachine,"StateMachine");}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ *
+ * Title:jsPlumb 2.3.0
+ *
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ *
+ * This file contains the 'flowchart' connectors, consisting of vertical and horizontal line segments.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ *
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ *
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil;var STRAIGHT="Straight";var Straight=function Straight(params){this.type=STRAIGHT;var _super=_jp.Connectors.AbstractConnector.apply(this,arguments);this._compute=function(paintInfo,_){_super.addSegment(this,STRAIGHT,{x1:paintInfo.sx,y1:paintInfo.sy,x2:paintInfo.startStubX,y2:paintInfo.startStubY});_super.addSegment(this,STRAIGHT,{x1:paintInfo.startStubX,y1:paintInfo.startStubY,x2:paintInfo.endStubX,y2:paintInfo.endStubY});_super.addSegment(this,STRAIGHT,{x1:paintInfo.endStubX,y1:paintInfo.endStubY,x2:paintInfo.tx,y2:paintInfo.ty});};};_ju.extend(Straight,_jp.Connectors.AbstractConnector);_jp.registerConnectorType(Straight,STRAIGHT);}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ * 
+ * Title:jsPlumb 2.3.0
+ * 
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ * 
+ * This file contains the SVG renderers.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ * 
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){// ************************** SVG utility methods ********************************************	
+"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil;var svgAttributeMap={"stroke-linejoin":"stroke-linejoin","stroke-dashoffset":"stroke-dashoffset","stroke-linecap":"stroke-linecap"},STROKE_DASHARRAY="stroke-dasharray",DASHSTYLE="dashstyle",LINEAR_GRADIENT="linearGradient",RADIAL_GRADIENT="radialGradient",DEFS="defs",FILL="fill",STOP="stop",STROKE="stroke",STROKE_WIDTH="stroke-width",STYLE="style",NONE="none",JSPLUMB_GRADIENT="jsplumb_gradient_",LINE_WIDTH="strokeWidth",ns={svg:"http://www.w3.org/2000/svg",xhtml:"http://www.w3.org/1999/xhtml"},_attr=function _attr(node,attributes){for(var i in attributes){node.setAttribute(i,""+attributes[i]);}},_node=function _node(name,attributes){attributes=attributes||{};attributes.version="1.1";attributes.xmlns=ns.xhtml;return _jp.createElementNS(ns.svg,name,null,null,attributes);},_pos=function _pos(d){return"position:absolute;left:"+d[0]+"px;top:"+d[1]+"px";},_clearGradient=function _clearGradient(parent){var els=parent.querySelectorAll(" defs,linearGradient,radialGradient");for(var i=0;i<els.length;i++){els[i].parentNode.removeChild(els[i]);}},_updateGradient=function _updateGradient(parent,node,style,dimensions,uiComponent){var id=JSPLUMB_GRADIENT+uiComponent._jsPlumb.instance.idstamp();// first clear out any existing gradient
+_clearGradient(parent);// this checks for an 'offset' property in the gradient, and in the absence of it, assumes
+// we want a linear gradient. if it's there, we create a radial gradient.
+// it is possible that a more explicit means of defining the gradient type would be
+// better. relying on 'offset' means that we can never have a radial gradient that uses
+// some default offset, for instance.
+// issue 244 suggested the 'gradientUnits' attribute; without this, straight/flowchart connectors with gradients would
+// not show gradients when the line was perfectly horizontal or vertical.
+var g;if(!style.gradient.offset)g=_node(LINEAR_GRADIENT,{id:id,gradientUnits:"userSpaceOnUse"});else g=_node(RADIAL_GRADIENT,{id:id});var defs=_node(DEFS);parent.appendChild(defs);defs.appendChild(g);// the svg radial gradient seems to treat stops in the reverse
+// order to how canvas does it.  so we want to keep all the maths the same, but
+// iterate the actual style declarations in reverse order, if the x indexes are not in order.
+for(var i=0;i<style.gradient.stops.length;i++){var styleToUse=uiComponent.segment==1||uiComponent.segment==2?i:style.gradient.stops.length-1-i,//stopColor = _ju.convertStyle(style.gradient.stops[styleToUse][1], true),
+stopColor=style.gradient.stops[styleToUse][1],s=_node(STOP,{"offset":Math.floor(style.gradient.stops[i][0]*100)+"%","stop-color":stopColor});g.appendChild(s);}var applyGradientTo=style.stroke?STROKE:FILL;node.setAttribute(applyGradientTo,"url(#"+id+")");},_applyStyles=function _applyStyles(parent,node,style,dimensions,uiComponent){node.setAttribute(FILL,style.fill?style.fill:NONE);node.setAttribute(STROKE,style.stroke?style.stroke:NONE);if(style.gradient){_updateGradient(parent,node,style,dimensions,uiComponent);}else{// make sure we clear any existing gradient
+_clearGradient(parent);node.setAttribute(STYLE,"");}if(style.strokeWidth){node.setAttribute(STROKE_WIDTH,style.strokeWidth);}// in SVG there is a stroke-dasharray attribute we can set, and its syntax looks like
+// the syntax in VML but is actually kind of nasty: values are given in the pixel
+// coordinate space, whereas in VML they are multiples of the width of the stroked
+// line, which makes a lot more sense.  for that reason, jsPlumb is supporting both
+// the native svg 'stroke-dasharray' attribute, and also the 'dashstyle' concept from
+// VML, which will be the preferred method.  the code below this converts a dashstyle
+// attribute given in terms of stroke width into a pixel representation, by using the
+// stroke's lineWidth.
+if(style[DASHSTYLE]&&style[LINE_WIDTH]&&!style[STROKE_DASHARRAY]){var sep=style[DASHSTYLE].indexOf(",")==-1?" ":",",parts=style[DASHSTYLE].split(sep),styleToUse="";parts.forEach(function(p){styleToUse+=Math.floor(p*style.strokeWidth)+sep;});node.setAttribute(STROKE_DASHARRAY,styleToUse);}else if(style[STROKE_DASHARRAY]){node.setAttribute(STROKE_DASHARRAY,style[STROKE_DASHARRAY]);}// extra attributes such as join type, dash offset.
+for(var i in svgAttributeMap){if(style[i]){node.setAttribute(svgAttributeMap[i],style[i]);}}},_appendAtIndex=function _appendAtIndex(svg,path,idx){if(svg.childNodes.length>idx){svg.insertBefore(path,svg.childNodes[idx]);}else svg.appendChild(path);};/**
+     utility methods for other objects to use.
+     */_ju.svg={node:_node,attr:_attr,pos:_pos};// ************************** / SVG utility methods ********************************************
+/*
+     * Base class for SVG components.
+     */var SvgComponent=function SvgComponent(params){var pointerEventsSpec=params.pointerEventsSpec||"all",renderer={};_jp.jsPlumbUIComponent.apply(this,params.originalArgs);this.canvas=null;this.path=null;this.svg=null;this.bgCanvas=null;var clazz=params.cssClass+" "+(params.originalArgs[0].cssClass||""),svgParams={"style":"","width":0,"height":0,"pointer-events":pointerEventsSpec,"position":"absolute"};this.svg=_node("svg",svgParams);if(params.useDivWrapper){this.canvas=_jp.createElement("div",{position:"absolute"});_ju.sizeElement(this.canvas,0,0,1,1);this.canvas.className=clazz;}else{_attr(this.svg,{"class":clazz});this.canvas=this.svg;}params._jsPlumb.appendElement(this.canvas,params.originalArgs[0].parent);if(params.useDivWrapper)this.canvas.appendChild(this.svg);var displayElements=[this.canvas];this.getDisplayElements=function(){return displayElements;};this.appendDisplayElement=function(el){displayElements.push(el);};this.paint=function(style,anchor,extents){if(style!=null){var xy=[this.x,this.y],wh=[this.w,this.h],p;if(extents!=null){if(extents.xmin<0)xy[0]+=extents.xmin;if(extents.ymin<0)xy[1]+=extents.ymin;wh[0]=extents.xmax+(extents.xmin<0?-extents.xmin:0);wh[1]=extents.ymax+(extents.ymin<0?-extents.ymin:0);}if(params.useDivWrapper){_ju.sizeElement(this.canvas,xy[0],xy[1],wh[0],wh[1]);xy[0]=0;xy[1]=0;p=_pos([0,0]);}else p=_pos([xy[0],xy[1]]);renderer.paint.apply(this,arguments);_attr(this.svg,{"style":p,"width":wh[0]||0,"height":wh[1]||0});}};return{renderer:renderer};};_ju.extend(SvgComponent,_jp.jsPlumbUIComponent,{cleanup:function cleanup(force){if(force||this.typeId==null){if(this.canvas)this.canvas._jsPlumb=null;if(this.svg)this.svg._jsPlumb=null;if(this.bgCanvas)this.bgCanvas._jsPlumb=null;if(this.canvas&&this.canvas.parentNode)this.canvas.parentNode.removeChild(this.canvas);if(this.bgCanvas&&this.bgCanvas.parentNode)this.canvas.parentNode.removeChild(this.canvas);this.svg=null;this.canvas=null;this.path=null;this.group=null;}else{// if not a forced cleanup, just detach from DOM for now.
+if(this.canvas&&this.canvas.parentNode)this.canvas.parentNode.removeChild(this.canvas);if(this.bgCanvas&&this.bgCanvas.parentNode)this.bgCanvas.parentNode.removeChild(this.bgCanvas);}},reattach:function reattach(instance){var c=instance.getContainer();if(this.canvas&&this.canvas.parentNode==null)c.appendChild(this.canvas);if(this.bgCanvas&&this.bgCanvas.parentNode==null)c.appendChild(this.bgCanvas);},setVisible:function setVisible(v){if(this.canvas){this.canvas.style.display=v?"block":"none";}}});/*
+     * Base class for SVG connectors.
+     */_jp.ConnectorRenderers.svg=function(params){var self=this,_super=SvgComponent.apply(this,[{cssClass:params._jsPlumb.connectorClass+(this.isEditable()?" "+params._jsPlumb.editableConnectorClass:""),originalArgs:arguments,pointerEventsSpec:"none",_jsPlumb:params._jsPlumb}]);var _superSetEditable=this.setEditable;this.setEditable=function(e){var result=_superSetEditable.apply(this,[e]);_jp[result?"addClass":"removeClass"](this.canvas,this._jsPlumb.instance.editableConnectorClass);};_super.renderer.paint=function(style,anchor,extents){var segments=self.getSegments(),p="",offset=[0,0];if(extents.xmin<0)offset[0]=-extents.xmin;if(extents.ymin<0)offset[1]=-extents.ymin;if(segments.length>0){p=self.getPathData();var a={d:p,transform:"translate("+offset[0]+","+offset[1]+")","pointer-events":params["pointer-events"]||"visibleStroke"},outlineStyle=null,d=[self.x,self.y,self.w,self.h];// outline style.  actually means drawing an svg object underneath the main one.
+if(style.outlineStroke){var outlineWidth=style.outlineWidth||1,outlineStrokeWidth=style.strokeWidth+2*outlineWidth;outlineStyle=_jp.extend({},style);delete outlineStyle.gradient;outlineStyle.stroke=style.outlineStroke;outlineStyle.strokeWidth=outlineStrokeWidth;if(self.bgPath==null){self.bgPath=_node("path",a);_jp.addClass(self.bgPath,_jp.connectorOutlineClass);_appendAtIndex(self.svg,self.bgPath,0);}else{_attr(self.bgPath,a);}_applyStyles(self.svg,self.bgPath,outlineStyle,d,self);}if(self.path==null){self.path=_node("path",a);_appendAtIndex(self.svg,self.path,style.outlineStroke?1:0);}else{_attr(self.path,a);}_applyStyles(self.svg,self.path,style,d,self);}};};_ju.extend(_jp.ConnectorRenderers.svg,SvgComponent);// ******************************* svg segment renderer *****************************************************	
+// ******************************* /svg segments *****************************************************
+/*
+     * Base class for SVG endpoints.
+     */var SvgEndpoint=_jp.SvgEndpoint=function(params){var _super=SvgComponent.apply(this,[{cssClass:params._jsPlumb.endpointClass,originalArgs:arguments,pointerEventsSpec:"all",useDivWrapper:true,_jsPlumb:params._jsPlumb}]);_super.renderer.paint=function(style){var s=_jp.extend({},style);if(s.outlineStroke){s.strokeWidth=s.strokeWidth;s.stroke=s.outlineStroke;}if(this.node==null){this.node=this.makeNode(s);this.svg.appendChild(this.node);}else if(this.updateNode!=null){this.updateNode(this.node);}_applyStyles(this.svg,this.node,s,[this.x,this.y,this.w,this.h],this);_pos(this.node,[this.x,this.y]);}.bind(this);};_ju.extend(SvgEndpoint,SvgComponent);/*
+     * SVG Dot Endpoint
+     */_jp.Endpoints.svg.Dot=function(){_jp.Endpoints.Dot.apply(this,arguments);SvgEndpoint.apply(this,arguments);this.makeNode=function(style){return _node("circle",{"cx":this.w/2,"cy":this.h/2,"r":this.radius});};this.updateNode=function(node){_attr(node,{"cx":this.w/2,"cy":this.h/2,"r":this.radius});};};_ju.extend(_jp.Endpoints.svg.Dot,[_jp.Endpoints.Dot,SvgEndpoint]);/*
+     * SVG Rectangle Endpoint
+     */_jp.Endpoints.svg.Rectangle=function(){_jp.Endpoints.Rectangle.apply(this,arguments);SvgEndpoint.apply(this,arguments);this.makeNode=function(style){return _node("rect",{"width":this.w,"height":this.h});};this.updateNode=function(node){_attr(node,{"width":this.w,"height":this.h});};};_ju.extend(_jp.Endpoints.svg.Rectangle,[_jp.Endpoints.Rectangle,SvgEndpoint]);/*
+     * SVG Image Endpoint is the default image endpoint.
+     */_jp.Endpoints.svg.Image=_jp.Endpoints.Image;/*
+     * Blank endpoint in svg renderer is the default Blank endpoint.
+     */_jp.Endpoints.svg.Blank=_jp.Endpoints.Blank;/*
+     * Label overlay in svg renderer is the default Label overlay.
+     */_jp.Overlays.svg.Label=_jp.Overlays.Label;/*
+     * Custom overlay in svg renderer is the default Custom overlay.
+     */_jp.Overlays.svg.Custom=_jp.Overlays.Custom;var AbstractSvgArrowOverlay=function AbstractSvgArrowOverlay(superclass,originalArgs){superclass.apply(this,originalArgs);_jp.jsPlumbUIComponent.apply(this,originalArgs);this.isAppendedAtTopLevel=false;var self=this;this.path=null;this.paint=function(params,containerExtents){// only draws on connections, not endpoints.
+if(params.component.svg&&containerExtents){if(this.path==null){this.path=_node("path",{"pointer-events":"all"});params.component.svg.appendChild(this.path);if(this.elementCreated){this.elementCreated(this.path,params.component);}this.canvas=params.component.svg;// for the sake of completeness; this behaves the same as other overlays
+}var clazz=originalArgs&&originalArgs.length==1?originalArgs[0].cssClass||"":"",offset=[0,0];if(containerExtents.xmin<0)offset[0]=-containerExtents.xmin;if(containerExtents.ymin<0)offset[1]=-containerExtents.ymin;_attr(this.path,{"d":makePath(params.d),"class":clazz,stroke:params.stroke?params.stroke:null,fill:params.fill?params.fill:null,transform:"translate("+offset[0]+","+offset[1]+")"});}};var makePath=function makePath(d){return isNaN(d.cxy.x)||isNaN(d.cxy.y)?"":"M"+d.hxy.x+","+d.hxy.y+" L"+d.tail[0].x+","+d.tail[0].y+" L"+d.cxy.x+","+d.cxy.y+" L"+d.tail[1].x+","+d.tail[1].y+" L"+d.hxy.x+","+d.hxy.y;};this.transfer=function(target){if(target.canvas&&this.path&&this.path.parentNode){this.path.parentNode.removeChild(this.path);target.canvas.appendChild(this.path);}};};_ju.extend(AbstractSvgArrowOverlay,[_jp.jsPlumbUIComponent,_jp.Overlays.AbstractOverlay],{cleanup:function cleanup(force){if(this.path!=null){if(force)this._jsPlumb.instance.removeElement(this.path);else if(this.path.parentNode)this.path.parentNode.removeChild(this.path);}},reattach:function reattach(instance){if(this.path&&this.canvas&&this.path.parentNode==null)this.canvas.appendChild(this.path);},setVisible:function setVisible(v){if(this.path!=null)this.path.style.display=v?"block":"none";}});_jp.Overlays.svg.Arrow=function(){AbstractSvgArrowOverlay.apply(this,[_jp.Overlays.Arrow,arguments]);};_ju.extend(_jp.Overlays.svg.Arrow,[_jp.Overlays.Arrow,AbstractSvgArrowOverlay]);_jp.Overlays.svg.PlainArrow=function(){AbstractSvgArrowOverlay.apply(this,[_jp.Overlays.PlainArrow,arguments]);};_ju.extend(_jp.Overlays.svg.PlainArrow,[_jp.Overlays.PlainArrow,AbstractSvgArrowOverlay]);_jp.Overlays.svg.Diamond=function(){AbstractSvgArrowOverlay.apply(this,[_jp.Overlays.Diamond,arguments]);};_ju.extend(_jp.Overlays.svg.Diamond,[_jp.Overlays.Diamond,AbstractSvgArrowOverlay]);// a test
+_jp.Overlays.svg.GuideLines=function(){var path=null,self=this,p1_1,p1_2;_jp.Overlays.GuideLines.apply(this,arguments);this.paint=function(params,containerExtents){if(path==null){path=_node("path");params.connector.svg.appendChild(path);self.attachListeners(path,params.connector);self.attachListeners(path,self);p1_1=_node("path");params.connector.svg.appendChild(p1_1);self.attachListeners(p1_1,params.connector);self.attachListeners(p1_1,self);p1_2=_node("path");params.connector.svg.appendChild(p1_2);self.attachListeners(p1_2,params.connector);self.attachListeners(p1_2,self);}var offset=[0,0];if(containerExtents.xmin<0)offset[0]=-containerExtents.xmin;if(containerExtents.ymin<0)offset[1]=-containerExtents.ymin;_attr(path,{"d":makePath(params.head,params.tail),stroke:"red",fill:null,transform:"translate("+offset[0]+","+offset[1]+")"});_attr(p1_1,{"d":makePath(params.tailLine[0],params.tailLine[1]),stroke:"blue",fill:null,transform:"translate("+offset[0]+","+offset[1]+")"});_attr(p1_2,{"d":makePath(params.headLine[0],params.headLine[1]),stroke:"green",fill:null,transform:"translate("+offset[0]+","+offset[1]+")"});};var makePath=function makePath(d1,d2){return"M "+d1.x+","+d1.y+" L"+d2.x+","+d2.y;};};_ju.extend(_jp.Overlays.svg.GuideLines,_jp.Overlays.GuideLines);}).call(typeof window!=='undefined'?window:commonjsGlobal);/*
+ * jsPlumb
+ * 
+ * Title:jsPlumb 2.3.0
+ * 
+ * Provides a way to visually connect elements on an HTML page, using SVG.
+ * 
+ * This file contains the 'vanilla' adapter - having no external dependencies other than bundled libs.
+ *
+ * Copyright (c) 2010 - 2017 jsPlumb (hello@jsplumbtoolkit.com)
+ * 
+ * http://jsplumbtoolkit.com
+ * http://github.com/sporritt/jsplumb
+ * 
+ * Dual licensed under the MIT and GPL2 licenses.
+ */(function(){"use strict";var root=this,_jp=root.jsPlumb,_ju=root.jsPlumbUtil,_jk=root.Katavorio,_jg=root.Biltong;var _getDragManager=function _getDragManager(instance,category){category=category||"main";var key="_katavorio_"+category;var k=instance[key],e=instance.getEventManager();if(!k){k=new _jk({bind:e.on,unbind:e.off,getSize:_jp.getSize,getPosition:function getPosition(el,relativeToRoot){// if this is a nested draggable then compute the offset against its own offsetParent, otherwise
+// compute against the Container's origin. see also the getUIPosition method below.
+var o=instance.getOffset(el,relativeToRoot,el._katavorioDrag?el.offsetParent:null);return[o.left,o.top];},setPosition:function setPosition(el,xy){el.style.left=xy[0]+"px";el.style.top=xy[1]+"px";},addClass:_jp.addClass,removeClass:_jp.removeClass,intersects:_jg.intersects,indexOf:function indexOf(l,i){return l.indexOf(i);},scope:instance.getDefaultScope(),css:{noSelect:instance.dragSelectClass,droppable:"jtk-droppable",draggable:"jtk-draggable",drag:"jtk-drag",selected:"jtk-drag-selected",active:"jtk-drag-active",hover:"jtk-drag-hover",ghostProxy:"jtk-ghost-proxy"}});instance[key]=k;instance.bind("zoom",k.setZoom);}return k;};var _animProps=function _animProps(o,p){var _one=function _one(pName){if(p[pName]!=null){if(_ju.isString(p[pName])){var m=p[pName].match(/-=/)?-1:1,v=p[pName].substring(2);return o[pName]+m*v;}else return p[pName];}else return o[pName];};return[_one("left"),_one("top")];};_jp.extend(root.jsPlumbInstance.prototype,{animationSupported:true,getElement:function getElement(el){if(el==null)return null;// here we pluck the first entry if el was a list of entries.
+// this is not my favourite thing to do, but previous versions of
+// jsplumb supported jquery selectors, and it is possible a selector
+// will be passed in here.
+el=typeof el==="string"?el:el.length!=null&&el.enctype==null?el[0]:el;return typeof el==="string"?document.getElementById(el):el;},removeElement:function removeElement(element){_getDragManager(this).elementRemoved(element);this.getEventManager().remove(element);},//
+// this adapter supports a rudimentary animation function. no easing is supported.  only
+// left/top properties are supported. property delta args are expected to be in the form
+//
+// +=x.xxxx
+//
+// or
+//
+// -=x.xxxx
+//
+doAnimate:function doAnimate(el,properties,options){options=options||{};var o=this.getOffset(el),ap=_animProps(o,properties),ldist=ap[0]-o.left,tdist=ap[1]-o.top,d=options.duration||250,step=15,steps=d/step,linc=step/d*ldist,tinc=step/d*tdist,idx=0,_int=setInterval(function(){_jp.setPosition(el,{left:o.left+linc*(idx+1),top:o.top+tinc*(idx+1)});if(options.step!=null)options.step(idx,Math.ceil(steps));idx++;if(idx>=steps){window.clearInterval(_int);if(options.complete!=null)options.complete();}},step);},// DRAG/DROP
+destroyDraggable:function destroyDraggable(el,category){_getDragManager(this,category).destroyDraggable(el);},destroyDroppable:function destroyDroppable(el,category){_getDragManager(this,category).destroyDroppable(el);},initDraggable:function initDraggable(el,options,category){_getDragManager(this,category).draggable(el,options);},initDroppable:function initDroppable(el,options,category){_getDragManager(this,category).droppable(el,options);},isAlreadyDraggable:function isAlreadyDraggable(el){return el._katavorioDrag!=null;},isDragSupported:function isDragSupported(el,options){return true;},isDropSupported:function isDropSupported(el,options){return true;},isElementDraggable:function isElementDraggable(el){el=_jp.getElement(el);return el._katavorioDrag&&el._katavorioDrag.isEnabled();},getDragObject:function getDragObject(eventArgs){return eventArgs[0].drag.getDragElement();},getDragScope:function getDragScope(el){return el._katavorioDrag&&el._katavorioDrag.scopes.join(" ")||"";},getDropEvent:function getDropEvent(args){return args[0].e;},getUIPosition:function getUIPosition(eventArgs,zoom){// here the position reported to us by Katavorio is relative to the element's offsetParent. For top
+// level nodes that is fine, but if we have a nested draggable then its offsetParent is actually
+// not going to be the jsplumb container; it's going to be some child of that element. In that case
+// we want to adjust the UI position to account for the offsetParent's position relative to the Container
+// origin.
+var el=eventArgs[0].el;if(el.offsetParent==null){return null;}var finalPos=eventArgs[0].finalPos||eventArgs[0].pos;var p={left:finalPos[0],top:finalPos[1]};if(el._katavorioDrag&&el.offsetParent!==this.getContainer()){var oc=this.getOffset(el.offsetParent);p.left+=oc.left;p.top+=oc.top;}return p;},setDragFilter:function setDragFilter(el,filter,_exclude){if(el._katavorioDrag){el._katavorioDrag.setFilter(filter,_exclude);}},setElementDraggable:function setElementDraggable(el,draggable){el=_jp.getElement(el);if(el._katavorioDrag)el._katavorioDrag.setEnabled(draggable);},setDragScope:function setDragScope(el,scope){if(el._katavorioDrag)el._katavorioDrag.k.setDragScope(el,scope);},setDropScope:function setDropScope(el,scope){if(el._katavorioDrop&&el._katavorioDrop.length>0){el._katavorioDrop[0].k.setDropScope(el,scope);}},addToPosse:function addToPosse(el,spec){var specs=Array.prototype.slice.call(arguments,1);var dm=_getDragManager(this);_jp.each(el,function(_el){_el=[_jp.getElement(_el)];_el.push.apply(_el,specs);dm.addToPosse.apply(dm,_el);});},setPosse:function setPosse(el,spec){var specs=Array.prototype.slice.call(arguments,1);var dm=_getDragManager(this);_jp.each(el,function(_el){_el=[_jp.getElement(_el)];_el.push.apply(_el,specs);dm.setPosse.apply(dm,_el);});},removeFromPosse:function removeFromPosse(el,posseId){var specs=Array.prototype.slice.call(arguments,1);var dm=_getDragManager(this);_jp.each(el,function(_el){_el=[_jp.getElement(_el)];_el.push.apply(_el,specs);dm.removeFromPosse.apply(dm,_el);});},removeFromAllPosses:function removeFromAllPosses(el){var dm=_getDragManager(this);_jp.each(el,function(_el){dm.removeFromAllPosses(_jp.getElement(_el));});},setPosseState:function setPosseState(el,posseId,state){var dm=_getDragManager(this);_jp.each(el,function(_el){dm.setPosseState(_jp.getElement(_el),posseId,state);});},dragEvents:{'start':'start','stop':'stop','drag':'drag','step':'step','over':'over','out':'out','drop':'drop','complete':'complete','beforeStart':'beforeStart'},animEvents:{'step':"step",'complete':'complete'},stopDrag:function stopDrag(el){if(el._katavorioDrag)el._katavorioDrag.abort();},addToDragSelection:function addToDragSelection(spec){_getDragManager(this).select(spec);},removeFromDragSelection:function removeFromDragSelection(spec){_getDragManager(this).deselect(spec);},clearDragSelection:function clearDragSelection(){_getDragManager(this).deselectAll();},trigger:function trigger(el,event,originalEvent,payload){this.getEventManager().trigger(el,event,originalEvent,payload);},doReset:function doReset(){// look for katavorio instances and reset each one if found.
+for(var key in this){if(key.indexOf("_katavorio_")===0){this[key].reset();}}}});var ready=function ready(f){var _do=function _do(){if(/complete|loaded|interactive/.test(document.readyState)&&typeof document.body!="undefined"&&document.body!=null)f();else setTimeout(_do,9);};_do();};ready(_jp.init);}).call(typeof window!=='undefined'?window:commonjsGlobal);});
+
+window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
+
+var draw = function draw(scope) {
+    if (scope) {
+        scope.draw();
+    }
+    requestAnimationFrame(function () {
+        draw(scope);
+    });
+};
+
+var htmlToElement = function htmlToElement(html) {
+    var template = document.createElement('template');
+    template.innerHTML = html;
+    return template.content.firstChild;
+};
+
+var initRepr = function initRepr(html, container) {
+    var element = htmlToElement(html);
+    if (container) {
+        container.appendChild(element);
+    } else {
+        document.body.appendChild(element);
+    }
+    return element;
+};
+
+var audioContext = null;
+var getAudioContext = function getAudioContext() {
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (audioContext) {
+        return audioContext;
+    }
+    audioContext = new AudioContext();
+    return audioContext;
+};
+
+var Marker = function Marker(scope, type, level) {
+    this.scope = scope;
+    if (type == 'vertical') {
+        this.x = level;
+        this.y = null;
+    } else {
+        this.x = null;
+        this.y = level;
+    }
+};
+
+Marker.prototype.draw = function () {
+    // Make life easier with shorter variables
+    var context = this.scope.canvas.getContext('2d');
+    context.strokeWidth = 1;
+    context.strokeStyle = '#006644';
+    if (context.setLineDash) context.setLineDash([5]);
+
+    if (this.x != null) {
+        context.beginPath();
+        context.moveTo(this.x, 0);
+        context.lineTo(this.x, this.scope.canvas.height);
+        context.stroke();
+    } else if (this.y != null) {
+        context.beginPath();
+        context.moveTo(0, 128 - this.y);
+        context.lineTo(this.scope.canvas.width, 128 - this.y);
+        context.stroke();
+    }
+};
+
+var Oscilloscope = function Oscilloscope(container, width, height) {
+    var me = this;
+
+    // Create a new canvas to draw the scope onto
+    this.canvas = document.createElement('canvas');
+    this.canvas.style.width = width;
+    this.canvas.style.height = height;
+    this.canvas.id = 'scope';
+    // If a parent container was specified use it, otherwise just use the document body
+    if (container) {
+        container.appendChild(this.canvas);
+    } else {
+        document.body.appendChild(this.canvas);
+    }
+
+    // Create HTML representation
+    var tr = createOscilloscopeRepr('oscilloscope-title-' + 0, 'oscilloscope-switch-' + 0);
+    var repr = initRepr(tr, document.getElementById('node-tree-canvas')); // TODO: proper container selection
+    this.repr = repr;
+    repr.controller = this;
+    this.repr.id = 'oscilloscope-' + 0;
+
+    this.canvas.onmousedown = function (event) {
+        onMouseDown(event, me);
+    };
+    this.canvas.onmouseup = function (event) {
+        onMouseUp(event, me);
+    };
+    this.canvas.onmousemove = function (event) {
+        onMouseMove(event, me);
+    };
+
+    this.triggerLevel = 50;
+    this.traces = [];
+
+    this.sources = [];
+
+    this.markers = [];
+    this.markers.push(new Marker(this, 'horizontal', 80), new Marker(this, 'vertical', 200));
+
+    this.markerMoving = false;
+
+    this.autoTriggering = true;
+    this.triggerMoving = false;
+    this.triggerTrace = 0;
+    this.triggerType = 'rising';
+};
+
+Oscilloscope.prototype.draw = function () {
+    // Make life easier with shorter variables
+    var width = this.canvas.clientWidth;
+    var height = this.canvas.clientHeight;
+    var context = this.canvas.getContext('2d');
+
+    // Assign new scope properties
+    this.canvas.height = height;
+    this.canvas.width = width;
+    this.scaling = height / 256;
+    context.strokeWidth = 1;
+
+    // Draw background
+    context.fillStyle = '#222222';
+    context.fillRect(0, 0, width, height);
+
+    // Draw trigger level
+    context.strokeStyle = '#278BFF';
+    context.beginPath();
+    context.moveTo(0, 128 - this.triggerLevel);
+    context.lineTo(width, 128 - this.triggerLevel);
+    context.stroke();
+
+    this.traces[this.triggerTrace].fetch();
+    var triggerLocation = getTriggerLocation(this.traces[this.triggerTrace].data, width, this.triggerLevel, this.triggerType);
+    if (triggerLocation === undefined && this.autoTriggering) {
+        triggerLocation = 0;
+    }
+
+    this.traces.forEach(function (trace) {
+        if (trace.on && trace.source !== null && trace.source.ready) {
+            trace.draw(triggerLocation);
+        }
+    });
+
+    this.markers.forEach(function (marker) {
+        marker.draw();
+    });
+};
+
+Oscilloscope.prototype.addSource = function (source) {
+    this.sources.push(source);
+};
+
+Oscilloscope.prototype.addTrace = function (trace) {
+    this.traces.push(trace);
+};
+
+Oscilloscope.prototype.addMarker = function (marker) {
+    this.markers.push(marker);
+};
+
+// Instantiates the GUI representation
+function createOscilloscopeRepr(title_id) {
+    return '<div class="mdl-shadow--2dp trace-card">\n        <div class="mdl-card__title">\n            <i class="material-icons trace-card-icon">keyboard_tab</i>&nbsp;\n            <div class="mdl-textfield mdl-js-textfield">\n                <input class="mdl-textfield__input card-title" type="text" id="' + title_id + '">\n                <label class="mdl-textfield__label" for="' + title_id + '">Oscilloscope</label>\n            </div>\n        </div>\n    </div>';
+}
+
+function getTriggerLocation(buf, buflen, triggerLevel, type) {
+    switch (type) {
+        case 'rising':
+        default:
+            return risingEdgeTrigger(buf, buflen, triggerLevel);
+        case 'falling':
+            return fallingEdgeTrigger(buf, buflen, triggerLevel);
+    }
+}
+
+function risingEdgeTrigger(buf, buflen, triggerLevel) {
+    for (var i = 1; i < buflen; i++) {
+        if (buf[i] > 128 + triggerLevel && buf[i - 1] < 128 + triggerLevel) {
+            return i;
+        }
+    }
+}
+
+function fallingEdgeTrigger(buf, buflen, triggerLevel) {
+    for (var i = 1; i < buflen; i++) {
+        if (buf[i] < 128 + triggerLevel && buf[i - 1] > 128 + triggerLevel) {
+            return i;
+        }
+    }
+}
+
+function onMouseDown(event, scope) {
+    // Start moving triggerlevel
+    if (128 - event.offsetY < scope.triggerLevel + 3 && 128 - event.offsetY > scope.triggerLevel - 3) {
+        scope.triggerMoving = true;
+        return;
+    }
+
+    // Start moving markers
+    for (var i = 0; i < scope.markers.length; i++) {
+        if (scope.markers[i].x != null) {
+            if (event.offsetX < scope.markers[i].x + 3 && event.offsetX > scope.markers[i].x - 3) {
+                scope.markerMoving = i;
+                return;
+            }
+        } else {
+            if (128 - event.offsetY < scope.markers[i].y + 3 && 128 - event.offsetY > scope.markers[i].y - 3) {
+                scope.markerMoving = i;
+                return;
+            }
+        }
+    }
+}
+
+function onMouseUp(event, scope) {
+    // End moving triggerlevel
+    if (scope.triggerMoving) {
+        scope.triggerMoving = false;
+    }
+
+    // Start moving markers
+    if (scope.markerMoving !== false) {
+        scope.markerMoving = false;
+    }
+}
+
+function onMouseMove(event, scope) {
+    // Change cursor
+    if (128 - event.offsetY < scope.triggerLevel + 3 && 128 - event.offsetY > scope.triggerLevel - 3) {
+        document.body.style.cursor = 'row-resize';
+    } else {
+        var changed = false;
+        for (var i = 0; i < scope.markers.length; i++) {
+            if (scope.markers[i].x != null) {
+                if (event.offsetX < scope.markers[i].x + 3 && event.offsetX > scope.markers[i].x - 3) {
+                    document.body.style.cursor = 'col-resize';
+                    changed = true;
+                    break;
+                }
+            } else {
+                if (128 - event.offsetY < scope.markers[i].y + 3 && 128 - event.offsetY > scope.markers[i].y - 3) {
+                    document.body.style.cursor = 'row-resize';
+                    changed = true;
+                    break;
+                }
+            }
+        }
+        if (!changed) {
+            document.body.style.cursor = 'initial';
+        }
+    }
+
+    // Move triggerlevel
+    if (scope.triggerMoving) {
+
+        var triggerLevel = 128 - event.offsetY;
+        if (triggerLevel > 127) {
+            triggerLevel = 127;
+        }
+        if (triggerLevel < -128) {
+            triggerLevel = -128;
+        }
+        scope.triggerLevel = triggerLevel;
+        return;
+    }
+
+    // Move markers
+    if (scope.markerMoving !== false) {
+        var markerLevel = 0;
+        if (scope.markers[scope.markerMoving].x != null) {
+            markerLevel = event.offsetX;
+            if (markerLevel > scope.canvas.width) {
+                markerLevel = scope.canvas.width;
+            }
+            if (markerLevel < 0) {
+                markerLevel = 0;
+            }
+            scope.markers[scope.markerMoving].x = markerLevel;
+            return;
+        } else {
+            markerLevel = 128 - event.offsetY;
+            if (markerLevel > 127) {
+                markerLevel = 127;
+            }
+            if (markerLevel < -128) {
+                markerLevel = -128;
+            }
+            scope.markers[scope.markerMoving].y = markerLevel;
+            return;
+        }
+    }
+}
+
+var Waveform = function Waveform(container, scope) {
+    var me = this;
+
+    // Assign class variables
+    this.scope = scope;
+    this.ready = false;
+
+    // Create HTML representation
+    var tr = createWaveformRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length);
+    this.repr = initRepr(tr, container);
+    this.repr.controller = this;
+    this.repr.id = 'source-' + scope.sources.length;
+
+    // Find on-off switch
+    this.on_off = this.repr.getElementsByClassName('trace-on-off')[0];
+    this.on_off.onchange = function (event) {
+        me.onSwitch(me, event);
+    };
+    this.on_off.checked = true;
+
+    // Find repr title
+    this.repr.getElementsByClassName('card-title')[0];
+
+    // Create source
+    var audioContext = getAudioContext();
+    this.osc = audioContext.createOscillator();
+    this.output = audioContext.createGain();
+    this.osc.type = 'sine';
+    this.osc.frequency.value = 1000;
+    this.osc.connect(this.output);
+    this.output.gain.value = 1;
+
+    this.start = startOsc;
+    this.stop = stopOsc;
+
+    // Create the analyzer
+    this.analyzer = audioContext.createAnalyser();
+    this.analyzer.fftSize = 4096;
+    // Connect the source output to the analyzer
+    this.output.connect(this.analyzer);
+    this.ready = true;
+
+    // Register with scope
+    scope.addSource(this);
+};
+
+function startOsc(time) {
+    this.osc.start(time);
+}
+
+function stopOsc(time) {
+    this.osc.stop(time);
+}
+
+// Instantiates the GUI representation
+function createWaveformRepr(title_id, switch_id) {
+    return '<div class="mdl-shadow--2dp trace-card">\n            <div class="mdl-card__title">\n                <i class="material-icons trace-card-icon">keyboard_capslock</i>&nbsp;\n                <div class="mdl-textfield mdl-js-textfield">\n                    <input class="mdl-textfield__input card-title" type="text" id="' + title_id + '">\n                    <label class="mdl-textfield__label" for="' + title_id + '">Waveform</label>\n                </div>\n                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="' + switch_id + '">\n                    <input type="checkbox" id="' + switch_id + '" class="mdl-switch__input trace-on-off"/>\n                </label>\n            </div>\n        </div>';
+}
+
+// Activates the source on the scope
+Waveform.prototype.onSwitch = function (source, event) {
+    if (event.target.checked) {
+        this.osc.type = this.previousType;
+        this.osc.frequency.value = this.previousFrequency;
+    } else {
+        this.previousType = this.osc.type;
+        this.previousFrequency = this.osc.frequency.value;
+        var real = new Float32Array(1);
+        var imag = new Float32Array(1);
+        real[0] = 0;
+        imag[0] = 0;
+        var wave = getAudioContext().createPeriodicWave(real, imag);
+        this.osc.setPeriodicWave(wave);
+    }
+};
+
+// Creates a new source
+var Microphone = function Microphone(container, scope) {
+    var me = this;
+
+    // Assign class variables
+    this.scope = scope;
+    this.ready = false;
+    this.onactive = null;
+
+    // Create HTML representation
+    var tr = createMicrophoneRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length);
+    var repr = initRepr(tr, container);
+    this.repr = repr;
+    repr.controller = this;
+    this.repr.id = 'source-' + scope.sources.length;
+
+    // Find on-off switch and store it
+    this.on_off = this.repr.getElementsByClassName('trace-on-off')[0];
+    this.on_off.onchange = function (event) {
+        me.onSwitch(me, event);
+    };
+    this.on_off.checked = false;
+
+    // Find repr title
+    this.repr.getElementsByClassName('card-title')[0];
+
+    // Initialize audio
+    initAudio(this);
+
+    // Register with scope
+    scope.addSource(this);
+};
+
+// Creates the actual audio source after a stream was found
+function gotStream(source, stream) {
+    console.log('Found a stream.');
+
+    var audioContext = getAudioContext();
+    // Create an AudioNode from the stream.
+    source.input = audioContext.createMediaStreamSource(stream);
+
+    // Connect to a gain from which the plots are derived
+    source.traceGain = audioContext.createGain();
+    source.input.connect(source.traceGain);
+
+    // Connect to a gain which can be sinked
+    source.sinkGain = audioContext.createGain();
+    source.sinkGain.gain.value = 0.0;
+    source.traceGain.connect(source.sinkGain);
+    source.sinkGain.connect(audioContext.destination);
+
+    // Create the analyzer
+    source.analyzer = audioContext.createAnalyser();
+    source.analyzer.fftSize = 4096;
+    // Connect the source output to the analyzer
+    source.traceGain.connect(source.analyzer);
+
+    // Create the data buffer
+    source.data = new Uint8Array(source.analyzer.frequencyBinCount);
+    source.onactive(source);
+    source.ready = true;
+    source.on_off.checked = true;
+}
+
+// Requests an audio source
+function initAudio(source) {
+    navigator.getUserMedia({
+        'audio': {
+            'mandatory': {
+                'googEchoCancellation': 'false',
+                'googAutoGainControl': 'false',
+                'googNoiseSuppression': 'false',
+                'googHighpassFilter': 'false'
+            },
+            'optional': []
+        }
+    }, function (stream) {
+        gotStream(source, stream);
+    }, function (e) {
+        console.log('Error getting audio!');
+        console.log(e);
+    });
+}
+
+Microphone.prototype.constructSource = function () {
+    initAudio(this);
+};
+
+// Instantiates the GUI representation
+function createMicrophoneRepr(title_id, switch_id) {
+    return '<div class="mdl-shadow--2dp trace-card">\n            <div class="mdl-card__title">\n                <i class="material-icons trace-card-icon">keyboard_tab</i>&nbsp;\n                <div class="mdl-textfield mdl-js-textfield">\n                    <input class="mdl-textfield__input card-title" type="text" id="' + title_id + '">\n                    <label class="mdl-textfield__label" for="' + title_id + '">Microphone</label>\n                </div>\n                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="' + switch_id + '">\n                    <input type="checkbox" id="' + switch_id + '" class="mdl-switch__input trace-on-off"/>\n                </label>\n            </div>\n        </div>';
+}
+
+// Activates the source on the scope
+Microphone.prototype.onSwitch = function (source, event) {
+    if (event.target.checked) {
+        this.traceGain.gain.previousGain = this.previousGain;
+    } else {
+        this.previousGain = this.traceGain.gain.value;
+        this.traceGain.gain.value = 0.0000001;
+    }
+};
+
+var NormalTrace = function NormalTrace(container, scope, source) {
+    var me = this;
+
+    // Assign class variables
+    this.scope = scope;
+    this.source = source;
+    this.color = '#E8830C';
+    this.on = source !== null;
+    this.colorpicker = null;
+    this.title = null;
+    this.icon = null;
+
+    // Create HTML representation
+    var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length);
+    this.repr = initRepr(tr, container);
+    this.repr.id = 'trace-' + scope.traces.length;
+    this.repr.controller = this;
+
+    // Find on-off switch
+    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
+    on_off.onchange = function (event) {
+        me.onSwitch(me, event);
+    };
+    on_off.checked = true;
+
+    // Find color storage and store it
+    var input = this.repr.getElementsByClassName('jscolor')[0];
+    // this.colorpicker = new jscolor(input,{
+    //     'value': this.color,
+    //     'hash': true
+    // }); TODO: new colorpicker
+    input.value = this.color;
+    input.onchange = function (event) {
+        me.setColor(event.target.value);
+    };
+
+    // Find repr title and store it
+    this.title = this.repr.getElementsByClassName('card-title')[0];
+    this.title.style.color = this.color;
+
+    // Find repr icon and store it
+    this.icon = this.repr.getElementsByClassName('material-icons')[0];
+    this.icon.style.color = this.color;
+
+    // Create the data buffer
+    if (source && source.ready) {
+        this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
+    }
+    this.fetched = false;
+};
+
+NormalTrace.prototype.setSource = function (source) {
+    this.source = source;
+    this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
+};
+
+// Instantiates the GUI representation
+NormalTrace.prototype.createTraceRepr = function (title_id, switch_id) {
+    return '<div class="mdl-shadow--2dp trace-card">\n            <div class="mdl-card__title">\n                <i class="material-icons trace-card-icon">timeline</i>&nbsp;\n                <div class="mdl-textfield mdl-js-textfield">\n                    <input class="mdl-textfield__input card-title" type="text" id="' + title_id + '">\n                    <label class="mdl-textfield__label" for="' + title_id + '">Trace</label>\n                </div><input class="jscolor">\n                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="' + switch_id + '">\n                    <input type="checkbox" id="' + switch_id + '" class="mdl-switch__input trace-on-off"/>\n                </label>\n            </div>\n        </div>';
+};
+
+// Sets a new color for the trace, both in the UI and on the scope canvas
+NormalTrace.prototype.setColor = function (color) {
+    // this.colorpicker.fromString(color);
+    this.color = color;
+    this.icon.style.color = this.color;
+    this.title.style.color = this.color;
+};
+
+// Activates drawing of a trace on the scope
+NormalTrace.prototype.onSwitch = function (trace, event) {
+    trace.on = event.target.checked;
+};
+
+// Preemptively fetches a new sample set
+NormalTrace.prototype.fetch = function () {
+    if (!this.fetched && this.source && this.source.ready) {
+        this.source.analyzer.getByteTimeDomainData(this.data);
+    }
+    this.fetched = true;
+};
+
+// Draws trace on the new frame
+NormalTrace.prototype.draw = function (triggerLocation) {
+    // Make life easier with shorter variables
+    var context = this.scope.canvas.getContext('2d');
+    context.strokeWidth = 1;
+
+    // Get a new dataset
+    this.fetch();
+
+    // Draw trace
+    context.strokeStyle = this.color;
+    context.beginPath();
+    // Draw samples
+    context.moveTo(0, (256 - this.data[triggerLocation]) * this.scope.scaling);
+    for (var i = triggerLocation, j = 0; j < this.scope.canvas.width && i < this.data.length; i++, j++) {
+        context.lineTo(j, (256 - this.data[i]) * this.scope.scaling);
+    }
+    // Fix drawing on canvas
+    context.stroke();
+
+    // Mark data as deprecated
+    this.fetched = false;
+};
+
+// Creates a new source
+var FFTrace = function FFTrace(container, scope, source) {
+    var me = this;
+
+    // Assign class variables
+    this.scope = scope;
+    this.source = source;
+    this.color = '#E8830C';
+    this.on = source !== null;
+
+    // Create HTML representation
+    var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length);
+    this.repr = initRepr(tr, container);
+    this.repr.id = 'trace-' + scope.traces.length;
+    this.repr.controller = this;
+
+    // Find on-off switch
+    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
+    on_off.onchange = function (event) {
+        me.onSwitch(me, event);
+    };
+    on_off.checked = true;
+
+    // Find color storage and store it
+    var input = this.repr.getElementsByClassName('jscolor')[0];
+    // this.colorpicker = new jscolor(input,{
+    //     'value': this.color,
+    //     'hash': true
+    // }); TODO: new clorpicker
+    input.value = this.color;
+    input.onchange = function (event) {
+        me.setColor(event.target.value);
+    };
+
+    // Find repr title and store it
+    this.title = this.repr.getElementsByClassName('card-title')[0];
+    this.title.style.color = this.color;
+
+    // Find repr icon and store it
+    this.icon = this.repr.getElementsByClassName('material-icons')[0];
+    this.icon.style.color = this.color;
+    // this.icon.onclick = this.colorpicker.show;
+
+    // Create the data buffer
+    if (source && source.ready) {
+        this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
+    }
+    this.fetched = false;
+};
+
+FFTrace.prototype.setSource = function (source) {
+    this.source = source;
+    this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
+};
+
+// Instantiates the GUI representation
+FFTrace.prototype.createTraceRepr = function (title_id, switch_id) {
+    return '<div class="mdl-shadow--2dp trace-card">\n        <div class="mdl-card__title">\n            <i class="material-icons trace-card-icon">equalizer</i>&nbsp;\n            <div class="mdl-textfield mdl-js-textfield">\n                <input class="mdl-textfield__input card-title" type="text" id="' + title_id + '">\n                <label class="mdl-textfield__label" for="' + title_id + '">FFT</label>\n            </div><input class="jscolor">\n            <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="' + switch_id + '">\n                <input type="checkbox" id="' + switch_id + '" class="mdl-switch__input trace-on-off"/>\n            </label>\n        </div>\n    </div>';
+};
+
+// Sets a new color for the trace, both in the UI and on the scope canvas
+FFTrace.prototype.setColor = function (color) {
+    // this.colorpicker.fromString(color);
+    this.color = color;
+};
+
+// Activates drawing of a trace on the scope
+FFTrace.prototype.onSwitch = function (trace, event) {
+    trace.on = event.target.checked;
+};
+
+// Preemptively fetches a new sample set
+FFTrace.prototype.fetch = function () {
+    if (!this.fetched && this.source && this.source.ready) {
+        this.source.analyzer.getByteFrequencyData(this.data);
+    }
+    this.fetched = true;
+};
+
+// Draws trace on the new frame
+FFTrace.prototype.draw = function (triggerLocation) {
+    var SPACING = 1;
+    var BAR_WIDTH = 1;
+    var numBars = Math.round(this.scope.canvas.width / SPACING);
+    var multiplier = this.source.analyzer.frequencyBinCount / numBars;
+
+    var context = this.scope.canvas.getContext('2d');
+    context.lineCap = 'round';
+
+    // Get a new dataset
+    this.fetch();
+
+    // Draw rectangle for each frequency
+    for (var i = 0; i < numBars; ++i) {
+        var magnitude = 0;
+        var offset = Math.floor(i * multiplier);
+        // gotta sum/average the block, or we miss narrow-bandwidth spikes
+        for (var j = 0; j < multiplier; j++) {
+            magnitude += this.data[offset + j];
+        }
+        magnitude = magnitude / multiplier;
+        context.fillStyle = 'hsl(' + Math.round(i * 360 / numBars) + ', 100%, 50%)';
+        context.fillRect(i * SPACING, this.scope.canvas.height, BAR_WIDTH, -magnitude);
+    }
+
+    // Mark data as deprecated
+    this.fetched = false;
+
+    return triggerLocation;
+};
+
+var nodeTreeCanvas = 'node-tree-canvas';
+
+var app = {
+    oninit: function oninit(vnode) {
+        // if(vnode.attrs.ctrl){
+        //     this.ctrl = vnode.attrs.ctrl;
+        // } else {
+        //     this.ctrl = {};
+        // }
+        this.nodes = [mithril('', 'KEK')];
+    },
+    view: function view(vnode) {
+        return mithril('', 'KEK');
+        return vnode.state.nodes;
+    },
+    add: function add() {
+        console.log(this);
+        // this.state.nodes.push(
+        //     m(sourceNode, {
+        //         ctrl: {
+        //             type: 'KEK'
+        //         }
+        //     })
+        // );
+        // m.redraw();
+    }
+};
+
+__$styleInject("body{margin:1em;background-color:#e85d55}#output{width:512px;height:256px}#scope{background:teal}#freqbars{background:#000;display:block;margin-top:1cm}.source{margin-right:.5em!important}#active-sources,#available-sources{margin-bottom:.5em!important}.jscolor{height:0!important;width:0!important;padding:0!important;margin:0!important;visibility:hidden;position:absolute}#scope-container{padding:0}.trace-card{min-height:0!important;padding:.2em;margin:.2em;position:absolute;width:200px}#node-tree-canvas{width:100%;height:100%;padding:50px}", undefined);
+
+function init() {
+    if (!navigator.getUserMedia) navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+    if (!navigator.cancelAnimationFrame) navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
+    if (!navigator.requestAnimationFrame) navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
+
+    var audioContext = getAudioContext();
+    // osc1.output.connect(audioContext.destination);
+    // osc2.output.connect(audioContext.destination);
+    var scope = new Oscilloscope(document.getElementById('scope-container'), '100%', '256px');
+
+    var osc1 = new Waveform(document.getElementById('node-tree-canvas'), scope);
+    osc1.osc.frequency.value = 500;
+    var osc2 = new Waveform(document.getElementById('node-tree-canvas'), scope);
+    var mic = new Microphone(document.getElementById('node-tree-canvas'), scope);
+
+    scope.addTrace(new NormalTrace(document.getElementById('node-tree-canvas'), scope, osc1));
+    scope.addTrace(new NormalTrace(document.getElementById('node-tree-canvas'), scope, osc2));
+    scope.traces[1].setColor('#E85D55');
+    var micTrace = new NormalTrace(document.getElementById('node-tree-canvas'), scope, mic);
+    scope.addTrace(micTrace);
+    var micFFT = new FFTrace(document.getElementById('node-tree-canvas'), scope, mic);
+    scope.addTrace(micFFT);
+    mic.onactive = function onMicActive(source) {
+        micTrace.setSource(source);
+        micFFT.setSource(source);
+    };
+
+    osc1.start(audioContext.currentTime + 0.05);
+    osc2.start(audioContext.currentTime + 0.05);
+    draw(scope);
+
+    console.log(app);
+    mithril.mount(document.getElementById(nodeTreeCanvas), { view: function view() {
+            return app;
+        }
+    });
+    app.add();
+
+    // var doneDraggables = [];
+    // jsPlumb.ready(function(){
+    //     var i = 0;
+
+    //     scope.repr.style.top = (200 + (1 * 150)) + 'px';
+    //     scope.repr.style.left = '800px';
+    //     jsPlumb.draggable(scope.repr.id, {
+    //         containment:true,
+    //         grid:[50,50]
+    //     });
+
+    //     jsPlumb.addEndpoint(scope.repr.id, { 
+    //         anchor: ['Left', {shape: 'Rectangle'}],
+    //         isTarget: true,
+    //     });
+
+    //     // Make existing boxes draggable
+    //     scope.traces.forEach(function(trace) {
+    //         i++;
+
+    //         if(doneDraggables.indexOf(trace.source.repr.id) < 0){
+    //             trace.source.repr.style.top = (200 + (i * 150)) + 'px';
+    //             jsPlumb.draggable(trace.source.repr.id, {
+    //                 containment:true,
+    //                 grid:[50,50]
+    //             });
+
+    //             jsPlumb.addEndpoint(trace.source.repr.id, { 
+    //                 anchor: ['Right', {shape: 'Rectangle'}],
+    //                 isSource: true,
+    //             });
+    //         }
+
+    //         if(doneDraggables.indexOf(trace.repr.id) < 0){
+    //             trace.repr.style.top = (200 + (i * 150)) + 'px';
+    //             trace.repr.style.left = '400px';
+
+    //             jsPlumb.draggable(trace.repr.id, {
+    //                 containment:true,
+    //                 grid:[50,50]
+    //             });
+
+    //             jsPlumb.addEndpoint(trace.repr.id, {
+    //                 anchor: [['Left', {shape: 'Rectangle'}],['Right', {shape: 'Rectangle'}]],
+    //                 isTarget: true,
+    //                 isSource: true
+    //             });
+    //         }
+
+    //         doneDraggables.push(trace.source.repr.id);
+    //         doneDraggables.push(trace.repr.id);
+
+    //         jsPlumb.connect({
+    //             source: trace.source.repr.id,
+    //             target: trace.repr.id,
+    //             endpoint: 'Dot',
+    //             anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
+    //         });
+
+    //         jsPlumb.connect({
+    //             source: trace.repr.id,
+    //             target: scope.repr.id,
+    //             endpoint: 'Dot',
+    //             anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
+    //         });
+    //     });
+
+    //     // Bind connection event
+    //     jsPlumb.bind('connection', function(info) {
+    //         info.target.controller.source = info.source.controller;
+    //     });
+
+    //     // Bind connectionDetached event
+    //     jsPlumb.bind('connectionDetached', function(info) {
+    //         info.target.controller.source = null;
+    //     });
+    // });
+    // TODO: Crosswindow stuff
+    // popup = window.open('http://fiddle.jshell.net');
+    // popup.console.log(1);
+    // popup.kek = 'KEK';
+    // popup.alert(popup.kek);
+}
+
+window.addEventListener('load', init);
+
+})));
 //# sourceMappingURL=bundle.js.map
