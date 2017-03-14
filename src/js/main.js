@@ -18,6 +18,16 @@ function init() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
+    jsPlumb.importDefaults({
+        PaintStyle : {
+            strokeWidth:13,
+            stroke: 'rgba(200,0,0,0.5)'
+        },
+        DragOptions : { cursor: "crosshair" },
+        Endpoints : [ [ "Dot", { radius:7 } ], [ "Dot", { radius:11 } ] ],
+        EndpointStyles : [{ fill:"#225588" }, { fill:"#558822" }]
+    });
+
     var audioContext = helpers.getAudioContext();
     // osc1.output.connect(audioContext.destination);
     // osc2.output.connect(audioContext.destination);

@@ -15098,6 +15098,8 @@ var jsplumb = createCommonjsModule(function (module, exports) {
 }).call(typeof window !== 'undefined' ? window : commonjsGlobal);
 });
 
+var jsplumb_6 = jsplumb.jsPlumb;
+
 window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
 
 
@@ -15860,7 +15862,7 @@ const radioSelection = {
 
 const sourceNode = {
     view: function(vnode) {
-        return mithril('.card.node', [
+        return mithril('.card.node', { id: 'node-' + vnode.attrs.id }, [
             mithril('.card-header', [
                 mithril('.card-title', 'Source'),
                 mithril('.card-meta', [
@@ -15877,7 +15879,20 @@ const sourceNode = {
                 ])
             ]),
             mithril('.card-body', (vnode.attrs.type == 'Waveform' ? mithril(sineBody, vnode.attrs) : 'YOLO2'))
-        ])
+        ]);
+    },
+    oncreate: function(vnode) {
+        vnode.dom.style.top = (300 + (vnode.attrs.id * 300)) + 'px';
+        jsplumb_6.draggable(vnode.dom.id, {
+            containment:true,
+            grid:[50,50]
+        });
+
+        console.log(vnode.dom.id);
+        // jsPlumb.addEndpoint(vnode.dom.id, { 
+        //     anchor: ['Right', {shape: 'Rectangle'}],
+        //     isSource: true,
+        // });
     }
 };
 
@@ -15906,7 +15921,7 @@ const sineBody = {
                     }),
                 })
             ])
-        ]
+        ];
     }
 };
 
@@ -15952,7 +15967,7 @@ const app = {
     }
 };
 
-__$styleInject("body {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n}\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:100%;\n    /*padding:50px;*/\n}",undefined);
+__$styleInject("body {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n}\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:100%;\n    /*padding:50px;*/\n}",undefined);
 
 function init() {
     if (!navigator.getUserMedia)
@@ -15961,6 +15976,16 @@ function init() {
         navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
+
+    jsplumb_6.importDefaults({
+        PaintStyle : {
+            strokeWidth:13,
+            stroke: 'rgba(200,0,0,0.5)'
+        },
+        DragOptions : { cursor: "crosshair" },
+        Endpoints : [ [ "Dot", { radius:7 } ], [ "Dot", { radius:11 } ] ],
+        EndpointStyles : [{ fill:"#225588" }, { fill:"#558822" }]
+    });
 
     var audioContext = getAudioContext();
     // osc1.output.connect(audioContext.destination);
