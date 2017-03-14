@@ -5,7 +5,7 @@ import { traceNode } from './trace.js';
 import { scopeNode } from './scope.js';
 import { getNodeByID } from '../helpers.js';
 
-export const app = {
+export const router = {
     oninit: function(vnode) {
         jsPlumb.ready(function(){
             // Bind connection event

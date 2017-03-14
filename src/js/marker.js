@@ -1,31 +1,27 @@
-export const Marker = function(scope, type, level) {
-    this.scope = scope;
-    if(type == 'vertical'){
-        this.x = level;
-        this.y = null;
-    } else {
-        this.x = null;
-        this.y = level;
-    }
-};
+export const draw = function (context, scope, state) {
+    // Store old state
+    context.save();
 
-Marker.prototype.draw = function () {
-    // Make life easier with shorter variables
-    var context = this.scope.canvas.getContext('2d');
+    // Setup brush
     context.strokeWidth = 1;
     context.strokeStyle = '#006644';
     if (context.setLineDash)
         context.setLineDash([5]);
 
-    if(this.x != null){
+    // Draw marker
+    if(state.type == 'vertical'){
         context.beginPath();
-        context.moveTo(this.x, 0);
-        context.lineTo(this.x, this.scope.canvas.height);
+        context.moveTo(state.x, 0);
+        context.lineTo(state.x, scope.height);
         context.stroke();
-    } else if(this.y != null){
+    } else if(state.type == 'horizontal'){
         context.beginPath();
-        context.moveTo(0, 128 - this.y);
-        context.lineTo(this.scope.canvas.width, 128 - this.y);
+        context.moveTo(0, scope.height / 2 - state.y);
+        context.lineTo(scope.width, scope.height / 2 - state.y);
         context.stroke();
     }
+
+    // Restore old brush settings
+    context.restore();
 };
+

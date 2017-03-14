@@ -1197,6 +1197,45 @@ module["exports"] = m;
 };
 });
 
+const url = 'http://localhost:8080';
+const canvasSize = {
+    height: '100%',
+    width: '100%'
+};
+
+window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
+
+
+const draw = function(scope) {  
+    if(scope) {
+        scope.draw();
+    }
+    requestAnimationFrame(function(){
+        draw(scope);
+    });
+};
+
+
+
+
+
+
+
+const withKey = function(key, callback) {
+    return function(e) {
+        if (e.keyCode == key) {
+            callback(e.target);
+        }
+    }
+};
+
+const getNodeByID = function(nodes, id){
+    var result = nodes.filter(function( obj ) {
+        return obj.id == id;
+    });
+    return result;
+};
+
 var jsplumb = createCommonjsModule(function (module, exports) {
 /**
  * jsBezier
@@ -15100,760 +15139,6 @@ var jsplumb = createCommonjsModule(function (module, exports) {
 
 var jsplumb_6 = jsplumb.jsPlumb;
 
-window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
-
-
-const draw = function(scope) {  
-    if(scope) {
-        scope.draw();
-    }
-    requestAnimationFrame(function(){
-        draw(scope);
-    });
-};
-
-const htmlToElement = function(html) {
-    var template = document.createElement('template');
-    template.innerHTML = html;
-    return template.content.firstChild;
-};
-
-const initRepr = function(html, container) {
-    var element = htmlToElement(html);
-    if(container) {
-        container.appendChild(element);
-    } else {
-        document.body.appendChild(element);
-    }
-    return element;
-};
-
-var audioContext = null;
-const getAudioContext = function() {
-    window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    if(audioContext){
-        return audioContext;
-    }
-    audioContext = new AudioContext();
-    return audioContext;
-};
-
-const withKey = function(key, callback) {
-    return function(e) {
-        if (e.keyCode == key) {
-            callback(e.target);
-        }
-    }
-};
-
-const getNodeByID = function(nodes, id){
-    var result = nodes.filter(function( obj ) {
-        return obj.id == id;
-    });
-    return result;
-};
-
-const Marker = function(scope, type, level) {
-    this.scope = scope;
-    if(type == 'vertical'){
-        this.x = level;
-        this.y = null;
-    } else {
-        this.x = null;
-        this.y = level;
-    }
-};
-
-Marker.prototype.draw = function () {
-    // Make life easier with shorter variables
-    var context = this.scope.canvas.getContext('2d');
-    context.strokeWidth = 1;
-    context.strokeStyle = '#006644';
-    if (context.setLineDash)
-        context.setLineDash([5]);
-
-    if(this.x != null){
-        context.beginPath();
-        context.moveTo(this.x, 0);
-        context.lineTo(this.x, this.scope.canvas.height);
-        context.stroke();
-    } else if(this.y != null){
-        context.beginPath();
-        context.moveTo(0, 128 - this.y);
-        context.lineTo(this.scope.canvas.width, 128 - this.y);
-        context.stroke();
-    }
-};
-
-const Oscilloscope = function(container, width, height) {
-    var me = this;
-
-    // Create a new canvas to draw the scope onto
-    this.canvas = document.createElement('canvas');
-    this.canvas.style.width = width; 
-    this.canvas.style.height = height; 
-    this.canvas.id = 'scope';
-    // If a parent container was specified use it, otherwise just use the document body
-    if(container) {
-        container.appendChild(this.canvas);
-    } else {
-        document.body.appendChild(this.canvas);
-    }
-
-    // Create HTML representation
-    var tr = createOscilloscopeRepr('oscilloscope-title-' + 0, 'oscilloscope-switch-' + 0);
-    var repr = initRepr(tr, document.getElementById('node-tree-canvas')); // TODO: proper container selection
-    this.repr = repr;
-    repr.controller = this;
-    this.repr.id = 'oscilloscope-' + 0;
-
-    this.canvas.onmousedown = function(event){onMouseDown(event, me);};
-    this.canvas.onmouseup = function(event){onMouseUp(event, me);};
-    this.canvas.onmousemove = function(event){onMouseMove(event, me);};
-
-    this.triggerLevel = 50;
-    this.traces = [];
-
-    this.sources = [];
-
-    this.markers = [];
-    this.markers.push(
-        new Marker(this, 'horizontal', 80),
-        new Marker(this, 'vertical', 200)
-    );
-
-    this.markerMoving = false;
-
-    this.autoTriggering = true;
-    this.triggerMoving = false;
-    this.triggerTrace = 0;
-    this.triggerType = 'rising';
-};
-
-Oscilloscope.prototype.draw = function() {
-    // Make life easier with shorter variables
-    var width = this.canvas.clientWidth;
-    var height = this.canvas.clientHeight;
-    var context = this.canvas.getContext('2d');
-
-    // Assign new scope properties
-    this.canvas.height = height;
-    this.canvas.width = width;
-    this.scaling = height / 256;
-    context.strokeWidth = 1;
-
-    // Draw background
-    context.fillStyle='#222222';
-    context.fillRect(0, 0, width, height);
-
-    // Draw trigger level
-    context.strokeStyle = '#278BFF';
-    context.beginPath();
-    context.moveTo(0, 128 - this.triggerLevel);
-    context.lineTo(width, 128 - this.triggerLevel);
-    context.stroke();
-
-    this.traces[this.triggerTrace].fetch();
-    var triggerLocation = getTriggerLocation(this.traces[this.triggerTrace].data, width, this.triggerLevel, this.triggerType);
-    if(triggerLocation === undefined && this.autoTriggering){
-        triggerLocation = 0;
-    }
-
-    this.traces.forEach(function(trace) {
-        if(trace.on && trace.source !== null && trace.source.ready){
-            trace.draw(triggerLocation);
-        }
-    });
-
-    this.markers.forEach(function(marker) {
-        marker.draw();
-    });
-};
-
-Oscilloscope.prototype.addSource = function(source) {
-    this.sources.push(source);
-};
-
-Oscilloscope.prototype.addTrace = function(trace) {
-    this.traces.push(trace);
-};
-
-Oscilloscope.prototype.addMarker = function(marker) {
-    this.markers.push(marker);
-};
-
-// Instantiates the GUI representation
-function createOscilloscopeRepr(title_id) {
-    return `<div class="mdl-shadow--2dp trace-card">
-        <div class="mdl-card__title">
-            <i class="material-icons trace-card-icon">keyboard_tab</i>&nbsp;
-            <div class="mdl-textfield mdl-js-textfield">
-                <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
-                <label class="mdl-textfield__label" for="${ title_id }">Oscilloscope</label>
-            </div>
-        </div>
-    </div>`;
-}
-
-function getTriggerLocation(buf, buflen, triggerLevel, type){
-    switch(type){
-    case 'rising':
-    default:
-        return risingEdgeTrigger(buf, buflen, triggerLevel);
-    case 'falling':
-        return fallingEdgeTrigger(buf, buflen, triggerLevel);
-    }
-}
-
-function risingEdgeTrigger(buf, buflen, triggerLevel) {
-    for(var i=1; i< buflen; i++){
-        if(buf[i] > 128 + triggerLevel && buf[i - 1] < 128 + triggerLevel){
-            return i;
-        }
-    }
-}
-
-function fallingEdgeTrigger(buf, buflen, triggerLevel) {
-    for(var i=1; i< buflen; i++){
-        if(buf[i] < 128 + triggerLevel && buf[i - 1] > 128 + triggerLevel){
-            return i;
-        }
-    }
-}
-
-function onMouseDown(event, scope){
-    // Start moving triggerlevel
-    if(128 - event.offsetY < scope.triggerLevel + 3 && 128 - event.offsetY > scope.triggerLevel - 3){
-        scope.triggerMoving = true;
-        return;
-    }
-
-    // Start moving markers
-    for(var i = 0; i < scope.markers.length; i++){
-        if(scope.markers[i].x != null){
-            if(event.offsetX < scope.markers[i].x + 3 && event.offsetX > scope.markers[i].x - 3){
-                scope.markerMoving = i;
-                return;
-            }
-        } else {
-            if(128 - event.offsetY < scope.markers[i].y + 3 && 128 - event.offsetY > scope.markers[i].y - 3){
-                scope.markerMoving = i;
-                return;
-            }
-        }
-    }
-}
-
-function onMouseUp(event, scope){
-    // End moving triggerlevel
-    if(scope.triggerMoving){
-        scope.triggerMoving = false;
-    }
-
-    // Start moving markers
-    if(scope.markerMoving !== false){
-        scope.markerMoving = false;
-    }
-}
-
-function onMouseMove(event, scope){
-    // Change cursor
-    if(128 - event.offsetY < scope.triggerLevel + 3 && 128 - event.offsetY > scope.triggerLevel - 3){
-        document.body.style.cursor = 'row-resize';
-    }
-    else{
-        var changed = false;
-        for(var i = 0; i < scope.markers.length; i++){
-            if(scope.markers[i].x != null){
-                if(event.offsetX < scope.markers[i].x + 3 && event.offsetX > scope.markers[i].x - 3){
-                    document.body.style.cursor = 'col-resize';
-                    changed = true;
-                    break;
-                }
-            } else {
-                if(128 - event.offsetY < scope.markers[i].y + 3 && 128 - event.offsetY > scope.markers[i].y - 3){
-                    document.body.style.cursor = 'row-resize';
-                    changed = true;
-                    break;
-                }
-            }
-        }
-        if(!changed){
-            document.body.style.cursor = 'initial';
-        }
-    }
-
-    // Move triggerlevel
-    if(scope.triggerMoving){
-
-        var triggerLevel = 128 - event.offsetY;
-        if(triggerLevel > 127){
-            triggerLevel = 127;
-        }
-        if(triggerLevel < -128){
-            triggerLevel = -128;
-        }
-        scope.triggerLevel = triggerLevel;
-        return;
-    }
-
-    // Move markers
-    if(scope.markerMoving !== false){
-        var markerLevel = 0;
-        if(scope.markers[scope.markerMoving].x != null){
-            markerLevel = event.offsetX;
-            if(markerLevel > scope.canvas.width){
-                markerLevel = scope.canvas.width;
-            }
-            if(markerLevel < 0){
-                markerLevel = 0;
-            }
-            scope.markers[scope.markerMoving].x = markerLevel;
-            return;
-        } else {
-            markerLevel = 128 - event.offsetY;
-            if(markerLevel > 127){
-                markerLevel = 127;
-            }
-            if(markerLevel < -128){
-                markerLevel = -128;
-            }
-            scope.markers[scope.markerMoving].y = markerLevel;
-            return;
-        }
-    }
-}
-
-const Waveform = function(container, scope) {
-    var me = this;
-
-    // Assign class variables
-    this.scope = scope;
-    this.ready = false;
-
-    // Create HTML representation
-    var tr = createWaveformRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length);
-    this.repr = initRepr(tr, container);
-    this.repr.controller = this;
-    this.repr.id = 'source-' + scope.sources.length;
-
-    // Find on-off switch
-    this.on_off = this.repr.getElementsByClassName('trace-on-off')[0];
-    this.on_off.onchange = function(event) { me.onSwitch(me, event); };
-    this.on_off.checked = true;
-
-    // Find repr title
-    this.repr.getElementsByClassName('card-title')[0];
-
-    // Create source
-    var audioContext = getAudioContext();
-    this.osc = audioContext.createOscillator();
-    this.output = audioContext.createGain();
-    this.osc.type = 'sine';
-    this.osc.frequency.value = 1000;
-    this.osc.connect(this.output);
-    this.output.gain.value = 1;
-
-    this.start = startOsc;
-    this.stop = stopOsc;
-
-    // Create the analyzer
-    this.analyzer = audioContext.createAnalyser();
-    this.analyzer.fftSize = 4096;
-    // Connect the source output to the analyzer
-    this.output.connect(this.analyzer);
-    this.ready = true;
-
-    // Register with scope
-    scope.addSource(this);
-};
-
-function startOsc(time) {
-    this.osc.start(time);
-}
-
-function stopOsc(time) {
-    this.osc.stop(time);
-}
-
-// Instantiates the GUI representation
-function createWaveformRepr(title_id, switch_id) {
-    return `<div class="mdl-shadow--2dp trace-card">
-            <div class="mdl-card__title">
-                <i class="material-icons trace-card-icon">keyboard_capslock</i>&nbsp;
-                <div class="mdl-textfield mdl-js-textfield">
-                    <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
-                    <label class="mdl-textfield__label" for="${ title_id }">Waveform</label>
-                </div>
-                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="${ switch_id }">
-                    <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
-                </label>
-            </div>
-        </div>`;
-}
-
-// Activates the source on the scope
-Waveform.prototype.onSwitch = function(source, event) {
-    if(event.target.checked){
-        this.osc.type = this.previousType;
-        this.osc.frequency.value = this.previousFrequency;
-    } else {
-        this.previousType = this.osc.type;
-        this.previousFrequency = this.osc.frequency.value;
-        var real = new Float32Array(1);
-        var imag = new Float32Array(1);
-        real[0] = 0;
-        imag[0] = 0;
-        var wave = getAudioContext().createPeriodicWave(real, imag);
-        this.osc.setPeriodicWave(wave);
-    }
-};
-
-// Creates a new source
-const Microphone = function(container, scope) {
-    var me = this;
-
-    // Assign class variables
-    this.scope = scope;
-    this.ready = false;
-    this.onactive = null;
-
-    // Create HTML representation
-    var tr = createMicrophoneRepr('source-title-' + scope.sources.length, 'source-switch-' + scope.sources.length);
-    var repr = initRepr(tr, container);
-    this.repr = repr;
-    repr.controller = this;
-    this.repr.id = 'source-' + scope.sources.length;
-
-     // Find on-off switch and store it
-    this.on_off = this.repr.getElementsByClassName('trace-on-off')[0];
-    this.on_off.onchange = function(event) { me.onSwitch(me, event); };
-    this.on_off.checked = false;
-
-    // Find repr title
-    this.repr.getElementsByClassName('card-title')[0];
-
-    // Initialize audio
-    initAudio(this);
-
-    // Register with scope
-    scope.addSource(this);
-};
-
-// Creates the actual audio source after a stream was found
-function gotStream(source, stream) {
-    console.log('Found a stream.');
-
-    var audioContext = getAudioContext();
-    // Create an AudioNode from the stream.
-    source.input = audioContext.createMediaStreamSource(stream);
-
-    // Connect to a gain from which the plots are derived
-    source.traceGain = audioContext.createGain();
-    source.input.connect(source.traceGain);
-
-    // Connect to a gain which can be sinked
-    source.sinkGain = audioContext.createGain();
-    source.sinkGain.gain.value = 0.0;
-    source.traceGain.connect(source.sinkGain);
-    source.sinkGain.connect(audioContext.destination);
-
-    // Create the analyzer
-    source.analyzer = audioContext.createAnalyser();
-    source.analyzer.fftSize = 4096;
-    // Connect the source output to the analyzer
-    source.traceGain.connect(source.analyzer);
-
-    // Create the data buffer
-    source.data = new Uint8Array(source.analyzer.frequencyBinCount);
-    source.onactive(source);
-    source.ready = true;
-    source.on_off.checked = true; 
-}
-
-// Requests an audio source
-function initAudio(source) {
-    navigator.getUserMedia({
-        'audio': {
-            'mandatory': {
-                'googEchoCancellation': 'false',
-                'googAutoGainControl': 'false',
-                'googNoiseSuppression': 'false',
-                'googHighpassFilter': 'false'
-            },
-            'optional': []
-        },
-    }, function(stream) { gotStream(source, stream); }, function(e) {
-        console.log('Error getting audio!');
-        console.log(e);
-    });
-}
-
-Microphone.prototype.constructSource = function() {
-    initAudio(this);
-};
-
-// Instantiates the GUI representation
-function createMicrophoneRepr(title_id, switch_id) {
-    return `<div class="mdl-shadow--2dp trace-card">
-            <div class="mdl-card__title">
-                <i class="material-icons trace-card-icon">keyboard_tab</i>&nbsp;
-                <div class="mdl-textfield mdl-js-textfield">
-                    <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
-                    <label class="mdl-textfield__label" for="${ title_id }">Microphone</label>
-                </div>
-                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="${ switch_id }">
-                    <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
-                </label>
-            </div>
-        </div>`;
-}
-
-// Activates the source on the scope
-Microphone.prototype.onSwitch = function(source, event) {
-    if(event.target.checked){
-        this.traceGain.gain.previousGain = this.previousGain;
-    } else {
-        this.previousGain = this.traceGain.gain.value;
-        this.traceGain.gain.value = 0.0000001;
-    }
-};
-
-const NormalTrace = function (container, scope, source) {
-    var me = this;
-
-    // Assign class variables
-    this.scope = scope;
-    this.source = source;
-    this.color = '#E8830C';
-    this.on = source !== null;
-    this.colorpicker = null;
-    this.title = null;
-    this.icon = null;
-
-    // Create HTML representation
-    var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length);
-    this.repr = initRepr(tr, container);
-    this.repr.id = 'trace-' + scope.traces.length;
-    this.repr.controller = this;
-
-    // Find on-off switch
-    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
-    on_off.onchange = function(event) {
-        me.onSwitch(me, event);
-    };
-    on_off.checked = true;
-
-    // Find color storage and store it
-    var input = this.repr.getElementsByClassName('jscolor')[0];
-    // this.colorpicker = new jscolor(input,{
-    //     'value': this.color,
-    //     'hash': true
-    // }); TODO: new colorpicker
-    input.value = this.color;
-    input.onchange = function(event) { me.setColor(event.target.value);  };
-
-    // Find repr title and store it
-    this.title = this.repr.getElementsByClassName('card-title')[0];
-    this.title.style.color = this.color;
-
-    // Find repr icon and store it
-    this.icon = this.repr.getElementsByClassName('material-icons')[0];
-    this.icon.style.color = this.color;
-
-    // Create the data buffer
-    if(source && source.ready) {
-        this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
-    }
-    this.fetched = false;
-};
-
-NormalTrace.prototype.setSource = function(source){
-    this.source = source;
-    this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
-};
-
-// Instantiates the GUI representation
-NormalTrace.prototype.createTraceRepr = function(title_id, switch_id) {
-    return `<div class="mdl-shadow--2dp trace-card">
-            <div class="mdl-card__title">
-                <i class="material-icons trace-card-icon">timeline</i>&nbsp;
-                <div class="mdl-textfield mdl-js-textfield">
-                    <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
-                    <label class="mdl-textfield__label" for="${ title_id }">Trace</label>
-                </div><input class="jscolor">
-                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="${ switch_id }">
-                    <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
-                </label>
-            </div>
-        </div>`;
-};
-
-// Sets a new color for the trace, both in the UI and on the scope canvas
-NormalTrace.prototype.setColor = function(color) {
-    // this.colorpicker.fromString(color);
-    this.color = color;
-    this.icon.style.color = this.color;
-    this.title.style.color = this.color;
-};
-
-// Activates drawing of a trace on the scope
-NormalTrace.prototype.onSwitch = function(trace, event) {
-    trace.on = event.target.checked;
-};
-
-// Preemptively fetches a new sample set
-NormalTrace.prototype.fetch = function () {
-    if(!this.fetched && this.source && this.source.ready){
-        this.source.analyzer.getByteTimeDomainData(this.data);
-    }
-    this.fetched = true;
-};
-
-// Draws trace on the new frame
-NormalTrace.prototype.draw = function (triggerLocation) {
-    // Make life easier with shorter variables
-    var context = this.scope.canvas.getContext('2d');
-    context.strokeWidth = 1;
-
-    // Get a new dataset
-    this.fetch();
-
-    // Draw trace
-    context.strokeStyle = this.color;
-    context.beginPath();
-    // Draw samples
-    context.moveTo(0, (256 - this.data[triggerLocation]) * this.scope.scaling);
-    for (var i=triggerLocation, j=0; (j < this.scope.canvas.width) && (i < this.data.length); i++, j++){
-        context.lineTo(j, (256 - this.data[i]) * this.scope.scaling);
-    }
-    // Fix drawing on canvas
-    context.stroke();
-
-    // Mark data as deprecated
-    this.fetched = false;
-};
-
-// Creates a new source
-const FFTrace = function(container, scope, source) {
-    var me = this;
-
-    // Assign class variables
-    this.scope = scope;
-    this.source = source;
-    this.color = '#E8830C';
-    this.on = source !== null;
-
-    // Create HTML representation
-    var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length);
-    this.repr = initRepr(tr, container);
-    this.repr.id = 'trace-' + scope.traces.length;
-    this.repr.controller = this;
-
-    // Find on-off switch
-    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
-    on_off.onchange = function(event) { me.onSwitch(me, event); };
-    on_off.checked = true;
-
-    // Find color storage and store it
-    var input = this.repr.getElementsByClassName('jscolor')[0];
-    // this.colorpicker = new jscolor(input,{
-    //     'value': this.color,
-    //     'hash': true
-    // }); TODO: new clorpicker
-    input.value = this.color;
-    input.onchange = function(event) { me.setColor(event.target.value);  };
-
-    // Find repr title and store it
-    this.title = this.repr.getElementsByClassName('card-title')[0];
-    this.title.style.color = this.color;
-
-    // Find repr icon and store it
-    this.icon = this.repr.getElementsByClassName('material-icons')[0];
-    this.icon.style.color = this.color;
-    // this.icon.onclick = this.colorpicker.show;
-    
-    // Create the data buffer
-    if(source && source.ready) {
-        this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
-    }
-    this.fetched = false;
-};
-
-FFTrace.prototype.setSource = function(source){
-    this.source = source;
-    this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
-};
-
-// Instantiates the GUI representation
-FFTrace.prototype.createTraceRepr = function(title_id, switch_id) {
-    return `<div class="mdl-shadow--2dp trace-card">
-        <div class="mdl-card__title">
-            <i class="material-icons trace-card-icon">equalizer</i>&nbsp;
-            <div class="mdl-textfield mdl-js-textfield">
-                <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
-                <label class="mdl-textfield__label" for="${ title_id }">FFT</label>
-            </div><input class="jscolor">
-            <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="${ switch_id }">
-                <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
-            </label>
-        </div>
-    </div>`;
-};
-
-// Sets a new color for the trace, both in the UI and on the scope canvas
-FFTrace.prototype.setColor = function(color) {
-    // this.colorpicker.fromString(color);
-    this.color = color;
-};
-
-// Activates drawing of a trace on the scope
-FFTrace.prototype.onSwitch = function(trace, event) {
-    trace.on = event.target.checked;
-};
-
-// Preemptively fetches a new sample set
-FFTrace.prototype.fetch = function () {
-    if(!this.fetched && this.source && this.source.ready){
-        this.source.analyzer.getByteFrequencyData(this.data);
-    }
-    this.fetched = true;
-};
-
-// Draws trace on the new frame
-FFTrace.prototype.draw = function (triggerLocation) {
-    var SPACING = 1;
-    var BAR_WIDTH = 1;
-    var numBars = Math.round(this.scope.canvas.width / SPACING);
-    var multiplier = this.source.analyzer.frequencyBinCount / numBars;
-
-    var context = this.scope.canvas.getContext('2d');
-    context.lineCap = 'round';
-
-    // Get a new dataset
-    this.fetch();
-
-    // Draw rectangle for each frequency
-    for (var i = 0; i < numBars; ++i) {
-        var magnitude = 0;
-        var offset = Math.floor(i * multiplier);
-        // gotta sum/average the block, or we miss narrow-bandwidth spikes
-        for (var j = 0; j < multiplier; j++) {
-            magnitude += this.data[offset + j];
-        }
-        magnitude = magnitude / multiplier;
-        context.fillStyle = 'hsl(' + Math.round((i*360)/numBars) + ', 100%, 50%)';
-        context.fillRect(i * SPACING, this.scope.canvas.height, BAR_WIDTH, -magnitude);
-    }
-
-    // Mark data as deprecated
-    this.fetched = false;
-
-    return triggerLocation;
-};
-
-const nodeTreeCanvas = 'node-tree-canvas';
-
 const radioSelection = {
     view: (vnode) =>
         mithril('.form-group', [
@@ -16016,6 +15301,12 @@ const scopeNode = {
             style: {
                 top: vnode.attrs.top + 'px',
                 left: vnode.attrs.left + 'px'
+            },
+            ondblclick: function() {
+                // TODO: Crosswindow stuff
+                var popup = window.open(url + '/#!/scope?id=' + vnode.attrs.id);
+                popup.console.log(1);
+                popup.kek = 'KEK';
             }
         }, [
             mithril('.card-header', [
@@ -16062,7 +15353,7 @@ const scopeNode = {
     }
 };
 
-const app = {
+const router = {
     oninit: function(vnode) {
         jsplumb_6.ready(function(){
             // Bind connection event
@@ -16162,124 +15453,335 @@ const app = {
     }
 };
 
-__$styleInject("body {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n}\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
+const draw$1 = function (context, scope, state) {
+    // Store old state
+    context.save();
 
-function init() {
-    if (!navigator.getUserMedia)
-        navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-    if (!navigator.cancelAnimationFrame)
-        navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
-    if (!navigator.requestAnimationFrame)
-        navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
+    // Setup brush
+    context.strokeWidth = 1;
+    context.strokeStyle = '#006644';
+    if (context.setLineDash)
+        context.setLineDash([5]);
 
-    var audioContext = getAudioContext();
-    // osc1.output.connect(audioContext.destination);
-    // osc2.output.connect(audioContext.destination);
-    var scope = new Oscilloscope(document.getElementById('scope-container'), '100%', '256px');
+    // Draw marker
+    if(state.type == 'vertical'){
+        context.beginPath();
+        context.moveTo(state.x, 0);
+        context.lineTo(state.x, scope.height);
+        context.stroke();
+    } else if(state.type == 'horizontal'){
+        context.beginPath();
+        context.moveTo(0, scope.height / 2 - state.y);
+        context.lineTo(scope.width, scope.height / 2 - state.y);
+        context.stroke();
+    }
 
-    var osc1 = new Waveform(document.getElementById('node-tree-canvas'), scope);
-    osc1.osc.frequency.value = 500;
-    var osc2 = new Waveform(document.getElementById('node-tree-canvas'), scope);
-    var mic = new Microphone(document.getElementById('node-tree-canvas'), scope);
+    // Restore old brush settings
+    context.restore();
+};
 
-    scope.addTrace(new NormalTrace(
-        document.getElementById('node-tree-canvas'), scope, osc1
-    ));
-    scope.addTrace(new NormalTrace(
-        document.getElementById('node-tree-canvas'), scope, osc2
-    ));
-    scope.traces[1].setColor('#E85D55');
-    var micTrace = new NormalTrace(
-        document.getElementById('node-tree-canvas'), scope, mic
-    );
-    scope.addTrace(micTrace);
-    var micFFT = new FFTrace(
-        document.getElementById('node-tree-canvas'), scope, mic
-    );
-    scope.addTrace(micFFT);
-    mic.onactive = function onMicActive(source){
-        micTrace.setSource(source);
-        micFFT.setSource(source);
-    };
+const Oscilloscope = function(state) {
+    // Remember scope state
+    this.state = state;
 
-    osc1.start(audioContext.currentTime+0.05);
-    osc2.start(audioContext.currentTime+0.05);
-    draw(scope);
+    // Create a new canvas to draw the scope onto
+    this.canvas = document.getElementById('scope');
 
-    var appState = {
-        nodes: {
-            traces: [{
-                id: 0,
-                name: 'Trace ' + 0,
-                top: 250,
-                left: 350,
-                source: { id: 4}
-            },
-            {
-                id: 1,
-                name: 'Trace ' + 1,
-                top: 350,
-                left: 350,
-                source: { id: 5}
-            },
-            {
-                id: 2,
-                name: 'Trace ' + 2,
-                top: 450,
-                left: 350,
-                source: { id: 6}
-            },
-            {
-                id: 3,
-                name: 'Trace ' + 3,
-                top: 550,
-                left: 350,
-                source: { id: 6}
-            }],
-            sources: [{
-                id: 4,
-                name: 'Source ' + 4,
-                top: 250,
-                left: 50,
-                type: 'Waveform',
-            },
-            {
-                id: 5,
-                name: 'Source ' + 5,
-                top: 430,
-                left: 50,
-                type: 'Waveform',
-            },
-            {
-                id: 6,
-                name: 'Source ' + 6,
-                top: 600,
-                left: 50,
-                type: 'Microphone',
-            }],
-            scopes: [{
-                id: 7,
-                name: 'Scope ' + 7,
-                top: 450,
-                left: 650,
-                traces: { ids: [0, 1, 2, 3] }
-            }],
-            count: 8
-        }
-    };
-    app.state = appState;
-    mithril.mount(document.getElementById(nodeTreeCanvas), { view: () =>
-       mithril(app, appState)
+    this.traces = [];
+
+    this.sources = [];
+
+    this.markerMoving = false;
+};
+
+Oscilloscope.prototype.draw = function() {
+    var me = this;
+
+    if(this.canvas == null){
+        return;
+    }
+    var width = this.canvas.clientWidth;
+    var height = this.canvas.clientHeight;
+    var context = this.canvas.getContext('2d');
+
+    // Assign new scope properties
+    this.canvas.height = this.state.height = height;
+    this.canvas.width = this.state.width = width;
+    this.scaling = height / 256;
+    context.strokeWidth = 1;
+
+    // Draw background
+    context.fillStyle='#222222';
+    context.fillRect(0, 0, width, height);
+
+    // Draw trigger level
+    context.strokeStyle = '#278BFF';
+    context.beginPath();
+    context.moveTo(0, height / 2 - this.triggerLevel);
+    context.lineTo(width, height / 2 - this.triggerLevel);
+    context.stroke();
+
+    // this.traces[this.triggerTrace].fetch();
+    // var triggerLocation = getTriggerLocation(this.traces[this.triggerTrace].data, width, this.triggerLevel, this.triggerType);
+    // if(triggerLocation === undefined && this.autoTriggering){
+    //     triggerLocation = 0;
+    // }
+
+    // this.traces.forEach(function(trace) {
+    //     if(trace.on && trace.source !== null && trace.source.ready){
+    //         trace.draw(triggerLocation);
+    //     }
+    // });
+
+    me.state.markers.forEach(function(m) {
+        draw$1(context, me.state, m);
     });
+};
 
-    // TODO: Crosswindow stuff
-    // popup = window.open('http://fiddle.jshell.net');
-    // popup.console.log(1);
-    // popup.kek = 'KEK';
-    // popup.alert(popup.kek);
-}
+Oscilloscope.prototype.addSource = function(source) {
+    this.sources.push(source);
+};
 
-window.addEventListener('load', init);
+Oscilloscope.prototype.addTrace = function(trace) {
+    this.traces.push(trace);
+};
+
+Oscilloscope.prototype.addMarker = function(marker) {
+    this.markers.push(marker);
+};
+
+Oscilloscope.prototype.onMouseDown = function(event, scope){
+    // Start moving triggerlevel
+    if(scope.canvas.height / 2 - event.offsetY < this.state.triggerLevel + 3 && scope.canvas.height / 2 - event.offsetY > this.state.triggerLevel - 3){
+        scope.triggerMoving = true;
+        return;
+    }
+
+    // Start moving markers
+    for(var i = 0; i < this.state.markers.length; i++){
+        if(this.state.markers[i].type == 'vertical'){
+            if(event.offsetX < this.state.markers[i].x + 3 && event.offsetX > this.state.markers[i].x - 3){
+                scope.markerMoving = i;
+                return;
+            }
+        } else {
+            if(scope.canvas.height / 2 - event.offsetY < this.state.markers[i].y + 3 && scope.canvas.height / 2 - event.offsetY > this.state.markers[i].y - 3){
+                scope.markerMoving = i;
+                return;
+            }
+        }
+    }
+};
+
+Oscilloscope.prototype.onMouseUp = function(event, scope){
+    // End moving triggerlevel
+    if(scope.triggerMoving){
+        scope.triggerMoving = false;
+    }
+
+    // Start moving markers
+    if(scope.markerMoving !== false){
+        scope.markerMoving = false;
+    }
+};
+
+Oscilloscope.prototype.onMouseMove = function(event, scope){
+    // Change cursor
+    if(scope.canvas.height / 2 - event.offsetY < this.state.triggerLevel + 3 && scope.canvas.height / 2 - event.offsetY > this.state.triggerLevel - 3){
+        document.body.style.cursor = 'row-resize';
+    }
+    else{
+        var changed = false;
+        for(var i = 0; i < this.state.markers.length; i++){
+            if(this.state.markers[i].type == 'vertical'){
+                if(event.offsetX < this.state.markers[i].x + 3 && event.offsetX > this.state.markers[i].x - 3){
+                    document.body.style.cursor = 'col-resize';
+                    changed = true;
+                    break;
+                }
+            } else {
+                console.log(scope.canvas.height / 2 - event.offsetY, this.state.markers[i].y + 3);
+
+                if(scope.canvas.height / 2 - event.offsetY < this.state.markers[i].y + 3 && scope.canvas.height / 2 - event.offsetY > this.state.markers[i].y - 3){
+                    document.body.style.cursor = 'row-resize';
+                    changed = true;
+                    break;
+                }
+            }
+        }
+        if(!changed){
+            document.body.style.cursor = 'initial';
+        }
+    }
+
+    // Move triggerlevel
+    if(scope.triggerMoving){
+
+        var triggerLevel = scope.canvas.height / 2 - event.offsetY;
+        if(triggerLevel > scope.canvas.height / 2 - 1){
+            triggerLevel = scope.canvas.height / 2 - 1;
+        }
+        if(triggerLevel < -scope.canvas.height / 2){
+            triggerLevel = -scope.canvas.height / 2;
+        }
+        this.state.triggerLevel = triggerLevel;
+        return;
+    }
+
+    // Move markers
+    if(scope.markerMoving !== false){
+        var markerLevel = 0;
+        if(this.state.markers[scope.markerMoving].type == 'vertical'){
+            markerLevel = event.offsetX;
+            if(markerLevel > this.canvas.width){
+                markerLevel = this.canvas.width;
+            }
+            if(markerLevel < 0){
+                markerLevel = 0;
+            }
+            this.state.markers[scope.markerMoving].x = markerLevel;
+            return;
+        } else {
+            markerLevel = scope.canvas.height / 2 - event.offsetY;
+            if(markerLevel > scope.canvas.height / 2 - 1){
+                markerLevel = scope.canvas.height / 2 - 1;
+            }
+            if(markerLevel < -scope.canvas.height / 2){
+                markerLevel = -scope.canvas.height / 2;
+            }
+            this.state.markers[scope.markerMoving].y = markerLevel;
+            return;
+        }
+    }
+};
+
+const scopeView = {
+    oninit: function(vnode) {
+        
+    },
+    view: function(vnode) {
+        var me = this;
+        return mithril('canvas', {
+            id: 'scope',
+            style: {
+                width: vnode.attrs.width,
+                height: vnode.attrs.height
+            },
+            onmousedown: function(event){ me.ctrl.onMouseDown(event, me.ctrl); },
+            onmouseup: function(event){ me.ctrl.onMouseUp(event, me.ctrl); },
+            onmousemove: function(event){ me.ctrl.onMouseMove(event, me.ctrl); }
+        })
+    },
+    oncreate: function(vnode){
+        this.ctrl = new Oscilloscope(vnode.attrs.scope);
+        draw(this.ctrl);
+    },
+};
+
+__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n}\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
+
+/*
+* This file is the main app file.
+* It holds the controller and the view and links them both.
+*/
+
+mithril.route.mode = 'search';
+
+var appState = {
+    nodes: {
+        traces: [{
+            id: 0,
+            name: 'Trace ' + 0,
+            top: 50,
+            left: 350,
+            source: { id: 4}
+        },
+        {
+            id: 1,
+            name: 'Trace ' + 1,
+            top: 150,
+            left: 350,
+            source: { id: 5}
+        },
+        {
+            id: 2,
+            name: 'Trace ' + 2,
+            top: 250,
+            left: 350,
+            source: { id: 6}
+        },
+        {
+            id: 3,
+            name: 'Trace ' + 3,
+            top: 350,
+            left: 350,
+            source: { id: 6}
+        }],
+        sources: [{
+            id: 4,
+            name: 'Source ' + 4,
+            top: 50,
+            left: 50,
+            type: 'Waveform',
+        },
+        {
+            id: 5,
+            name: 'Source ' + 5,
+            top: 300,
+            left: 50,
+            type: 'Waveform',
+        },
+        {
+            id: 6,
+            name: 'Source ' + 6,
+            top: 550,
+            left: 50,
+            type: 'Microphone',
+        }],
+        scopes: [{
+            id: 7,
+            name: 'Scope ' + 7,
+            top: 250,
+            left: 650,
+            traces: { ids: [0, 1, 2, 3] },
+            triggerLevel: 50,
+            markers: [
+                { id: 1, type: 'horizontal', x: 0, y: 80 },
+                { id: 2, type: 'vertical', x: 200, y: 0 }
+            ],
+            autoTriggering: true,
+            triggerMoving: false,
+            triggerTrace: 0,
+            triggerType: 'rising',
+        }],
+        count: 8
+    }
+};
+
+window.addEventListener('load', function() {
+    mithril.route(document.body, '/routing', {
+        '/routing': {
+            controller: function() {}, 
+            view: function() {
+                return mithril(router, appState);
+            }
+        },
+        '/scope': {
+            controller: function() {},
+            view: function(vnode) {
+                var scope = getNodeByID(appState.nodes.scopes, vnode.attrs.id);
+                if(scope.length < 1){
+                    return mithril('', 'Scope does not exist!');
+                }
+                return mithril(scopeView, {
+                    width: canvasSize.width,
+                    height: canvasSize.height,
+                    scope: scope[0]
+                });
+            }
+        }
+    });
+});
 
 })));
 //# sourceMappingURL=bundle.js.map

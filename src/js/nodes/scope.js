@@ -1,4 +1,5 @@
 import m from 'mithril';
+import * as conf from '../conf.js';
 import { jsPlumb } from 'jsplumb';
 import { radioSelection } from './components.js';
 import { withKey } from '../helpers.js';
@@ -13,6 +14,12 @@ export const scopeNode = {
             style: {
                 top: vnode.attrs.top + 'px',
                 left: vnode.attrs.left + 'px'
+            },
+            ondblclick: function() {
+                // TODO: Crosswindow stuff
+                var popup = window.open(conf.url + '/#!/scope?id=' + vnode.attrs.id);
+                popup.console.log(1);
+                popup.kek = 'KEK';
             }
         }, [
             m('.card-header', [
