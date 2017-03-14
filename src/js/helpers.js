@@ -35,3 +35,11 @@ export const getAudioContext = function() {
     audioContext = new AudioContext();
     return audioContext;
 };
+
+export const withKey = function(key, callback) {
+  return function(e) {
+    if (e.keyCode == key) {
+        callback(e.target);
+    }
+  }
+}

@@ -24,17 +24,18 @@ export const sourceNode = {
         ]);
     },
     oncreate: function(vnode) {
-        vnode.dom.style.top = (300 + (vnode.attrs.id * 300)) + 'px';
-        jsPlumb.draggable(vnode.dom.id, {
-            containment:true,
-            grid:[50,50]
-        });
-
-        console.log(vnode.dom.id);
-        // jsPlumb.addEndpoint(vnode.dom.id, { 
-        //     anchor: ['Right', {shape: 'Rectangle'}],
-        //     isSource: true,
-        // });
+        jsPlumb.ready(function(){
+            vnode.dom.style.top = (300 + (vnode.attrs.id * 300)) + 'px';
+            jsPlumb.draggable(vnode.dom.id, {
+                containment:true,
+                grid:[50,50]
+            });
+            
+            jsPlumb.addEndpoint(vnode.dom.id, { 
+                anchor: ['Right', {shape: 'Rectangle'}],
+                isSource: true,
+            });
+        })
     }
 };
 

@@ -15138,6 +15138,14 @@ const getAudioContext = function() {
     return audioContext;
 };
 
+const withKey = function(key, callback) {
+  return function(e) {
+    if (e.keyCode == key) {
+        callback(e.target);
+    }
+  }
+};
+
 const Marker = function(scope, type, level) {
     this.scope = scope;
     if(type == 'vertical'){
@@ -15882,17 +15890,18 @@ const sourceNode = {
         ]);
     },
     oncreate: function(vnode) {
-        vnode.dom.style.top = (300 + (vnode.attrs.id * 300)) + 'px';
-        jsplumb_6.draggable(vnode.dom.id, {
-            containment:true,
-            grid:[50,50]
+        jsplumb_6.ready(function(){
+            vnode.dom.style.top = (300 + (vnode.attrs.id * 300)) + 'px';
+            jsplumb_6.draggable(vnode.dom.id, {
+                containment:true,
+                grid:[50,50]
+            });
+            
+            jsplumb_6.addEndpoint(vnode.dom.id, { 
+                anchor: ['Right', {shape: 'Rectangle'}],
+                isSource: true,
+            });
         });
-
-        console.log(vnode.dom.id);
-        // jsPlumb.addEndpoint(vnode.dom.id, { 
-        //     anchor: ['Right', {shape: 'Rectangle'}],
-        //     isSource: true,
-        // });
     }
 };
 
@@ -15925,6 +15934,55 @@ const sineBody = {
     }
 };
 
+const traceNode = {
+    oninit: function(vnode) {
+        vnode.attrs.editingName = false;
+    },
+    view: function(vnode) {
+        return mithril('.card.node', { id: 'node-' + vnode.attrs.id }, [
+            mithril('.card-header', [
+                mithril('.card-title', [
+                    (vnode.attrs.editingName ?
+                    mithril('.form-group', [
+                        mithril('input.form-input', {
+                            type: 'text',
+                            id: 'trace-name-' + vnode.attrs.id,
+                            value: vnode.attrs.name,
+                            onkeypress: withKey(13, function(target){
+                                console.log(target);
+                                vnode.attrs.name = target.value;
+                                vnode.attrs.editingName = false;
+                            })
+                        })
+                    ]) :
+                    mithril('span', {
+                        onclick: function() {
+                            vnode.attrs.editingName = true;
+                        }
+                    }, vnode.attrs.name))
+                    // TODO: Colorlabel here
+                ]),
+                mithril('.card-meta', [])
+            ]),
+            mithril('.card-body', '')
+        ]);
+    },
+    oncreate: function(vnode) {
+        jsplumb_6.ready(function(){
+            vnode.dom.style.top = (300 + (vnode.attrs.id * 300)) + 'px';
+            jsplumb_6.draggable(vnode.dom.id, {
+                containment:true,
+                grid:[50,50]
+            });
+
+            jsplumb_6.addEndpoint(vnode.dom.id, { 
+                anchor: [['Right', {shape: 'Rectangle'}], ['Left', {shape: 'Rectangle'}]],
+                isSource: true,
+            });
+        });
+    }
+};
+
 const app = {
     oninit: function(vnode) {
         if(vnode.attrs.state){
@@ -15932,24 +15990,31 @@ const app = {
         } else {
             this.state = {};
         }
+
+        jsplumb_6.ready(function(){
+            // Bind connection event
+            jsplumb_6.bind('connection', function(info) {
+                console.log(info);
+            });
+
+            // Bind connectionDetached event
+            jsplumb_6.bind('connectionDetached', function(info) {
+                console.log(info);
+            });
+        });
     },
     view: function(vnode) {
         return [
-            this.state.nodes.traces.map(node => mithril(sourceNode, node.state)),
-            this.state.nodes.sources.map(node => mithril(sourceNode, node.state))
+            this.state.nodes.traces.map(node => mithril(node.node, node.state)),
+            this.state.nodes.sources.map(node => mithril(node.node, node.state))
         ]
     },
     addTrace: function(trace) {
         this.state.nodes.traces.push({
-            node: sourceNode,
+            node: traceNode,
             state: {
-                app: {
-                    type: 'KEK'
-                },
-                type: 'Waveform',
-                amplitude: 0.7,
-                frequency: 1337,
-                id: this.state.nodes.count
+                id: this.state.nodes.count,
+                name: 'Trace ' + this.state.nodes.count
             }
         });
         this.state.nodes.count++;
@@ -15959,7 +16024,8 @@ const app = {
         this.state.nodes.sources.push({
             node: sourceNode,
             state: {
-                id: this.state.nodes.count
+                id: this.state.nodes.count,
+                name: 'Source ' + this.state.nodes.count
             }
         });
         this.state.nodes.count++;
@@ -15977,7 +16043,7 @@ function init() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
-    jsplumb_6.importDefaults({
+    jsPlumb.importDefaults({
         PaintStyle : {
             strokeWidth:13,
             stroke: 'rgba(200,0,0,0.5)'
@@ -16035,87 +16101,18 @@ function init() {
     scope.traces.forEach(function(trace){
         app.addTrace(trace);
     });
-    scope.sources.forEach(function(trace){
-        app.addSource(trace);
+    scope.sources.forEach(function(source){
+        app.addSource(source);
     });
 
-    // var doneDraggables = [];
-    // jsPlumb.ready(function(){
-    //     var i = 0;
-
-    //     scope.repr.style.top = (200 + (1 * 150)) + 'px';
-    //     scope.repr.style.left = '800px';
-    //     jsPlumb.draggable(scope.repr.id, {
-    //         containment:true,
-    //         grid:[50,50]
-    //     });
-
-    //     jsPlumb.addEndpoint(scope.repr.id, { 
-    //         anchor: ['Left', {shape: 'Rectangle'}],
-    //         isTarget: true,
-    //     });
-
-    //     // Make existing boxes draggable
-    //     scope.traces.forEach(function(trace) {
-    //         i++;
-
-    //         if(doneDraggables.indexOf(trace.source.repr.id) < 0){
-    //             trace.source.repr.style.top = (200 + (i * 150)) + 'px';
-    //             jsPlumb.draggable(trace.source.repr.id, {
-    //                 containment:true,
-    //                 grid:[50,50]
-    //             });
-
-    //             jsPlumb.addEndpoint(trace.source.repr.id, { 
-    //                 anchor: ['Right', {shape: 'Rectangle'}],
-    //                 isSource: true,
-    //             });
-    //         }
-
-    //         if(doneDraggables.indexOf(trace.repr.id) < 0){
-    //             trace.repr.style.top = (200 + (i * 150)) + 'px';
-    //             trace.repr.style.left = '400px';
-                
-    //             jsPlumb.draggable(trace.repr.id, {
-    //                 containment:true,
-    //                 grid:[50,50]
-    //             });
-
-    //             jsPlumb.addEndpoint(trace.repr.id, {
-    //                 anchor: [['Left', {shape: 'Rectangle'}],['Right', {shape: 'Rectangle'}]],
-    //                 isTarget: true,
-    //                 isSource: true
-    //             });
-    //         }
-            
-    //         doneDraggables.push(trace.source.repr.id);
-    //         doneDraggables.push(trace.repr.id);
-
-    //         jsPlumb.connect({
-    //             source: trace.source.repr.id,
-    //             target: trace.repr.id,
-    //             endpoint: 'Dot',
-    //             anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-    //         });
 
     //         jsPlumb.connect({
     //             source: trace.repr.id,
     //             target: scope.repr.id,
     //             endpoint: 'Dot',
     //             anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-    //         });
-    //     });
+    //         });0
 
-    //     // Bind connection event
-    //     jsPlumb.bind('connection', function(info) {
-    //         info.target.controller.source = info.source.controller;
-    //     });
-
-    //     // Bind connectionDetached event
-    //     jsPlumb.bind('connectionDetached', function(info) {
-    //         info.target.controller.source = null;
-    //     });
-    // });
     // TODO: Crosswindow stuff
     // popup = window.open('http://fiddle.jshell.net');
     // popup.console.log(1);
