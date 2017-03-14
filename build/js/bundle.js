@@ -15139,11 +15139,18 @@ const getAudioContext = function() {
 };
 
 const withKey = function(key, callback) {
-  return function(e) {
-    if (e.keyCode == key) {
-        callback(e.target);
+    return function(e) {
+        if (e.keyCode == key) {
+            callback(e.target);
+        }
     }
-  }
+};
+
+const getNodeByID = function(nodes, id){
+    var result = nodes.filter(function( obj ) {
+        return obj.id == id;
+    });
+    return result;
 };
 
 const Marker = function(scope, type, level) {
@@ -15870,7 +15877,13 @@ const radioSelection = {
 
 const sourceNode = {
     view: function(vnode) {
-        return mithril('.card.node', { id: 'node-' + vnode.attrs.id }, [
+        return mithril('.card.node.unselectable', {
+            id: 'node-' + vnode.attrs.id,
+            style: {
+                top: vnode.attrs.top + 'px',
+                left: vnode.attrs.left + 'px'
+            }
+        }, [
             mithril('.card-header', [
                 mithril('.card-title', 'Source'),
                 mithril('.card-meta', [
@@ -15886,17 +15899,19 @@ const sourceNode = {
                     })
                 ])
             ]),
-            mithril('.card-body', (vnode.attrs.type == 'Waveform' ? mithril(sineBody, vnode.attrs) : 'YOLO2'))
+            mithril('.card-body', (vnode.attrs.type == 'Waveform' ? mithril(sineBody, vnode.attrs) : 'Not implemented'))
         ]);
     },
     oncreate: function(vnode) {
         jsplumb_6.ready(function(){
-            vnode.dom.style.top = (300 + (vnode.attrs.id * 300)) + 'px';
             jsplumb_6.draggable(vnode.dom.id, {
-                containment:true,
-                grid:[50,50]
+                grid:[50,50],
+                stop: function(e){
+                    vnode.attrs.top = e.pos[1];
+                    vnode.attrs.left = e.pos[0];
+                }
             });
-            
+
             jsplumb_6.addEndpoint(vnode.dom.id, { 
                 anchor: ['Right', {shape: 'Rectangle'}],
                 isSource: true,
@@ -15939,7 +15954,13 @@ const traceNode = {
         vnode.attrs.editingName = false;
     },
     view: function(vnode) {
-        return mithril('.card.node', { id: 'node-' + vnode.attrs.id }, [
+        return mithril('.card.node.unselectable', {
+            id: 'node-' + vnode.attrs.id,
+            style: {
+                top: vnode.attrs.top + 'px',
+                left: vnode.attrs.left + 'px'
+            }
+        }, [
             mithril('.card-header', [
                 mithril('.card-title', [
                     (vnode.attrs.editingName ?
@@ -15949,7 +15970,6 @@ const traceNode = {
                             id: 'trace-name-' + vnode.attrs.id,
                             value: vnode.attrs.name,
                             onkeypress: withKey(13, function(target){
-                                console.log(target);
                                 vnode.attrs.name = target.value;
                                 vnode.attrs.editingName = false;
                             })
@@ -15969,15 +15989,74 @@ const traceNode = {
     },
     oncreate: function(vnode) {
         jsplumb_6.ready(function(){
-            vnode.dom.style.top = (300 + (vnode.attrs.id * 300)) + 'px';
             jsplumb_6.draggable(vnode.dom.id, {
-                containment:true,
-                grid:[50,50]
+                grid:[50,50],
+                stop: function(e){
+                    vnode.attrs.top = e.pos[1];
+                    vnode.attrs.left = e.pos[0];
+                }
             });
 
             jsplumb_6.addEndpoint(vnode.dom.id, { 
-                anchor: [['Right', {shape: 'Rectangle'}], ['Left', {shape: 'Rectangle'}]],
+                anchor: [['Left', {shape: 'Rectangle'}], ['Right', {shape: 'Rectangle'}]],
                 isSource: true,
+                isTarget: true
+            });
+        });
+    }
+};
+
+const scopeNode = {
+    oninit: function(vnode) {
+        vnode.attrs.editingName = false;
+    },
+    view: function(vnode) {
+        return mithril('.card.node.unselectable', {
+            id: 'node-' + vnode.attrs.id,
+            style: {
+                top: vnode.attrs.top + 'px',
+                left: vnode.attrs.left + 'px'
+            }
+        }, [
+            mithril('.card-header', [
+                mithril('.card-title', [
+                    (vnode.attrs.editingName ?
+                    mithril('.form-group', [
+                        mithril('input.form-input', {
+                            type: 'text',
+                            id: 'scope-name-' + vnode.attrs.id,
+                            value: vnode.attrs.name,
+                            onkeypress: withKey(13, function(target){
+                                vnode.attrs.name = target.value;
+                                vnode.attrs.editingName = false;
+                            })
+                        })
+                    ]) :
+                    mithril('span', {
+                        onclick: function() {
+                            vnode.attrs.editingName = true;
+                        }
+                    }, vnode.attrs.name))
+                    // TODO: Colorlabel here
+                ]),
+                mithril('.card-meta', [])
+            ]),
+            mithril('.card-body', '')
+        ]);
+    },
+    oncreate: function(vnode) {
+        jsplumb_6.ready(function(){
+            jsplumb_6.draggable(vnode.dom.id, {
+                grid:[50,50],
+                stop: function(e){
+                    vnode.attrs.top = e.pos[1];
+                    vnode.attrs.left = e.pos[0];
+                }
+            });
+
+            jsplumb_6.addEndpoint(vnode.dom.id, { 
+                anchor: ['Left', {shape: 'Rectangle'}],
+                isTarget: true
             });
         });
     }
@@ -15985,29 +16064,79 @@ const traceNode = {
 
 const app = {
     oninit: function(vnode) {
-        if(vnode.attrs.state){
-            this.state = vnode.attrs.state;
-        } else {
-            this.state = {};
-        }
-
         jsplumb_6.ready(function(){
             // Bind connection event
             jsplumb_6.bind('connection', function(info) {
-                console.log(info);
+                var sourceID = info.source.id.split('-')[1];
+                var source = getNodeByID(vnode.attrs.nodes.sources, sourceID);
+                if(source.length < 1){
+                    // TODO: Look in traces too since they can be sources to sinks and scopes too!
+                } else {
+                    source = source[0];
+                }
+                var targetID = info.target.id.split('-')[1];
+                var target = getNodeByID(vnode.attrs.nodes.traces, targetID);
+                if(target.length < 1){
+                    // TODO: Look in sinks and scopes too since they can be targets as well!
+                } else {
+                    target = target[0];
+                }
+                target.source = {
+                    id: sourceID,
+                    node: source
+                };
             });
 
             // Bind connectionDetached event
             jsplumb_6.bind('connectionDetached', function(info) {
-                console.log(info);
+                var targetID = info.target.id.split('-')[1];
+                var target = getNodeByID(vnode.attrs.nodes.traces, targetID);
+                if(target.length < 1){
+                    // TODO: Look in sinks and scopes too since they can be targets as well!
+                } else {
+                    target = target[0];
+                }
+                target.source = null;
             });
         });
     },
     view: function(vnode) {
         return [
-            this.state.nodes.traces.map(node => mithril(node.node, node.state)),
-            this.state.nodes.sources.map(node => mithril(node.node, node.state))
-        ]
+            vnode.attrs.nodes.traces.map(node => mithril(traceNode, node)),
+            vnode.attrs.nodes.sources.map(node => mithril(sourceNode, node)),
+            vnode.attrs.nodes.scopes.map(node => mithril(scopeNode, node))
+        ];
+    },
+    oncreate: function(vnode){
+        jsplumb_6.ready(function(){
+            vnode.attrs.nodes.traces.forEach(function(trace) {
+                if(trace.source){
+                    trace.source.node = getNodeByID(vnode.attrs.nodes.sources, trace.source.id)[0];
+                    jsplumb_6.connect({
+                        source: 'node-' + trace.source.node.id,
+                        target: 'node-' + trace.id,
+                        endpoint: 'Dot',
+                        anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
+                    });
+                }
+            }, this);
+
+            vnode.attrs.nodes.scopes.forEach(function(scope) {
+                if(scope.traces){
+                    scope.traces.nodes = [];
+                    scope.traces.ids.forEach(function(trace){
+                        var node = getNodeByID(vnode.attrs.nodes.traces, trace)[0];
+                        scope.traces.nodes.push(node);
+                        jsplumb_6.connect({
+                            source: 'node-' + node.id,
+                            target: 'node-' + scope.id,
+                            endpoint: 'Dot',
+                            anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
+                        });
+                    });
+                }
+            }, this);
+        });
     },
     addTrace: function(trace) {
         this.state.nodes.traces.push({
@@ -16033,7 +16162,7 @@ const app = {
     }
 };
 
-__$styleInject("body {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n}\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}",undefined);
+__$styleInject("body {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n}\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
 
 function init() {
     if (!navigator.getUserMedia)
@@ -16042,16 +16171,6 @@ function init() {
         navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
-
-    jsPlumb.importDefaults({
-        PaintStyle : {
-            strokeWidth:13,
-            stroke: 'rgba(200,0,0,0.5)'
-        },
-        DragOptions : { cursor: "crosshair" },
-        Endpoints : [ [ "Dot", { radius:7 } ], [ "Dot", { radius:11 } ] ],
-        EndpointStyles : [{ fill:"#225588" }, { fill:"#558822" }]
-    });
 
     var audioContext = getAudioContext();
     // osc1.output.connect(audioContext.destination);
@@ -16089,29 +16208,69 @@ function init() {
 
     var appState = {
         nodes: {
-            traces: [],
-            sources: [],
-            count: 0
+            traces: [{
+                id: 0,
+                name: 'Trace ' + 0,
+                top: 250,
+                left: 350,
+                source: { id: 4}
+            },
+            {
+                id: 1,
+                name: 'Trace ' + 1,
+                top: 350,
+                left: 350,
+                source: { id: 5}
+            },
+            {
+                id: 2,
+                name: 'Trace ' + 2,
+                top: 450,
+                left: 350,
+                source: { id: 6}
+            },
+            {
+                id: 3,
+                name: 'Trace ' + 3,
+                top: 550,
+                left: 350,
+                source: { id: 6}
+            }],
+            sources: [{
+                id: 4,
+                name: 'Source ' + 4,
+                top: 250,
+                left: 50,
+                type: 'Waveform',
+            },
+            {
+                id: 5,
+                name: 'Source ' + 5,
+                top: 430,
+                left: 50,
+                type: 'Waveform',
+            },
+            {
+                id: 6,
+                name: 'Source ' + 6,
+                top: 600,
+                left: 50,
+                type: 'Microphone',
+            }],
+            scopes: [{
+                id: 7,
+                name: 'Scope ' + 7,
+                top: 450,
+                left: 650,
+                traces: { ids: [0, 1, 2, 3] }
+            }],
+            count: 8
         }
     };
     app.state = appState;
     mithril.mount(document.getElementById(nodeTreeCanvas), { view: () =>
-       mithril(app, { state: appState })
+       mithril(app, appState)
     });
-    scope.traces.forEach(function(trace){
-        app.addTrace(trace);
-    });
-    scope.sources.forEach(function(source){
-        app.addSource(source);
-    });
-
-
-    //         jsPlumb.connect({
-    //             source: trace.repr.id,
-    //             target: scope.repr.id,
-    //             endpoint: 'Dot',
-    //             anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-    //         });0
 
     // TODO: Crosswindow stuff
     // popup = window.open('http://fiddle.jshell.net');

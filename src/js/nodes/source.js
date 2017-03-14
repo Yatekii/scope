@@ -4,7 +4,13 @@ import { radioSelection } from './components.js';
 
 export const sourceNode = {
     view: function(vnode) {
-        return m('.card.node', { id: 'node-' + vnode.attrs.id }, [
+        return m('.card.node.unselectable', {
+            id: 'node-' + vnode.attrs.id,
+            style: {
+                top: vnode.attrs.top + 'px',
+                left: vnode.attrs.left + 'px'
+            }
+        }, [
             m('.card-header', [
                 m('.card-title', 'Source'),
                 m('.card-meta', [
@@ -20,17 +26,19 @@ export const sourceNode = {
                     })
                 ])
             ]),
-            m('.card-body', (vnode.attrs.type == 'Waveform' ? m(sineBody, vnode.attrs) : 'YOLO2'))
+            m('.card-body', (vnode.attrs.type == 'Waveform' ? m(sineBody, vnode.attrs) : 'Not implemented'))
         ]);
     },
     oncreate: function(vnode) {
         jsPlumb.ready(function(){
-            vnode.dom.style.top = (300 + (vnode.attrs.id * 300)) + 'px';
             jsPlumb.draggable(vnode.dom.id, {
-                containment:true,
-                grid:[50,50]
+                grid:[50,50],
+                stop: function(e){
+                    vnode.attrs.top = e.pos[1];
+                    vnode.attrs.left = e.pos[0];
+                }
             });
-            
+
             jsPlumb.addEndpoint(vnode.dom.id, { 
                 anchor: ['Right', {shape: 'Rectangle'}],
                 isSource: true,

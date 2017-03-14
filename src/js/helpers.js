@@ -37,9 +37,16 @@ export const getAudioContext = function() {
 };
 
 export const withKey = function(key, callback) {
-  return function(e) {
-    if (e.keyCode == key) {
-        callback(e.target);
+    return function(e) {
+        if (e.keyCode == key) {
+            callback(e.target);
+        }
     }
-  }
+};
+
+export const getNodeByID = function(nodes, id){
+    var result = nodes.filter(function( obj ) {
+        return obj.id == id;
+    });
+    return result;
 }

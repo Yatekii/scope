@@ -17,16 +17,6 @@ function init() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
-    jsPlumb.importDefaults({
-        PaintStyle : {
-            strokeWidth:13,
-            stroke: 'rgba(200,0,0,0.5)'
-        },
-        DragOptions : { cursor: "crosshair" },
-        Endpoints : [ [ "Dot", { radius:7 } ], [ "Dot", { radius:11 } ] ],
-        EndpointStyles : [{ fill:"#225588" }, { fill:"#558822" }]
-    });
-
     var audioContext = helpers.getAudioContext();
     // osc1.output.connect(audioContext.destination);
     // osc2.output.connect(audioContext.destination);
@@ -63,29 +53,69 @@ function init() {
 
     var appState = {
         nodes: {
-            traces: [],
-            sources: [],
-            count: 0
+            traces: [{
+                id: 0,
+                name: 'Trace ' + 0,
+                top: 250,
+                left: 350,
+                source: { id: 4}
+            },
+            {
+                id: 1,
+                name: 'Trace ' + 1,
+                top: 350,
+                left: 350,
+                source: { id: 5}
+            },
+            {
+                id: 2,
+                name: 'Trace ' + 2,
+                top: 450,
+                left: 350,
+                source: { id: 6}
+            },
+            {
+                id: 3,
+                name: 'Trace ' + 3,
+                top: 550,
+                left: 350,
+                source: { id: 6}
+            }],
+            sources: [{
+                id: 4,
+                name: 'Source ' + 4,
+                top: 250,
+                left: 50,
+                type: 'Waveform',
+            },
+            {
+                id: 5,
+                name: 'Source ' + 5,
+                top: 430,
+                left: 50,
+                type: 'Waveform',
+            },
+            {
+                id: 6,
+                name: 'Source ' + 6,
+                top: 600,
+                left: 50,
+                type: 'Microphone',
+            }],
+            scopes: [{
+                id: 7,
+                name: 'Scope ' + 7,
+                top: 450,
+                left: 650,
+                traces: { ids: [0, 1, 2, 3] }
+            }],
+            count: 8
         }
     };
     app.state = appState;
     m.mount(document.getElementById(conf.nodeTreeCanvas), { view: () =>
-       m(app, { state: appState })
+       m(app, appState)
     });
-    scope.traces.forEach(function(trace){
-        app.addTrace(trace)
-    });
-    scope.sources.forEach(function(source){
-        app.addSource(source)
-    });
-
-
-    //         jsPlumb.connect({
-    //             source: trace.repr.id,
-    //             target: scope.repr.id,
-    //             endpoint: 'Dot',
-    //             anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-    //         });0
 
     // TODO: Crosswindow stuff
     // popup = window.open('http://fiddle.jshell.net');

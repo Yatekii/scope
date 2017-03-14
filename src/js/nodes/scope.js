@@ -3,7 +3,7 @@ import { jsPlumb } from 'jsplumb';
 import { radioSelection } from './components.js';
 import { withKey } from '../helpers.js';
 
-export const traceNode = {
+export const scopeNode = {
     oninit: function(vnode) {
         vnode.attrs.editingName = false;
     },
@@ -21,7 +21,7 @@ export const traceNode = {
                     m('.form-group', [
                         m('input.form-input', {
                             type: 'text',
-                            id: 'trace-name-' + vnode.attrs.id,
+                            id: 'scope-name-' + vnode.attrs.id,
                             value: vnode.attrs.name,
                             onkeypress: withKey(13, function(target){
                                 vnode.attrs.name = target.value;
@@ -52,8 +52,7 @@ export const traceNode = {
             });
 
             jsPlumb.addEndpoint(vnode.dom.id, { 
-                anchor: [['Left', {shape: 'Rectangle'}], ['Right', {shape: 'Rectangle'}]],
-                isSource: true,
+                anchor: ['Left', {shape: 'Rectangle'}],
                 isTarget: true
             });
         })
