@@ -45,8 +45,8 @@ export const router = {
     },
     view: function(vnode) {
         return [
-            vnode.attrs.nodes.traces.map(node => m(traceNode, node)),
             vnode.attrs.nodes.sources.map(node => m(sourceNode, node)),
+            vnode.attrs.nodes.traces.map(node => m(traceNode, node)),
             vnode.attrs.nodes.scopes.map(node => m(scopeNode, node))
         ];
     },

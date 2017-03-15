@@ -18,8 +18,7 @@ export const scopeNode = {
             ondblclick: function() {
                 // TODO: Crosswindow stuff
                 var popup = window.open(conf.url + '/#!/scope?id=' + vnode.attrs.id);
-                popup.console.log(1);
-                popup.kek = 'KEK';
+                popup.scopeState = vnode.attrs;
             }
         }, [
             m('.card-header', [

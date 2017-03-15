@@ -2,6 +2,7 @@ import m from 'mithril';
 import { jsPlumb } from 'jsplumb';
 import { radioSelection } from './components.js';
 import { withKey } from '../helpers.js';
+import { NormalTrace } from '../trace.js';
 
 export const traceNode = {
     oninit: function(vnode) {
@@ -57,5 +58,15 @@ export const traceNode = {
                 isTarget: true
             });
         })
+
+        switch(vnode.attrs.type){
+        default:
+        case 'NormalTrace':
+            vnode.attrs.ctrl = new NormalTrace(vnode.attrs);
+            break;
+
+        case 'KEK':
+            break;
+        }
     }
 };

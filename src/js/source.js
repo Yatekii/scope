@@ -23,6 +23,7 @@ export const Waveform = function(state) {
     // Connect the source output to the analyzer
     this.output.connect(this.analyzer);
     this.ready = true;
+    this.osc.start(audioContext.currentTime+0.05);
 };
 
 // Creates a new source

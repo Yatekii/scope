@@ -1215,9 +1215,21 @@ const draw = function(scope) {
     });
 };
 
+const htmlToElement = function(html) {
+    var template = document.createElement('template');
+    template.innerHTML = html;
+    return template.content.firstChild;
+};
 
-
-
+const initRepr = function(html, container) {
+    var element = htmlToElement(html);
+    if(container) {
+        container.appendChild(element);
+    } else {
+        document.body.appendChild(element);
+    }
+    return element;
+};
 
 var audioContext = null;
 const getAudioContext = function() {
@@ -15191,6 +15203,7 @@ const Waveform = function(state) {
     // Connect the source output to the analyzer
     this.output.connect(this.analyzer);
     this.ready = true;
+    this.osc.start(audioContext.currentTime+0.05);
 };
 
 // Creates a new source
@@ -15350,6 +15363,182 @@ const sineBody = {
     }
 };
 
+const NormalTrace = function (state) {
+    // Remember trace state
+    this.state = state;
+
+    // Assign class variables
+    this.on = true;
+
+    // Create the data buffer
+    if(state.source.node && state.source.node.ctrl.ready) {
+        this.data = new Uint8Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+    }
+    this.fetched = false;
+};
+
+NormalTrace.prototype.setSource = function(source){
+    this.data = new Uint8Array(this.state.source.node.analyzer.frequencyBinCount);
+};
+
+// Preemptively fetches a new sample set
+NormalTrace.prototype.fetch = function () {
+    if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
+        if(!this.data){
+            this.data = new Uint8Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+        }
+        this.state.source.node.ctrl.analyzer.getByteTimeDomainData(this.data);
+        console.log(this.data);
+    }
+    this.fetched = true;
+};
+
+// Draws trace on the new frame
+NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
+    // Store brush
+    context.save();
+    context.strokeWidth = 1;
+
+    // Get a new dataset
+    this.fetch();
+
+    // Draw trace
+    context.strokeStyle = this.state.color;
+    context.beginPath();
+    // Draw samples
+    console.log(this.data);
+    context.moveTo(0, (256 - this.data[triggerLocation]) * scope.scaling);
+    for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i++, j++){
+        context.lineTo(j, (256 - this.data[i]) * scope.scaling);
+    }
+    // Fix drawing on canvas
+    context.stroke();
+
+    // Restore brush
+    context.restore();
+
+    // Mark data as deprecated
+    this.fetched = false;
+};
+
+// Creates a new source
+const FFTrace = function(container, scope, source) {
+    var me = this;
+
+    // Assign class variables
+    this.scope = scope;
+    this.source = source;
+    this.color = '#E8830C';
+    this.on = source !== null;
+
+    // Create HTML representation
+    var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length);
+    this.repr = initRepr(tr, container);
+    this.repr.id = 'trace-' + scope.traces.length;
+    this.repr.controller = this;
+
+    // Find on-off switch
+    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
+    on_off.onchange = function(event) { me.onSwitch(me, event); };
+    on_off.checked = true;
+
+    // Find color storage and store it
+    var input = this.repr.getElementsByClassName('jscolor')[0];
+    // this.colorpicker = new jscolor(input,{
+    //     'value': this.color,
+    //     'hash': true
+    // }); TODO: new clorpicker
+    input.value = this.color;
+    input.onchange = function(event) { me.setColor(event.target.value);  };
+
+    // Find repr title and store it
+    this.title = this.repr.getElementsByClassName('card-title')[0];
+    this.title.style.color = this.color;
+
+    // Find repr icon and store it
+    this.icon = this.repr.getElementsByClassName('material-icons')[0];
+    this.icon.style.color = this.color;
+    // this.icon.onclick = this.colorpicker.show;
+    
+    // Create the data buffer
+    if(source && source.ready) {
+        this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
+    }
+    this.fetched = false;
+};
+
+FFTrace.prototype.setSource = function(source){
+    this.source = source;
+    this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
+};
+
+// Instantiates the GUI representation
+FFTrace.prototype.createTraceRepr = function(title_id, switch_id) {
+    return `<div class="mdl-shadow--2dp trace-card">
+        <div class="mdl-card__title">
+            <i class="material-icons trace-card-icon">equalizer</i>&nbsp;
+            <div class="mdl-textfield mdl-js-textfield">
+                <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
+                <label class="mdl-textfield__label" for="${ title_id }">FFT</label>
+            </div><input class="jscolor">
+            <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="${ switch_id }">
+                <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
+            </label>
+        </div>
+    </div>`;
+};
+
+// Sets a new color for the trace, both in the UI and on the scope canvas
+FFTrace.prototype.setColor = function(color) {
+    // this.colorpicker.fromString(color);
+    this.color = color;
+};
+
+// Activates drawing of a trace on the scope
+FFTrace.prototype.onSwitch = function(trace, event) {
+    trace.on = event.target.checked;
+};
+
+// Preemptively fetches a new sample set
+FFTrace.prototype.fetch = function () {
+    if(!this.fetched && this.source && this.source.ready){
+        this.source.analyzer.getByteFrequencyData(this.data);
+    }
+    this.fetched = true;
+};
+
+// Draws trace on the new frame
+FFTrace.prototype.draw = function (triggerLocation) {
+    var SPACING = 1;
+    var BAR_WIDTH = 1;
+    var numBars = Math.round(this.scope.canvas.width / SPACING);
+    var multiplier = this.source.analyzer.frequencyBinCount / numBars;
+
+    var context = this.scope.canvas.getContext('2d');
+    context.lineCap = 'round';
+
+    // Get a new dataset
+    this.fetch();
+
+    // Draw rectangle for each frequency
+    for (var i = 0; i < numBars; ++i) {
+        var magnitude = 0;
+        var offset = Math.floor(i * multiplier);
+        // gotta sum/average the block, or we miss narrow-bandwidth spikes
+        for (var j = 0; j < multiplier; j++) {
+            magnitude += this.data[offset + j];
+        }
+        magnitude = magnitude / multiplier;
+        context.fillStyle = 'hsl(' + Math.round((i*360)/numBars) + ', 100%, 50%)';
+        context.fillRect(i * SPACING, this.scope.canvas.height, BAR_WIDTH, -magnitude);
+    }
+
+    // Mark data as deprecated
+    this.fetched = false;
+
+    return triggerLocation;
+};
+
 const traceNode = {
     oninit: function(vnode) {
         vnode.attrs.editingName = false;
@@ -15404,6 +15593,16 @@ const traceNode = {
                 isTarget: true
             });
         });
+
+        switch(vnode.attrs.type){
+        default:
+        case 'NormalTrace':
+            vnode.attrs.ctrl = new NormalTrace(vnode.attrs);
+            break;
+
+        case 'KEK':
+            break;
+        }
     }
 };
 
@@ -15421,8 +15620,7 @@ const scopeNode = {
             ondblclick: function() {
                 // TODO: Crosswindow stuff
                 var popup = window.open(url + '/#!/scope?id=' + vnode.attrs.id);
-                popup.console.log(1);
-                popup.kek = 'KEK';
+                popup.scopeState = vnode.attrs;
             }
         }, [
             mithril('.card-header', [
@@ -15509,8 +15707,8 @@ const router = {
     },
     view: function(vnode) {
         return [
-            vnode.attrs.nodes.traces.map(node => mithril(traceNode, node)),
             vnode.attrs.nodes.sources.map(node => mithril(sourceNode, node)),
+            vnode.attrs.nodes.traces.map(node => mithril(traceNode, node)),
             vnode.attrs.nodes.scopes.map(node => mithril(scopeNode, node))
         ];
     },
@@ -15643,27 +15841,17 @@ Oscilloscope.prototype.draw = function() {
     //     triggerLocation = 0;
     // }
 
-    // this.traces.forEach(function(trace) {
-    //     if(trace.on && trace.source !== null && trace.source.ready){
-    //         trace.draw(triggerLocation);
-    //     }
-    // });
+    if(this.state.traces.nodes){
+        this.state.traces.nodes.forEach(function(trace) {
+            if(trace.ctrl && trace.ctrl.on && trace.source.node !== null && trace.source.node.ctrl.ready){
+                trace.ctrl.draw(context, me.state, 0); // TODO: triggering
+            }
+        });
+    }
 
     me.state.markers.forEach(function(m) {
         draw$1(context, me.state, m);
     });
-};
-
-Oscilloscope.prototype.addSource = function(source) {
-    this.sources.push(source);
-};
-
-Oscilloscope.prototype.addTrace = function(trace) {
-    this.traces.push(trace);
-};
-
-Oscilloscope.prototype.addMarker = function(marker) {
-    this.markers.push(marker);
 };
 
 Oscilloscope.prototype.onMouseDown = function(event, scope){
@@ -15806,28 +15994,34 @@ var appState = {
             name: 'Trace ' + 0,
             top: 50,
             left: 350,
-            source: { id: 4}
+            source: { id: 4},
+            type: 'NormalTrace',
+            color: '#E8830C'
         },
         {
             id: 1,
             name: 'Trace ' + 1,
             top: 150,
             left: 350,
-            source: { id: 5}
+            source: { id: 5},
+            type: 'KEK',
         },
         {
             id: 2,
             name: 'Trace ' + 2,
             top: 250,
             left: 350,
-            source: { id: 6}
+            source: { id: 6},
+            type: 'KEK',
         },
         {
             id: 3,
             name: 'Trace ' + 3,
             top: 350,
             left: 350,
-            source: { id: 6}
+            source: { id: 6},
+            type: 'KEK',
+            color: '#E8830C'
         }],
         sources: [{
             id: 4,
@@ -15867,6 +16061,7 @@ var appState = {
             triggerMoving: false,
             triggerTrace: 0,
             triggerType: 'rising',
+            scaling: 1,
         }],
         count: 8
     }
@@ -15883,14 +16078,10 @@ window.addEventListener('load', function() {
         '/scope': {
             controller: function() {},
             view: function(vnode) {
-                var scope = getNodeByID(appState.nodes.scopes, vnode.attrs.id);
-                if(scope.length < 1){
-                    return mithril('', 'Scope does not exist!');
-                }
                 return mithril(scopeView, {
                     width: canvasSize.width,
                     height: canvasSize.height,
-                    scope: scope[0]
+                    scope: window.scopeState
                 });
             }
         }

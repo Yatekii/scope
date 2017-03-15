@@ -22,28 +22,34 @@ var appState = {
             name: 'Trace ' + 0,
             top: 50,
             left: 350,
-            source: { id: 4}
+            source: { id: 4},
+            type: 'NormalTrace',
+            color: '#E8830C'
         },
         {
             id: 1,
             name: 'Trace ' + 1,
             top: 150,
             left: 350,
-            source: { id: 5}
+            source: { id: 5},
+            type: 'KEK',
         },
         {
             id: 2,
             name: 'Trace ' + 2,
             top: 250,
             left: 350,
-            source: { id: 6}
+            source: { id: 6},
+            type: 'KEK',
         },
         {
             id: 3,
             name: 'Trace ' + 3,
             top: 350,
             left: 350,
-            source: { id: 6}
+            source: { id: 6},
+            type: 'KEK',
+            color: '#E8830C'
         }],
         sources: [{
             id: 4,
@@ -83,6 +89,7 @@ var appState = {
             triggerMoving: false,
             triggerTrace: 0,
             triggerType: 'rising',
+            scaling: 1,
         }],
         count: 8
     }
@@ -99,14 +106,10 @@ window.addEventListener('load', function() {
         '/scope': {
             controller: function() {},
             view: function(vnode) {
-                var scope = getNodeByID(appState.nodes.scopes, vnode.attrs.id);
-                if(scope.length < 1){
-                    return m('', 'Scope does not exist!');
-                }
                 return m(scopeView, {
                     width: conf.canvasSize.width,
                     height: conf.canvasSize.height,
-                    scope: scope[0]
+                    scope: window.scopeState
                 });
             }
         }

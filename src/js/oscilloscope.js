@@ -48,27 +48,17 @@ Oscilloscope.prototype.draw = function() {
     //     triggerLocation = 0;
     // }
 
-    // this.traces.forEach(function(trace) {
-    //     if(trace.on && trace.source !== null && trace.source.ready){
-    //         trace.draw(triggerLocation);
-    //     }
-    // });
+    if(this.state.traces.nodes){
+        this.state.traces.nodes.forEach(function(trace) {
+            if(trace.ctrl && trace.ctrl.on && trace.source.node !== null && trace.source.node.ctrl.ready){
+                trace.ctrl.draw(context, me.state, 0); // TODO: triggering
+            }
+        });
+    }
 
     me.state.markers.forEach(function(m) {
         marker.draw(context, me.state, m);
     });
-};
-
-Oscilloscope.prototype.addSource = function(source) {
-    this.sources.push(source);
-};
-
-Oscilloscope.prototype.addTrace = function(trace) {
-    this.traces.push(trace);
-};
-
-Oscilloscope.prototype.addMarker = function(marker) {
-    this.markers.push(marker);
 };
 
 function getTriggerLocation(buf, buflen, triggerLevel, type){
