@@ -51,6 +51,8 @@ var appState = {
             top: 50,
             left: 50,
             type: 'Waveform',
+            gain: 1,
+            frequency: 1000,
         },
         {
             id: 5,

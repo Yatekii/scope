@@ -1,6 +1,7 @@
 import m from 'mithril';
 import { jsPlumb } from 'jsplumb';
 import { radioSelection } from './components.js';
+import { Waveform, Microphone } from '../source.js';
 
 export const sourceNode = {
     view: function(vnode) {
@@ -21,6 +22,16 @@ export const sourceNode = {
                         type: vnode.attrs.type,
                         onchange: (value) => {
                             vnode.attrs.type = value;
+                            switch(vnode.attrs.type){
+                            default:
+                            case 'Waveform':
+                                vnode.attrs.ctrl = new Waveform(vnode.attrs);
+                                break;
+
+                            case 'Microphone':
+                                vnode.attrs.ctrl = new Microphone(vnode.attrs);
+                                break;
+                            }
                             m.redraw();
                         }
                     })
@@ -44,6 +55,17 @@ export const sourceNode = {
                 isSource: true,
             });
         })
+
+        switch(vnode.attrs.type){
+        default:
+        case 'Waveform':
+            vnode.attrs.ctrl = new Waveform(vnode.attrs);
+            break;
+
+        case 'Microphone':
+            vnode.attrs.ctrl = new Microphone(vnode.attrs);
+            break;
+        }
     }
 };
 
