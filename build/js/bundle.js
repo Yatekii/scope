@@ -1215,21 +1215,9 @@ const draw = function(scope) {
     });
 };
 
-const htmlToElement = function(html) {
-    var template = document.createElement('template');
-    template.innerHTML = html;
-    return template.content.firstChild;
-};
 
-const initRepr = function(html, container) {
-    var element = htmlToElement(html);
-    if(container) {
-        container.appendChild(element);
-    } else {
-        document.body.appendChild(element);
-    }
-    return element;
-};
+
+
 
 var audioContext = null;
 const getAudioContext = function() {
@@ -15180,7 +15168,6 @@ const radioSelection = {
         ])
 };
 
-// Creates a new source
 const Waveform = function(state) {
     // Remember source state
     this.state = state;
@@ -15306,7 +15293,7 @@ const sourceNode = {
         ]);
     },
     oncreate: function(vnode) {
-        jsplumb_6.ready(function(){
+        jsplumb_6.bind('ready', function(){
             jsplumb_6.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -15388,7 +15375,6 @@ NormalTrace.prototype.fetch = function () {
             this.data = new Uint8Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
         }
         this.state.source.node.ctrl.analyzer.getByteTimeDomainData(this.data);
-        console.log(this.data);
     }
     this.fetched = true;
 };
@@ -15406,7 +15392,6 @@ NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
     context.strokeStyle = this.state.color;
     context.beginPath();
     // Draw samples
-    console.log(this.data);
     context.moveTo(0, (256 - this.data[triggerLocation]) * scope.scaling);
     for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i++, j++){
         context.lineTo(j, (256 - this.data[i]) * scope.scaling);
@@ -15422,99 +15407,45 @@ NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
 };
 
 // Creates a new source
-const FFTrace = function(container, scope, source) {
-    var me = this;
+const FFTrace = function(state) {
+    // Remember trace state
+    this.state = state;
 
-    // Assign class variables
-    this.scope = scope;
-    this.source = source;
-    this.color = '#E8830C';
-    this.on = source !== null;
-
-    // Create HTML representation
-    var tr = this.createTraceRepr('trace-title-' + scope.traces.length, 'trace-switch-' + scope.traces.length);
-    this.repr = initRepr(tr, container);
-    this.repr.id = 'trace-' + scope.traces.length;
-    this.repr.controller = this;
-
-    // Find on-off switch
-    var on_off = this.repr.getElementsByClassName('trace-on-off')[0];
-    on_off.onchange = function(event) { me.onSwitch(me, event); };
-    on_off.checked = true;
-
-    // Find color storage and store it
-    var input = this.repr.getElementsByClassName('jscolor')[0];
-    // this.colorpicker = new jscolor(input,{
-    //     'value': this.color,
-    //     'hash': true
-    // }); TODO: new clorpicker
-    input.value = this.color;
-    input.onchange = function(event) { me.setColor(event.target.value);  };
-
-    // Find repr title and store it
-    this.title = this.repr.getElementsByClassName('card-title')[0];
-    this.title.style.color = this.color;
-
-    // Find repr icon and store it
-    this.icon = this.repr.getElementsByClassName('material-icons')[0];
-    this.icon.style.color = this.color;
-    // this.icon.onclick = this.colorpicker.show;
+    this.on = true;
     
     // Create the data buffer
-    if(source && source.ready) {
-        this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
+    if(state.source.node && state.source.node.ctrl.ready) {
+        this.data = new Uint8Array(state.source.node.ctrl.analyzer.frequencyBinCount);
     }
     this.fetched = false;
 };
 
 FFTrace.prototype.setSource = function(source){
-    this.source = source;
-    this.data = new Uint8Array(this.source.analyzer.frequencyBinCount);
+    this.data = new Uint8Array(this.state.source.node.analyzer.frequencyBinCount);
 };
 
-// Instantiates the GUI representation
-FFTrace.prototype.createTraceRepr = function(title_id, switch_id) {
-    return `<div class="mdl-shadow--2dp trace-card">
-        <div class="mdl-card__title">
-            <i class="material-icons trace-card-icon">equalizer</i>&nbsp;
-            <div class="mdl-textfield mdl-js-textfield">
-                <input class="mdl-textfield__input card-title" type="text" id="${ title_id }">
-                <label class="mdl-textfield__label" for="${ title_id }">FFT</label>
-            </div><input class="jscolor">
-            <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="${ switch_id }">
-                <input type="checkbox" id="${ switch_id }" class="mdl-switch__input trace-on-off"/>
-            </label>
-        </div>
-    </div>`;
-};
-
-// Sets a new color for the trace, both in the UI and on the scope canvas
-FFTrace.prototype.setColor = function(color) {
-    // this.colorpicker.fromString(color);
-    this.color = color;
-};
-
-// Activates drawing of a trace on the scope
-FFTrace.prototype.onSwitch = function(trace, event) {
-    trace.on = event.target.checked;
-};
 
 // Preemptively fetches a new sample set
 FFTrace.prototype.fetch = function () {
-    if(!this.fetched && this.source && this.source.ready){
-        this.source.analyzer.getByteFrequencyData(this.data);
+    if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
+        if(!this.data){
+            this.data = new Uint8Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+        }
+        this.state.source.node.ctrl.analyzer.getByteFrequencyData(this.data);
     }
     this.fetched = true;
 };
 
 // Draws trace on the new frame
-FFTrace.prototype.draw = function (triggerLocation) {
+FFTrace.prototype.draw = function (context, scope, triggerLocation) {
     var SPACING = 1;
     var BAR_WIDTH = 1;
-    var numBars = Math.round(this.scope.canvas.width / SPACING);
-    var multiplier = this.source.analyzer.frequencyBinCount / numBars;
+    var numBars = Math.round(scope.width / SPACING);
+    var multiplier = this.state.source.node.ctrl.analyzer.frequencyBinCount / numBars;
 
-    var context = this.scope.canvas.getContext('2d');
+    // Store brush
+    context.save();
+
     context.lineCap = 'round';
 
     // Get a new dataset
@@ -15530,8 +15461,11 @@ FFTrace.prototype.draw = function (triggerLocation) {
         }
         magnitude = magnitude / multiplier;
         context.fillStyle = 'hsl(' + Math.round((i*360)/numBars) + ', 100%, 50%)';
-        context.fillRect(i * SPACING, this.scope.canvas.height, BAR_WIDTH, -magnitude);
+        context.fillRect(i * SPACING, scope.width, BAR_WIDTH, -magnitude);
     }
+
+    // Restore brush
+    context.restore();
 
     // Mark data as deprecated
     this.fetched = false;
@@ -15578,7 +15512,7 @@ const traceNode = {
         ]);
     },
     oncreate: function(vnode) {
-        jsplumb_6.ready(function(){
+        jsplumb_6.bind('ready', function(){
             jsplumb_6.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -15600,7 +15534,8 @@ const traceNode = {
             vnode.attrs.ctrl = new NormalTrace(vnode.attrs);
             break;
 
-        case 'KEK':
+        case 'FFTrace':
+            vnode.attrs.ctrl = new FFTrace(vnode.attrs);
             break;
         }
     }
@@ -15650,7 +15585,7 @@ const scopeNode = {
         ]);
     },
     oncreate: function(vnode) {
-        jsplumb_6.ready(function(){
+        jsplumb_6.bind('ready', function(){
             jsplumb_6.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -15669,7 +15604,7 @@ const scopeNode = {
 
 const router = {
     oninit: function(vnode) {
-        jsplumb_6.ready(function(){
+        jsplumb_6.bind('ready', function(){
             // Bind connection event
             jsplumb_6.bind('connection', function(info) {
                 var sourceID = info.source.id.split('-')[1];
@@ -15713,7 +15648,7 @@ const router = {
         ];
     },
     oncreate: function(vnode){
-        jsplumb_6.ready(function(){
+        jsplumb_6.bind('ready', function(){
             vnode.attrs.nodes.traces.forEach(function(trace) {
                 if(trace.source){
                     trace.source.node = getNodeByID(vnode.attrs.nodes.sources, trace.source.id)[0];
@@ -15835,16 +15770,18 @@ Oscilloscope.prototype.draw = function() {
     context.lineTo(width, height / 2 - this.state.triggerLevel);
     context.stroke();
 
-    // this.state.traces[this.triggerTrace].fetch();
-    // var triggerLocation = getTriggerLocation(this.traces[this.triggerTrace].data, width, this.triggerLevel, this.triggerType);
-    // if(triggerLocation === undefined && this.autoTriggering){
-    //     triggerLocation = 0;
-    // }
-
+    if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
+        this.state.triggerTrace.node = getNodeByID(this.state.traces.nodes, this.state.triggerTrace.id)[0];
+    }
+    this.state.triggerTrace.node.ctrl.fetch();
+    var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
+    if(triggerLocation === undefined && this.state.autoTriggering){
+        triggerLocation = 0;
+    }
     if(this.state.traces.nodes){
         this.state.traces.nodes.forEach(function(trace) {
             if(trace.ctrl && trace.ctrl.on && trace.source.node !== null && trace.source.node.ctrl.ready){
-                trace.ctrl.draw(context, me.state, 0); // TODO: triggering
+                trace.ctrl.draw(context, me.state, triggerLocation); // TODO: triggering
             }
         });
     }
@@ -15853,6 +15790,32 @@ Oscilloscope.prototype.draw = function() {
         draw$1(context, me.state, m);
     });
 };
+
+function getTriggerLocation(buf, buflen, triggerLevel, type){
+    switch(type){
+    case 'rising':
+    default:
+        return risingEdgeTrigger(buf, buflen, triggerLevel);
+    case 'falling':
+        return fallingEdgeTrigger(buf, buflen, triggerLevel);
+    }
+}
+
+function risingEdgeTrigger(buf, buflen, triggerLevel) {
+    for(var i=1; i< buflen; i++){
+        if(buf[i] > 128 + triggerLevel && buf[i - 1] < 128 + triggerLevel){
+            return i;
+        }
+    }
+}
+
+function fallingEdgeTrigger(buf, buflen, triggerLevel) {
+    for(var i=1; i< buflen; i++){
+        if(buf[i] < 128 + triggerLevel && buf[i - 1] > 128 + triggerLevel){
+            return i;
+        }
+    }
+}
 
 Oscilloscope.prototype.onMouseDown = function(event, scope){
     // Start moving triggerlevel
@@ -16004,7 +15967,8 @@ var appState = {
             top: 150,
             left: 350,
             source: { id: 5},
-            type: 'KEK',
+            type: 'NormalTrace',
+            color: '#E8830C'
         },
         {
             id: 2,
@@ -16012,7 +15976,8 @@ var appState = {
             top: 250,
             left: 350,
             source: { id: 6},
-            type: 'KEK',
+            type: 'NormalTrace',
+            color: '#E8830C'
         },
         {
             id: 3,
@@ -16020,7 +15985,7 @@ var appState = {
             top: 350,
             left: 350,
             source: { id: 6},
-            type: 'KEK',
+            type: 'FFTrace',
             color: '#E8830C'
         }],
         sources: [{
@@ -16058,8 +16023,7 @@ var appState = {
                 { id: 2, type: 'vertical', x: 200, y: 0 }
             ],
             autoTriggering: true,
-            triggerMoving: false,
-            triggerTrace: 0,
+            triggerTrace: { id: 0},
             triggerType: 'rising',
             scaling: 1,
         }],

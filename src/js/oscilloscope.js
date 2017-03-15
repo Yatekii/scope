@@ -42,16 +42,18 @@ Oscilloscope.prototype.draw = function() {
     context.lineTo(width, height / 2 - this.state.triggerLevel);
     context.stroke();
 
-    // this.state.traces[this.triggerTrace].fetch();
-    // var triggerLocation = getTriggerLocation(this.traces[this.triggerTrace].data, width, this.triggerLevel, this.triggerType);
-    // if(triggerLocation === undefined && this.autoTriggering){
-    //     triggerLocation = 0;
-    // }
-
+    if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
+        this.state.triggerTrace.node = helpers.getNodeByID(this.state.traces.nodes, this.state.triggerTrace.id)[0];
+    }
+    this.state.triggerTrace.node.ctrl.fetch();
+    var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
+    if(triggerLocation === undefined && this.state.autoTriggering){
+        triggerLocation = 0;
+    }
     if(this.state.traces.nodes){
         this.state.traces.nodes.forEach(function(trace) {
             if(trace.ctrl && trace.ctrl.on && trace.source.node !== null && trace.source.node.ctrl.ready){
-                trace.ctrl.draw(context, me.state, 0); // TODO: triggering
+                trace.ctrl.draw(context, me.state, triggerLocation); // TODO: triggering
             }
         });
     }

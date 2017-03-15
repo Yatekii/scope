@@ -48,7 +48,7 @@ export const scopeNode = {
         ]);
     },
     oncreate: function(vnode) {
-        jsPlumb.ready(function(){
+        jsPlumb.bind('ready', function(){
             jsPlumb.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){

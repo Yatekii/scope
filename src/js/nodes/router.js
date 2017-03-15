@@ -7,7 +7,7 @@ import { getNodeByID } from '../helpers.js';
 
 export const router = {
     oninit: function(vnode) {
-        jsPlumb.ready(function(){
+        jsPlumb.bind('ready', function(){
             // Bind connection event
             jsPlumb.bind('connection', function(info) {
                 var sourceID = info.source.id.split('-')[1];
@@ -51,7 +51,7 @@ export const router = {
         ];
     },
     oncreate: function(vnode){
-        jsPlumb.ready(function(){
+        jsPlumb.bind('ready', function(){
             vnode.attrs.nodes.traces.forEach(function(trace) {
                 if(trace.source){
                     trace.source.node = getNodeByID(vnode.attrs.nodes.sources, trace.source.id)[0];

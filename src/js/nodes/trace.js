@@ -2,7 +2,7 @@ import m from 'mithril';
 import { jsPlumb } from 'jsplumb';
 import { radioSelection } from './components.js';
 import { withKey } from '../helpers.js';
-import { NormalTrace } from '../trace.js';
+import { NormalTrace, FFTrace } from '../trace.js';
 
 export const traceNode = {
     oninit: function(vnode) {
@@ -43,7 +43,7 @@ export const traceNode = {
         ]);
     },
     oncreate: function(vnode) {
-        jsPlumb.ready(function(){
+        jsPlumb.bind('ready', function(){
             jsPlumb.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -65,7 +65,8 @@ export const traceNode = {
             vnode.attrs.ctrl = new NormalTrace(vnode.attrs);
             break;
 
-        case 'KEK':
+        case 'FFTrace':
+            vnode.attrs.ctrl = new FFTrace(vnode.attrs);
             break;
         }
     }

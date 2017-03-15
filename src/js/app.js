@@ -32,7 +32,8 @@ var appState = {
             top: 150,
             left: 350,
             source: { id: 5},
-            type: 'KEK',
+            type: 'NormalTrace',
+            color: '#E8830C'
         },
         {
             id: 2,
@@ -40,7 +41,8 @@ var appState = {
             top: 250,
             left: 350,
             source: { id: 6},
-            type: 'KEK',
+            type: 'NormalTrace',
+            color: '#E8830C'
         },
         {
             id: 3,
@@ -48,7 +50,7 @@ var appState = {
             top: 350,
             left: 350,
             source: { id: 6},
-            type: 'KEK',
+            type: 'FFTrace',
             color: '#E8830C'
         }],
         sources: [{
@@ -86,8 +88,7 @@ var appState = {
                 { id: 2, type: 'vertical', x: 200, y: 0 }
             ],
             autoTriggering: true,
-            triggerMoving: false,
-            triggerTrace: 0,
+            triggerTrace: { id: 0},
             triggerType: 'rising',
             scaling: 1,
         }],
