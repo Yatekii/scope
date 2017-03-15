@@ -38,11 +38,11 @@ Oscilloscope.prototype.draw = function() {
     // Draw trigger level
     context.strokeStyle = '#278BFF';
     context.beginPath();
-    context.moveTo(0, height / 2 - this.triggerLevel);
-    context.lineTo(width, height / 2 - this.triggerLevel);
+    context.moveTo(0, height / 2 - this.state.triggerLevel);
+    context.lineTo(width, height / 2 - this.state.triggerLevel);
     context.stroke();
 
-    // this.traces[this.triggerTrace].fetch();
+    // this.state.traces[this.triggerTrace].fetch();
     // var triggerLocation = getTriggerLocation(this.traces[this.triggerTrace].data, width, this.triggerLevel, this.triggerType);
     // if(triggerLocation === undefined && this.autoTriggering){
     //     triggerLocation = 0;
@@ -147,8 +147,6 @@ Oscilloscope.prototype.onMouseMove = function(event, scope){
                     break;
                 }
             } else {
-                console.log(scope.canvas.height / 2 - event.offsetY, this.state.markers[i].y + 3)
-
                 if(scope.canvas.height / 2 - event.offsetY < this.state.markers[i].y + 3 && scope.canvas.height / 2 - event.offsetY > this.state.markers[i].y - 3){
                     document.body.style.cursor = 'row-resize';
                     changed = true;

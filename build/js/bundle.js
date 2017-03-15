@@ -15517,11 +15517,11 @@ Oscilloscope.prototype.draw = function() {
     // Draw trigger level
     context.strokeStyle = '#278BFF';
     context.beginPath();
-    context.moveTo(0, height / 2 - this.triggerLevel);
-    context.lineTo(width, height / 2 - this.triggerLevel);
+    context.moveTo(0, height / 2 - this.state.triggerLevel);
+    context.lineTo(width, height / 2 - this.state.triggerLevel);
     context.stroke();
 
-    // this.traces[this.triggerTrace].fetch();
+    // this.state.traces[this.triggerTrace].fetch();
     // var triggerLocation = getTriggerLocation(this.traces[this.triggerTrace].data, width, this.triggerLevel, this.triggerType);
     // if(triggerLocation === undefined && this.autoTriggering){
     //     triggerLocation = 0;
@@ -15600,8 +15600,6 @@ Oscilloscope.prototype.onMouseMove = function(event, scope){
                     break;
                 }
             } else {
-                console.log(scope.canvas.height / 2 - event.offsetY, this.state.markers[i].y + 3);
-
                 if(scope.canvas.height / 2 - event.offsetY < this.state.markers[i].y + 3 && scope.canvas.height / 2 - event.offsetY > this.state.markers[i].y - 3){
                     document.body.style.cursor = 'row-resize';
                     changed = true;
@@ -15657,24 +15655,22 @@ Oscilloscope.prototype.onMouseMove = function(event, scope){
 
 const scopeView = {
     oninit: function(vnode) {
-        
     },
     view: function(vnode) {
-        var me = this;
         return mithril('canvas', {
             id: 'scope',
             style: {
                 width: vnode.attrs.width,
                 height: vnode.attrs.height
             },
-            onmousedown: function(event){ me.ctrl.onMouseDown(event, me.ctrl); },
-            onmouseup: function(event){ me.ctrl.onMouseUp(event, me.ctrl); },
-            onmousemove: function(event){ me.ctrl.onMouseMove(event, me.ctrl); }
+            onmousedown: function(event){ vnode.attrs.scope.ctrl.onMouseDown(event, vnode.attrs.scope.ctrl); },
+            onmouseup: function(event){ vnode.attrs.scope.ctrl.onMouseUp(event, vnode.attrs.scope.ctrl); },
+            onmousemove: function(event){ vnode.attrs.scope.ctrl.onMouseMove(event, vnode.attrs.scope.ctrl); }
         })
     },
     oncreate: function(vnode){
-        this.ctrl = new Oscilloscope(vnode.attrs.scope);
-        draw(this.ctrl);
+        vnode.attrs.scope.ctrl = new Oscilloscope(vnode.attrs.scope);
+        draw(vnode.attrs.scope.ctrl);
     },
 };
 
