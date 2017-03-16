@@ -191,3 +191,11 @@ Oscilloscope.prototype.onMouseMove = function(event, scope){
         }
     }
 }
+
+Oscilloscope.prototype.onScroll = function(event, scope){
+    scope.state.scaling += event.wheelDeltaY * 0.01;
+    if(scope.state.scaling < 0){
+        scope.state.scaling = 0;
+    }
+    console.log(scope.state.scaling)
+}

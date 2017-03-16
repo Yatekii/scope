@@ -60,7 +60,7 @@ var appState = {
             left: 50,
             type: 'Waveform',
             gain: 1,
-            frequency: 1000,
+            frequency: 0.1,
         },
         {
             id: 5,
@@ -68,6 +68,8 @@ var appState = {
             top: 300,
             left: 50,
             type: 'Waveform',
+            gain: 0.7,
+            frequency: 0.2,
         },
         {
             id: 6,
@@ -81,16 +83,24 @@ var appState = {
             name: 'Scope ' + 7,
             top: 250,
             left: 650,
-            traces: { ids: [0, 1, 2, 3] },
+            traces: {
+                ids: [0, 1, 2, 3]
+            },
             triggerLevel: 50,
             markers: [
-                { id: 1, type: 'horizontal', x: 0, y: 80 },
-                { id: 2, type: 'vertical', x: 200, y: 0 }
+                { id: 1, type: 'horizontal', x: 0, y: 0 },
+                { id: 2, type: 'vertical', x: 0.5, y: 0 }
             ],
             autoTriggering: true,
             triggerTrace: { id: 0},
             triggerType: 'rising',
             scaling: 1,
+            ui: {
+                mover: {
+                    width: 50,
+                    height: 50,
+                }
+            }
         }],
         count: 8
     }

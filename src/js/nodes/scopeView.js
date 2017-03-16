@@ -9,6 +9,9 @@ import * as oscilloscope from '../oscilloscope.js';
 
 export const scopeView = {
     oninit: function(vnode) {
+        window.addEventListener('mousewheel', function(event){
+            vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
+        }, false);
     },
     view: function(vnode) {
         return m('canvas', {
@@ -17,9 +20,9 @@ export const scopeView = {
                 width: vnode.attrs.width,
                 height: vnode.attrs.height
             },
-            onmousedown: function(event){ vnode.attrs.scope.ctrl.onMouseDown(event, vnode.attrs.scope.ctrl); },
-            onmouseup: function(event){ vnode.attrs.scope.ctrl.onMouseUp(event, vnode.attrs.scope.ctrl); },
-            onmousemove: function(event){ vnode.attrs.scope.ctrl.onMouseMove(event, vnode.attrs.scope.ctrl); }
+            onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event, vnode.attrs.scope.ctrl); },
+            onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event, vnode.attrs.scope.ctrl); },
+            onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event, vnode.attrs.scope.ctrl); },
         })
     },
     oncreate: function(vnode){

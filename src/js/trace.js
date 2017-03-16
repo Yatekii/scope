@@ -10,22 +10,22 @@ export const  NormalTrace = function (state) {
 
     // Create the data buffer
     if(state.source.node && state.source.node.ctrl.ready) {
-        this.data = new Uint8Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+        this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
     }
     this.fetched = false;
 };
 
 NormalTrace.prototype.setSource = function(source){
-    this.data = new Uint8Array(this.state.source.node.analyzer.frequencyBinCount);
+    this.data = new Float32Array(this.state.source.node.analyzer.frequencyBinCount);
 };
 
 // Preemptively fetches a new sample set
 NormalTrace.prototype.fetch = function () {
     if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
         if(!this.data){
-            this.data = new Uint8Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+            this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
         }
-        this.state.source.node.ctrl.analyzer.getByteTimeDomainData(this.data);
+        this.state.source.node.ctrl.analyzer.getFloatTimeDomainData(this.data);
     }
     this.fetched = true;
 };
@@ -43,12 +43,17 @@ NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
     context.strokeStyle = this.state.color;
     context.beginPath();
     // Draw samples
-    context.moveTo(0, (256 - this.data[triggerLocation]) * scope.scaling);
+    var halfHeight = scope.height / 2;
+    context.moveTo(0, (halfHeight - this.data[triggerLocation] * halfHeight * scope.scaling));
     for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i++, j++){
-        context.lineTo(j, (256 - this.data[i]) * scope.scaling);
+        context.lineTo(j, (halfHeight - this.data[i] * halfHeight * scope.scaling));
     }
     // Fix drawing on canvas
     context.stroke();
+
+    // Draw mover
+    context.fillStyle = this.state.color;
+    context.fillRect(scope.width - scope.ui.mover.width, halfHeight, scope.ui.mover.width, scope.ui.mover.height);
 
     // Restore brush
     context.restore();
@@ -66,13 +71,13 @@ export const FFTrace = function(state) {
     
     // Create the data buffer
     if(state.source.node && state.source.node.ctrl.ready) {
-        this.data = new Uint8Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+        this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
     }
     this.fetched = false;
 };
 
 FFTrace.prototype.setSource = function(source){
-    this.data = new Uint8Array(this.state.source.node.analyzer.frequencyBinCount);
+    this.data = new Float32Array(this.state.source.node.analyzer.frequencyBinCount);
 };
 
 
@@ -80,9 +85,9 @@ FFTrace.prototype.setSource = function(source){
 FFTrace.prototype.fetch = function () {
     if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
         if(!this.data){
-            this.data = new Uint8Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+            this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
         }
-        this.state.source.node.ctrl.analyzer.getByteFrequencyData(this.data);
+        this.state.source.node.ctrl.analyzer.getFloatFrequencyData(this.data);
     }
     this.fetched = true;
 };

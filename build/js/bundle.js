@@ -15350,6 +15350,7 @@ const sineBody = {
     }
 };
 
+// Creates a new trace
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
@@ -15359,22 +15360,22 @@ const NormalTrace = function (state) {
 
     // Create the data buffer
     if(state.source.node && state.source.node.ctrl.ready) {
-        this.data = new Uint8Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+        this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
     }
     this.fetched = false;
 };
 
 NormalTrace.prototype.setSource = function(source){
-    this.data = new Uint8Array(this.state.source.node.analyzer.frequencyBinCount);
+    this.data = new Float32Array(this.state.source.node.analyzer.frequencyBinCount);
 };
 
 // Preemptively fetches a new sample set
 NormalTrace.prototype.fetch = function () {
     if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
         if(!this.data){
-            this.data = new Uint8Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+            this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
         }
-        this.state.source.node.ctrl.analyzer.getByteTimeDomainData(this.data);
+        this.state.source.node.ctrl.analyzer.getFloatTimeDomainData(this.data);
     }
     this.fetched = true;
 };
@@ -15392,12 +15393,17 @@ NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
     context.strokeStyle = this.state.color;
     context.beginPath();
     // Draw samples
-    context.moveTo(0, (256 - this.data[triggerLocation]) * scope.scaling);
+    var halfHeight = scope.height / 2;
+    context.moveTo(0, (halfHeight - this.data[triggerLocation] * halfHeight * scope.scaling));
     for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i++, j++){
-        context.lineTo(j, (256 - this.data[i]) * scope.scaling);
+        context.lineTo(j, (halfHeight - this.data[i] * halfHeight * scope.scaling));
     }
     // Fix drawing on canvas
     context.stroke();
+
+    // Draw mover
+    context.fillStyle = this.state.color;
+    context.fillRect(scope.width - scope.ui.mover.width, halfHeight, scope.ui.mover.width, scope.ui.mover.height);
 
     // Restore brush
     context.restore();
@@ -15415,13 +15421,13 @@ const FFTrace = function(state) {
     
     // Create the data buffer
     if(state.source.node && state.source.node.ctrl.ready) {
-        this.data = new Uint8Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+        this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
     }
     this.fetched = false;
 };
 
 FFTrace.prototype.setSource = function(source){
-    this.data = new Uint8Array(this.state.source.node.analyzer.frequencyBinCount);
+    this.data = new Float32Array(this.state.source.node.analyzer.frequencyBinCount);
 };
 
 
@@ -15429,9 +15435,9 @@ FFTrace.prototype.setSource = function(source){
 FFTrace.prototype.fetch = function () {
     if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
         if(!this.data){
-            this.data = new Uint8Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+            this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
         }
-        this.state.source.node.ctrl.analyzer.getByteFrequencyData(this.data);
+        this.state.source.node.ctrl.analyzer.getFloatFrequencyData(this.data);
     }
     this.fetched = true;
 };
@@ -15709,19 +15715,21 @@ const draw$1 = function (context, scope, state) {
     // Setup brush
     context.strokeWidth = 1;
     context.strokeStyle = '#006644';
-    if (context.setLineDash)
+    if (context.setLineDash) {
         context.setLineDash([5]);
+    }
 
     // Draw marker
     if(state.type == 'vertical'){
         context.beginPath();
-        context.moveTo(state.x, 0);
-        context.lineTo(state.x, scope.height);
+        context.moveTo(state.x * scope.width, 0);
+        context.lineTo(state.x * scope.width, scope.height);
         context.stroke();
     } else if(state.type == 'horizontal'){
         context.beginPath();
-        context.moveTo(0, scope.height / 2 - state.y);
-        context.lineTo(scope.width, scope.height / 2 - state.y);
+        var halfHeight = scope.height / 2;
+        context.moveTo(0, halfHeight - state.y * halfHeight);
+        context.lineTo(scope.width, halfHeight - state.y * halfHeight);
         context.stroke();
     }
 
@@ -15920,8 +15928,19 @@ Oscilloscope.prototype.onMouseMove = function(event, scope){
     }
 };
 
+Oscilloscope.prototype.onScroll = function(event, scope){
+    scope.state.scaling += event.wheelDeltaY * 0.01;
+    if(scope.state.scaling < 0){
+        scope.state.scaling = 0;
+    }
+    console.log(scope.state.scaling);
+};
+
 const scopeView = {
     oninit: function(vnode) {
+        window.addEventListener('mousewheel', function(event){
+            vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
+        }, false);
     },
     view: function(vnode) {
         return mithril('canvas', {
@@ -15930,9 +15949,9 @@ const scopeView = {
                 width: vnode.attrs.width,
                 height: vnode.attrs.height
             },
-            onmousedown: function(event){ vnode.attrs.scope.ctrl.onMouseDown(event, vnode.attrs.scope.ctrl); },
-            onmouseup: function(event){ vnode.attrs.scope.ctrl.onMouseUp(event, vnode.attrs.scope.ctrl); },
-            onmousemove: function(event){ vnode.attrs.scope.ctrl.onMouseMove(event, vnode.attrs.scope.ctrl); }
+            onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event, vnode.attrs.scope.ctrl); },
+            onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event, vnode.attrs.scope.ctrl); },
+            onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event, vnode.attrs.scope.ctrl); },
         })
     },
     oncreate: function(vnode){
@@ -15995,7 +16014,7 @@ var appState = {
             left: 50,
             type: 'Waveform',
             gain: 1,
-            frequency: 1000,
+            frequency: 0.1,
         },
         {
             id: 5,
@@ -16003,6 +16022,8 @@ var appState = {
             top: 300,
             left: 50,
             type: 'Waveform',
+            gain: 0.7,
+            frequency: 0.2,
         },
         {
             id: 6,
@@ -16016,16 +16037,24 @@ var appState = {
             name: 'Scope ' + 7,
             top: 250,
             left: 650,
-            traces: { ids: [0, 1, 2, 3] },
+            traces: {
+                ids: [0, 1, 2, 3]
+            },
             triggerLevel: 50,
             markers: [
-                { id: 1, type: 'horizontal', x: 0, y: 80 },
-                { id: 2, type: 'vertical', x: 200, y: 0 }
+                { id: 1, type: 'horizontal', x: 0, y: 0 },
+                { id: 2, type: 'vertical', x: 0.5, y: 0 }
             ],
             autoTriggering: true,
             triggerTrace: { id: 0},
             triggerType: 'rising',
             scaling: 1,
+            ui: {
+                mover: {
+                    width: 50,
+                    height: 50,
+                }
+            }
         }],
         count: 8
     }
