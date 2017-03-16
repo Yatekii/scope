@@ -15402,7 +15402,18 @@ NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
 
     // Draw mover
     context.fillStyle = this.state.color;
-    context.fillRect(scope.width - scope.ui.mover.width, halfHeight, scope.ui.mover.width, scope.ui.mover.height);
+    var offset = this.state.offset;
+    if(offset > 1){
+        offset = 1;
+    } else if(offset < -1){
+        offset = -1;
+    }
+    context.fillRect(
+        scope.width - scope.ui.mover.width,
+        halfHeight - offset * halfHeight * scope.scaling - scope.ui.mover.height,
+        scope.ui.mover.width,
+        scope.ui.mover.height
+    );
 
     // Restore brush
     context.restore();
@@ -15743,11 +15754,8 @@ const Oscilloscope = function(state) {
     // Create a new canvas to draw the scope onto
     this.canvas = document.getElementById('scope');
 
-    this.traces = [];
-
-    this.sources = [];
-
     this.markerMoving = false;
+    this.triggerMoving = false;
 };
 
 Oscilloscope.prototype.draw = function() {
@@ -15823,47 +15831,47 @@ function fallingEdgeTrigger(buf, buflen, triggerLevel) {
     }
 }
 
-Oscilloscope.prototype.onMouseDown = function(event, scope){
+Oscilloscope.prototype.onMouseDown = function(event){
     // Start moving triggerlevel
-    var halfHeight = scope.canvas.height / 2;
+    var halfHeight = this.canvas.height / 2;
     var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        scope.triggerMoving = true;
+        this.triggerMoving = true;
         return;
     }
 
     // Start moving markers
     for(var i = 0; i < this.state.markers.length; i++){
         if(this.state.markers[i].type == 'vertical'){
-            var x = this.state.markers[i].x * scope.canvas.width;
+            var x = this.state.markers[i].x * this.canvas.width;
             if(event.offsetX < x + 3 && event.offsetX > x - 3){
-                scope.markerMoving = i;
+                this.markerMoving = i;
                 return;
             }
         } else {
             var y = this.state.markers[i].y * halfHeight * this.state.scaling;
             if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
-                scope.markerMoving = i;
+                this.markerMoving = i;
                 return;
             }
         }
     }
 };
 
-Oscilloscope.prototype.onMouseUp = function(event, scope){
+Oscilloscope.prototype.onMouseUp = function(event){
     // End moving triggerlevel
-    if(scope.triggerMoving){
-        scope.triggerMoving = false;
+    if(this.triggerMoving){
+        this.triggerMoving = false;
     }
 
     // Start moving markers
-    if(scope.markerMoving !== false){
-        scope.markerMoving = false;
+    if(this.markerMoving !== false){
+        this.markerMoving = false;
     }
 };
 
-Oscilloscope.prototype.onMouseMove = function(event, scope){
-    var halfHeight = scope.canvas.height / 2;
+Oscilloscope.prototype.onMouseMove = function(event){
+    var halfHeight = this.canvas.height / 2;
     var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling;
 
     // Change cursor
@@ -15874,7 +15882,7 @@ Oscilloscope.prototype.onMouseMove = function(event, scope){
         var changed = false;
         for(var i = 0; i < this.state.markers.length; i++){
             if(this.state.markers[i].type == 'vertical'){
-                var x = this.state.markers[i].x * scope.canvas.width;
+                var x = this.state.markers[i].x * this.canvas.width;
                 if(event.offsetX < x + 3 && event.offsetX > x - 3){
                     document.body.style.cursor = 'col-resize';
                     changed = true;
@@ -15895,7 +15903,7 @@ Oscilloscope.prototype.onMouseMove = function(event, scope){
     }
 
     // Move triggerlevel
-    if(scope.triggerMoving){
+    if(this.triggerMoving){
         triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling);
         if(triggerLevel > 1){
             triggerLevel = 1;
@@ -15908,17 +15916,17 @@ Oscilloscope.prototype.onMouseMove = function(event, scope){
     }
 
     // Move markers
-    if(scope.markerMoving !== false){
+    if(this.markerMoving !== false){
         var markerLevel = 0;
-        if(this.state.markers[scope.markerMoving].type == 'vertical'){
-            markerLevel = event.offsetX / scope.canvas.width;
+        if(this.state.markers[this.markerMoving].type == 'vertical'){
+            markerLevel = event.offsetX / this.canvas.width;
             if(markerLevel > 1){
                 markerLevel = 1;
             }
             if(markerLevel < 0){
                 markerLevel = 0;
             }
-            this.state.markers[scope.markerMoving].x = markerLevel;
+            this.state.markers[this.markerMoving].x = markerLevel;
             return;
         } else {
             markerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling);
@@ -15928,13 +15936,13 @@ Oscilloscope.prototype.onMouseMove = function(event, scope){
             if(markerLevel < -1){
                 markerLevel = -1;
             }
-            this.state.markers[scope.markerMoving].y = markerLevel;
+            this.state.markers[this.markerMoving].y = markerLevel;
             return;
         }
     }
 };
 
-Oscilloscope.prototype.onScroll = function(event, scope){
+Oscilloscope.prototype.onScroll = function(event){
     this.state.scaling += event.wheelDeltaY * 0.01;
     if(this.state.scaling < 0){
         this.state.scaling = 0;
@@ -15955,9 +15963,9 @@ const scopeView = {
                 width: vnode.attrs.width,
                 height: vnode.attrs.height
             },
-            onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event, vnode.attrs.scope.ctrl); },
-            onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event, vnode.attrs.scope.ctrl); },
-            onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event, vnode.attrs.scope.ctrl); },
+            onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
+            onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
+            onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
         })
     },
     oncreate: function(vnode){
@@ -15973,7 +15981,6 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the controller and the view and links them both.
 */
 
-//use default mode
 mithril.route.mode = 'search';
 
 var appState = {

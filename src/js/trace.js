@@ -53,7 +53,18 @@ NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
 
     // Draw mover
     context.fillStyle = this.state.color;
-    context.fillRect(scope.width - scope.ui.mover.width, halfHeight, scope.ui.mover.width, scope.ui.mover.height);
+    var offset = this.state.offset;
+    if(offset > 1){
+        offset = 1;
+    } else if(offset < -1){
+        offset = -1;
+    }
+    context.fillRect(
+        scope.width - scope.ui.mover.width,
+        halfHeight - offset * halfHeight * scope.scaling - scope.ui.mover.height,
+        scope.ui.mover.width,
+        scope.ui.mover.height
+    );
 
     // Restore brush
     context.restore();

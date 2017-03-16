@@ -20,9 +20,9 @@ export const scopeView = {
                 width: vnode.attrs.width,
                 height: vnode.attrs.height
             },
-            onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event, vnode.attrs.scope.ctrl); },
-            onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event, vnode.attrs.scope.ctrl); },
-            onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event, vnode.attrs.scope.ctrl); },
+            onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
+            onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
+            onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
         })
     },
     oncreate: function(vnode){
