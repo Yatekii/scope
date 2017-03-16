@@ -1197,7 +1197,6 @@ module["exports"] = m;
 };
 });
 
-const url = 'http://localhost:8080';
 const canvasSize = {
     height: '100%',
     width: '100%'
@@ -15475,7 +15474,7 @@ FFTrace.prototype.draw = function (context, scope, traceConf, triggerLocation) {
         for (var j = 0; j < multiplier; j++) {
             magnitude += this.data[offset + j];
         }
-        magnitude = magnitude / multiplier - 500;
+        magnitude = magnitude / multiplier * 4;
         context.fillStyle = 'hsl(' + Math.round((i * 360) / numBars) + ', 100%, 50%)';
         context.fillRect(i * SPACING, -magnitude + traceConf.offset * scope.height, BAR_WIDTH, scope.height + magnitude);
     }
@@ -15585,7 +15584,7 @@ const scopeNode = {
             },
             ondblclick: function() {
                 // TODO: Crosswindow stuff
-                var popup = window.open(url + '/#!/scope?id=' + vnode.attrs.id);
+                var popup = window.open(window.location.hostname + '/#!/scope?id=' + vnode.attrs.id);
                 popup.scopeState = vnode.attrs;
             }
         }, [
@@ -16088,7 +16087,7 @@ var appState = {
             top: 350,
             left: 350,
             source: { id: 6},
-            type: 'NormalTrace',
+            type: 'FFTrace',
             color: '#E8830C'
         }],
         sources: [{

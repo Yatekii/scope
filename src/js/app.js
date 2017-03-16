@@ -50,7 +50,7 @@ var appState = {
             top: 350,
             left: 350,
             source: { id: 6},
-            type: 'NormalTrace',
+            type: 'FFTrace',
             color: '#E8830C'
         }],
         sources: [{
