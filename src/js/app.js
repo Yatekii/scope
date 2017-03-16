@@ -33,7 +33,7 @@ var appState = {
             left: 350,
             source: { id: 5},
             type: 'NormalTrace',
-            color: '#E8830C'
+            color: '#E85D55'
         },
         {
             id: 2,
@@ -42,7 +42,7 @@ var appState = {
             left: 350,
             source: { id: 6},
             type: 'NormalTrace',
-            color: '#E8830C'
+            color: '#78FFCE'
         },
         {
             id: 3,
@@ -101,7 +101,7 @@ var appState = {
                     offset: 0,
                 },
             ],
-            triggerLevel: 50,
+            triggerLevel: 0,
             markers: [
                 { id: 1, type: 'horizontal', x: 0, y: 0 },
                 { id: 2, type: 'vertical', x: 0.5, y: 0 }
@@ -113,7 +113,7 @@ var appState = {
             ui: {
                 mover: {
                     width: 50,
-                    height: 50,
+                    height: 20,
                 }
             }
         }],
