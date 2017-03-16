@@ -50,7 +50,7 @@ var appState = {
             top: 350,
             left: 350,
             source: { id: 6},
-            type: 'FFTrace',
+            type: 'NormalTrace',
             color: '#E8830C'
         }],
         sources: [{
@@ -60,7 +60,7 @@ var appState = {
             left: 50,
             type: 'Waveform',
             gain: 1,
-            frequency: 0.1,
+            frequency: 0.6,
         },
         {
             id: 5,

@@ -15350,7 +15350,6 @@ const sineBody = {
     }
 };
 
-// Creates a new trace
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
@@ -15454,7 +15453,7 @@ FFTrace.prototype.fetch = function () {
 };
 
 // Draws trace on the new frame
-FFTrace.prototype.draw = function (context, scope, triggerLocation) {
+FFTrace.prototype.draw = function (context, scope, traceConf, triggerLocation) {
     var SPACING = 1;
     var BAR_WIDTH = 1;
     var numBars = Math.round(scope.width / SPACING);
@@ -15462,13 +15461,13 @@ FFTrace.prototype.draw = function (context, scope, triggerLocation) {
 
     // Store brush
     context.save();
-
     context.lineCap = 'round';
 
     // Get a new dataset
     this.fetch();
 
     // Draw rectangle for each frequency
+    var halfHeight = scope.height / 2;
     for (var i = 0; i < numBars; ++i) {
         var magnitude = 0;
         var offset = Math.floor(i * multiplier);
@@ -15476,10 +15475,25 @@ FFTrace.prototype.draw = function (context, scope, triggerLocation) {
         for (var j = 0; j < multiplier; j++) {
             magnitude += this.data[offset + j];
         }
-        magnitude = magnitude / multiplier;
-        context.fillStyle = 'hsl(' + Math.round((i*360)/numBars) + ', 100%, 50%)';
-        context.fillRect(i * SPACING, scope.width, BAR_WIDTH, -magnitude);
+        magnitude = magnitude / multiplier - 500;
+        context.fillStyle = 'hsl(' + Math.round((i * 360) / numBars) + ', 100%, 50%)';
+        context.fillRect(i * SPACING, -magnitude + traceConf.offset * scope.height, BAR_WIDTH, scope.height + magnitude);
     }
+
+    // Draw mover
+    context.fillStyle = this.state.color;
+    var offset = this.state.offset;
+    if(offset > 1){
+        offset = 1;
+    } else if(offset < -1){
+        offset = -1;
+    }
+    context.fillRect(
+        scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
+        halfHeight - traceConf.offset * halfHeight * scope.scaling - scope.ui.mover.height / 2,
+        scope.ui.mover.width,
+        scope.ui.mover.height
+    );
 
     // Restore brush
     context.restore();
@@ -16074,7 +16088,7 @@ var appState = {
             top: 350,
             left: 350,
             source: { id: 6},
-            type: 'FFTrace',
+            type: 'NormalTrace',
             color: '#E8830C'
         }],
         sources: [{
@@ -16084,7 +16098,7 @@ var appState = {
             left: 50,
             type: 'Waveform',
             gain: 1,
-            frequency: 0.1,
+            frequency: 0.6,
         },
         {
             id: 5,
