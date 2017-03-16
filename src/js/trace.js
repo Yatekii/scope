@@ -31,7 +31,7 @@ NormalTrace.prototype.fetch = function () {
 };
 
 // Draws trace on the new frame
-NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
+NormalTrace.prototype.draw = function (context, scope, traceConf, triggerLocation) {
     // Store brush
     context.save();
     context.strokeWidth = 1;
@@ -44,9 +44,9 @@ NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
     context.beginPath();
     // Draw samples
     var halfHeight = scope.height / 2;
-    context.moveTo(0, (halfHeight - this.data[triggerLocation] * halfHeight * scope.scaling));
+    context.moveTo(0, (halfHeight - (this.data[triggerLocation] + traceConf.offset) * halfHeight * scope.scaling));
     for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i++, j++){
-        context.lineTo(j, (halfHeight - this.data[i] * halfHeight * scope.scaling));
+        context.lineTo(j, (halfHeight - (this.data[i] + traceConf.offset) * halfHeight * scope.scaling));
     }
     // Fix drawing on canvas
     context.stroke();
@@ -60,8 +60,8 @@ NormalTrace.prototype.draw = function (context, scope, triggerLocation) {
         offset = -1;
     }
     context.fillRect(
-        scope.width - scope.ui.mover.width,
-        halfHeight - offset * halfHeight * scope.scaling - scope.ui.mover.height,
+        scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
+        halfHeight - traceConf.offset * halfHeight * scope.scaling - scope.ui.mover.height / 2,
         scope.ui.mover.width,
         scope.ui.mover.height
     );

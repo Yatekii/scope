@@ -114,6 +114,7 @@ var appState = {
                 mover: {
                     width: 50,
                     height: 20,
+                    horizontalPosition: 0,
                 }
             }
         }],
