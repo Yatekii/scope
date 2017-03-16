@@ -15350,7 +15350,6 @@ const sineBody = {
     }
 };
 
-// Creates a new trace
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
@@ -15670,9 +15669,9 @@ const router = {
             vnode.attrs.nodes.scopes.forEach(function(scope) {
                 if(scope.traces){
                     scope.traces.nodes = [];
-                    scope.traces.ids.forEach(function(trace){
-                        var node = getNodeByID(vnode.attrs.nodes.traces, trace)[0];
-                        scope.traces.nodes.push(node);
+                    scope.traces.forEach(function(trace){
+                        var node = getNodeByID(vnode.attrs.nodes.traces, trace.id)[0];
+                        trace.node = node;
                         jsplumb_6.connect({
                             source: 'node-' + node.id,
                             target: 'node-' + scope.id,
@@ -15779,7 +15778,7 @@ Oscilloscope.prototype.draw = function() {
     context.stroke();
 
     if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
-        this.state.triggerTrace.node = getNodeByID(this.state.traces.nodes, this.state.triggerTrace.id)[0];
+        this.state.triggerTrace.node = getNodeByID(this.state.traces.map(function(trace){ return trace.node }), this.state.triggerTrace.id)[0];
     }
     this.state.triggerTrace.node.ctrl.fetch();
     var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
@@ -15787,9 +15786,9 @@ Oscilloscope.prototype.draw = function() {
         triggerLocation = 0;
     }
     if(this.state.traces.nodes){
-        this.state.traces.nodes.forEach(function(trace) {
-            if(trace.ctrl && trace.ctrl.on && trace.source.node !== null && trace.source.node.ctrl.ready){
-                trace.ctrl.draw(context, me.state, triggerLocation); // TODO: triggering
+        this.state.traces.forEach(function(trace) {
+            if(trace.node.ctrl && trace.node.ctrl.on && trace.node.source.node !== null && trace.node.source.node.ctrl.ready){
+                trace.node.ctrl.draw(context, me.state, triggerLocation); // TODO: triggering
             }
         });
     }
@@ -16037,16 +16036,31 @@ var appState = {
             name: 'Scope ' + 7,
             top: 250,
             left: 650,
-            traces: {
-                ids: [0, 1, 2, 3]
-            },
+            traces: [
+                {
+                    id: 0,
+                    offset: 0,
+                },
+                {
+                    id: 1,
+                    offset: 0,
+                },
+                {
+                    id: 2,
+                    offset: 0,
+                },
+                {
+                    id: 3,
+                    offset: 0,
+                },
+            ],
             triggerLevel: 50,
             markers: [
                 { id: 1, type: 'horizontal', x: 0, y: 0 },
                 { id: 2, type: 'vertical', x: 0.5, y: 0 }
             ],
             autoTriggering: true,
-            triggerTrace: { id: 0},
+            triggerTrace: { id: 0 },
             triggerType: 'rising',
             scaling: 1,
             ui: {

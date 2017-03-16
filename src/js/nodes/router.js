@@ -67,9 +67,9 @@ export const router = {
             vnode.attrs.nodes.scopes.forEach(function(scope) {
                 if(scope.traces){
                     scope.traces.nodes = [];
-                    scope.traces.ids.forEach(function(trace){
-                        var node = getNodeByID(vnode.attrs.nodes.traces, trace)[0];
-                        scope.traces.nodes.push(node);
+                    scope.traces.forEach(function(trace){
+                        var node = getNodeByID(vnode.attrs.nodes.traces, trace.id)[0];
+                        trace.node = node;
                         jsPlumb.connect({
                             source: 'node-' + node.id,
                             target: 'node-' + scope.id,

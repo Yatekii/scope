@@ -43,7 +43,7 @@ Oscilloscope.prototype.draw = function() {
     context.stroke();
 
     if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
-        this.state.triggerTrace.node = helpers.getNodeByID(this.state.traces.nodes, this.state.triggerTrace.id)[0];
+        this.state.triggerTrace.node = helpers.getNodeByID(this.state.traces.map(function(trace){ return trace.node }), this.state.triggerTrace.id)[0];
     }
     this.state.triggerTrace.node.ctrl.fetch();
     var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
@@ -51,9 +51,9 @@ Oscilloscope.prototype.draw = function() {
         triggerLocation = 0;
     }
     if(this.state.traces.nodes){
-        this.state.traces.nodes.forEach(function(trace) {
-            if(trace.ctrl && trace.ctrl.on && trace.source.node !== null && trace.source.node.ctrl.ready){
-                trace.ctrl.draw(context, me.state, triggerLocation); // TODO: triggering
+        this.state.traces.forEach(function(trace) {
+            if(trace.node.ctrl && trace.node.ctrl.on && trace.node.source.node !== null && trace.node.source.node.ctrl.ready){
+                trace.node.ctrl.draw(context, me.state, triggerLocation); // TODO: triggering
             }
         });
     }

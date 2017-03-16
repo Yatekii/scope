@@ -83,16 +83,31 @@ var appState = {
             name: 'Scope ' + 7,
             top: 250,
             left: 650,
-            traces: {
-                ids: [0, 1, 2, 3]
-            },
+            traces: [
+                {
+                    id: 0,
+                    offset: 0,
+                },
+                {
+                    id: 1,
+                    offset: 0,
+                },
+                {
+                    id: 2,
+                    offset: 0,
+                },
+                {
+                    id: 3,
+                    offset: 0,
+                },
+            ],
             triggerLevel: 50,
             markers: [
                 { id: 1, type: 'horizontal', x: 0, y: 0 },
                 { id: 2, type: 'vertical', x: 0.5, y: 0 }
             ],
             autoTriggering: true,
-            triggerTrace: { id: 0},
+            triggerTrace: { id: 0 },
             triggerType: 'rising',
             scaling: 1,
             ui: {
