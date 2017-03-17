@@ -42,6 +42,7 @@ export const sourceNode = {
     },
     oncreate: function(vnode) {
         jsPlumb.bind('ready', function(){
+            console.log('Handled source jsPlumb');
             jsPlumb.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -53,6 +54,7 @@ export const sourceNode = {
             jsPlumb.addEndpoint(vnode.dom.id, { 
                 anchor: ['Right', {shape: 'Rectangle'}],
                 isSource: true,
+                maxConnections: 10,
             });
         })
 

@@ -49,6 +49,7 @@ export const scopeNode = {
     },
     oncreate: function(vnode) {
         jsPlumb.bind('ready', function(){
+            console.log('Handled scope jsPlumb');
             jsPlumb.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -59,7 +60,8 @@ export const scopeNode = {
 
             jsPlumb.addEndpoint(vnode.dom.id, { 
                 anchor: ['Left', {shape: 'Rectangle'}],
-                isTarget: true
+                isTarget: true,
+                maxConnections: 10,
             });
         })
     }

@@ -15167,7 +15167,6 @@ const radioSelection = {
         ])
 };
 
-// Creates a new source
 const Waveform = function(state) {
     // Remember source state
     this.state = state;
@@ -15300,6 +15299,7 @@ const sourceNode = {
     },
     oncreate: function(vnode) {
         jsplumb_6.bind('ready', function(){
+            console.log('Handled source jsPlumb');
             jsplumb_6.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -15311,6 +15311,7 @@ const sourceNode = {
             jsplumb_6.addEndpoint(vnode.dom.id, { 
                 anchor: ['Right', {shape: 'Rectangle'}],
                 isSource: true,
+                maxConnections: 10,
             });
         });
 
@@ -15550,6 +15551,7 @@ const traceNode = {
     },
     oncreate: function(vnode) {
         jsplumb_6.bind('ready', function(){
+            console.log('Handled trace jsPlumb');
             jsplumb_6.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -15559,9 +15561,15 @@ const traceNode = {
             });
 
             jsplumb_6.addEndpoint(vnode.dom.id, { 
-                anchor: [['Left', {shape: 'Rectangle'}], ['Right', {shape: 'Rectangle'}]],
+                anchor: ['Left', {shape: 'Rectangle'}],
+                isTarget: true,
+                maxConnections: 1,
+            });
+
+            jsplumb_6.addEndpoint(vnode.dom.id, { 
+                anchor: ['Right', {shape: 'Rectangle'}],
                 isSource: true,
-                isTarget: true
+                maxConnections: 10,
             });
         });
 
@@ -15623,6 +15631,7 @@ const scopeNode = {
     },
     oncreate: function(vnode) {
         jsplumb_6.bind('ready', function(){
+            console.log('Handled scope jsPlumb');
             jsplumb_6.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -15633,7 +15642,8 @@ const scopeNode = {
 
             jsplumb_6.addEndpoint(vnode.dom.id, { 
                 anchor: ['Left', {shape: 'Rectangle'}],
-                isTarget: true
+                isTarget: true,
+                maxConnections: 10,
             });
         });
     }
@@ -15685,35 +15695,35 @@ const router = {
         ];
     },
     oncreate: function(vnode){
-        jsplumb_6.bind('ready', function(){
-            vnode.attrs.nodes.traces.forEach(function(trace) {
-                if(trace.source){
-                    trace.source.node = getNodeByID(vnode.attrs.nodes.sources, trace.source.id)[0];
-                    jsplumb_6.connect({
-                        source: 'node-' + trace.source.node.id,
-                        target: 'node-' + trace.id,
-                        endpoint: 'Dot',
-                        anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-                    });
-                }
-            }, this);
+        // jsPlumb.bind('ready', function(){
+        //     vnode.attrs.nodes.traces.forEach(function(trace) {
+        //         if(trace.source){
+        //             trace.source.node = getNodeByID(vnode.attrs.nodes.sources, trace.source.id)[0];
+        //             jsPlumb.connect({
+        //                 source: 'node-' + trace.source.node.id,
+        //                 target: 'node-' + trace.id,
+        //                 endpoint: 'Dot',
+        //                 anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
+        //             });
+        //         }
+        //     }, this);
 
-            vnode.attrs.nodes.scopes.forEach(function(scope) {
-                if(scope.traces){
-                    scope.traces.nodes = [];
-                    scope.traces.forEach(function(trace){
-                        var node = getNodeByID(vnode.attrs.nodes.traces, trace.id)[0];
-                        trace.node = node;
-                        jsplumb_6.connect({
-                            source: 'node-' + node.id,
-                            target: 'node-' + scope.id,
-                            endpoint: 'Dot',
-                            anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-                        });
-                    });
-                }
-            }, this);
-        });
+        //     vnode.attrs.nodes.scopes.forEach(function(scope) {
+        //         if(scope.traces){
+        //             scope.traces.nodes = [];
+        //             scope.traces.forEach(function(trace){
+        //                 var node = getNodeByID(vnode.attrs.nodes.traces, trace.id)[0];
+        //                 trace.node = node;
+        //                 jsPlumb.connect({
+        //                     source: 'node-' + node.id,
+        //                     target: 'node-' + scope.id,
+        //                     endpoint: 'Dot',
+        //                     anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
+        //                 });
+        //             })
+        //         }
+        //     }, this);
+        // });
     },
     addTrace: function(trace) {
         this.state.nodes.traces.push({
