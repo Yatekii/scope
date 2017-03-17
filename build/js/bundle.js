@@ -15167,6 +15167,7 @@ const radioSelection = {
         ])
 };
 
+// Creates a new source
 const Waveform = function(state) {
     // Remember source state
     this.state = state;
@@ -15238,6 +15239,12 @@ function gotStream(source, stream) {
 
 // Requests an audio source
 function initAudio(source) {
+    navigator.getUserMedia = (
+        navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia
+    );
     navigator.getUserMedia({
         'audio': {
             'mandatory': {
