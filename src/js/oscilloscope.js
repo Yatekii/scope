@@ -42,14 +42,18 @@ Oscilloscope.prototype.draw = function() {
     if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
         this.state.triggerTrace.node = helpers.getNodeByID(this.state.traces.map(function(trace){ return trace.node }), this.state.triggerTrace.id)[0];
     }
-    this.state.triggerTrace.node.ctrl.fetch();
-    var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
-    if(triggerLocation === undefined && this.state.autoTriggering){
+    if(this.state.triggerTrace.node && this.state.triggerTrace.node.ctrl.ready){
+        this.state.triggerTrace.node.ctrl.fetch();
+        var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
+        if(triggerLocation === undefined && this.state.autoTriggering){
+            triggerLocation = 0;
+        }
+    } else {
         triggerLocation = 0;
     }
-    if(this.state.traces.nodes){
+    if(this.state.traces){
         this.state.traces.forEach(function(trace) {
-            if(trace.node.ctrl && trace.node.ctrl.on && trace.node.source.node !== null && trace.node.source.node.ctrl.ready){
+            if(trace.node && trace.node.ctrl && trace.node.ctrl.on && trace.node.source && trace.node.source.node && trace.node.source.node.ctrl.ready){
                 trace.node.ctrl.draw(context, me.state, trace, triggerLocation); // TODO: triggering
             }
         });

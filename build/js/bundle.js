@@ -15655,35 +15655,53 @@ const router = {
             // Bind connection event
             jsplumb_6.bind('connection', function(info) {
                 var sourceID = info.source.id.split('-')[1];
+                var targetID = info.target.id.split('-')[1];
+                
+                var trace = null;
                 var source = getNodeByID(vnode.attrs.nodes.sources, sourceID);
                 if(source.length < 1){
-                    // TODO: Look in traces too since they can be sources to sinks and scopes too!
+                    trace = getNodeByID(vnode.attrs.nodes.traces, sourceID)[0];
+                    var scope = getNodeByID(vnode.attrs.nodes.scopes, targetID)[0];
+                    if (getNodeByID(scope.traces, sourceID).length == 0) {
+                        scope.traces.push({ id: sourceID, node: trace, offset: 0 });
+                        console.log('Connected new trace to scope.');
+                        return;
+                    }
+                    console.log('Trace already connected to scope.');
+                    return;
+                    // TODO: Look in sinks too since they can be targets as well!
                 } else {
                     source = source[0];
+                    trace = getNodeByID(vnode.attrs.nodes.traces, targetID);
+                    if(trace.length > 0){
+                        trace = trace[0];
+                        trace.source = {
+                            id: sourceID,
+                            node: source
+                        };
+                        console.log('Connected source to trace.');
+                        return;
+                    }
                 }
-                var targetID = info.target.id.split('-')[1];
-                var target = getNodeByID(vnode.attrs.nodes.traces, targetID);
-                if(target.length < 1){
-                    // TODO: Look in sinks and scopes too since they can be targets as well!
-                } else {
-                    target = target[0];
-                }
-                target.source = {
-                    id: sourceID,
-                    node: source
-                };
             });
 
             // Bind connectionDetached event
             jsplumb_6.bind('connectionDetached', function(info) {
                 var targetID = info.target.id.split('-')[1];
-                var target = getNodeByID(vnode.attrs.nodes.traces, targetID);
-                if(target.length < 1){
-                    // TODO: Look in sinks and scopes too since they can be targets as well!
+                var trace = getNodeByID(vnode.attrs.nodes.traces, targetID);
+                if(trace.length < 1){
+                    var sourceID = info.source.id.split('-')[1];
+                    var scope = getNodeByID(vnode.attrs.nodes.scopes, targetID)[0];
+                    scope.traces = scope.traces.filter(obj => obj.id != sourceID);
+                    console.log('Removed trace from the scope');
+                    return;
+                    // TODO: Look in sinks too since they can be targets as well!
                 } else {
-                    target = target[0];
+                    trace = trace[0];
+                    trace.source = null;
+                    console.log('Removed source from trace.');
+                    return;
                 }
-                target.source = null;
             });
         });
     },
@@ -15695,35 +15713,34 @@ const router = {
         ];
     },
     oncreate: function(vnode){
-        // jsPlumb.bind('ready', function(){
-        //     vnode.attrs.nodes.traces.forEach(function(trace) {
-        //         if(trace.source){
-        //             trace.source.node = getNodeByID(vnode.attrs.nodes.sources, trace.source.id)[0];
-        //             jsPlumb.connect({
-        //                 source: 'node-' + trace.source.node.id,
-        //                 target: 'node-' + trace.id,
-        //                 endpoint: 'Dot',
-        //                 anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-        //             });
-        //         }
-        //     }, this);
+        jsplumb_6.bind('ready', function(){
+            vnode.attrs.nodes.traces.forEach(function(trace) {
+                if(trace.source){
+                    trace.source.node = getNodeByID(vnode.attrs.nodes.sources, trace.source.id)[0];
+                    jsplumb_6.connect({
+                        source: 'node-' + trace.source.node.id,
+                        target: 'node-' + trace.id,
+                        endpoint: 'Dot',
+                        //anchors: [['Right', {shape:'Rectangle'}], ['Left', {shape:'Rectangle'}]]
+                    });
+                }
+            }, this);
 
-        //     vnode.attrs.nodes.scopes.forEach(function(scope) {
-        //         if(scope.traces){
-        //             scope.traces.nodes = [];
-        //             scope.traces.forEach(function(trace){
-        //                 var node = getNodeByID(vnode.attrs.nodes.traces, trace.id)[0];
-        //                 trace.node = node;
-        //                 jsPlumb.connect({
-        //                     source: 'node-' + node.id,
-        //                     target: 'node-' + scope.id,
-        //                     endpoint: 'Dot',
-        //                     anchors: [['Right', {shape:'Circle'}], ['Left', {shape:'Circle'}]]
-        //                 });
-        //             })
-        //         }
-        //     }, this);
-        // });
+            vnode.attrs.nodes.scopes.forEach(function(scope) {
+                if(scope.traces){
+                    scope.traces.forEach(function(trace){
+                        var node = getNodeByID(vnode.attrs.nodes.traces, trace.id)[0];
+                        trace.node = node;
+                        jsplumb_6.connect({
+                            source: 'node-' + node.id,
+                            target: 'node-' + scope.id,
+                            endpoint: 'Dot',
+                            //anchors: [['Right', {shape:'Rectangle'}], ['Left', {shape:'Rectangle'}]]
+                        });
+                    });
+                }
+            }, this);
+        });
     },
     addTrace: function(trace) {
         this.state.nodes.traces.push({
@@ -15819,14 +15836,18 @@ Oscilloscope.prototype.draw = function() {
     if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
         this.state.triggerTrace.node = getNodeByID(this.state.traces.map(function(trace){ return trace.node }), this.state.triggerTrace.id)[0];
     }
-    this.state.triggerTrace.node.ctrl.fetch();
-    var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
-    if(triggerLocation === undefined && this.state.autoTriggering){
+    if(this.state.triggerTrace.node && this.state.triggerTrace.node.ctrl.ready){
+        this.state.triggerTrace.node.ctrl.fetch();
+        var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
+        if(triggerLocation === undefined && this.state.autoTriggering){
+            triggerLocation = 0;
+        }
+    } else {
         triggerLocation = 0;
     }
-    if(this.state.traces.nodes){
+    if(this.state.traces){
         this.state.traces.forEach(function(trace) {
-            if(trace.node.ctrl && trace.node.ctrl.on && trace.node.source.node !== null && trace.node.source.node.ctrl.ready){
+            if(trace.node && trace.node.ctrl && trace.node.ctrl.on && trace.node.source && trace.node.source.node && trace.node.source.node.ctrl.ready){
                 trace.node.ctrl.draw(context, me.state, trace, triggerLocation); // TODO: triggering
             }
         });
@@ -16113,7 +16134,7 @@ var appState = {
             top: 50,
             left: 50,
             type: 'Waveform',
-            gain: 1,
+            amplitude: 1,
             frequency: 0.6,
         },
         {
@@ -16122,7 +16143,7 @@ var appState = {
             top: 300,
             left: 50,
             type: 'Waveform',
-            gain: 0.7,
+            amplitude: 0.7,
             frequency: 0.2,
         },
         {

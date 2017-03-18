@@ -59,7 +59,7 @@ var appState = {
             top: 50,
             left: 50,
             type: 'Waveform',
-            gain: 1,
+            amplitude: 1,
             frequency: 0.6,
         },
         {
@@ -68,7 +68,7 @@ var appState = {
             top: 300,
             left: 50,
             type: 'Waveform',
-            gain: 0.7,
+            amplitude: 0.7,
             frequency: 0.2,
         },
         {
