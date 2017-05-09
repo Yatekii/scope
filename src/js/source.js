@@ -93,3 +93,65 @@ function initAudio(source) {
         console.log(e);
     });
 }
+
+// Creates a new source
+export const WebsocketSource = function(state) {
+    var me = this;
+    // Remember source state
+    this.state = state;
+
+    // Assign class variables
+    this.ready = true;
+
+    // Init socket
+    this.socket = new WebSocket(state.location);
+    this.socket.binaryType = 'arraybuffer';
+
+    // Socket open event
+    this.socket.onopen = function() {
+        console.log('Connected!');
+        me.isOpen = true;
+        me.nextStartTime = 0;
+        me.awaitsSingle = true;
+        me.sendJSON({ frameSize: me.state.frameSize });
+    }
+
+    // Received message event
+    this.socket.onmessage = function(e) {
+        if(me.ready && me.awaitsSingle){
+            if (typeof e.data == 'string') {
+                console.log('Text message received: ' + e.data);
+            } else {
+                // New data from stream
+                var arr = new Uint16Array(e.data);
+                me.data = new Float32Array(arr);
+                for(var i = 0; i < arr.length; i++){
+                    // 14 bit int to float
+                    me.data[i] = (arr[i] - 16384) / 16384;
+                }
+                me.awaitsSingle = false;
+            }
+        }
+    }
+
+    // Socket close event
+    this.socket.onclose = function(e) {
+        console.log('Connection closed.');
+        me.socket = null;
+        me.isOpen = false;
+    }
+
+    // play(this, this.audiobuffer);
+};
+
+WebsocketSource.prototype.single = function() {
+    this.awaitsSingle = true;
+};
+
+WebsocketSource.prototype.sendMsg = function(txt) {
+    this.socket.send(txt);
+};
+
+WebsocketSource.prototype.sendJSON = function(obj) {
+    this.socket.send(JSON.stringify(obj));
+};

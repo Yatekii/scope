@@ -9,8 +9,13 @@ export const  NormalTrace = function (state) {
     this.on = true;
 
     // Create the data buffer
+    
     if(state.source.node && state.source.node.ctrl.ready) {
-        this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+        if(this.state.source.node.type != 'WebsocketSource'){
+            this.data = new Float32Array(state.source.frameSize);
+        } else {
+            this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+        }
     }
     this.fetched = false;
 };
@@ -22,10 +27,14 @@ NormalTrace.prototype.setSource = function(source){
 // Preemptively fetches a new sample set
 NormalTrace.prototype.fetch = function () {
     if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
-        if(!this.data){
-            this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+        if(this.state.source.node.type != 'WebsocketSource'){
+            if(!this.data){
+                this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+            }
+            this.state.source.node.ctrl.analyzer.getFloatTimeDomainData(this.data);
+        } else {
+            this.data = this.state.source.node.ctrl.data;
         }
-        this.state.source.node.ctrl.analyzer.getFloatTimeDomainData(this.data);
     }
     this.fetched = true;
 };
@@ -44,9 +53,17 @@ NormalTrace.prototype.draw = function (context, scope, traceConf, triggerLocatio
     context.beginPath();
     // Draw samples
     var halfHeight = scope.height / 2;
-    context.moveTo(0, (halfHeight - (this.data[triggerLocation] + traceConf.offset) * halfHeight * scope.scaling));
-    for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i++, j++){
-        context.lineTo(j, (halfHeight - (this.data[i] + traceConf.offset) * halfHeight * scope.scaling));
+    var skip = 1;
+    var mul = 1;
+    var ratio = scope.width / this.data.length * scope.scaling.x;
+    if(ratio > 1){
+        mul = Math.ceil(ratio);
+    } else {
+        skip = Math.floor(1 / ratio);
+    }
+    context.moveTo(0, (halfHeight - (this.data[triggerLocation] + traceConf.offset) * halfHeight * scope.scaling.y));
+    for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i+=skip, j+=mul){
+        context.lineTo(j, (halfHeight - (this.data[i] + traceConf.offset) * halfHeight * scope.scaling.y));
     }
     // Fix drawing on canvas
     context.stroke();
@@ -61,7 +78,7 @@ NormalTrace.prototype.draw = function (context, scope, traceConf, triggerLocatio
     }
     context.fillRect(
         scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - traceConf.offset * halfHeight * scope.scaling - scope.ui.mover.height / 2,
+        halfHeight - traceConf.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
         scope.ui.mover.width,
         scope.ui.mover.height
     );
@@ -141,7 +158,7 @@ FFTrace.prototype.draw = function (context, scope, traceConf, triggerLocation) {
     }
     context.fillRect(
         scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - traceConf.offset * halfHeight * scope.scaling - scope.ui.mover.height / 2,
+        halfHeight - traceConf.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
         scope.ui.mover.width,
         scope.ui.mover.height
     );

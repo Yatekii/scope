@@ -1,7 +1,7 @@
 import m from 'mithril';
 import { jsPlumb } from 'jsplumb';
 import { radioSelection } from './components.js';
-import { Waveform, Microphone } from '../source.js';
+import { Waveform, Microphone, WebsocketSource } from '../source.js';
 
 export const sourceNode = {
     view: function(vnode) {
@@ -17,7 +17,7 @@ export const sourceNode = {
                 m('.card-meta', [
                     m(radioSelection, {
                         id: vnode.attrs.id,
-                        items: ['Waveform', 'Microphone'],
+                        items: ['Waveform', 'Microphone', 'WebsocketSource'],
                         startValue: 'Waveform',
                         type: vnode.attrs.type,
                         onchange: (value) => {
@@ -27,9 +27,11 @@ export const sourceNode = {
                             case 'Waveform':
                                 vnode.attrs.ctrl = new Waveform(vnode.attrs);
                                 break;
-
                             case 'Microphone':
                                 vnode.attrs.ctrl = new Microphone(vnode.attrs);
+                                break;
+                            case 'WebsocketSource':
+                                vnode.attrs.ctrl = new WebsocketSource(vnode.attrs);
                                 break;
                             }
                             m.redraw();
@@ -37,7 +39,11 @@ export const sourceNode = {
                     })
                 ])
             ]),
-            m('.card-body', (vnode.attrs.type == 'Waveform' ? m(sineBody, vnode.attrs) : 'Not implemented'))
+            m('.card-body',
+                vnode.attrs.type == 'Waveform' ? m(sineBody, vnode.attrs) :
+                vnode.attrs.type == 'WebsocketSource' ? m(wssBody, vnode.attrs) :
+                'Not implemented'
+            )
         ]);
     },
     oncreate: function(vnode) {
@@ -67,6 +73,10 @@ export const sourceNode = {
         case 'Microphone':
             vnode.attrs.ctrl = new Microphone(vnode.attrs);
             break;
+
+        case 'WebsocketSource':
+            vnode.attrs.ctrl = new WebsocketSource(vnode.attrs);
+            break;
         }
     }
 };
@@ -93,6 +103,36 @@ const sineBody = {
                     value: vnode.attrs.frequency,
                     onchange: m.withAttr('value', function(value) {
                         vnode.attrs.frequency = value;
+                    }),
+                })
+            ])
+        ];
+    }
+};
+
+const wssBody = {
+    view: function(vnode){
+        return [
+            m('.form-group', [
+                m('label.form-label [for=wss-loc-' + vnode.attrs.id + ']', 'Location'),
+                m('input.form-input', {
+                    type: 'text',
+                    id: 'wss-loc-' + vnode.attrs.id,
+                    value: vnode.attrs.location,
+                    onchange: m.withAttr('value', function(value) {
+                        vnode.attrs.location = value;
+                    }),
+                })
+            ]),
+            m('.form-group', [
+                m('label.form-label [for=wss-framesize-' + vnode.attrs.id + ']', 'Frame Size'),
+                m('input.form-input', {
+                    type: 'number',
+                    id: 'wss-framesize-' + vnode.attrs.id, 
+                    value: vnode.attrs.frameSize,
+                    onchange: m.withAttr('value', function(value) {
+                        vnode.attrs.frameSize = value;
+                        vnode.attrs.ctrl.sendJSON({ frameSize: value });
                     }),
                 })
             ])
