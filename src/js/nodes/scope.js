@@ -1,7 +1,5 @@
 import m from 'mithril';
-import * as conf from '../conf.js';
 import { jsPlumb } from 'jsplumb';
-import { radioSelection } from './components.js';
 import { withKey } from '../helpers.js';
 
 export const scopeNode = {
@@ -63,6 +61,6 @@ export const scopeNode = {
                 isTarget: true,
                 maxConnections: 10,
             });
-        })
+        });
     }
 };

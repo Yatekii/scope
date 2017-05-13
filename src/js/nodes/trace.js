@@ -64,7 +64,7 @@ export const traceNode = {
                 isSource: true,
                 maxConnections: 10,
             });
-        })
+        });
 
         switch(vnode.attrs.type){
         default:

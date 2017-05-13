@@ -6,7 +6,6 @@
 import m from 'mithril';
 
 import * as conf from './conf.js';
-import { getNodeByID } from './helpers.js';
 import { router } from './nodes/router.js';
 import { scopeView } from './nodes/scopeView.js';
 
@@ -18,74 +17,74 @@ m.route.mode = 'search';
 var appState = {
     nodes: {
         traces: [
-        // {
-        //     id: 0,
-        //     name: 'Trace ' + 0,
-        //     top: 50,
-        //     left: 350,
-        //     source: { id: 4},
-        //     type: 'NormalTrace',
-        //     color: '#E8830C'
-        // },
-        {
-            id: 1,
-            name: 'Trace ' + 1,
-            top: 150,
-            left: 350,
-            source: { id: 5},
-            type: 'NormalTrace',
-            color: '#E85D55'
-        },
-        // {
-        //     id: 2,
-        //     name: 'Trace ' + 2,
-        //     top: 250,
-        //     left: 350,
-        //     source: { id: 6},
-        //     type: 'NormalTrace',
-        //     color: '#78FFCE'
-        // },
-        {
-            id: 3,
-            name: 'Trace ' + 3,
-            top: 350,
-            left: 350,
-            source: { id: 5},
-            type: 'FFTrace',
-            color: '#E8830C'
-        }
+            // {
+            //     id: 0,
+            //     name: 'Trace ' + 0,
+            //     top: 50,
+            //     left: 350,
+            //     source: { id: 4},
+            //     type: 'NormalTrace',
+            //     color: '#E8830C'
+            // },
+            {
+                id: 1,
+                name: 'Trace ' + 1,
+                top: 150,
+                left: 350,
+                source: { id: 5},
+                type: 'NormalTrace',
+                color: '#E85D55'
+            },
+            // {
+            //     id: 2,
+            //     name: 'Trace ' + 2,
+            //     top: 250,
+            //     left: 350,
+            //     source: { id: 6},
+            //     type: 'NormalTrace',
+            //     color: '#78FFCE'
+            // },
+            {
+                id: 3,
+                name: 'Trace ' + 3,
+                top: 350,
+                left: 350,
+                source: { id: 5},
+                type: 'FFTrace',
+                color: '#E8830C'
+            }
         ],
         sources: [
-        // {
-        //     id: 4,
-        //     name: 'Source ' + 4,
-        //     top: 50,
-        //     left: 50,
-        //     type: 'Waveform',
-        //     amplitude: 1,
-        //     frequency: 0.6,
-        // },
-        {
-            id: 5,
-            name: 'Source ' + 5,
-            top: 300,
-            left: 50,
-            type: 'WebsocketSource',
-            //location: 'ws://10.84.130.54:50090',
-            location: 'ws://localhost:50090',
-            frameSize: 4096,
-            buffer: {
-                upperSize: 4,
-                lowerSize: 1,
-            }
-        },
-        // {
-        //     id: 6,
-        //     name: 'Source ' + 6,
-        //     top: 550,
-        //     left: 50,
-        //     type: 'Microphone',
-        // }
+            // {
+            //     id: 4,
+            //     name: 'Source ' + 4,
+            //     top: 50,
+            //     left: 50,
+            //     type: 'Waveform',
+            //     amplitude: 1,
+            //     frequency: 0.6,
+            // },
+            {
+                id: 5,
+                name: 'Source ' + 5,
+                top: 300,
+                left: 50,
+                type: 'WebsocketSource',
+                //location: 'ws://10.84.130.54:50090',
+                location: 'ws://localhost:50090',
+                frameSize: 4096,
+                buffer: {
+                    upperSize: 4,
+                    lowerSize: 1,
+                }
+            },
+            // {
+            //     id: 6,
+            //     name: 'Source ' + 6,
+            //     top: 550,
+            //     left: 50,
+            //     type: 'Microphone',
+            // }
         ],
         scopes: [{
             id: 7,
@@ -148,7 +147,7 @@ window.addEventListener('load', function() {
         },
         '/scope': {
             controller: function() {},
-            view: function(vnode) {
+            view: function() {
                 return m(scopeView, {
                     width: conf.canvasSize.width,
                     height: conf.canvasSize.height,

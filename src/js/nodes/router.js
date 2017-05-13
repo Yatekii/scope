@@ -93,12 +93,12 @@ export const router = {
                             endpoint: 'Dot',
                             //anchors: [['Right', {shape:'Rectangle'}], ['Left', {shape:'Rectangle'}]]
                         });
-                    })
+                    });
                 }
             }, this);
         });
     },
-    addTrace: function(trace) {
+    addTrace: function(traceNode) {
         this.state.nodes.traces.push({
             node: traceNode,
             state: {
@@ -109,7 +109,7 @@ export const router = {
         this.state.nodes.count++;
         m.redraw();
     },
-    addSource: function(source) {
+    addSource: function(sourceNode) {
         this.state.nodes.sources.push({
             node: sourceNode,
             state: {

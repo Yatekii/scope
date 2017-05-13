@@ -6,13 +6,6 @@ export const Oscilloscope = function(state) {
     // Remember scope state
     this.state = state;
 
-    // Create a new canvas to draw the scope onto
-    var canvas = this.canvas = document.getElementById('scope');
-
-    // this.state.traces.forEach(function(t){
-    //     t.node.ctrl.initGL(canvas);
-    // });
-
     this.markerMoving = false;
     this.triggerMoving = false;
     this.traceMoving = false;
@@ -45,7 +38,7 @@ Oscilloscope.prototype.draw = function() {
     context.stroke();
 
     if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
-        this.state.triggerTrace.node = helpers.getNodeByID(this.state.traces.map(function(trace){ return trace.node }), this.state.triggerTrace.id)[0];
+        this.state.triggerTrace.node = helpers.getNodeByID(this.state.traces.map(function(trace){ return trace.node; }), this.state.triggerTrace.id)[0];
     }
     if(this.state.triggerTrace.node && this.state.triggerTrace.node.ctrl.ready){
         this.state.triggerTrace.node.ctrl.fetch();
@@ -175,7 +168,7 @@ Oscilloscope.prototype.onMouseUp = function(event){
             }
         });
     }
-}
+};
 
 Oscilloscope.prototype.onMouseMove = function(event){
     var halfHeight = this.canvas.height / 2;
@@ -281,7 +274,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
         this.traceMoving.offset = traceOffset;
         return;
     }
-}
+};
 
 Oscilloscope.prototype.onScroll = function(event){
     this.state.scaling.y += event.wheelDeltaY * 0.01;
@@ -292,4 +285,4 @@ Oscilloscope.prototype.onScroll = function(event){
     if(this.state.scaling.x < 1){
         this.state.scaling.x = 1;
     }
-}
+};

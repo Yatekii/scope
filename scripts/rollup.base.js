@@ -2,7 +2,7 @@
 import fs from "fs";
 
 // Rollup plugins
-import buble from "rollup-plugin-buble";
+//import buble from "rollup-plugin-buble";
 import eslint from "rollup-plugin-eslint";
 import resolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
@@ -13,7 +13,7 @@ import postcss from 'rollup-plugin-postcss';
 import simplevars from 'postcss-simple-vars';
 import nested from 'postcss-nested';
 import cssnext from 'postcss-cssnext';
-import cssnano from 'cssnano';
+//import cssnano from 'cssnano';
 
 export const pkg = JSON.parse(fs.readFileSync("./package.json"));
 if (!pkg) {

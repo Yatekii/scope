@@ -41,7 +41,7 @@ export const withKey = function(key, callback) {
         if (e.keyCode == key) {
             callback(e.target);
         }
-    }
+    };
 };
 
 export const getNodeByID = function(nodes, id){
@@ -49,4 +49,4 @@ export const getNodeByID = function(nodes, id){
         return obj.id == id;
     });
     return result;
-}
+};

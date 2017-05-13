@@ -28,7 +28,7 @@ export const Waveform = function(state) {
 
 // Creates a new source
 export const Microphone = function(state) {
-    var me = this;
+    this.state = state;
 
     // Assign class variables
     this.ready = false;
@@ -110,7 +110,7 @@ export const WebsocketSource = function(state) {
         me.nextStartTime = 0;
         me.awaitsSingle = true;
         me.sendJSON({ frameSize: me.state.frameSize });
-    }
+    };
 
     // Received message event
     this.socket.onmessage = function(e) {
@@ -133,16 +133,14 @@ export const WebsocketSource = function(state) {
                 }
             }
         }
-    }
+    };
 
     // Socket close event
-    this.socket.onclose = function(e) {
+    this.socket.onclose = function() {
         console.log('Connection closed.');
         me.socket = null;
         me.isOpen = false;
-    }
-
-    // play(this, this.audiobuffer);
+    };
 };
 
 WebsocketSource.prototype.single = function() {

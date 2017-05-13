@@ -1202,47 +1202,6 @@ const canvasSize = {
     width: '100%'
 };
 
-window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
-
-
-const draw = function(scope) {  
-    if(scope) {
-        scope.draw();
-    }
-    requestAnimationFrame(function(){
-        draw(scope);
-    });
-};
-
-
-
-
-
-var audioContext = null;
-const getAudioContext = function() {
-    window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    if(audioContext){
-        return audioContext;
-    }
-    audioContext = new AudioContext();
-    return audioContext;
-};
-
-const withKey = function(key, callback) {
-    return function(e) {
-        if (e.keyCode == key) {
-            callback(e.target);
-        }
-    }
-};
-
-const getNodeByID = function(nodes, id){
-    var result = nodes.filter(function( obj ) {
-        return obj.id == id;
-    });
-    return result;
-};
-
 var jsplumb = createCommonjsModule(function (module, exports) {
 /**
  * jsBezier
@@ -15167,6 +15126,48 @@ const radioSelection = {
         ])
 };
 
+window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
+
+
+const draw = function(scope) {  
+    if(scope) {
+        scope.draw();
+    }
+    requestAnimationFrame(function(){
+        draw(scope);
+    });
+};
+
+
+
+
+
+var audioContext = null;
+const getAudioContext = function() {
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    if(audioContext){
+        return audioContext;
+    }
+    audioContext = new AudioContext();
+    return audioContext;
+};
+
+const withKey = function(key, callback) {
+    return function(e) {
+        if (e.keyCode == key) {
+            callback(e.target);
+        }
+    };
+};
+
+const getNodeByID = function(nodes, id){
+    var result = nodes.filter(function( obj ) {
+        return obj.id == id;
+    });
+    return result;
+};
+
+// Creates a new source
 const Waveform = function(state) {
     // Remember source state
     this.state = state;
@@ -15194,7 +15195,7 @@ const Waveform = function(state) {
 
 // Creates a new source
 const Microphone = function(state) {
-    var me = this;
+    this.state = state;
 
     // Assign class variables
     this.ready = false;
@@ -15302,13 +15303,11 @@ const WebsocketSource = function(state) {
     };
 
     // Socket close event
-    this.socket.onclose = function(e) {
+    this.socket.onclose = function() {
         console.log('Connection closed.');
         me.socket = null;
         me.isOpen = false;
     };
-
-    // play(this, this.audiobuffer);
 };
 
 WebsocketSource.prototype.single = function() {
@@ -15462,24 +15461,31 @@ const wssBody = {
 
 function miniFFT(re, im) {
     var N = re.length;
-    for (var i = 0; i < N; i++) {
-        for(var j = 0, h = i, k = N; k >>= 1; h >>= 1)
+    var i;
+    var j;
+    var h;
+    var k;
+    for (i = 0; i < N; i++) {
+        for(j = 0, h = i, k = N; k >>= 1; h >>= 1){
             j = (j << 1) | (h & 1);
+        }
         if (j > i) {
             re[j] = [re[i], re[i] = re[j]][0];
             im[j] = [im[i], im[i] = im[j]][0];
         }
     }
-    for(var hN = 1; hN * 2 <= N; hN *= 2)
-        for (var i = 0; i < N; i += hN * 2)
-            for (var j = i; j < i + hN; j++) {
-                var cos = Math.cos(Math.PI * (j - i) / hN),
-                    sin = Math.sin(Math.PI * (j - i) / hN);
-                var tre =  re[j+hN] * cos + im[j+hN] * sin,
-                    tim = -re[j+hN] * sin + im[j+hN] * cos;
+    for(var hN = 1; hN * 2 <= N; hN *= 2){
+        for (i = 0; i < N; i += hN * 2){
+            for (j = i; j < i + hN; j++) {
+                var cos = Math.cos(Math.PI * (j - i) / hN);
+                var sin = Math.sin(Math.PI * (j - i) / hN);
+                var tre =  re[j+hN] * cos + im[j+hN] * sin;
+                var tim = -re[j+hN] * sin + im[j+hN] * cos;
                 re[j + hN] = re[j] - tre; im[j + hN] = im[j] - tim;
                 re[j] += tre; im[j] += tim;
             }
+        }
+    }
 }
 
 // Creates a new trace
@@ -15590,42 +15596,6 @@ const FFTrace = function(state) {
     this.fetched = false;
 };
 
-FFTrace.prototype.initGL = function(canvas){
-    if(this.state.source.node.type != 'WebsocketSource'){
-        this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
-    } else {
-        this.data = new Float32Array(this.state.source.frameSize);
-
-        if(!canvas)
-            return;
-        var gl = canvas.getContext('webgl') || canvas.getContext('webgl-experimental');
-        if (!gl) {
-            return;
-        }
-
-        // setup GLSL program
-        this.program = webglUtils.createProgramFromScripts(gl, ["2d-vertex-shader", "2d-fragment-shader"]);
-
-        // look up where the vertex data needs to go.
-        this.sizeLocation = gl.getUniformLocation(this.program, 'size');
-        this.positionLocation = gl.getAttribLocation(this.program, 'position');
-        this.vData = gl.getUniformLocation(this.program, 'data'); // Getting location
-
-        gl.uniform2f(this.sizeLocation, canvas.width, canvas.height);
-
-        // Create a Vertex Array Object.
-        this.positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
-
-
-        this.translation = [200, 150];
-        this.angleInRadians = 0;
-        this.scale = [1, 1];
-    }
-};
-
-
 // Preemptively fetches a new sample set
 FFTrace.prototype.fetch = function () {
     if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
@@ -15643,28 +15613,33 @@ FFTrace.prototype.fetch = function () {
 };
 
 // Draws trace on the new frame
-FFTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
-    // Get a new dataset
-    this.fetch();
+FFTrace.prototype.draw = function (canvas, scope, traceConf) {
+
+    var i, j;
+    var halfHeight = scope.height / 2;
+    var context = canvas.getContext('2d');
+
 
     if(this.state.source.node.type != 'WebsocketSource'){
         var SPACING = 1;
         var BAR_WIDTH = 1;
         var numBars = Math.round(scope.width / SPACING);
         var multiplier = this.state.source.node.ctrl.analyzer.frequencyBinCount / numBars;
-        var context = canvas.getContext('2d');
+
+        // Get a new dataset
+        this.fetch();
 
         // Store brush
         context.save();
         context.lineCap = 'round';
 
         // Draw rectangle for each frequency
-        var halfHeight = scope.height / 2;
-        for (var i = 0; i < numBars; ++i) {
+        halfHeight = scope.height / 2;
+        for (i = 0; i < numBars; ++i) {
             var magnitude = 0;
             var offset = Math.floor(i * multiplier);
             // gotta sum/average the block, or we miss narrow-bandwidth spikes
-            for (var j = 0; j < multiplier; j++) {
+            for (j = 0; j < multiplier; j++) {
                 magnitude += this.data[offset + j];
             }
             magnitude = magnitude / multiplier * 4;
@@ -15674,7 +15649,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
 
         // Draw mover
         context.fillStyle = this.state.color;
-        var offset = this.state.offset;
+        offset = this.state.offset;
         if(offset > 1){
             offset = 1;
         } else if(offset < -1){
@@ -15693,22 +15668,15 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        // var gl = canvas.getContext("webgl");
-        // if (!gl) {
-        //     return;
-        // }
-        // drawScene(gl, this);
 
         var real = this.data.slice(0);
         var compl = new Float32Array(this.data.length);
         miniFFT(real, compl);
         var ab = new Float32Array(this.data.length);
-        for(var i = 0; i < this.data.length; i++){
+        for(i = 0; i < this.data.length; i++){
             ab[i] = Math.abs(real[i]*real[i] - compl[i]*compl[i]);
             ab[i] = Math.log10(ab[i])*20/200;
         }
-
-        var context = canvas.getContext('2d');
         // Store brush
         context.save();
         context.strokeWidth = 1;
@@ -15720,7 +15688,6 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
         context.strokeStyle = this.state.color;
         context.beginPath();
         // Draw samples
-        var halfHeight = scope.height / 2;
         var skip = 1;
         var mul = 1;
         var ratio = scope.width / this.data.length * scope.scaling.x;
@@ -15730,7 +15697,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
             skip = Math.floor(1 / ratio);
         }
         context.moveTo(0, (halfHeight - ((ab[0] + ab[1] + ab[2]) / 3 + traceConf.offset) * halfHeight * scope.scaling.y));
-        for (var i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
+        for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
             context.lineTo(j, (halfHeight - ((ab[-1+i] + ab[0+i] + ab[1+i]) / 3 + traceConf.offset) * halfHeight * scope.scaling.y));
         }
         // Fix drawing on canvas
@@ -15738,7 +15705,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
 
         // Draw mover
         context.fillStyle = this.state.color;
-        var offset = this.state.offset;
+        offset = this.state.offset;
         if(offset > 1){
             offset = 1;
         } else if(offset < -1){
@@ -15990,9 +15957,9 @@ const router = {
             }, this);
         });
     },
-    addTrace: function(trace) {
+    addTrace: function(traceNode$$1) {
         this.state.nodes.traces.push({
-            node: traceNode,
+            node: traceNode$$1,
             state: {
                 id: this.state.nodes.count,
                 name: 'Trace ' + this.state.nodes.count
@@ -16001,9 +15968,9 @@ const router = {
         this.state.nodes.count++;
         mithril.redraw();
     },
-    addSource: function(source) {
+    addSource: function(sourceNode$$1) {
         this.state.nodes.sources.push({
-            node: sourceNode,
+            node: sourceNode$$1,
             state: {
                 id: this.state.nodes.count,
                 name: 'Source ' + this.state.nodes.count
@@ -16061,13 +16028,6 @@ const Oscilloscope = function(state) {
     // Remember scope state
     this.state = state;
 
-    // Create a new canvas to draw the scope onto
-    var canvas = this.canvas = document.getElementById('scope');
-
-    // this.state.traces.forEach(function(t){
-    //     t.node.ctrl.initGL(canvas);
-    // });
-
     this.markerMoving = false;
     this.triggerMoving = false;
     this.traceMoving = false;
@@ -16100,7 +16060,7 @@ Oscilloscope.prototype.draw = function() {
     context.stroke();
 
     if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
-        this.state.triggerTrace.node = getNodeByID(this.state.traces.map(function(trace){ return trace.node }), this.state.triggerTrace.id)[0];
+        this.state.triggerTrace.node = getNodeByID(this.state.traces.map(function(trace){ return trace.node; }), this.state.triggerTrace.id)[0];
     }
     if(this.state.triggerTrace.node && this.state.triggerTrace.node.ctrl.ready){
         this.state.triggerTrace.node.ctrl.fetch();
@@ -16365,10 +16325,11 @@ const scopeView = {
             onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
             onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
             onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
-        })
+        });
     },
     oncreate: function(vnode){
         vnode.attrs.scope.ctrl = new Oscilloscope(vnode.attrs.scope);
+        // First draw to invoke all subsequnt draws on each rendered frame
         draw(vnode.attrs.scope.ctrl);
     },
 };
@@ -16380,79 +16341,80 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the controller and the view and links them both.
 */
 
+//use default mode
 mithril.route.mode = 'search';
 
 var appState = {
     nodes: {
         traces: [
-        // {
-        //     id: 0,
-        //     name: 'Trace ' + 0,
-        //     top: 50,
-        //     left: 350,
-        //     source: { id: 4},
-        //     type: 'NormalTrace',
-        //     color: '#E8830C'
-        // },
-        {
-            id: 1,
-            name: 'Trace ' + 1,
-            top: 150,
-            left: 350,
-            source: { id: 5},
-            type: 'NormalTrace',
-            color: '#E85D55'
-        },
-        // {
-        //     id: 2,
-        //     name: 'Trace ' + 2,
-        //     top: 250,
-        //     left: 350,
-        //     source: { id: 6},
-        //     type: 'NormalTrace',
-        //     color: '#78FFCE'
-        // },
-        {
-            id: 3,
-            name: 'Trace ' + 3,
-            top: 350,
-            left: 350,
-            source: { id: 5},
-            type: 'FFTrace',
-            color: '#E8830C'
-        }
+            // {
+            //     id: 0,
+            //     name: 'Trace ' + 0,
+            //     top: 50,
+            //     left: 350,
+            //     source: { id: 4},
+            //     type: 'NormalTrace',
+            //     color: '#E8830C'
+            // },
+            {
+                id: 1,
+                name: 'Trace ' + 1,
+                top: 150,
+                left: 350,
+                source: { id: 5},
+                type: 'NormalTrace',
+                color: '#E85D55'
+            },
+            // {
+            //     id: 2,
+            //     name: 'Trace ' + 2,
+            //     top: 250,
+            //     left: 350,
+            //     source: { id: 6},
+            //     type: 'NormalTrace',
+            //     color: '#78FFCE'
+            // },
+            {
+                id: 3,
+                name: 'Trace ' + 3,
+                top: 350,
+                left: 350,
+                source: { id: 5},
+                type: 'FFTrace',
+                color: '#E8830C'
+            }
         ],
         sources: [
-        // {
-        //     id: 4,
-        //     name: 'Source ' + 4,
-        //     top: 50,
-        //     left: 50,
-        //     type: 'Waveform',
-        //     amplitude: 1,
-        //     frequency: 0.6,
-        // },
-        {
-            id: 5,
-            name: 'Source ' + 5,
-            top: 300,
-            left: 50,
-            type: 'WebsocketSource',
-            //location: 'ws://10.84.130.54:50090',
-            location: 'ws://localhost:50090',
-            frameSize: 4096,
-            buffer: {
-                upperSize: 4,
-                lowerSize: 1,
-            }
-        },
-        // {
-        //     id: 6,
-        //     name: 'Source ' + 6,
-        //     top: 550,
-        //     left: 50,
-        //     type: 'Microphone',
-        // }
+            // {
+            //     id: 4,
+            //     name: 'Source ' + 4,
+            //     top: 50,
+            //     left: 50,
+            //     type: 'Waveform',
+            //     amplitude: 1,
+            //     frequency: 0.6,
+            // },
+            {
+                id: 5,
+                name: 'Source ' + 5,
+                top: 300,
+                left: 50,
+                type: 'WebsocketSource',
+                //location: 'ws://10.84.130.54:50090',
+                location: 'ws://localhost:50090',
+                frameSize: 4096,
+                buffer: {
+                    upperSize: 4,
+                    lowerSize: 1,
+                }
+            },
+            // {
+            //     id: 6,
+            //     name: 'Source ' + 6,
+            //     top: 550,
+            //     left: 50,
+            //     type: 'Microphone',
+            // }
         ],
         scopes: [{
             id: 7,
@@ -16515,7 +16477,7 @@ window.addEventListener('load', function() {
         },
         '/scope': {
             controller: function() {},
-            view: function(vnode) {
+            view: function() {
                 return mithril(scopeView, {
                     width: canvasSize.width,
                     height: canvasSize.height,

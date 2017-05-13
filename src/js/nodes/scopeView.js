@@ -1,9 +1,5 @@
 import m from 'mithril';
-import { jsPlumb } from 'jsplumb';
-import { sourceNode } from './source.js';
-import { traceNode } from './trace.js';
-import { scopeNode } from './scope.js';
-import { getNodeByID, draw } from '../helpers.js';
+import { draw } from '../helpers.js';
 
 import * as oscilloscope from '../oscilloscope.js';
 
@@ -23,10 +19,11 @@ export const scopeView = {
             onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
             onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
             onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
-        })
+        });
     },
     oncreate: function(vnode){
         vnode.attrs.scope.ctrl = new oscilloscope.Oscilloscope(vnode.attrs.scope);
+        // First draw to invoke all subsequnt draws on each rendered frame
         draw(vnode.attrs.scope.ctrl);
     },
 };
