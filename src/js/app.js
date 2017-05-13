@@ -45,15 +45,15 @@ var appState = {
         //     type: 'NormalTrace',
         //     color: '#78FFCE'
         // },
-        // {
-        //     id: 3,
-        //     name: 'Trace ' + 3,
-        //     top: 350,
-        //     left: 350,
-        //     source: { id: 6},
-        //     type: 'FFTrace',
-        //     color: '#E8830C'
-        // }
+        {
+            id: 3,
+            name: 'Trace ' + 3,
+            top: 350,
+            left: 350,
+            source: { id: 5},
+            type: 'FFTrace',
+            color: '#E8830C'
+        }
         ],
         sources: [
         // {
@@ -71,8 +71,9 @@ var appState = {
             top: 300,
             left: 50,
             type: 'WebsocketSource',
-            location: 'ws://127.0.0.1:9000',
-            frameSize: 200,
+            //location: 'ws://10.84.130.54:50090',
+            location: 'ws://localhost:50090',
+            frameSize: 4096,
             buffer: {
                 upperSize: 4,
                 lowerSize: 1,
@@ -104,10 +105,10 @@ var appState = {
                 //     id: 2,
                 //     offset: 0,
                 // },
-                // {
-                //     id: 3,
-                //     offset: 0,
-                // },
+                {
+                    id: 3,
+                    offset: 0,
+                },
             ],
             triggerLevel: 0,
             markers: [
@@ -117,7 +118,7 @@ var appState = {
             buttons: [
                 { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single'}
             ],
-            mode: 'single',
+            mode: 'normal',
             autoTriggering: true,
             triggerTrace: { id: 0 },
             triggerType: 'rising',

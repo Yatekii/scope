@@ -131,8 +131,8 @@ const wssBody = {
                     id: 'wss-framesize-' + vnode.attrs.id, 
                     value: vnode.attrs.frameSize,
                     onchange: m.withAttr('value', function(value) {
-                        vnode.attrs.frameSize = value;
-                        vnode.attrs.ctrl.sendJSON({ frameSize: value });
+                        vnode.attrs.frameSize = parseInt(value);
+                        vnode.attrs.ctrl.sendJSON({ frameSize: vnode.attrs.frameSize });
                     }),
                 })
             ])

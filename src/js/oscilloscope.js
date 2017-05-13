@@ -7,7 +7,11 @@ export const Oscilloscope = function(state) {
     this.state = state;
 
     // Create a new canvas to draw the scope onto
-    this.canvas = document.getElementById('scope');
+    var canvas = this.canvas = document.getElementById('scope');
+
+    // this.state.traces.forEach(function(t){
+    //     t.node.ctrl.initGL(canvas);
+    // });
 
     this.markerMoving = false;
     this.triggerMoving = false;
@@ -55,7 +59,7 @@ Oscilloscope.prototype.draw = function() {
     if(this.state.traces){
         this.state.traces.forEach(function(trace) {
             if(trace.node && trace.node.ctrl && trace.node.ctrl.on && trace.node.source && trace.node.source.node && trace.node.source.node.ctrl.ready){
-                trace.node.ctrl.draw(context, me.state, trace, triggerLocation); // TODO: triggering
+                trace.node.ctrl.draw(me.canvas, me.state, trace, 0); // TODO: triggering
             }
         });
     }

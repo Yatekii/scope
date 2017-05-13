@@ -32,7 +32,6 @@ export const Microphone = function(state) {
 
     // Assign class variables
     this.ready = false;
-    this.onactive = null;
 
     // Initialize audio
     initAudio(this);
@@ -64,9 +63,6 @@ function gotStream(source, stream) {
 
     // Create the data buffer
     source.data = new Uint8Array(source.analyzer.frequencyBinCount);
-    if(source.onactive){
-        source.onactive(source);
-    }
     source.ready = true;
 }
 
@@ -127,9 +123,14 @@ export const WebsocketSource = function(state) {
                 me.data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit int to float
-                    me.data[i] = (arr[i] - 16384) / 16384;
+                    me.data[i] = (arr[i]) / 8192;
+                    // HAXX
+                    if(me.data[i] > 1)
+                        me.data[i] -= 2;
                 }
-                me.awaitsSingle = false;
+                if(me.state.mode == 'single'){
+                    me.awaitsSingle = false;
+                }
             }
         }
     }

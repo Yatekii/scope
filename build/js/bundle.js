@@ -15198,7 +15198,6 @@ const Microphone = function(state) {
 
     // Assign class variables
     this.ready = false;
-    this.onactive = null;
 
     // Initialize audio
     initAudio(this);
@@ -15230,9 +15229,6 @@ function gotStream(source, stream) {
 
     // Create the data buffer
     source.data = new Uint8Array(source.analyzer.frequencyBinCount);
-    if(source.onactive){
-        source.onactive(source);
-    }
     source.ready = true;
 }
 
@@ -15293,9 +15289,14 @@ const WebsocketSource = function(state) {
                 me.data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit int to float
-                    me.data[i] = (arr[i] - 16384) / 16384;
+                    me.data[i] = (arr[i]) / 8192;
+                    // HAXX
+                    if(me.data[i] > 1)
+                        me.data[i] -= 2;
                 }
-                me.awaitsSingle = false;
+                if(me.state.mode == 'single'){
+                    me.awaitsSingle = false;
+                }
             }
         }
     };
@@ -15450,8 +15451,8 @@ const wssBody = {
                     id: 'wss-framesize-' + vnode.attrs.id, 
                     value: vnode.attrs.frameSize,
                     onchange: mithril.withAttr('value', function(value) {
-                        vnode.attrs.frameSize = value;
-                        vnode.attrs.ctrl.sendJSON({ frameSize: value });
+                        vnode.attrs.frameSize = parseInt(value);
+                        vnode.attrs.ctrl.sendJSON({ frameSize: vnode.attrs.frameSize });
                     }),
                 })
             ])
@@ -15459,6 +15460,29 @@ const wssBody = {
     }
 };
 
+function miniFFT(re, im) {
+    var N = re.length;
+    for (var i = 0; i < N; i++) {
+        for(var j = 0, h = i, k = N; k >>= 1; h >>= 1)
+            j = (j << 1) | (h & 1);
+        if (j > i) {
+            re[j] = [re[i], re[i] = re[j]][0];
+            im[j] = [im[i], im[i] = im[j]][0];
+        }
+    }
+    for(var hN = 1; hN * 2 <= N; hN *= 2)
+        for (var i = 0; i < N; i += hN * 2)
+            for (var j = i; j < i + hN; j++) {
+                var cos = Math.cos(Math.PI * (j - i) / hN),
+                    sin = Math.sin(Math.PI * (j - i) / hN);
+                var tre =  re[j+hN] * cos + im[j+hN] * sin,
+                    tim = -re[j+hN] * sin + im[j+hN] * cos;
+                re[j + hN] = re[j] - tre; im[j + hN] = im[j] - tim;
+                re[j] += tre; im[j] += tim;
+            }
+}
+
+// Creates a new trace
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
@@ -15470,16 +15494,15 @@ const NormalTrace = function (state) {
     
     if(state.source.node && state.source.node.ctrl.ready) {
         if(this.state.source.node.type != 'WebsocketSource'){
-            this.data = new Float32Array(state.source.frameSize);
-        } else {
             this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+        } else {
+            this.data = new Float32Array(state.source.frameSize);
         }
     }
     this.fetched = false;
 };
 
-NormalTrace.prototype.setSource = function(source){
-    this.data = new Float32Array(this.state.source.node.analyzer.frequencyBinCount);
+NormalTrace.prototype.initGL = function(){
 };
 
 // Preemptively fetches a new sample set
@@ -15498,7 +15521,8 @@ NormalTrace.prototype.fetch = function () {
 };
 
 // Draws trace on the new frame
-NormalTrace.prototype.draw = function (context, scope, traceConf, triggerLocation) {
+NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
+    var context = canvas.getContext('2d');
     // Store brush
     context.save();
     context.strokeWidth = 1;
@@ -15557,77 +15581,182 @@ const FFTrace = function(state) {
     
     // Create the data buffer
     if(state.source.node && state.source.node.ctrl.ready) {
-        this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+        if(this.state.source.node.type != 'WebsocketSource'){
+            this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
+        } else {
+            this.data = new Float32Array(state.source.frameSize);
+        }
     }
     this.fetched = false;
 };
 
-FFTrace.prototype.setSource = function(source){
-    this.data = new Float32Array(this.state.source.node.analyzer.frequencyBinCount);
+FFTrace.prototype.initGL = function(canvas){
+    if(this.state.source.node.type != 'WebsocketSource'){
+        this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+    } else {
+        this.data = new Float32Array(this.state.source.frameSize);
+
+        if(!canvas)
+            return;
+        var gl = canvas.getContext('webgl') || canvas.getContext('webgl-experimental');
+        if (!gl) {
+            return;
+        }
+
+        // setup GLSL program
+        this.program = webglUtils.createProgramFromScripts(gl, ["2d-vertex-shader", "2d-fragment-shader"]);
+
+        // look up where the vertex data needs to go.
+        this.sizeLocation = gl.getUniformLocation(this.program, 'size');
+        this.positionLocation = gl.getAttribLocation(this.program, 'position');
+        this.vData = gl.getUniformLocation(this.program, 'data'); // Getting location
+
+        gl.uniform2f(this.sizeLocation, canvas.width, canvas.height);
+
+        // Create a Vertex Array Object.
+        this.positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+
+
+        this.translation = [200, 150];
+        this.angleInRadians = 0;
+        this.scale = [1, 1];
+    }
 };
 
 
 // Preemptively fetches a new sample set
 FFTrace.prototype.fetch = function () {
     if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
-        if(!this.data){
-            this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+        if(this.state.source.node.type != 'WebsocketSource'){
+            if(!this.data){
+                this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
+            }
+            this.state.source.node.ctrl.analyzer.getFloatFrequencyData(this.data);
+        } else {
+            this.data = this.state.source.node.ctrl.data;
         }
-        this.state.source.node.ctrl.analyzer.getFloatFrequencyData(this.data);
+        
     }
     this.fetched = true;
 };
 
 // Draws trace on the new frame
-FFTrace.prototype.draw = function (context, scope, traceConf, triggerLocation) {
-    var SPACING = 1;
-    var BAR_WIDTH = 1;
-    var numBars = Math.round(scope.width / SPACING);
-    var multiplier = this.state.source.node.ctrl.analyzer.frequencyBinCount / numBars;
-
-    // Store brush
-    context.save();
-    context.lineCap = 'round';
-
+FFTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
     // Get a new dataset
     this.fetch();
 
-    // Draw rectangle for each frequency
-    var halfHeight = scope.height / 2;
-    for (var i = 0; i < numBars; ++i) {
-        var magnitude = 0;
-        var offset = Math.floor(i * multiplier);
-        // gotta sum/average the block, or we miss narrow-bandwidth spikes
-        for (var j = 0; j < multiplier; j++) {
-            magnitude += this.data[offset + j];
+    if(this.state.source.node.type != 'WebsocketSource'){
+        var SPACING = 1;
+        var BAR_WIDTH = 1;
+        var numBars = Math.round(scope.width / SPACING);
+        var multiplier = this.state.source.node.ctrl.analyzer.frequencyBinCount / numBars;
+        var context = canvas.getContext('2d');
+
+        // Store brush
+        context.save();
+        context.lineCap = 'round';
+
+        // Draw rectangle for each frequency
+        var halfHeight = scope.height / 2;
+        for (var i = 0; i < numBars; ++i) {
+            var magnitude = 0;
+            var offset = Math.floor(i * multiplier);
+            // gotta sum/average the block, or we miss narrow-bandwidth spikes
+            for (var j = 0; j < multiplier; j++) {
+                magnitude += this.data[offset + j];
+            }
+            magnitude = magnitude / multiplier * 4;
+            context.fillStyle = 'hsl(' + Math.round((i * 360) / numBars) + ', 100%, 50%)';
+            context.fillRect(i * SPACING, -magnitude + traceConf.offset * scope.height, BAR_WIDTH, scope.height + magnitude);
         }
-        magnitude = magnitude / multiplier * 4;
-        context.fillStyle = 'hsl(' + Math.round((i * 360) / numBars) + ', 100%, 50%)';
-        context.fillRect(i * SPACING, -magnitude + traceConf.offset * scope.height, BAR_WIDTH, scope.height + magnitude);
+
+        // Draw mover
+        context.fillStyle = this.state.color;
+        var offset = this.state.offset;
+        if(offset > 1){
+            offset = 1;
+        } else if(offset < -1){
+            offset = -1;
+        }
+        context.fillRect(
+            scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
+            halfHeight - traceConf.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
+            scope.ui.mover.width,
+            scope.ui.mover.height
+        );
+
+        // Restore brush
+        context.restore();
+
+        // Mark data as deprecated
+        this.fetched = false;
+    } else {
+        // var gl = canvas.getContext("webgl");
+        // if (!gl) {
+        //     return;
+        // }
+        // drawScene(gl, this);
+
+        var real = this.data.slice(0);
+        var compl = new Float32Array(this.data.length);
+        miniFFT(real, compl);
+        var ab = new Float32Array(this.data.length);
+        for(var i = 0; i < this.data.length; i++){
+            ab[i] = Math.abs(real[i]*real[i] - compl[i]*compl[i]);
+            ab[i] = Math.log10(ab[i])*20/200;
+        }
+
+        var context = canvas.getContext('2d');
+        // Store brush
+        context.save();
+        context.strokeWidth = 1;
+
+        // Get a new dataset
+        this.fetch();
+
+        // Draw trace
+        context.strokeStyle = this.state.color;
+        context.beginPath();
+        // Draw samples
+        var halfHeight = scope.height / 2;
+        var skip = 1;
+        var mul = 1;
+        var ratio = scope.width / this.data.length * scope.scaling.x;
+        if(ratio > 1){
+            mul = Math.ceil(ratio);
+        } else {
+            skip = Math.floor(1 / ratio);
+        }
+        context.moveTo(0, (halfHeight - ((ab[0] + ab[1] + ab[2]) / 3 + traceConf.offset) * halfHeight * scope.scaling.y));
+        for (var i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
+            context.lineTo(j, (halfHeight - ((ab[-1+i] + ab[0+i] + ab[1+i]) / 3 + traceConf.offset) * halfHeight * scope.scaling.y));
+        }
+        // Fix drawing on canvas
+        context.stroke();
+
+        // Draw mover
+        context.fillStyle = this.state.color;
+        var offset = this.state.offset;
+        if(offset > 1){
+            offset = 1;
+        } else if(offset < -1){
+            offset = -1;
+        }
+        context.fillRect(
+            scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
+            halfHeight - traceConf.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
+            scope.ui.mover.width,
+            scope.ui.mover.height
+        );
+
+        // Restore brush
+        context.restore();
+
+        // Mark data as deprecated
+        this.fetched = false;
     }
-
-    // Draw mover
-    context.fillStyle = this.state.color;
-    var offset = this.state.offset;
-    if(offset > 1){
-        offset = 1;
-    } else if(offset < -1){
-        offset = -1;
-    }
-    context.fillRect(
-        scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - traceConf.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
-        scope.ui.mover.width,
-        scope.ui.mover.height
-    );
-
-    // Restore brush
-    context.restore();
-
-    // Mark data as deprecated
-    this.fetched = false;
-
-    return triggerLocation;
 };
 
 const traceNode = {
@@ -15933,7 +16062,11 @@ const Oscilloscope = function(state) {
     this.state = state;
 
     // Create a new canvas to draw the scope onto
-    this.canvas = document.getElementById('scope');
+    var canvas = this.canvas = document.getElementById('scope');
+
+    // this.state.traces.forEach(function(t){
+    //     t.node.ctrl.initGL(canvas);
+    // });
 
     this.markerMoving = false;
     this.triggerMoving = false;
@@ -15981,7 +16114,7 @@ Oscilloscope.prototype.draw = function() {
     if(this.state.traces){
         this.state.traces.forEach(function(trace) {
             if(trace.node && trace.node.ctrl && trace.node.ctrl.on && trace.node.source && trace.node.source.node && trace.node.source.node.ctrl.ready){
-                trace.node.ctrl.draw(context, me.state, trace, triggerLocation); // TODO: triggering
+                trace.node.ctrl.draw(me.canvas, me.state, trace, 0); // TODO: triggering
             }
         });
     }
@@ -16279,15 +16412,15 @@ var appState = {
         //     type: 'NormalTrace',
         //     color: '#78FFCE'
         // },
-        // {
-        //     id: 3,
-        //     name: 'Trace ' + 3,
-        //     top: 350,
-        //     left: 350,
-        //     source: { id: 6},
-        //     type: 'FFTrace',
-        //     color: '#E8830C'
-        // }
+        {
+            id: 3,
+            name: 'Trace ' + 3,
+            top: 350,
+            left: 350,
+            source: { id: 5},
+            type: 'FFTrace',
+            color: '#E8830C'
+        }
         ],
         sources: [
         // {
@@ -16305,8 +16438,9 @@ var appState = {
             top: 300,
             left: 50,
             type: 'WebsocketSource',
-            location: 'ws://127.0.0.1:9000',
-            frameSize: 200,
+            //location: 'ws://10.84.130.54:50090',
+            location: 'ws://localhost:50090',
+            frameSize: 4096,
             buffer: {
                 upperSize: 4,
                 lowerSize: 1,
@@ -16338,10 +16472,10 @@ var appState = {
                 //     id: 2,
                 //     offset: 0,
                 // },
-                // {
-                //     id: 3,
-                //     offset: 0,
-                // },
+                {
+                    id: 3,
+                    offset: 0,
+                },
             ],
             triggerLevel: 0,
             markers: [
@@ -16351,7 +16485,7 @@ var appState = {
             buttons: [
                 { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single'}
             ],
-            mode: 'single',
+            mode: 'normal',
             autoTriggering: true,
             triggerTrace: { id: 0 },
             triggerType: 'rising',
