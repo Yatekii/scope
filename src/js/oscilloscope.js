@@ -6,6 +6,8 @@ export const Oscilloscope = function(state) {
     // Remember scope state
     this.state = state;
 
+    this.canvas = document.getElementById('scope');
+
     this.markerMoving = false;
     this.triggerMoving = false;
     this.traceMoving = false;

@@ -50,3 +50,19 @@ export const getNodeByID = function(nodes, id){
     });
     return result;
 };
+
+export const sum = function(arr){
+    var k = 0;
+    for(var i = 0; i < arr.length; i++){
+        k += arr[i];
+    }
+    return k;
+};
+
+export const ssum = function(arr){
+    var k = 0;
+    for(var i = 0; i < arr.length; i++){
+        k += arr[i]*arr[i];
+    }
+    return k;
+};

@@ -15167,6 +15167,22 @@ const getNodeByID = function(nodes, id){
     return result;
 };
 
+const sum = function(arr){
+    var k = 0;
+    for(var i = 0; i < arr.length; i++){
+        k += arr[i];
+    }
+    return k;
+};
+
+const ssum = function(arr){
+    var k = 0;
+    for(var i = 0; i < arr.length; i++){
+        k += arr[i]*arr[i];
+    }
+    return k;
+};
+
 // Creates a new source
 const Waveform = function(state) {
     // Remember source state
@@ -15459,14 +15475,11 @@ const wssBody = {
     }
 };
 
-function miniFFT(re, im) {
+const miniFFT = function(re, im) {
     var N = re.length;
-    var i;
-    var j;
-    var h;
-    var k;
+    var i, j, h, k;
     for (i = 0; i < N; i++) {
-        for(j = 0, h = i, k = N; k >>= 1; h >>= 1){
+        for(j = 0, h = i, k = N; k >>= 1; h >>= 1){ // eslint-disable-line no-cond-assign
             j = (j << 1) | (h & 1);
         }
         if (j > i) {
@@ -15486,42 +15499,31 @@ function miniFFT(re, im) {
             }
         }
     }
-}
+};
 
-// Creates a new trace
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
 
-    // Assign class variables
+    // Init class variables
     this.on = true;
-
-    // Create the data buffer
-    
-    if(state.source.node && state.source.node.ctrl.ready) {
-        if(this.state.source.node.type != 'WebsocketSource'){
-            this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
-        } else {
-            this.data = new Float32Array(state.source.frameSize);
-        }
-    }
     this.fetched = false;
-};
-
-NormalTrace.prototype.initGL = function(){
 };
 
 // Preemptively fetches a new sample set
 NormalTrace.prototype.fetch = function () {
-    if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
-        if(this.state.source.node.type != 'WebsocketSource'){
+    // If it is not a WSS, data must be fetched from the Analyzer node
+    if(this.state.source.node.type != 'WebsocketSource'){
+        if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
             if(!this.data){
                 this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
             }
             this.state.source.node.ctrl.analyzer.getFloatTimeDomainData(this.data);
-        } else {
-            this.data = this.state.source.node.ctrl.data;
         }
+    }
+    // Otherwise it will just be ensured the data is referenced from the source properly
+    else {
+        this.data = this.state.source.node.ctrl.data;
     }
     this.fetched = true;
 };
@@ -15529,7 +15531,7 @@ NormalTrace.prototype.fetch = function () {
 // Draws trace on the new frame
 NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
     var context = canvas.getContext('2d');
-    // Store brush
+    // Store context state so other painters are presented with their known context state
     context.save();
     context.strokeWidth = 1;
 
@@ -15539,24 +15541,35 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     // Draw trace
     context.strokeStyle = this.state.color;
     context.beginPath();
-    // Draw samples
+
+    // Half height of canvas
     var halfHeight = scope.height / 2;
+
+    // Draw every <skip> sample in data
     var skip = 1;
+
+    // Apply sample to every <mul> pixel on canvas
     var mul = 1;
+
+    // Calculate ratio of number of samples to number of pixels and factor in x-scaling
+    // To calculate steps in the for loop to draw the trace
     var ratio = scope.width / this.data.length * scope.scaling.x;
     if(ratio > 1){
         mul = Math.ceil(ratio);
     } else {
         skip = Math.floor(1 / ratio);
     }
+
+    // Actually draw the trace, starting at pixel 0 and data point at triggerLocation
+    // triggerLocation is only relevant when using WebAudio
+    // using an external source the source handles triggering
     context.moveTo(0, (halfHeight - (this.data[triggerLocation] + traceConf.offset) * halfHeight * scope.scaling.y));
     for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (this.data[i] + traceConf.offset) * halfHeight * scope.scaling.y));
     }
-    // Fix drawing on canvas
     context.stroke();
 
-    // Draw mover
+    // Draw mover (grab and draw to move the trace)
     context.fillStyle = this.state.color;
     var offset = this.state.offset;
     if(offset > 1){
@@ -15571,10 +15584,10 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
         scope.ui.mover.height
     );
 
-    // Restore brush
+    // Restore canvas context for next painter
     context.restore();
 
-    // Mark data as deprecated
+    // Mark data as deprecated so we will fetch again next cycle
     this.fetched = false;
 };
 
@@ -15583,31 +15596,26 @@ const FFTrace = function(state) {
     // Remember trace state
     this.state = state;
 
+    // Init class variables
     this.on = true;
-    
-    // Create the data buffer
-    if(state.source.node && state.source.node.ctrl.ready) {
-        if(this.state.source.node.type != 'WebsocketSource'){
-            this.data = new Float32Array(state.source.node.ctrl.analyzer.frequencyBinCount);
-        } else {
-            this.data = new Float32Array(state.source.frameSize);
-        }
-    }
     this.fetched = false;
 };
 
 // Preemptively fetches a new sample set
 FFTrace.prototype.fetch = function () {
-    if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
-        if(this.state.source.node.type != 'WebsocketSource'){
+    // If it is not a WSS, data must be fetched from the Analyzer node
+    if(this.state.source.node.type != 'WebsocketSource'){
+        if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
             if(!this.data){
                 this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
             }
             this.state.source.node.ctrl.analyzer.getFloatFrequencyData(this.data);
-        } else {
-            this.data = this.state.source.node.ctrl.data;
         }
         
+    }
+    // Otherwise it will just be ensured the data is referenced from the source properly
+    else {
+        this.data = this.state.source.node.ctrl.data;
     }
     this.fetched = true;
 };
@@ -15619,15 +15627,15 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
 
+    // Get a new dataset
+    this.fetch();
+
 
     if(this.state.source.node.type != 'WebsocketSource'){
         var SPACING = 1;
         var BAR_WIDTH = 1;
         var numBars = Math.round(scope.width / SPACING);
         var multiplier = this.state.source.node.ctrl.analyzer.frequencyBinCount / numBars;
-
-        // Get a new dataset
-        this.fetch();
 
         // Store brush
         context.save();
@@ -15674,15 +15682,32 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         miniFFT(real, compl);
         var ab = new Float32Array(this.data.length);
         for(i = 0; i < this.data.length; i++){
-            ab[i] = Math.abs(real[i]*real[i] - compl[i]*compl[i]);
+            ab[i] = Math.abs(real[i]*real[i] - compl[i]*compl[i]+0.00001);
+        }
+        var m = sum(ab) / ab.length;
+        // console.log('m', sum(ab))
+        var n = [];
+        var s = [];
+        for(i = 0; i < this.data.length; i++){
+            if(ab[i] < m){
+                n.push(ab[i]);
+            }
+            else {
+                s.push(ab[i]);
+            }
+        }
+        var ss = ssum(s);
+        var sn = ssum(n);
+        var SNR = Math.log10(ss / sn) * 10;
+        //console.log(SNR);
+
+        for(i = 0; i < this.data.length; i++){
             ab[i] = Math.log10(ab[i])*20/200;
         }
+
         // Store brush
         context.save();
         context.strokeWidth = 1;
-
-        // Get a new dataset
-        this.fetch();
 
         // Draw trace
         context.strokeStyle = this.state.color;
@@ -16028,6 +16053,8 @@ const Oscilloscope = function(state) {
     // Remember scope state
     this.state = state;
 
+    this.canvas = document.getElementById('scope');
+
     this.markerMoving = false;
     this.triggerMoving = false;
     this.traceMoving = false;
@@ -16341,7 +16368,6 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the controller and the view and links them both.
 */
 
-//use default mode
 mithril.route.mode = 'search';
 
 var appState = {
