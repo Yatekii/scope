@@ -15183,7 +15183,6 @@ const ssum = function(arr){
     return k;
 };
 
-// Creates a new source
 const Waveform = function(state) {
     // Remember source state
     this.state = state;
@@ -15501,6 +15500,99 @@ const miniFFT = function(re, im) {
     }
 };
 
+/* Richard Meadows 2013 */
+
+/**
+ * Extend Math
+ */
+Math.sinc = function(n) { return Math.sin(Math.PI*n)/(Math.PI*n); };
+Math.bessi0 = function(x) { /* Evaluate modified Bessel function In(x) and n=0. */
+	var ax = Math.abs(x);
+
+	if (ax < 3.75) {
+		y = x / 3.75; y = y * y;
+		return 1.0 + y*(3.5156229+y*(3.0899424+y*(1.2067492+y*(0.2659732+y*(0.360768e-1+y*0.45813e-2)))));
+   } else {
+		y = 3.75 / ax;
+		return (Math.exp(ax) / Math.sqrt(ax)) *
+			(0.39894228+y*(0.1328592e-1+y*(0.225319e-2+y*(-0.157565e-2+y*(0.916281e-2+y*
+			(-0.2057706e-1+y*(0.2635537e-1+y*(-0.1647633e-1+y*0.392377e-2))))))));
+   }
+};
+
+/**
+ * Windowing functions.
+ */
+const windows = {
+	hann:		function (n, points) { return 0.5 - 0.5*Math.cos(2*Math.PI*n/(points-1)); },
+	hamming:	function (n, points) { return 0.54 - 0.46*Math.cos(2*Math.PI*n/(points-1)); },
+	cosine:		function (n, points) { return Math.sin(Math.PI*n/(points-1)); },
+	lanczos:	function (n, points) { return Math.sinc((2*n/(points-1))-1); },
+	gaussian:	function (n, points, alpha) {
+				if (!alpha) { alpha = 0.4; }
+				return Math.pow(Math.E, -0.5*Math.pow((n-(points-1)/2)/(alpha*(points-1)/2), 2));
+			},
+	tukey:		function (n, points, alpha) {
+				if (!alpha) { alpha = 0.5; }
+
+				if (n < 0.5*alpha*(points-1)) {
+					return 0.5*(1+(Math.cos(Math.PI*((2*n/(alpha*(points-1)))-1))));
+				} else if (n < (1-(0.5*alpha))*(points-1)) {
+					return 1;
+				} else {
+					return 0.5*(1+(Math.cos(Math.PI*((2*n/(alpha*(points-1)))+1-(2/alpha)))));
+				}
+			},
+	blackman:	function (n, points, alpha) {
+				if (!alpha) { alpha = 0.16; }
+				return 0.42 - 0.5*Math.cos(2*Math.PI*n/(points-1)) + 0.08*Math.cos(4*Math.PI*n/(points-1));
+			},
+	exact_blackman:	function (n, points) {
+				return 0.4243801 - 0.4973406*Math.cos(2*Math.PI*n/(points-1)) + 0.0782793*Math.cos(4*Math.PI*n/(points-1));
+			},
+	kaiser:		function (n, points, alpha) {
+				if (!alpha) { alpha = 3; }
+				return Math.bessi0(Math.PI*alpha*Math.sqrt(1-Math.pow((2*n/(points-1))-1, 2))) / Math.bessi0(Math.PI*alpha);
+			},
+	nuttall:	function (n, points) {
+				return 0.355768 - 0.487396*Math.cos(2*Math.PI*n/(points-1))
+					+ 0.144232*Math.cos(4*Math.PI*n/(points-1))
+					- 0.012604*Math.cos(6*Math.PI*n/(points-1));
+			},
+	blackman_harris:function (n, points) {
+				return 0.35875 - 0.48829*Math.cos(2*Math.PI*n/(points-1))
+					+ 0.14128*Math.cos(4*Math.PI*n/(points-1))
+					- 0.01168*Math.cos(6*Math.PI*n/(points-1));
+			},
+	blackman_nuttall:function (n, points) {
+				return 0.3635819 - 0.3635819*Math.cos(2*Math.PI*n/(points-1))
+					+ 0.1365995*Math.cos(4*Math.PI*n/(points-1))
+					- 0.0106411*Math.cos(6*Math.PI*n/(points-1));
+			},
+	flat_top:	function (n, points) {
+				return 1 - 1.93*Math.cos(2*Math.PI*n/(points-1))
+					+ 1.29*Math.cos(4*Math.PI*n/(points-1))
+					- 0.388*Math.cos(6*Math.PI*n/(points-1))
+					+ 0.032*Math.cos(8*Math.PI*n/(points-1));
+			},
+};
+
+/**
+ * Applies a Windowing Function to an array.
+ */
+const window$1 = function(data_array, windowing_function, alpha) {
+	var datapoints = data_array.length;
+
+	/* For each item in the array */
+	for (var n=0; n<datapoints; ++n) {
+		/* Apply the windowing function */
+		data_array[n] *= windowing_function(n, datapoints, alpha);
+	}
+
+	return data_array;
+};
+
+// Creates a new trace
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
@@ -15630,7 +15722,6 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
     // Get a new dataset
     this.fetch();
 
-
     if(this.state.source.node.type != 'WebsocketSource'){
         var SPACING = 1;
         var BAR_WIDTH = 1;
@@ -15676,32 +15767,40 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-
-        var real = this.data.slice(0);
+        var real = window$1(this.data.slice(0), windows.hamming);
         var compl = new Float32Array(this.data.length);
         miniFFT(real, compl);
-        var ab = new Float32Array(this.data.length);
-        for(i = 0; i < this.data.length; i++){
-            ab[i] = Math.abs(real[i]*real[i] - compl[i]*compl[i]+0.00001);
+        real = real.slice(0, real.length / 2);
+        compl = compl.slice(0, compl.length / 2);
+        var ab = new Float32Array(real.length);
+        for(i = 0; i < ab.length; i++){
+            ab[i] = Math.sqrt(real[i]*real[i] + compl[i]*compl[i]);
         }
+        
         var m = sum(ab) / ab.length;
-        // console.log('m', sum(ab))
         var n = [];
         var s = [];
-        for(i = 0; i < this.data.length; i++){
+        var pushed = 0;
+        var firstSNRMarker = 0;
+        for(i = 0; i < ab.length; i++){
             if(ab[i] < m){
                 n.push(ab[i]);
             }
             else {
+                if(pushed == 0){
+                    firstSNRMarker = i;
+                }
                 s.push(ab[i]);
+                pushed = i;
             }
         }
+
         var ss = ssum(s);
         var sn = ssum(n);
         var SNR = Math.log10(ss / sn) * 10;
-        //console.log(SNR);
+        console.log('SNR: ', SNR);
 
-        for(i = 0; i < this.data.length; i++){
+        for(i = 0; i < ab.length; i++){
             ab[i] = Math.log10(ab[i])*20/200;
         }
 
@@ -15721,9 +15820,11 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         } else {
             skip = Math.floor(1 / ratio);
         }
-        context.moveTo(0, (halfHeight - ((ab[0] + ab[1] + ab[2]) / 3 + traceConf.offset) * halfHeight * scope.scaling.y));
+        scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, pushed * mul / scope.width);
+
+        context.moveTo(0, (halfHeight - (ab[0] + traceConf.offset) * halfHeight * scope.scaling.y));
         for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-            context.lineTo(j, (halfHeight - ((ab[-1+i] + ab[0+i] + ab[1+i]) / 3 + traceConf.offset) * halfHeight * scope.scaling.y));
+            context.lineTo(j, (halfHeight - (ab[i] + traceConf.offset) * halfHeight * scope.scaling.y));
         }
         // Fix drawing on canvas
         context.stroke();
@@ -16106,6 +16207,7 @@ Oscilloscope.prototype.draw = function() {
         });
     }
 
+    var i = 0;
     me.state.markers.forEach(function(m) {
         draw$1(context, me.state, m);
     });
@@ -16336,6 +16438,59 @@ Oscilloscope.prototype.onScroll = function(event){
     }
 };
 
+Oscilloscope.prototype.addMarker = function(id, type, xy){
+    var px = 0;
+    var py = 0;
+    if(type == 'horizontal'){
+        py = xy;
+    } else {
+        px = xy;
+    }
+    this.state.markers.push({
+        id: id, type: type, x: px, y: py
+    });
+};
+
+Oscilloscope.prototype.getMarkerById = function(id){
+    var result = this.state.markers.filter(function( obj ) {
+        return obj.id == id;
+    });
+    return result;
+};
+
+Oscilloscope.prototype.setSNRMarkers = function(firstX, secondX){
+    var first = this.getMarkerById('SNRfirst');
+    var second = this.getMarkerById('SNRsecond');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+    } else {
+        first[0].x = firstX;
+    }
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+    } else {
+        second[0].x = secondX;
+    }
+};
+
+Oscilloscope.prototype.setFirstSNRMarker = function(firstX){
+    var first = this.getMarkerById('SNRfirst');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+        return;
+    }
+    first[0].x = firstX;
+};
+
+Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
+    var second = this.getMarkerById('SNRsecond');
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+        return;
+    }
+    second[0].x = secondX;
+};
+
 const scopeView = {
     oninit: function(vnode) {
         window.addEventListener('mousewheel', function(event){
@@ -16426,7 +16581,7 @@ var appState = {
                 top: 300,
                 left: 50,
                 type: 'WebsocketSource',
-                //location: 'ws://10.84.130.54:50090',
+                // location: 'ws://10.84.130.54:50090',
                 location: 'ws://localhost:50090',
                 frameSize: 4096,
                 buffer: {

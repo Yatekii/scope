@@ -1,5 +1,6 @@
-import { miniFFT } from './math/fft.js';
+import { miniFFT} from './math/fft.js';
 import { sum, ssum } from './helpers.js';
+import { window, windows } from './math/windowing.js';
 
 // Creates a new trace
 export const  NormalTrace = function (state) {
@@ -131,7 +132,6 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
     // Get a new dataset
     this.fetch();
 
-
     if(this.state.source.node.type != 'WebsocketSource'){
         var SPACING = 1;
         var BAR_WIDTH = 1;
@@ -177,32 +177,40 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-
-        var real = this.data.slice(0);
+        var real = window(this.data.slice(0), windows.hamming);
         var compl = new Float32Array(this.data.length);
         miniFFT(real, compl);
-        var ab = new Float32Array(this.data.length);
-        for(i = 0; i < this.data.length; i++){
-            ab[i] = Math.abs(real[i]*real[i] - compl[i]*compl[i]+0.00001);
+        real = real.slice(0, real.length / 2);
+        compl = compl.slice(0, compl.length / 2);
+        var ab = new Float32Array(real.length);
+        for(i = 0; i < ab.length; i++){
+            ab[i] = Math.sqrt(real[i]*real[i] + compl[i]*compl[i]);
         }
+        
         var m = sum(ab) / ab.length;
-        // console.log('m', sum(ab))
         var n = [];
         var s = [];
-        for(i = 0; i < this.data.length; i++){
+        var pushed = 0;
+        var firstSNRMarker = 0;
+        for(i = 0; i < ab.length; i++){
             if(ab[i] < m){
                 n.push(ab[i]);
             }
             else {
+                if(pushed == 0){
+                    firstSNRMarker = i;
+                }
                 s.push(ab[i]);
+                pushed = i;
             }
         }
+
         var ss = ssum(s);
         var sn = ssum(n);
         var SNR = Math.log10(ss / sn) * 10;
-        //console.log(SNR);
+        console.log('SNR: ', SNR);
 
-        for(i = 0; i < this.data.length; i++){
+        for(i = 0; i < ab.length; i++){
             ab[i] = Math.log10(ab[i])*20/200;
         }
 
@@ -222,9 +230,11 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         } else {
             skip = Math.floor(1 / ratio);
         }
-        context.moveTo(0, (halfHeight - ((ab[0] + ab[1] + ab[2]) / 3 + traceConf.offset) * halfHeight * scope.scaling.y));
+        scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, pushed * mul / scope.width);
+
+        context.moveTo(0, (halfHeight - (ab[0] + traceConf.offset) * halfHeight * scope.scaling.y));
         for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-            context.lineTo(j, (halfHeight - ((ab[-1+i] + ab[0+i] + ab[1+i]) / 3 + traceConf.offset) * halfHeight * scope.scaling.y));
+            context.lineTo(j, (halfHeight - (ab[i] + traceConf.offset) * halfHeight * scope.scaling.y));
         }
         // Fix drawing on canvas
         context.stroke();

@@ -59,6 +59,7 @@ Oscilloscope.prototype.draw = function() {
         });
     }
 
+    var i = 0;
     me.state.markers.forEach(function(m) {
         marker.draw(context, me.state, m);
     });
@@ -287,4 +288,57 @@ Oscilloscope.prototype.onScroll = function(event){
     if(this.state.scaling.x < 1){
         this.state.scaling.x = 1;
     }
+};
+
+Oscilloscope.prototype.addMarker = function(id, type, xy){
+    var px = 0;
+    var py = 0;
+    if(type == 'horizontal'){
+        py = xy;
+    } else {
+        px = xy;
+    }
+    this.state.markers.push({
+        id: id, type: type, x: px, y: py
+    });
+};
+
+Oscilloscope.prototype.getMarkerById = function(id){
+    var result = this.state.markers.filter(function( obj ) {
+        return obj.id == id;
+    });
+    return result;
+};
+
+Oscilloscope.prototype.setSNRMarkers = function(firstX, secondX){
+    var first = this.getMarkerById('SNRfirst');
+    var second = this.getMarkerById('SNRsecond');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+    } else {
+        first[0].x = firstX;
+    }
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+    } else {
+        second[0].x = secondX;
+    }
+};
+
+Oscilloscope.prototype.setFirstSNRMarker = function(firstX){
+    var first = this.getMarkerById('SNRfirst');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+        return;
+    }
+    first[0].x = firstX;
+};
+
+Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
+    var second = this.getMarkerById('SNRsecond');
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+        return;
+    }
+    second[0].x = secondX;
 };

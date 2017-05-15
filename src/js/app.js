@@ -70,7 +70,7 @@ var appState = {
                 top: 300,
                 left: 50,
                 type: 'WebsocketSource',
-                //location: 'ws://10.84.130.54:50090',
+                // location: 'ws://10.84.130.54:50090',
                 location: 'ws://localhost:50090',
                 frameSize: 4096,
                 buffer: {
