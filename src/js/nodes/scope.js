@@ -42,7 +42,9 @@ export const scopeNode = {
                 ]),
                 m('.card-meta', [])
             ]),
-            m('.card-body', '')
+            m('.card-body',
+                m(body, vnode.attrs)
+            )
         ]);
     },
     oncreate: function(vnode) {
@@ -62,5 +64,24 @@ export const scopeNode = {
                 maxConnections: 10,
             });
         });
+    }
+};
+
+const body = {
+    view: function(vnode){
+        return [
+            m('.form-group', [
+                m('label.form-label [for=wss-samplingrate-' + vnode.attrs.id + ']', 'Sampling Rate'),
+                m('input.form-input', {
+                    type: 'number',
+                    id: 'wss-samplingrate-' + vnode.attrs.id, 
+                    value: vnode.attrs.samplingRate,
+                    onchange: m.withAttr('value', function(value) {
+                        vnode.attrs.samplingRate = parseInt(value);
+                        vnode.attrs.ctrl.sendJSON({ frameSize: vnode.attrs.SamplingRate });
+                    }),
+                })
+            ])
+        ];
     }
 };

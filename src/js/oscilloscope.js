@@ -1,6 +1,7 @@
 import * as helpers from './helpers.js';
 import * as marker from './marker.js';
 import * as button from './button.js';
+import * as converting from './math/converting.js';
 
 export const Oscilloscope = function(state) {
     // Remember scope state
@@ -19,8 +20,10 @@ Oscilloscope.prototype.draw = function() {
     if(this.canvas == null){
         return;
     }
-    var width = this.canvas.clientWidth;
-    var height = this.canvas.clientHeight;
+
+    // vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none'
+    var width = document.body.clientWidth - (me.state.ui.prefPane.open ? me.state.ui.prefPane.width : 0);
+    var height = document.body.clientHeight;
     var halfHeight = this.state.height / 2;
     var context = this.canvas.getContext('2d');
 
@@ -59,7 +62,6 @@ Oscilloscope.prototype.draw = function() {
         });
     }
 
-    var i = 0;
     me.state.markers.forEach(function(m) {
         marker.draw(context, me.state, m);
     });
@@ -67,7 +69,57 @@ Oscilloscope.prototype.draw = function() {
     me.state.buttons.forEach(function(b) {
         button.draw(context, me.state, b);
     });
+
+    /* Draw scales */
+    context.strokeWidth = 1;
+    context.strokeStyle = '#ABABAB';
+    context.setLineDash([5]);
+
+    context.font = "30px Arial";
+    context.fillStyle = 'blue';
+
+    var unit = 1e9
+    var skip = 1;
+    var mul = 1;
+    var ratio = width / me.state.frameSize * me.state.scaling.x; // pixel/sample
+    var nStart = 1e18;
+    var n = 1e18;
+    var dt = ratio / me.state.samplingRate * n;
+    for(var a = 0; a < 20; a++){
+        if(width / dt > 1 && width / dt < 11){
+            break;
+        }
+        n *= 1e-1;
+        dt = ratio / me.state.samplingRate * n;
+    }
+     // pixel / sample * sample / sek
+    var i;
+    for(i = 0; i < 11; i++){
+        context.beginPath();
+        context.moveTo(dt * i, 0);
+        context.lineTo(dt * i, height);
+        context.stroke();
+    }
+        // context.beginPath();
+        // var halfHeight = scope.height / 2;
+        // context.moveTo(0, halfHeight - state.y * halfHeight);
+        // context.lineTo(scope.width, halfHeight - state.y * halfHeight);
+        // context.stroke();
+
+    // Draw legend
+    context.strokeStyle = '#ABABAB';
+    context.fillStyle='#222222';
+    context.setLineDash([0]);
+    context.rect(width - 300, 20, 280, 180);
+    context.stroke();
+    context.fill();
+    context.textAlign = 'left';
+    context.font = '20px Arial';
+    context.fillStyle = '#ABABAB';
+    context.textBaseline = 'hanging';
+    context.fillText('Δt = ' + converting.secondsToString(me.state.samplingRate / (nStart / n)), width - 290, 30);
 };
+
 
 function getTriggerLocation(buf, buflen, triggerLevel, type){
     switch(type){
@@ -162,11 +214,7 @@ Oscilloscope.prototype.onMouseUp = function(event){
             var y = button.top;
             if(event.offsetX < x + w && event.offsetX > x){
                 if(event.offsetY < y + h && event.offsetY > y){
-                    me.state.traces.forEach(function(t){
-                        if(t.node.source.node.ctrl.single){
-                            t.node.source.node.ctrl.single();
-                        }
-                    });
+                    me.uiHandlers[button.handler](me);
                 }
             }
         });
@@ -341,4 +389,17 @@ Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
         return;
     }
     second[0].x = secondX;
+};
+
+Oscilloscope.prototype.uiHandlers = {
+    singleShot: function(scope){
+        scope.state.traces.forEach(function(t){
+            if(t.node.source.node.ctrl.single){
+                t.node.source.node.ctrl.single();
+            }
+        });
+    },
+    togglePrefPane: function(scope){
+        scope.state.ui.prefPane.open = !scope.state.ui.prefPane.open;
+    }
 };

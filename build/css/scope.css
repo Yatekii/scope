@@ -19,6 +19,11 @@ p { margin: 1em 0;}
 #scope {
     background: teal;
 }
+#prefpane {
+    width: 200px;
+    height: 100%;
+    background-color:white;
+}
 #freqbars {
     background: black;
     display: block;

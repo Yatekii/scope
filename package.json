@@ -24,6 +24,7 @@
     "jsfft": "^0.0.2",
     "jsplumb": "^2.3.0",
     "mithril": "^1.0.1",
+    "mithril-stream": "^1.0.0",
     "postcss-cssnext": "^2.9.0",
     "postcss-nested": "^1.0.0",
     "postcss-simple-vars": "^3.0.0",

@@ -57,9 +57,9 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     // To calculate steps in the for loop to draw the trace
     var ratio = scope.width / this.data.length * scope.scaling.x;
     if(ratio > 1){
-        mul = Math.ceil(ratio);
+        mul = ratio;
     } else {
-        skip = Math.floor(1 / ratio);
+        skip = 1 / ratio;
     }
 
     // Actually draw the trace, starting at pixel 0 and data point at triggerLocation
@@ -67,7 +67,7 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     // using an external source the source handles triggering
     context.moveTo(0, (halfHeight - (this.data[triggerLocation] + traceConf.offset) * halfHeight * scope.scaling.y));
     for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (this.data[i] + traceConf.offset) * halfHeight * scope.scaling.y));
+        context.lineTo(j, (halfHeight - (this.data[Math.floor(i)] + traceConf.offset) * halfHeight * scope.scaling.y));
     }
     context.stroke();
 
@@ -177,7 +177,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        var real = window(this.data.slice(0), windows.hamming);
+        var real = window(this.data.slice(0), windows.hann);
         var compl = new Float32Array(this.data.length);
         miniFFT(real, compl);
         real = real.slice(0, real.length / 2);
@@ -224,17 +224,17 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Draw samples
         var skip = 1;
         var mul = 1;
-        var ratio = scope.width / this.data.length * scope.scaling.x;
+        var ratio = scope.width / ab.length * scope.scaling.x;
         if(ratio > 1){
-            mul = Math.ceil(ratio);
+            mul = ratio;
         } else {
-            skip = Math.floor(1 / ratio);
+            skip = 1 / ratio;
         }
         scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, pushed * mul / scope.width);
 
         context.moveTo(0, (halfHeight - (ab[0] + traceConf.offset) * halfHeight * scope.scaling.y));
         for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-            context.lineTo(j, (halfHeight - (ab[i] + traceConf.offset) * halfHeight * scope.scaling.y));
+            context.lineTo(j, (halfHeight - (ab[Math.floor(i)] + traceConf.offset) * halfHeight * scope.scaling.y));
         }
         // Fix drawing on canvas
         context.stroke();

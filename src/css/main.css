@@ -18,7 +18,25 @@ body {
 }
 #scope {
     background: teal;
+    float: left;
+    transition: transform 1s;
 }
+#prefpane {
+    width: 300px;
+    height: 100%;
+    float: right;
+    /*position:fixed;
+    right: 0;
+    top: 0;*/
+    background-color: #ABABAB;
+    transition: transform 1s;
+}
+
+#toggle-prefpane {
+    position:fixed;
+    bottom: 20px;
+}
+
 #freqbars {
     background: black;
     display: block;

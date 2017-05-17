@@ -115,7 +115,7 @@ var appState = {
                 { id: 2, type: 'vertical', x: 0.5, y: 0 }
             ],
             buttons: [
-                { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single'}
+                { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single', handler: 'singleShot'}
             ],
             mode: 'normal',
             autoTriggering: true,
@@ -130,8 +130,14 @@ var appState = {
                     width: 50,
                     height: 20,
                     horizontalPosition: 0,
+                },
+                prefPane: {
+                    open: false,
+                    width: 300,
                 }
-            }
+            },
+            frameSize: 4096,
+            samplingRate: 1000000,
         }],
         count: 8
     }
@@ -149,8 +155,8 @@ window.addEventListener('load', function() {
             controller: function() {},
             view: function() {
                 return m(scopeView, {
-                    width: conf.canvasSize.width,
-                    height: conf.canvasSize.height,
+                    // width: conf.canvasSize.width,
+                    // height: conf.canvasSize.height,
                     scope: window.scopeState
                 });
             }

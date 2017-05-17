@@ -1869,6 +1869,10 @@ minimist@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.0.tgz#a35008b20f41383eec1fb914f4cd5df79a264284"
 
+mithril-stream@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/mithril-stream/-/mithril-stream-1.0.0.tgz#ee68ad7006755a40653c6ed3a3efac5b6f89d0a4"
+
 mithril@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/mithril/-/mithril-1.0.1.tgz#056b35b24e3f7e323a264b7a25b756c57d69008a"

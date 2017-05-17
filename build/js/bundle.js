@@ -1197,11 +1197,6 @@ module["exports"] = m;
 };
 });
 
-const canvasSize = {
-    height: '100%',
-    width: '100%'
-};
-
 var jsplumb = createCommonjsModule(function (module, exports) {
 /**
  * jsBezier
@@ -15303,13 +15298,12 @@ const WebsocketSource = function(state) {
                 // New data from stream
                 var arr = new Uint16Array(e.data);
                 me.data = new Float32Array(arr);
+                console.log(arr);
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit int to float
-                    me.data[i] = (arr[i]) / 8192;
-                    // HAXX
-                    if(me.data[i] > 1)
-                        me.data[i] -= 2;
+                    me.data[i] = (arr[i] - 8192) / 8192;
                 }
+                // console.log(me.data)
                 if(me.state.mode == 'single'){
                     me.awaitsSingle = false;
                 }
@@ -15592,7 +15586,6 @@ const window$1 = function(data_array, windowing_function, alpha) {
 	return data_array;
 };
 
-// Creates a new trace
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
@@ -15647,9 +15640,9 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     // To calculate steps in the for loop to draw the trace
     var ratio = scope.width / this.data.length * scope.scaling.x;
     if(ratio > 1){
-        mul = Math.ceil(ratio);
+        mul = ratio;
     } else {
-        skip = Math.floor(1 / ratio);
+        skip = 1 / ratio;
     }
 
     // Actually draw the trace, starting at pixel 0 and data point at triggerLocation
@@ -15657,7 +15650,7 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     // using an external source the source handles triggering
     context.moveTo(0, (halfHeight - (this.data[triggerLocation] + traceConf.offset) * halfHeight * scope.scaling.y));
     for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (this.data[i] + traceConf.offset) * halfHeight * scope.scaling.y));
+        context.lineTo(j, (halfHeight - (this.data[Math.floor(i)] + traceConf.offset) * halfHeight * scope.scaling.y));
     }
     context.stroke();
 
@@ -15767,7 +15760,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        var real = window$1(this.data.slice(0), windows.hamming);
+        var real = window$1(this.data.slice(0), windows.hann);
         var compl = new Float32Array(this.data.length);
         miniFFT(real, compl);
         real = real.slice(0, real.length / 2);
@@ -15814,17 +15807,17 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Draw samples
         var skip = 1;
         var mul = 1;
-        var ratio = scope.width / this.data.length * scope.scaling.x;
+        var ratio = scope.width / ab.length * scope.scaling.x;
         if(ratio > 1){
-            mul = Math.ceil(ratio);
+            mul = ratio;
         } else {
-            skip = Math.floor(1 / ratio);
+            skip = 1 / ratio;
         }
         scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, pushed * mul / scope.width);
 
         context.moveTo(0, (halfHeight - (ab[0] + traceConf.offset) * halfHeight * scope.scaling.y));
         for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-            context.lineTo(j, (halfHeight - (ab[i] + traceConf.offset) * halfHeight * scope.scaling.y));
+            context.lineTo(j, (halfHeight - (ab[Math.floor(i)] + traceConf.offset) * halfHeight * scope.scaling.y));
         }
         // Fix drawing on canvas
         context.stroke();
@@ -15967,7 +15960,9 @@ const scopeNode = {
                 ]),
                 mithril('.card-meta', [])
             ]),
-            mithril('.card-body', '')
+            mithril('.card-body',
+                mithril(body, vnode.attrs)
+            )
         ]);
     },
     oncreate: function(vnode) {
@@ -15987,6 +15982,25 @@ const scopeNode = {
                 maxConnections: 10,
             });
         });
+    }
+};
+
+const body = {
+    view: function(vnode){
+        return [
+            mithril('.form-group', [
+                mithril('label.form-label [for=wss-samplingrate-' + vnode.attrs.id + ']', 'Sampling Rate'),
+                mithril('input.form-input', {
+                    type: 'number',
+                    id: 'wss-samplingrate-' + vnode.attrs.id, 
+                    value: vnode.attrs.samplingRate,
+                    onchange: mithril.withAttr('value', function(value) {
+                        vnode.attrs.samplingRate = parseInt(value);
+                        vnode.attrs.ctrl.sendJSON({ frameSize: vnode.attrs.SamplingRate });
+                    }),
+                })
+            ])
+        ];
     }
 };
 
@@ -16150,6 +16164,27 @@ const draw$2 = function (context, scope, state) {
     context.restore();
 };
 
+const secondsToString = function(s){
+    if(s < 1e-9){
+        return (s * 1e12).toFixed(2) + 'ps';
+    }
+    if(s < 1e-6){
+        return (s * 1e9).toFixed(2) + 'ns';
+    }
+    if(s < 1e-3){
+        return (s * 1e6).toFixed(2) + 'us';
+    }
+    if(s < 1){
+        return (s * 1e3).toFixed(2) + 'ms';
+    }
+    if(s < 1e3){
+        return (s).toFixed(2) + 's';
+    }
+    if(s < 1e6){
+        return (s * 1e-3).toFixed(2) + 'Ms';
+    }
+};
+
 const Oscilloscope = function(state) {
     // Remember scope state
     this.state = state;
@@ -16167,8 +16202,10 @@ Oscilloscope.prototype.draw = function() {
     if(this.canvas == null){
         return;
     }
-    var width = this.canvas.clientWidth;
-    var height = this.canvas.clientHeight;
+
+    // vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none'
+    var width = document.body.clientWidth - (me.state.ui.prefPane.open ? me.state.ui.prefPane.width : 0);
+    var height = document.body.clientHeight;
     var halfHeight = this.state.height / 2;
     var context = this.canvas.getContext('2d');
 
@@ -16207,7 +16244,6 @@ Oscilloscope.prototype.draw = function() {
         });
     }
 
-    var i = 0;
     me.state.markers.forEach(function(m) {
         draw$1(context, me.state, m);
     });
@@ -16215,7 +16251,57 @@ Oscilloscope.prototype.draw = function() {
     me.state.buttons.forEach(function(b) {
         draw$2(context, me.state, b);
     });
+
+    /* Draw scales */
+    context.strokeWidth = 1;
+    context.strokeStyle = '#ABABAB';
+    context.setLineDash([5]);
+
+    context.font = "30px Arial";
+    context.fillStyle = 'blue';
+
+    var unit = 1e9;
+    var skip = 1;
+    var mul = 1;
+    var ratio = width / me.state.frameSize * me.state.scaling.x; // pixel/sample
+    var nStart = 1e18;
+    var n = 1e18;
+    var dt = ratio / me.state.samplingRate * n;
+    for(var a = 0; a < 20; a++){
+        if(width / dt > 1 && width / dt < 11){
+            break;
+        }
+        n *= 1e-1;
+        dt = ratio / me.state.samplingRate * n;
+    }
+     // pixel / sample * sample / sek
+    var i;
+    for(i = 0; i < 11; i++){
+        context.beginPath();
+        context.moveTo(dt * i, 0);
+        context.lineTo(dt * i, height);
+        context.stroke();
+    }
+        // context.beginPath();
+        // var halfHeight = scope.height / 2;
+        // context.moveTo(0, halfHeight - state.y * halfHeight);
+        // context.lineTo(scope.width, halfHeight - state.y * halfHeight);
+        // context.stroke();
+
+    // Draw legend
+    context.strokeStyle = '#ABABAB';
+    context.fillStyle='#222222';
+    context.setLineDash([0]);
+    context.rect(width - 300, 20, 280, 180);
+    context.stroke();
+    context.fill();
+    context.textAlign = 'left';
+    context.font = '20px Arial';
+    context.fillStyle = '#ABABAB';
+    context.textBaseline = 'hanging';
+    context.fillText('Δt = ' + secondsToString(me.state.samplingRate / (nStart / n)), width - 290, 30);
 };
+
 
 function getTriggerLocation(buf, buflen, triggerLevel, type){
     switch(type){
@@ -16310,11 +16396,7 @@ Oscilloscope.prototype.onMouseUp = function(event){
             var y = button.top;
             if(event.offsetX < x + w && event.offsetX > x){
                 if(event.offsetY < y + h && event.offsetY > y){
-                    me.state.traces.forEach(function(t){
-                        if(t.node.source.node.ctrl.single){
-                            t.node.source.node.ctrl.single();
-                        }
-                    });
+                    me.uiHandlers[button.handler](me);
                 }
             }
         });
@@ -16491,23 +16573,55 @@ Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
     second[0].x = secondX;
 };
 
+Oscilloscope.prototype.uiHandlers = {
+    singleShot: function(scope){
+        scope.state.traces.forEach(function(t){
+            if(t.node.source.node.ctrl.single){
+                t.node.source.node.ctrl.single();
+            }
+        });
+    },
+    togglePrefPane: function(scope){
+        scope.state.ui.prefPane.open = !scope.state.ui.prefPane.open;
+    }
+};
+
 const scopeView = {
     oninit: function(vnode) {
+        console.log(vnode.attrs.scope);
         window.addEventListener('mousewheel', function(event){
             vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
         }, false);
     },
     view: function(vnode) {
-        return mithril('canvas', {
-            id: 'scope',
-            style: {
-                width: vnode.attrs.width,
-                height: vnode.attrs.height
-            },
-            onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
-            onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
-            onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
-        });
+        return [
+            mithril('canvas', {
+                id: 'scope',
+                style: {
+                    width: vnode.attrs.width,
+                    height: vnode.attrs.height
+                },
+                onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
+                onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
+                onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
+            }),
+            mithril('', {
+                id: 'prefpane',
+                style: {
+                    display: vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none',
+                }
+            }),
+            mithril('button.btn.btn-primary.btn-action.btn-lg', {
+                id: 'toggle-prefpane',
+                style: {
+                    right: vnode.attrs.scope.ui.prefPane.open ? '' + (vnode.attrs.scope.ui.prefPane.width + 20) + 'px' : '' + 20 + 'px',
+                },
+                onclick: function(){
+                    console.log(vnode.attrs.scope);
+                    vnode.attrs.scope.ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope.ctrl);
+                }
+            }, mithril('i.icon.icon-cross', ''))
+        ];
     },
     oncreate: function(vnode){
         vnode.attrs.scope.ctrl = new Oscilloscope(vnode.attrs.scope);
@@ -16516,7 +16630,7 @@ const scopeView = {
     },
 };
 
-__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n}\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
+__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n    float: left;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n#prefpane {\n    width: 300px;\n    height: 100%;\n    float: right;\n    /*position:fixed;\n    right: 0;\n    top: 0;*/\n    background-color: #ABABAB;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n\n#toggle-prefpane {\n    position:fixed;\n    bottom: 20px;\n}\n\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
 
 /*
 * This file is the main app file.
@@ -16626,7 +16740,7 @@ var appState = {
                 { id: 2, type: 'vertical', x: 0.5, y: 0 }
             ],
             buttons: [
-                { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single'}
+                { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single', handler: 'singleShot'}
             ],
             mode: 'normal',
             autoTriggering: true,
@@ -16641,8 +16755,14 @@ var appState = {
                     width: 50,
                     height: 20,
                     horizontalPosition: 0,
+                },
+                prefPane: {
+                    open: false,
+                    width: 300,
                 }
-            }
+            },
+            frameSize: 4096,
+            samplingRate: 1000000,
         }],
         count: 8
     }
@@ -16660,8 +16780,8 @@ window.addEventListener('load', function() {
             controller: function() {},
             view: function() {
                 return mithril(scopeView, {
-                    width: canvasSize.width,
-                    height: canvasSize.height,
+                    // width: conf.canvasSize.width,
+                    // height: conf.canvasSize.height,
                     scope: window.scopeState
                 });
             }
