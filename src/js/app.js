@@ -107,6 +107,7 @@ var appState = {
                 {
                     id: 3,
                     offset: 0,
+                    window: 'hann'
                 },
             ],
             triggerLevel: 0,
@@ -132,7 +133,7 @@ var appState = {
                     horizontalPosition: 0,
                 },
                 prefPane: {
-                    open: false,
+                    open: true,
                     width: 300,
                 }
             },
@@ -149,6 +150,10 @@ window.addEventListener('load', function() {
             controller: function() {}, 
             view: function() {
                 return m(router, appState);
+            },
+            oncreate: function(){
+                var popup = window.open(window.location.pathname + '#!/scope?id=1');
+                popup.scopeState = appState.nodes.scopes[0];
             }
         },
         '/scope': {
@@ -159,7 +164,7 @@ window.addEventListener('load', function() {
                     // height: conf.canvasSize.height,
                     scope: window.scopeState
                 });
-            }
+            },
         }
     });
 });

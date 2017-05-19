@@ -121,7 +121,7 @@ export const WebsocketSource = function(state) {
                 // New data from stream
                 var arr = new Uint16Array(e.data);
                 me.data = new Float32Array(arr);
-                console.log(arr)
+                // console.log(arr)
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit int to float
                     me.data[i] = (arr[i] - 8192) / 8192;

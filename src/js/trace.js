@@ -1,6 +1,6 @@
 import { miniFFT} from './math/fft.js';
 import { sum, ssum } from './helpers.js';
-import { window, windows } from './math/windowing.js';
+import { applyWindow, windowFunctions } from './math/windowing.js';
 
 // Creates a new trace
 export const  NormalTrace = function (state) {
@@ -25,7 +25,11 @@ NormalTrace.prototype.fetch = function () {
     }
     // Otherwise it will just be ensured the data is referenced from the source properly
     else {
-        this.data = this.state.source.node.ctrl.data;
+        if(this.state.source.node.ctrl.data){
+            this.data = this.state.source.node.ctrl.data;
+        } else {
+            this.data = new Float32Array();
+        }
     }
     this.fetched = true;
 };
@@ -117,7 +121,11 @@ FFTrace.prototype.fetch = function () {
     }
     // Otherwise it will just be ensured the data is referenced from the source properly
     else {
-        this.data = this.state.source.node.ctrl.data;
+        if(this.state.source.node.ctrl.data){
+            this.data = this.state.source.node.ctrl.data;
+        } else {
+            this.data = new Float32Array();
+        }
     }
     this.fetched = true;
 };
@@ -177,21 +185,36 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        var real = window(this.data.slice(0), windows.hann);
+        // console.log(traceConf);
+
+        // Duplicate data
+        var real = this.data.slice(0);
+        // Create a complex vector with zeroes sice we only have real input
         var compl = new Float32Array(this.data.length);
+        // Window data if a valid window was selected
+        if(traceConf.window && windowFunctions[traceConf.window]){
+            real = applyWindow(real, windowFunctions[traceConf.window]);
+        }
+        // Do an FFT of the signal
         miniFFT(real, compl);
+        // Only use half of the FFT since we only need the upper half
         real = real.slice(0, real.length / 2);
         compl = compl.slice(0, compl.length / 2);
+
+        // Create the the total power of the signal
+        // P = V^2
         var ab = new Float32Array(real.length);
         for(i = 0; i < ab.length; i++){
-            ab[i] = Math.sqrt(real[i]*real[i] + compl[i]*compl[i]);
+            ab[i] = real[i]*real[i] + compl[i]*compl[i];
         }
         
+        // Calculate SNR
         var m = sum(ab) / ab.length;
         var n = [];
         var s = [];
         var pushed = 0;
         var firstSNRMarker = 0;
+        // Add all values under the average and those above each to a list
         for(i = 0; i < ab.length; i++){
             if(ab[i] < m){
                 n.push(ab[i]);
@@ -205,23 +228,23 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
             }
         }
 
+        // Sum both sets and calculate their ratio which is the SNR
         var ss = ssum(s);
         var sn = ssum(n);
         var SNR = Math.log10(ss / sn) * 10;
         console.log('SNR: ', SNR);
 
+        // Convert spectral density to a logarithmic scale to be able to better plot it.
+        // Scale it down by 200 for a nicer plot
         for(i = 0; i < ab.length; i++){
             ab[i] = Math.log10(ab[i])*20/200;
         }
 
-        // Store brush
-        context.save();
-        context.strokeWidth = 1;
-
-        // Draw trace
-        context.strokeStyle = this.state.color;
-        context.beginPath();
-        // Draw samples
+        // Calculate x-Axis scaling
+        // mul tells how many pixels have to be skipped after each sample
+        // If the signal has more points than the canvas, this will always be 1
+        // skip tells how many samples have to be skipped after each pixel
+        // If the signal has less points than the canvas, this will always be 1
         var skip = 1;
         var mul = 1;
         var ratio = scope.width / ab.length * scope.scaling.x;
@@ -230,8 +253,16 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         } else {
             skip = 1 / ratio;
         }
+
+        // // Position SNR markers
         scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, pushed * mul / scope.width);
 
+        // Store brush
+        context.save();
+        context.strokeWidth = 1;
+        // Draw trace
+        context.strokeStyle = this.state.color;
+        context.beginPath();
         context.moveTo(0, (halfHeight - (ab[0] + traceConf.offset) * halfHeight * scope.scaling.y));
         for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
             context.lineTo(j, (halfHeight - (ab[Math.floor(i)] + traceConf.offset) * halfHeight * scope.scaling.y));
@@ -239,7 +270,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Fix drawing on canvas
         context.stroke();
 
-        // Draw mover
+        // Draw mover to move the trace
         context.fillStyle = this.state.color;
         offset = this.state.offset;
         if(offset > 1){

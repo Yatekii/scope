@@ -121,6 +121,7 @@ const wssBody = {
                     value: vnode.attrs.location,
                     onchange: m.withAttr('value', function(value) {
                         vnode.attrs.location = value;
+                        vnode.attrs.ctrl = new WebsocketSource(vnode.attrs);
                     }),
                 })
             ]),

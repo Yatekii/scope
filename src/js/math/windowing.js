@@ -21,7 +21,7 @@ Math.bessi0 = function(x) { /* Evaluate modified Bessel function In(x) and n=0. 
 /**
  * Windowing functions.
  */
-export const windows = {
+export const windowFunctions = {
 	hann:		function (n, points) { return 0.5 - 0.5*Math.cos(2*Math.PI*n/(points-1)); },
 	hamming:	function (n, points) { return 0.54 - 0.46*Math.cos(2*Math.PI*n/(points-1)); },
 	cosine:		function (n, points) { return Math.sin(Math.PI*n/(points-1)); },
@@ -78,7 +78,7 @@ export const windows = {
 /**
  * Applies a Windowing Function to an array.
  */
-export const window = function(data_array, windowing_function, alpha) {
+export const applyWindow = function(data_array, windowing_function, alpha) {
 	var datapoints = data_array.length;
 
 	/* For each item in the array */

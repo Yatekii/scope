@@ -34,10 +34,9 @@ export const scopeView = {
                     right: vnode.attrs.scope.ui.prefPane.open ? '' + (vnode.attrs.scope.ui.prefPane.width + 20) + 'px' : '' + 20 + 'px',
                 },
                 onclick: function(){
-                    console.log(vnode.attrs.scope)
                     vnode.attrs.scope.ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope.ctrl);
                 }
-            }, m('i.icon.icon-cross', ''))
+            }, m('i.icon.icon-menu', ''))
         ];
     },
     oncreate: function(vnode){

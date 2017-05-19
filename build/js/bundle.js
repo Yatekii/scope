@@ -15298,7 +15298,7 @@ const WebsocketSource = function(state) {
                 // New data from stream
                 var arr = new Uint16Array(e.data);
                 me.data = new Float32Array(arr);
-                console.log(arr);
+                // console.log(arr)
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit int to float
                     me.data[i] = (arr[i] - 8192) / 8192;
@@ -15449,6 +15449,7 @@ const wssBody = {
                     value: vnode.attrs.location,
                     onchange: mithril.withAttr('value', function(value) {
                         vnode.attrs.location = value;
+                        vnode.attrs.ctrl = new WebsocketSource(vnode.attrs);
                     }),
                 })
             ]),
@@ -15517,7 +15518,7 @@ Math.bessi0 = function(x) { /* Evaluate modified Bessel function In(x) and n=0. 
 /**
  * Windowing functions.
  */
-const windows = {
+const windowFunctions = {
 	hann:		function (n, points) { return 0.5 - 0.5*Math.cos(2*Math.PI*n/(points-1)); },
 	hamming:	function (n, points) { return 0.54 - 0.46*Math.cos(2*Math.PI*n/(points-1)); },
 	cosine:		function (n, points) { return Math.sin(Math.PI*n/(points-1)); },
@@ -15574,7 +15575,7 @@ const windows = {
 /**
  * Applies a Windowing Function to an array.
  */
-const window$1 = function(data_array, windowing_function, alpha) {
+const applyWindow = function(data_array, windowing_function, alpha) {
 	var datapoints = data_array.length;
 
 	/* For each item in the array */
@@ -15586,6 +15587,7 @@ const window$1 = function(data_array, windowing_function, alpha) {
 	return data_array;
 };
 
+// Creates a new trace
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
@@ -15608,7 +15610,11 @@ NormalTrace.prototype.fetch = function () {
     }
     // Otherwise it will just be ensured the data is referenced from the source properly
     else {
-        this.data = this.state.source.node.ctrl.data;
+        if(this.state.source.node.ctrl.data){
+            this.data = this.state.source.node.ctrl.data;
+        } else {
+            this.data = new Float32Array();
+        }
     }
     this.fetched = true;
 };
@@ -15700,7 +15706,11 @@ FFTrace.prototype.fetch = function () {
     }
     // Otherwise it will just be ensured the data is referenced from the source properly
     else {
-        this.data = this.state.source.node.ctrl.data;
+        if(this.state.source.node.ctrl.data){
+            this.data = this.state.source.node.ctrl.data;
+        } else {
+            this.data = new Float32Array();
+        }
     }
     this.fetched = true;
 };
@@ -15760,21 +15770,36 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        var real = window$1(this.data.slice(0), windows.hann);
+        // console.log(traceConf);
+
+        // Duplicate data
+        var real = this.data.slice(0);
+        // Create a complex vector with zeroes sice we only have real input
         var compl = new Float32Array(this.data.length);
+        // Window data if a valid window was selected
+        if(traceConf.window && windowFunctions[traceConf.window]){
+            real = applyWindow(real, windowFunctions[traceConf.window]);
+        }
+        // Do an FFT of the signal
         miniFFT(real, compl);
+        // Only use half of the FFT since we only need the upper half
         real = real.slice(0, real.length / 2);
         compl = compl.slice(0, compl.length / 2);
+
+        // Create the the total power of the signal
+        // P = V^2
         var ab = new Float32Array(real.length);
         for(i = 0; i < ab.length; i++){
-            ab[i] = Math.sqrt(real[i]*real[i] + compl[i]*compl[i]);
+            ab[i] = real[i]*real[i] + compl[i]*compl[i];
         }
         
+        // Calculate SNR
         var m = sum(ab) / ab.length;
         var n = [];
         var s = [];
         var pushed = 0;
         var firstSNRMarker = 0;
+        // Add all values under the average and those above each to a list
         for(i = 0; i < ab.length; i++){
             if(ab[i] < m){
                 n.push(ab[i]);
@@ -15788,23 +15813,23 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
             }
         }
 
+        // Sum both sets and calculate their ratio which is the SNR
         var ss = ssum(s);
         var sn = ssum(n);
         var SNR = Math.log10(ss / sn) * 10;
         console.log('SNR: ', SNR);
 
+        // Convert spectral density to a logarithmic scale to be able to better plot it.
+        // Scale it down by 200 for a nicer plot
         for(i = 0; i < ab.length; i++){
             ab[i] = Math.log10(ab[i])*20/200;
         }
 
-        // Store brush
-        context.save();
-        context.strokeWidth = 1;
-
-        // Draw trace
-        context.strokeStyle = this.state.color;
-        context.beginPath();
-        // Draw samples
+        // Calculate x-Axis scaling
+        // mul tells how many pixels have to be skipped after each sample
+        // If the signal has more points than the canvas, this will always be 1
+        // skip tells how many samples have to be skipped after each pixel
+        // If the signal has less points than the canvas, this will always be 1
         var skip = 1;
         var mul = 1;
         var ratio = scope.width / ab.length * scope.scaling.x;
@@ -15813,8 +15838,16 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         } else {
             skip = 1 / ratio;
         }
+
+        // // Position SNR markers
         scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, pushed * mul / scope.width);
 
+        // Store brush
+        context.save();
+        context.strokeWidth = 1;
+        // Draw trace
+        context.strokeStyle = this.state.color;
+        context.beginPath();
         context.moveTo(0, (halfHeight - (ab[0] + traceConf.offset) * halfHeight * scope.scaling.y));
         for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
             context.lineTo(j, (halfHeight - (ab[Math.floor(i)] + traceConf.offset) * halfHeight * scope.scaling.y));
@@ -15822,7 +15855,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Fix drawing on canvas
         context.stroke();
 
-        // Draw mover
+        // Draw mover to move the trace
         context.fillStyle = this.state.color;
         offset = this.state.offset;
         if(offset > 1){
@@ -16617,10 +16650,9 @@ const scopeView = {
                     right: vnode.attrs.scope.ui.prefPane.open ? '' + (vnode.attrs.scope.ui.prefPane.width + 20) + 'px' : '' + 20 + 'px',
                 },
                 onclick: function(){
-                    console.log(vnode.attrs.scope);
                     vnode.attrs.scope.ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope.ctrl);
                 }
-            }, mithril('i.icon.icon-cross', ''))
+            }, mithril('i.icon.icon-menu', ''))
         ];
     },
     oncreate: function(vnode){
@@ -16732,6 +16764,7 @@ var appState = {
                 {
                     id: 3,
                     offset: 0,
+                    window: 'hann'
                 },
             ],
             triggerLevel: 0,
@@ -16757,7 +16790,7 @@ var appState = {
                     horizontalPosition: 0,
                 },
                 prefPane: {
-                    open: false,
+                    open: true,
                     width: 300,
                 }
             },
@@ -16774,6 +16807,10 @@ window.addEventListener('load', function() {
             controller: function() {}, 
             view: function() {
                 return mithril(router, appState);
+            },
+            oncreate: function(){
+                var popup = window.open(window.location.pathname + '#!/scope?id=1');
+                popup.scopeState = appState.nodes.scopes[0];
             }
         },
         '/scope': {
@@ -16784,7 +16821,7 @@ window.addEventListener('load', function() {
                     // height: conf.canvasSize.height,
                     scope: window.scopeState
                 });
-            }
+            },
         }
     });
 });
