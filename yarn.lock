@@ -2951,9 +2951,9 @@ source-map@~0.1.7:
   dependencies:
     amdefine ">=0.0.4"
 
-spectre.css@^0.2.8:
-  version "0.2.8"
-  resolved "https://registry.yarnpkg.com/spectre.css/-/spectre.css-0.2.8.tgz#98efebdc716faa369447be4b867b3915b57b3c9f"
+spectre.css@^0.2.14:
+  version "0.2.14"
+  resolved "https://registry.yarnpkg.com/spectre.css/-/spectre.css-0.2.14.tgz#4a3f9afd289e8bafcd3e96b13999e08d9e2ebffd"
 
 sprintf-js@~1.0.2:
   version "1.0.3"

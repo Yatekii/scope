@@ -40,6 +40,6 @@
     "rollup-plugin-serve": "^0.1.0",
     "rollup-plugin-uglify": "^1.0.1",
     "rollup-watch": "^3.2.2",
-    "spectre.css": "^0.2.8"
+    "spectre.css": "^0.2.14"
   }
 }

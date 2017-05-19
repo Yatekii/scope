@@ -185,15 +185,15 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        // console.log(traceConf);
+        console.log(scope);
 
         // Duplicate data
         var real = this.data.slice(0);
         // Create a complex vector with zeroes sice we only have real input
         var compl = new Float32Array(this.data.length);
         // Window data if a valid window was selected
-        if(traceConf.window && windowFunctions[traceConf.window]){
-            real = applyWindow(real, windowFunctions[traceConf.window]);
+        if(traceConf.windowFunction && windowFunctions[traceConf.windowFunction]){
+            real = applyWindow(real, windowFunctions[traceConf.windowFunction]);
         }
         // Do an FFT of the signal
         miniFFT(real, compl);
@@ -209,9 +209,21 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         }
         
         // Calculate SNR
-        var m = sum(ab) / ab.length;
+        // var max = -3000000;
+        // var maxi = 0;
+        // for(i = 0; i < ab.length; i++){
+        //     if(ab[i] > max){
+        //         max = ab[i];
+        //         maxi = i;
+        //     }
+        // }
+        var sampleAtSignal = traceConf.signalFrequency / (scope.samplingRate / this.state.source.node.frameSize);
+        // var m = (sum(ab.slice(0, maxi - 2)) + sum(ab.slice(maxi + 2))) / ab.length;
+        var m = (sum(ab.slice(0, sampleAtSignal - 3)) + sum(ab.slice(sampleAtSignal + 3))) / ab.length;
         var n = [];
         var s = [];
+        var max = 0;
+        var maxi = 0;
         var pushed = 0;
         var firstSNRMarker = 0;
         // Add all values under the average and those above each to a list
@@ -232,7 +244,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         var ss = ssum(s);
         var sn = ssum(n);
         var SNR = Math.log10(ss / sn) * 10;
-        console.log('SNR: ', SNR);
+        traceConf.info.SNR = SNR;
 
         // Convert spectral density to a logarithmic scale to be able to better plot it.
         // Scale it down by 200 for a nicer plot

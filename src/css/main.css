@@ -22,7 +22,7 @@ body {
     transition: transform 1s;
 }
 #prefpane {
-    width: 300px;
+    width: 400px;
     height: 100%;
     float: right;
     /*position:fixed;

@@ -15178,6 +15178,10 @@ const ssum = function(arr){
     return k;
 };
 
+const capitalizeFirstLetter = function(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 const Waveform = function(state) {
     // Remember source state
     this.state = state;
@@ -15770,15 +15774,15 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        // console.log(traceConf);
+        console.log(scope);
 
         // Duplicate data
         var real = this.data.slice(0);
         // Create a complex vector with zeroes sice we only have real input
         var compl = new Float32Array(this.data.length);
         // Window data if a valid window was selected
-        if(traceConf.window && windowFunctions[traceConf.window]){
-            real = applyWindow(real, windowFunctions[traceConf.window]);
+        if(traceConf.windowFunction && windowFunctions[traceConf.windowFunction]){
+            real = applyWindow(real, windowFunctions[traceConf.windowFunction]);
         }
         // Do an FFT of the signal
         miniFFT(real, compl);
@@ -15794,9 +15798,21 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         }
         
         // Calculate SNR
-        var m = sum(ab) / ab.length;
+        // var max = -3000000;
+        // var maxi = 0;
+        // for(i = 0; i < ab.length; i++){
+        //     if(ab[i] > max){
+        //         max = ab[i];
+        //         maxi = i;
+        //     }
+        // }
+        var sampleAtSignal = traceConf.signalFrequency / (scope.samplingRate / this.state.source.node.frameSize);
+        // var m = (sum(ab.slice(0, maxi - 2)) + sum(ab.slice(maxi + 2))) / ab.length;
+        var m = (sum(ab.slice(0, sampleAtSignal - 3)) + sum(ab.slice(sampleAtSignal + 3))) / ab.length;
         var n = [];
         var s = [];
+        var max = 0;
+        var maxi = 0;
         var pushed = 0;
         var firstSNRMarker = 0;
         // Add all values under the average and those above each to a list
@@ -15817,7 +15833,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         var ss = ssum(s);
         var sn = ssum(n);
         var SNR = Math.log10(ss / sn) * 10;
-        console.log('SNR: ', SNR);
+        traceConf.info.SNR = SNR;
 
         // Convert spectral density to a logarithmic scale to be able to better plot it.
         // Scale it down by 200 for a nicer plot
@@ -16151,6 +16167,43 @@ const router = {
         });
         this.state.nodes.count++;
         mithril.redraw();
+    }
+};
+
+const FFTracePrefPane = {
+    view: function(vnode){
+        var s = vnode.attrs.traceConf;
+        return [
+            mithril('header.text-center', mithril('h4', s.node.name)),
+            mithril('.form-horizontal', [
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label [for=signalfrequency]', 'Signal Frequency')),
+                    mithril('.col-9', mithril('input.form-input', {
+                        type: 'number',
+                        id: 'signalfrequency', 
+                        value: s.signalFrequency,
+                        onchange: mithril.withAttr('value', function(value) {
+                            s.signalFrequency = parseInt(value);
+                        }),
+                    }))
+                ]),
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label [for=window', 'Window')),
+                    mithril('.col-9', mithril('select.form-input', {
+                        id: 'window', 
+                        value: s.windowFunction,
+                        onchange: mithril.withAttr('value', function(value) {
+                            s.windowFunction = value;
+                        }),
+                    }, Object.keys(windowFunctions).map(function(value){ return mithril('option', { value: value }, capitalizeFirstLetter(value)) }))
+                    )
+                ]),
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label [for=SNR', 'SNR')),
+                    mithril('.col-9', mithril('label.form-label', { id: 'SNR' }, s.info.SNR))
+                ])
+            ])
+        ];
     }
 };
 
@@ -16621,7 +16674,6 @@ Oscilloscope.prototype.uiHandlers = {
 
 const scopeView = {
     oninit: function(vnode) {
-        console.log(vnode.attrs.scope);
         window.addEventListener('mousewheel', function(event){
             vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
         }, false);
@@ -16638,12 +16690,14 @@ const scopeView = {
                 onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
                 onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
             }),
-            mithril('', {
+            mithril('.panel', {
                 id: 'prefpane',
                 style: {
                     display: vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none',
                 }
-            }),
+            }, vnode.attrs.scope.traces.map(function(value){
+                return value.node.type == 'FFTrace' ? [mithril(FFTracePrefPane, { traceConf: value }), mithril('.divider')] : '';
+            })),
             mithril('button.btn.btn-primary.btn-action.btn-lg', {
                 id: 'toggle-prefpane',
                 style: {
@@ -16662,7 +16716,7 @@ const scopeView = {
     },
 };
 
-__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n    float: left;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n#prefpane {\n    width: 300px;\n    height: 100%;\n    float: right;\n    /*position:fixed;\n    right: 0;\n    top: 0;*/\n    background-color: #ABABAB;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n\n#toggle-prefpane {\n    position:fixed;\n    bottom: 20px;\n}\n\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
+__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n    float: left;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n#prefpane {\n    width: 400px;\n    height: 100%;\n    float: right;\n    /*position:fixed;\n    right: 0;\n    top: 0;*/\n    background-color: #ABABAB;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n\n#toggle-prefpane {\n    position:fixed;\n    bottom: 20px;\n}\n\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
 
 /*
 * This file is the main app file.
@@ -16756,6 +16810,7 @@ var appState = {
                 {
                     id: 1,
                     offset: 0,
+                    info: {}
                 },
                 // {
                 //     id: 2,
@@ -16764,7 +16819,8 @@ var appState = {
                 {
                     id: 3,
                     offset: 0,
-                    window: 'hann'
+                    windowFunction: 'hann',
+                    info: {}
                 },
             ],
             triggerLevel: 0,
@@ -16791,7 +16847,7 @@ var appState = {
                 },
                 prefPane: {
                     open: true,
-                    width: 300,
+                    width: 400,
                 }
             },
             frameSize: 4096,

@@ -99,6 +99,7 @@ var appState = {
                 {
                     id: 1,
                     offset: 0,
+                    info: {}
                 },
                 // {
                 //     id: 2,
@@ -107,7 +108,8 @@ var appState = {
                 {
                     id: 3,
                     offset: 0,
-                    window: 'hann'
+                    windowFunction: 'hann',
+                    info: {}
                 },
             ],
             triggerLevel: 0,
@@ -134,7 +136,7 @@ var appState = {
                 },
                 prefPane: {
                     open: true,
-                    width: 300,
+                    width: 400,
                 }
             },
             frameSize: 4096,

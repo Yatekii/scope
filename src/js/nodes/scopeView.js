@@ -1,11 +1,11 @@
 import m from 'mithril';
 import { draw } from '../helpers.js';
+import { FFTracePrefPane } from '../prefpanes/fftrace.js'
 
 import * as oscilloscope from '../oscilloscope.js';
 
 export const scopeView = {
     oninit: function(vnode) {
-        console.log(vnode.attrs.scope)
         window.addEventListener('mousewheel', function(event){
             vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
         }, false);
@@ -22,12 +22,14 @@ export const scopeView = {
                 onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
                 onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
             }),
-            m('', {
+            m('.panel', {
                 id: 'prefpane',
                 style: {
                     display: vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none',
                 }
-            }),
+            }, vnode.attrs.scope.traces.map(function(value){
+                return value.node.type == 'FFTrace' ? [m(FFTracePrefPane, { traceConf: value }), m('.divider')] : '';
+            })),
             m('button.btn.btn-primary.btn-action.btn-lg', {
                 id: 'toggle-prefpane',
                 style: {
