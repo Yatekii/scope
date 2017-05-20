@@ -126,8 +126,7 @@ export const WebsocketSource = function(state) {
                     // 14 bit int to float
                     me.data[i] = (arr[i] - 8192) / 8192;
                 }
-                // console.log(me.data)
-                if(me.state.mode == 'single'){
+                if(me.mode == 'single'){
                     me.awaitsSingle = false;
                 }
             }

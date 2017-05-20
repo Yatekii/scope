@@ -1,6 +1,7 @@
 import m from 'mithril';
 import { draw } from '../helpers.js';
-import { FFTracePrefPane } from '../prefpanes/fftrace.js'
+import { FFTracePrefPane } from '../prefpanes/fftrace.js';
+import { generalPrefPane } from '../prefpanes/general.js';
 
 import * as oscilloscope from '../oscilloscope.js';
 
@@ -27,9 +28,12 @@ export const scopeView = {
                 style: {
                     display: vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none',
                 }
-            }, vnode.attrs.scope.traces.map(function(value){
-                return value.node.type == 'FFTrace' ? [m(FFTracePrefPane, { traceConf: value }), m('.divider')] : '';
-            })),
+            }, [
+                m(generalPrefPane, { scope: vnode.attrs.scope }),
+                vnode.attrs.scope.traces.map(function(value){
+                    return value.node.type == 'FFTrace' ? [m(FFTracePrefPane, { traceConf: value }), m('.divider')] : '';
+                })
+            ]),
             m('button.btn.btn-primary.btn-action.btn-lg', {
                 id: 'toggle-prefpane',
                 style: {

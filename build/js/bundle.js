@@ -15182,6 +15182,7 @@ const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
+// Creates a new source
 const Waveform = function(state) {
     // Remember source state
     this.state = state;
@@ -15307,8 +15308,7 @@ const WebsocketSource = function(state) {
                     // 14 bit int to float
                     me.data[i] = (arr[i] - 8192) / 8192;
                 }
-                // console.log(me.data)
-                if(me.state.mode == 'single'){
+                if(me.mode == 'single'){
                     me.awaitsSingle = false;
                 }
             }
@@ -15591,7 +15591,6 @@ const applyWindow = function(data_array, windowing_function, alpha) {
 	return data_array;
 };
 
-// Creates a new trace
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
@@ -15774,7 +15773,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        console.log(scope);
+        // console.log(scope);
 
         // Duplicate data
         var real = this.data.slice(0);
@@ -16202,6 +16201,55 @@ const FFTracePrefPane = {
                     mithril('.col-3', mithril('label.form-label [for=SNR', 'SNR')),
                     mithril('.col-9', mithril('label.form-label', { id: 'SNR' }, s.info.SNR))
                 ])
+            ])
+        ];
+    }
+};
+
+const generalPrefPane = {
+    view: function(vnode){
+        var s = vnode.attrs.scope;
+        // console.log(s);
+        return [
+            mithril('header.text-center', mithril('h4', s)),
+            mithril('.form-horizontal', [
+                mithril('.form-group', [
+                    mithril('.col-12', mithril('.btn-group.btn-group-block', [
+                        mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.mode = 'normal';
+                                    t.node.source.node.ctrl.single();
+                                });
+                                s.mode = 'normal';
+                            }
+                        }, 'Normal'),
+                        mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
+                            onclick: function(e){
+                                
+                            }
+                        }, 'Auto'),
+                        mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.mode = 'single';
+                                });
+                                s.mode = 'single';
+                            }
+                        }, 'Single')
+                    ]))
+                ]),
+                mithril('.form-group', [
+                    mithril('button.btn.col-12', {
+                        onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.mode = 'single';
+                                    t.node.source.node.ctrl.single();
+                                });
+                                s.mode = 'single';
+                            }
+                    }, 'Single Shot')
+                ]),
             ])
         ];
     }
@@ -16695,9 +16743,12 @@ const scopeView = {
                 style: {
                     display: vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none',
                 }
-            }, vnode.attrs.scope.traces.map(function(value){
-                return value.node.type == 'FFTrace' ? [mithril(FFTracePrefPane, { traceConf: value }), mithril('.divider')] : '';
-            })),
+            }, [
+                mithril(generalPrefPane, { scope: vnode.attrs.scope }),
+                vnode.attrs.scope.traces.map(function(value){
+                    return value.node.type == 'FFTrace' ? [mithril(FFTracePrefPane, { traceConf: value }), mithril('.divider')] : '';
+                })
+            ]),
             mithril('button.btn.btn-primary.btn-action.btn-lg', {
                 id: 'toggle-prefpane',
                 style: {
@@ -16783,6 +16834,7 @@ var appState = {
                 type: 'WebsocketSource',
                 // location: 'ws://10.84.130.54:50090',
                 location: 'ws://localhost:50090',
+                // location: 'ws://yatekii.ch:50090',
                 frameSize: 4096,
                 buffer: {
                     upperSize: 4,

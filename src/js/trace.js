@@ -185,7 +185,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        console.log(scope);
+        // console.log(scope);
 
         // Duplicate data
         var real = this.data.slice(0);
