@@ -110,13 +110,16 @@ var appState = {
                     id: 3,
                     offset: 0,
                     windowFunction: 'hann',
+                    SNRmode: 'auto',
                     info: {}
                 },
             ],
             triggerLevel: 0,
             markers: [
                 { id: 1, type: 'horizontal', x: 0, y: 0 },
-                { id: 2, type: 'vertical', x: 0.5, y: 0 }
+                { id: 2, type: 'vertical', x: 0.5, y: 0 },
+                { id: 'SNRfirst', type: 'vertical', x: 0 },
+                { id: 'SNRsecond', type: 'vertical', x: 0 },
             ],
             buttons: [
                 { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single', handler: 'singleShot'}

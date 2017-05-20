@@ -31,6 +31,20 @@ export const FFTracePrefPane = {
                     )
                 ]),
                 m('.form-group', [
+                    m('.col-12', m('.btn-group.btn-group-block', [
+                        m('button.btn' + (s.SNRmode == 'manual' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.SNRmode = 'manual';
+                            }
+                        }, 'Manual'),
+                        m('button.btn' + (s.SNRmode == 'auto' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.SNRmode = 'auto';
+                            }
+                        }, 'Auto')
+                    ]))
+                ]),
+                m('.form-group', [
                     m('.col-3', m('label.form-label [for=SNR', 'SNR')),
                     m('.col-9', m('label.form-label', { id: 'SNR' }, s.info.SNR))
                 ])
