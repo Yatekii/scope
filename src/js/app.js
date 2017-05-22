@@ -72,6 +72,7 @@ var appState = {
                 type: 'WebsocketSource',
                 // location: 'ws://10.84.130.54:50090',
                 location: 'ws://localhost:50090',
+                // location: 'ws://yatekii.ch:50090',
                 frameSize: 4096,
                 buffer: {
                     upperSize: 4,
@@ -109,13 +110,16 @@ var appState = {
                     id: 3,
                     offset: 0,
                     windowFunction: 'hann',
+                    SNRmode: 'auto',
                     info: {}
                 },
             ],
             triggerLevel: 0,
             markers: [
                 { id: 1, type: 'horizontal', x: 0, y: 0 },
-                { id: 2, type: 'vertical', x: 0.5, y: 0 }
+                { id: 2, type: 'vertical', x: 0.5, y: 0 },
+                { id: 'SNRfirst', type: 'vertical', x: 0 },
+                { id: 'SNRsecond', type: 'vertical', x: 0 },
             ],
             buttons: [
                 { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single', handler: 'singleShot'}

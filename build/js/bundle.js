@@ -15308,6 +15308,7 @@ const WebsocketSource = function(state) {
                     // 14 bit int to float
                     me.data[i] = (arr[i] - 8192) / 8192;
                 }
+<<<<<<< HEAD
                 // console.log(me.data)
                 if(me.state.mode == 'single'){
                     // We don't have to do anything, we already did our job
@@ -15319,6 +15320,10 @@ const WebsocketSource = function(state) {
                 if(me.state.mode == 'auto'){
                     // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
                     me.auto();
+=======
+                if(me.mode == 'single'){
+                    me.awaitsSingle = false;
+>>>>>>> d93fe2d5e770315d386a7d213c30464393533aeb
                 }
             }
         }
@@ -15811,7 +15816,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        console.log(scope);
+        // console.log(scope);
 
         // Duplicate data
         var real = this.data.slice(0);
@@ -15833,50 +15838,8 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         for(i = 0; i < ab.length; i++){
             ab[i] = real[i]*real[i] + compl[i]*compl[i];
         }
-        
-        // Calculate SNR
-        // var max = -3000000;
-        // var maxi = 0;
-        // for(i = 0; i < ab.length; i++){
-        //     if(ab[i] > max){
-        //         max = ab[i];
-        //         maxi = i;
-        //     }
-        // }
-        var sampleAtSignal = traceConf.signalFrequency / (scope.samplingRate / this.state.source.node.frameSize);
-        // var m = (sum(ab.slice(0, maxi - 2)) + sum(ab.slice(maxi + 2))) / ab.length;
-        var m = (sum(ab.slice(0, sampleAtSignal - 3)) + sum(ab.slice(sampleAtSignal + 3))) / ab.length;
-        var n = [];
-        var s = [];
-        var max = 0;
-        var maxi = 0;
-        var pushed = 0;
-        var firstSNRMarker = 0;
-        // Add all values under the average and those above each to a list
-        for(i = 0; i < ab.length; i++){
-            if(ab[i] < m){
-                n.push(ab[i]);
-            }
-            else {
-                if(pushed == 0){
-                    firstSNRMarker = i;
-                }
-                s.push(ab[i]);
-                pushed = i;
-            }
-        }
 
-        // Sum both sets and calculate their ratio which is the SNR
-        var ss = ssum(s);
-        var sn = ssum(n);
-        var SNR = Math.log10(ss / sn) * 10;
-        traceConf.info.SNR = SNR;
 
-        // Convert spectral density to a logarithmic scale to be able to better plot it.
-        // Scale it down by 200 for a nicer plot
-        for(i = 0; i < ab.length; i++){
-            ab[i] = Math.log10(ab[i])*20/200;
-        }
 
         // Calculate x-Axis scaling
         // mul tells how many pixels have to be skipped after each sample
@@ -15892,8 +15855,69 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
             skip = 1 / ratio;
         }
 
-        // // Position SNR markers
-        scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, pushed * mul / scope.width);
+
+        
+        // Calculate SNR
+        if(traceConf.SNRmode == 'manual'){
+            var ss = 0;
+            var sn = 0;
+            var first = scope.ctrl.getMarkerById('SNRfirst')[0].x / mul * scope.width;
+            var second = scope.ctrl.getMarkerById('SNRsecond')[0].x / mul * scope.width;
+            console.log(first, second);
+            for(i = 0; i < ab.length; i++){
+                if(i < first || i > second){
+                    sn += ab[i];
+                } else {
+                    console.log(ss);
+                    ss += ab[i];
+                }
+            }
+            var SNR = Math.log10(ss / sn) * 10;
+            traceConf.info.SNR = SNR;
+        }
+        if(traceConf.SNRmode == 'auto'){
+            // Find max
+            var max = -3000000;
+            var maxi = 0;
+            for(i = 0; i < ab.length; i++){
+                if(ab[i] > max){
+                    max = ab[i];
+                    maxi = i;
+                }
+            }
+            var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
+            var n = [];
+            var s = [];
+            var secondSNRMarker = 0;
+            var firstSNRMarker = 0;
+            // Add all values under the average and those above each to a list
+            for(i = 0; i < ab.length; i++){
+                if(ab[i] < m){
+                    n.push(ab[i]);
+                }
+                else {
+                    if(secondSNRMarker == 0){
+                        firstSNRMarker = i;
+                    }
+                    s.push(ab[i]);
+                    secondSNRMarker = i;
+                }
+            }
+            // Sum both sets and calculate their ratio which is the SNR
+            var ss = ssum(s);
+            var sn = ssum(n);
+            var SNR = Math.log10(ss / sn) * 10;
+            traceConf.info.SNR = SNR;
+
+            // Posiion SNR markers
+            scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, secondSNRMarker * mul / scope.width);
+         }
+
+        // Convert spectral density to a logarithmic scale to be able to better plot it.
+        // Scale it down by 200 for a nicer plot
+        for(i = 0; i < ab.length; i++){
+            ab[i] = Math.log10(ab[i])*20/200;
+        }
 
         // Store brush
         context.save();
@@ -16236,9 +16260,72 @@ const FFTracePrefPane = {
                     )
                 ]),
                 mithril('.form-group', [
+                    mithril('.col-12', mithril('.btn-group.btn-group-block', [
+                        mithril('button.btn' + (s.SNRmode == 'manual' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.SNRmode = 'manual';
+                            }
+                        }, 'Manual'),
+                        mithril('button.btn' + (s.SNRmode == 'auto' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.SNRmode = 'auto';
+                            }
+                        }, 'Auto')
+                    ]))
+                ]),
+                mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label [for=SNR', 'SNR')),
                     mithril('.col-9', mithril('label.form-label', { id: 'SNR' }, s.info.SNR))
                 ])
+            ])
+        ];
+    }
+};
+
+const generalPrefPane = {
+    view: function(vnode){
+        var s = vnode.attrs.scope;
+        // console.log(s);
+        return [
+            mithril('header.text-center', mithril('h4', s)),
+            mithril('.form-horizontal', [
+                mithril('.form-group', [
+                    mithril('.col-12', mithril('.btn-group.btn-group-block', [
+                        mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.mode = 'normal';
+                                    t.node.source.node.ctrl.single();
+                                });
+                                s.mode = 'normal';
+                            }
+                        }, 'Normal'),
+                        mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
+                            onclick: function(e){
+                                
+                            }
+                        }, 'Auto'),
+                        mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.mode = 'single';
+                                });
+                                s.mode = 'single';
+                            }
+                        }, 'Single')
+                    ]))
+                ]),
+                mithril('.form-group', [
+                    mithril('button.btn.col-12', {
+                        onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.mode = 'single';
+                                    t.node.source.node.ctrl.single();
+                                });
+                                s.mode = 'single';
+                            }
+                    }, 'Single Shot')
+                ]),
             ])
         ];
     }
@@ -16732,9 +16819,12 @@ const scopeView = {
                 style: {
                     display: vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none',
                 }
-            }, vnode.attrs.scope.traces.map(function(value){
-                return value.node.type == 'FFTrace' ? [mithril(FFTracePrefPane, { traceConf: value }), mithril('.divider')] : '';
-            })),
+            }, [
+                mithril(generalPrefPane, { scope: vnode.attrs.scope }),
+                vnode.attrs.scope.traces.map(function(value){
+                    return value.node.type == 'FFTrace' ? [mithril(FFTracePrefPane, { traceConf: value }), mithril('.divider')] : '';
+                })
+            ]),
             mithril('button.btn.btn-primary.btn-action.btn-lg', {
                 id: 'toggle-prefpane',
                 style: {
@@ -16820,6 +16910,7 @@ var appState = {
                 type: 'WebsocketSource',
                 // location: 'ws://10.84.130.54:50090',
                 location: 'ws://localhost:50090',
+                // location: 'ws://yatekii.ch:50090',
                 frameSize: 4096,
                 buffer: {
                     upperSize: 4,
@@ -16857,13 +16948,16 @@ var appState = {
                     id: 3,
                     offset: 0,
                     windowFunction: 'hann',
+                    SNRmode: 'auto',
                     info: {}
                 },
             ],
             triggerLevel: 0,
             markers: [
                 { id: 1, type: 'horizontal', x: 0, y: 0 },
-                { id: 2, type: 'vertical', x: 0.5, y: 0 }
+                { id: 2, type: 'vertical', x: 0.5, y: 0 },
+                { id: 'SNRfirst', type: 'vertical', x: 0 },
+                { id: 'SNRsecond', type: 'vertical', x: 0 },
             ],
             buttons: [
                 { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single', handler: 'singleShot'}

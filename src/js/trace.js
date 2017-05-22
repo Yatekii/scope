@@ -185,7 +185,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        console.log(scope);
+        // console.log(scope);
 
         // Duplicate data
         var real = this.data.slice(0);
@@ -207,50 +207,8 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         for(i = 0; i < ab.length; i++){
             ab[i] = real[i]*real[i] + compl[i]*compl[i];
         }
-        
-        // Calculate SNR
-        // var max = -3000000;
-        // var maxi = 0;
-        // for(i = 0; i < ab.length; i++){
-        //     if(ab[i] > max){
-        //         max = ab[i];
-        //         maxi = i;
-        //     }
-        // }
-        var sampleAtSignal = traceConf.signalFrequency / (scope.samplingRate / this.state.source.node.frameSize);
-        // var m = (sum(ab.slice(0, maxi - 2)) + sum(ab.slice(maxi + 2))) / ab.length;
-        var m = (sum(ab.slice(0, sampleAtSignal - 3)) + sum(ab.slice(sampleAtSignal + 3))) / ab.length;
-        var n = [];
-        var s = [];
-        var max = 0;
-        var maxi = 0;
-        var pushed = 0;
-        var firstSNRMarker = 0;
-        // Add all values under the average and those above each to a list
-        for(i = 0; i < ab.length; i++){
-            if(ab[i] < m){
-                n.push(ab[i]);
-            }
-            else {
-                if(pushed == 0){
-                    firstSNRMarker = i;
-                }
-                s.push(ab[i]);
-                pushed = i;
-            }
-        }
 
-        // Sum both sets and calculate their ratio which is the SNR
-        var ss = ssum(s);
-        var sn = ssum(n);
-        var SNR = Math.log10(ss / sn) * 10;
-        traceConf.info.SNR = SNR;
 
-        // Convert spectral density to a logarithmic scale to be able to better plot it.
-        // Scale it down by 200 for a nicer plot
-        for(i = 0; i < ab.length; i++){
-            ab[i] = Math.log10(ab[i])*20/200;
-        }
 
         // Calculate x-Axis scaling
         // mul tells how many pixels have to be skipped after each sample
@@ -266,8 +224,69 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
             skip = 1 / ratio;
         }
 
-        // // Position SNR markers
-        scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, pushed * mul / scope.width);
+
+        
+        // Calculate SNR
+        if(traceConf.SNRmode == 'manual'){
+            var ss = 0;
+            var sn = 0;
+            var first = scope.ctrl.getMarkerById('SNRfirst')[0].x / mul * scope.width;
+            var second = scope.ctrl.getMarkerById('SNRsecond')[0].x / mul * scope.width;
+            console.log(first, second)
+            for(i = 0; i < ab.length; i++){
+                if(i < first || i > second){
+                    sn += ab[i];
+                } else {
+                    console.log(ss)
+                    ss += ab[i];
+                }
+            }
+            var SNR = Math.log10(ss / sn) * 10;
+            traceConf.info.SNR = SNR;
+        }
+        if(traceConf.SNRmode == 'auto'){
+            // Find max
+            var max = -3000000;
+            var maxi = 0;
+            for(i = 0; i < ab.length; i++){
+                if(ab[i] > max){
+                    max = ab[i];
+                    maxi = i;
+                }
+            }
+            var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
+            var n = [];
+            var s = [];
+            var secondSNRMarker = 0;
+            var firstSNRMarker = 0;
+            // Add all values under the average and those above each to a list
+            for(i = 0; i < ab.length; i++){
+                if(ab[i] < m){
+                    n.push(ab[i]);
+                }
+                else {
+                    if(secondSNRMarker == 0){
+                        firstSNRMarker = i;
+                    }
+                    s.push(ab[i]);
+                    secondSNRMarker = i;
+                }
+            }
+            // Sum both sets and calculate their ratio which is the SNR
+            var ss = ssum(s);
+            var sn = ssum(n);
+            var SNR = Math.log10(ss / sn) * 10;
+            traceConf.info.SNR = SNR;
+
+            // Posiion SNR markers
+            scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, secondSNRMarker * mul / scope.width);
+         }
+
+        // Convert spectral density to a logarithmic scale to be able to better plot it.
+        // Scale it down by 200 for a nicer plot
+        for(i = 0; i < ab.length; i++){
+            ab[i] = Math.log10(ab[i])*20/200;
+        }
 
         // Store brush
         context.save();
