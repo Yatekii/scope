@@ -22,7 +22,7 @@ export const FFTracePrefPane = {
                 m('.form-group', [
                     m('.col-3', m('label.form-label [for=window', 'Window')),
                     m('.col-9', m('select.form-input', {
-                        id: 'window', 
+                        id: 'window',
                         value: s.windowFunction,
                         onchange: m.withAttr('value', function(value) {
                             s.windowFunction = value;

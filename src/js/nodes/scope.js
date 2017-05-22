@@ -78,7 +78,7 @@ const body = {
                     value: vnode.attrs.samplingRate,
                     onchange: m.withAttr('value', function(value) {
                         vnode.attrs.samplingRate = parseInt(value);
-                        vnode.attrs.ctrl.sendJSON({ frameSize: vnode.attrs.SamplingRate });
+                        // TODO: send sampling rate
                     }),
                 })
             ])

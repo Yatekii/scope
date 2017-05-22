@@ -15137,15 +15137,7 @@ const draw = function(scope) {
 
 
 
-var audioContext = null;
-const getAudioContext = function() {
-    window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    if(audioContext){
-        return audioContext;
-    }
-    audioContext = new AudioContext();
-    return audioContext;
-};
+
 
 const withKey = function(key, callback) {
     return function(e) {
@@ -15182,97 +15174,6 @@ const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-// Creates a new source
-const Waveform = function(state) {
-    // Remember source state
-    this.state = state;
-
-    // Assign class variables
-    this.ready = false;
-
-    // Create source
-    var audioContext = getAudioContext();
-    this.osc = audioContext.createOscillator();
-    this.output = audioContext.createGain();
-    this.osc.type = 'sine';
-    this.osc.frequency.value = state.frequency ? state.frequency : 1337;
-    this.osc.connect(this.output);
-    this.output.gain.value = state.gain ? state.gain : 0.7;
-
-    // Create the analyzer
-    this.analyzer = audioContext.createAnalyser();
-    this.analyzer.fftSize = 4096;
-    // Connect the source output to the analyzer
-    this.output.connect(this.analyzer);
-    this.ready = true;
-    this.osc.start(audioContext.currentTime+0.05);
-};
-
-// Creates a new source
-const Microphone = function(state) {
-    this.state = state;
-
-    // Assign class variables
-    this.ready = false;
-
-    // Initialize audio
-    initAudio(this);
-};
-
-// Creates the actual audio source after a stream was found
-function gotStream(source, stream) {
-    console.log('Found a stream.');
-
-    var audioContext = getAudioContext();
-    // Create an AudioNode from the stream.
-    source.input = audioContext.createMediaStreamSource(stream);
-
-    // Connect to a gain from which the plots are derived
-    source.traceGain = audioContext.createGain();
-    source.input.connect(source.traceGain);
-
-    // Connect to a gain which can be sinked
-    source.sinkGain = audioContext.createGain();
-    source.sinkGain.gain.value = 0.0;
-    source.traceGain.connect(source.sinkGain);
-    source.sinkGain.connect(audioContext.destination);
-
-    // Create the analyzer
-    source.analyzer = audioContext.createAnalyser();
-    source.analyzer.fftSize = 4096;
-    // Connect the source output to the analyzer
-    source.traceGain.connect(source.analyzer);
-
-    // Create the data buffer
-    source.data = new Uint8Array(source.analyzer.frequencyBinCount);
-    source.ready = true;
-}
-
-// Requests an audio source
-function initAudio(source) {
-    navigator.getUserMedia = (
-        navigator.getUserMedia ||
-        navigator.webkitGetUserMedia ||
-        navigator.mozGetUserMedia ||
-        navigator.msGetUserMedia
-    );
-    navigator.getUserMedia({
-        'audio': {
-            'mandatory': {
-                'googEchoCancellation': 'false',
-                'googAutoGainControl': 'false',
-                'googNoiseSuppression': 'false',
-                'googHighpassFilter': 'false'
-            },
-            'optional': []
-        },
-    }, function(stream) { gotStream(source, stream); }, function(e) {
-        console.log('Error getting audio!');
-        console.log(e);
-    });
-}
-
-// Creates a new source
 const WebsocketSource = function(state) {
     var me = this;
     // Remember source state
@@ -15291,7 +15192,20 @@ const WebsocketSource = function(state) {
         me.isOpen = true;
         me.nextStartTime = 0;
         me.awaitsFrame = true;
-        me.sendJSON({ frameSize: me.state.frameSize });
+        me.setNumberOfChannels(me.state.numberOfChannels);
+        me.frameConfiguration(me.state.frameSize, me.state.frameSize / 2, me.state.frameSize / 2);
+        me.triggerOn(me.state.trigger);
+        if(me.state.mode == 'single'){
+            // We don't have to do anything, we already did our job
+        }
+        if(me.state.mode == 'normal'){
+            // Immediately request a new frame
+            me.normal();
+        }
+        if(me.state.mode == 'auto'){
+            // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
+            me.auto();
+        }
     };
 
     // Received message event
@@ -15308,7 +15222,6 @@ const WebsocketSource = function(state) {
                     // 14 bit int to float
                     me.data[i] = (arr[i] - 8192) / 8192;
                 }
-<<<<<<< HEAD
                 // console.log(me.data)
                 if(me.state.mode == 'single'){
                     // We don't have to do anything, we already did our job
@@ -15320,10 +15233,6 @@ const WebsocketSource = function(state) {
                 if(me.state.mode == 'auto'){
                     // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
                     me.auto();
-=======
-                if(me.mode == 'single'){
-                    me.awaitsSingle = false;
->>>>>>> d93fe2d5e770315d386a7d213c30464393533aeb
                 }
             }
         }
@@ -15354,11 +15263,19 @@ WebsocketSource.prototype.forceTrigger = function() {
 };
 
 WebsocketSource.prototype.frameConfiguration = function(frameSize, pre, suf) {
-    this.sendJSON({ frameSize: frameSize, pre: pre, suf: suf });
+    this.sendJSON({ frameConfiguration: { frameSize: frameSize, pre: pre, suf: suf } });
+};
+
+WebsocketSource.prototype.triggerOn = function(trigger) {
+    this.sendJSON({ triggerOn: trigger });
+};
+
+WebsocketSource.prototype.setNumberOfChannels = function(n) {
+    this.sendJSON({ setNumberOfChannels: n });
 };
 
 WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hysteresis = 2, slope = 0) {
-    this.sendJSON({ channel: channel, level: level, hysteresis: hysteresis, slope: slope });
+    this.sendJSON({ type: 'risingEdge', channel: channel, level: level, hysteresis: hysteresis, slope: slope });
 };
 
 WebsocketSource.prototype.single = function() {
@@ -15368,14 +15285,17 @@ WebsocketSource.prototype.single = function() {
 
 WebsocketSource.prototype.normal = function() {
     this.state.mode = 'normal';
-    this.requestFrame();
+    var me = this;
+    setTimeout(function(){ me.requestFrame(); }, 5);
+    // this.requestFrame();
 };
 
 WebsocketSource.prototype.auto = function(timeout) {
     var me = this;
     this.state.mode = 'auto';
     this.requestFrame();
-    setTimeout(function(){ me.forceTrigger(); }, 50);
+    // TODO: fix
+    // setTimeout(function(){ me.forceTrigger() }, 50);
 };
 
 const sourceNode = {
@@ -15392,19 +15312,13 @@ const sourceNode = {
                 mithril('.card-meta', [
                     mithril(radioSelection, {
                         id: vnode.attrs.id,
-                        items: ['Waveform', 'Microphone', 'WebsocketSource'],
+                        items: ['WebsocketSource'],
                         startValue: 'Waveform',
                         type: vnode.attrs.type,
                         onchange: (value) => {
                             vnode.attrs.type = value;
                             switch(vnode.attrs.type){
                             default:
-                            case 'Waveform':
-                                vnode.attrs.ctrl = new Waveform(vnode.attrs);
-                                break;
-                            case 'Microphone':
-                                vnode.attrs.ctrl = new Microphone(vnode.attrs);
-                                break;
                             case 'WebsocketSource':
                                 vnode.attrs.ctrl = new WebsocketSource(vnode.attrs);
                                 break;
@@ -15415,7 +15329,6 @@ const sourceNode = {
                 ])
             ]),
             mithril('.card-body',
-                vnode.attrs.type == 'Waveform' ? mithril(sineBody, vnode.attrs) :
                 vnode.attrs.type == 'WebsocketSource' ? mithril(wssBody, vnode.attrs) :
                 'Not implemented'
             )
@@ -15441,47 +15354,10 @@ const sourceNode = {
 
         switch(vnode.attrs.type){
         default:
-        case 'Waveform':
-            vnode.attrs.ctrl = new Waveform(vnode.attrs);
-            break;
-
-        case 'Microphone':
-            vnode.attrs.ctrl = new Microphone(vnode.attrs);
-            break;
-
         case 'WebsocketSource':
             vnode.attrs.ctrl = new WebsocketSource(vnode.attrs);
             break;
         }
-    }
-};
-
-const sineBody = {
-    view: function(vnode){
-        return [
-            mithril('.form-group', [
-                mithril('label.form-label [for=sine-amplitude-' + vnode.attrs.id + ']', 'Amplitude'),
-                mithril('input.form-input', {
-                    type: 'number',
-                    id: 'sine-amplitude-' + vnode.attrs.id,
-                    value: vnode.attrs.amplitude,
-                    onchange: mithril.withAttr('value', function(value) {
-                        vnode.attrs.amplitude = value;
-                    }),
-                })
-            ]),
-            mithril('.form-group', [
-                mithril('label.form-label [for=sine-frequency-' + vnode.attrs.id + ']', 'Frequency'),
-                mithril('input.form-input', {
-                    type: 'number',
-                    id: 'sine-frequency-' + vnode.attrs.id, 
-                    value: vnode.attrs.frequency,
-                    onchange: mithril.withAttr('value', function(value) {
-                        vnode.attrs.frequency = value;
-                    }),
-                })
-            ])
-        ];
     }
 };
 
@@ -15508,7 +15384,7 @@ const wssBody = {
                     value: vnode.attrs.frameSize,
                     onchange: mithril.withAttr('value', function(value) {
                         vnode.attrs.frameSize = parseInt(value);
-                        vnode.attrs.ctrl.sendJSON({ frameSize: vnode.attrs.frameSize });
+                        vnode.attrs.ctrl.frameConfiguration(vnode.attrs.frameSize, vnode.attrs.frameSize / 2, vnode.attrs.frameSize / 2);
                     }),
                 })
             ])
@@ -16106,7 +15982,7 @@ const body = {
                     value: vnode.attrs.samplingRate,
                     onchange: mithril.withAttr('value', function(value) {
                         vnode.attrs.samplingRate = parseInt(value);
-                        vnode.attrs.ctrl.sendJSON({ frameSize: vnode.attrs.SamplingRate });
+                        // TODO: send sampling rate
                     }),
                 })
             ])
@@ -16251,7 +16127,7 @@ const FFTracePrefPane = {
                 mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label [for=window', 'Window')),
                     mithril('.col-9', mithril('select.form-input', {
-                        id: 'window', 
+                        id: 'window',
                         value: s.windowFunction,
                         onchange: mithril.withAttr('value', function(value) {
                             s.windowFunction = value;
@@ -16285,7 +16161,6 @@ const FFTracePrefPane = {
 const generalPrefPane = {
     view: function(vnode){
         var s = vnode.attrs.scope;
-        // console.log(s);
         return [
             mithril('header.text-center', mithril('h4', s)),
             mithril('.form-horizontal', [
@@ -16294,21 +16169,24 @@ const generalPrefPane = {
                         mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
                             onclick: function(e){
                                 s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.mode = 'normal';
-                                    t.node.source.node.ctrl.single();
+                                    t.node.source.node.ctrl.normal();
                                 });
                                 s.mode = 'normal';
                             }
                         }, 'Normal'),
                         mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
                             onclick: function(e){
-                                
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.auto();
+                                });
+                                s.mode = 'auto';
                             }
                         }, 'Auto'),
                         mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
                             onclick: function(e){
                                 s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.mode = 'single';
+                                    // TODO fix this (will trigger a trace multiple times)
+                                    t.node.source.node.ctrl.single();
                                 });
                                 s.mode = 'single';
                             }
@@ -16316,15 +16194,21 @@ const generalPrefPane = {
                     ]))
                 ]),
                 mithril('.form-group', [
-                    mithril('button.btn.col-12', {
+                    mithril('button.btn.col-6', {
                         onclick: function(e){
                                 s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.mode = 'single';
                                     t.node.source.node.ctrl.single();
                                 });
                                 s.mode = 'single';
                             }
-                    }, 'Single Shot')
+                    }, 'Single Shot'),
+                    mithril('button.btn.col-6', {
+                        onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.forceTrigger();
+                                });
+                            }
+                    }, 'Force Trigger')
                 ]),
             ])
         ];
@@ -16355,20 +16239,6 @@ const draw$1 = function (context, scope, state) {
         context.lineTo(scope.width, halfHeight - state.y * halfHeight);
         context.stroke();
     }
-
-    // Restore old brush settings
-    context.restore();
-};
-
-const draw$2 = function (context, scope, state) {
-    // Store old state
-    context.save();
-
-    // Setup brush
-    context.fillStyle = '#FFFFFF';
-
-    // Draw Box
-    context.fillRect(state.left, state.top, state.width, state.height);
 
     // Restore old brush settings
     context.restore();
@@ -16428,38 +16298,22 @@ Oscilloscope.prototype.draw = function() {
     context.fillStyle='#222222';
     context.fillRect(0, 0, width, height);
     // Draw trigger level
-    context.strokeStyle = '#278BFF';
-    context.beginPath();
-    context.moveTo(0, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
-    context.lineTo(width, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
-    context.stroke();
+    // context.strokeStyle = '#278BFF';
+    // context.beginPath();
+    // context.moveTo(0, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
+    // context.lineTo(width, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
+    // context.stroke();
 
-    if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
-        this.state.triggerTrace.node = getNodeByID(this.state.traces.map(function(trace){ return trace.node; }), this.state.triggerTrace.id)[0];
-    }
-    if(this.state.triggerTrace.node && this.state.triggerTrace.node.ctrl.ready){
-        this.state.triggerTrace.node.ctrl.fetch();
-        var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
-        if(triggerLocation === undefined && this.state.autoTriggering){
-            triggerLocation = 0;
-        }
-    } else {
-        triggerLocation = 0;
-    }
     if(this.state.traces){
         this.state.traces.forEach(function(trace) {
             if(trace.node && trace.node.ctrl && trace.node.ctrl.on && trace.node.source && trace.node.source.node && trace.node.source.node.ctrl.ready){
-                trace.node.ctrl.draw(me.canvas, me.state, trace, 0); // TODO: triggering
+                trace.node.ctrl.draw(me.canvas, me.state, trace, 0);
             }
         });
     }
 
     me.state.markers.forEach(function(m) {
         draw$1(context, me.state, m);
-    });
-
-    me.state.buttons.forEach(function(b) {
-        draw$2(context, me.state, b);
     });
 
     /* Draw scales */
@@ -16512,41 +16366,15 @@ Oscilloscope.prototype.draw = function() {
     context.fillText('Δt = ' + secondsToString(me.state.samplingRate / (nStart / n)), width - 290, 30);
 };
 
-
-function getTriggerLocation(buf, buflen, triggerLevel, type){
-    switch(type){
-    case 'rising':
-    default:
-        return risingEdgeTrigger(buf, buflen, triggerLevel);
-    case 'falling':
-        return fallingEdgeTrigger(buf, buflen, triggerLevel);
-    }
-}
-
-function risingEdgeTrigger(buf, buflen, triggerLevel) {
-    for(var i=1; i< buflen; i++){
-        if(buf[i] > 128 + triggerLevel && buf[i - 1] < 128 + triggerLevel){
-            return i;
-        }
-    }
-}
-
-function fallingEdgeTrigger(buf, buflen, triggerLevel) {
-    for(var i=1; i< buflen; i++){
-        if(buf[i] < 128 + triggerLevel && buf[i - 1] > 128 + triggerLevel){
-            return i;
-        }
-    }
-}
-
 Oscilloscope.prototype.onMouseDown = function(event){
     // Start moving triggerlevel
-    var halfHeight = this.canvas.height / 2;
-    var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        this.triggerMoving = true;
-        return;
-    }
+    // TODO:
+    // var halfHeight = this.canvas.height / 2;
+    // var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
+    // if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+    //     this.triggerMoving = true;
+    //     return;
+    // }
 
     // Start moving markers
     for(var i = 0; i < this.state.markers.length; i++){
@@ -16617,14 +16445,14 @@ Oscilloscope.prototype.onMouseMove = function(event){
     var halfHeight = this.canvas.height / 2;
     var halfMoverWidth = this.state.ui.mover.width / 2;
     var halfMoverHeight = this.state.ui.mover.height / 2;
-    var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
+    // var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
     var cursorSet = false;
 
     // Change cursor if trigger set
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        document.body.style.cursor = 'row-resize';
-        cursorSet = true;
-    }
+    // if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+    //     document.body.style.cursor = 'row-resize';
+    //     cursorSet = true;
+    // }
     // Change cursor if marker set
     if(!cursorSet){
         for(var i = 0; i < this.state.markers.length; i++){
@@ -16667,17 +16495,17 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
 
     // Move triggerlevel
-    if(this.triggerMoving){
-        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
-        if(triggerLevel > 1){
-            triggerLevel = 1;
-        }
-        if(triggerLevel < -1){
-            triggerLevel = -1;
-        }
-        this.state.triggerLevel = triggerLevel;
-        return;
-    }
+    // if(this.triggerMoving){
+    //     triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+    //     if(triggerLevel > 1){
+    //         triggerLevel = 1;
+    //     }
+    //     if(triggerLevel < -1){
+    //         triggerLevel = -1;
+    //     }
+    //     this.state.triggerLevel = triggerLevel;
+    //     return;
+    // }
 
     // Move markers
     if(this.markerMoving !== false){
@@ -16784,13 +16612,6 @@ Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
 };
 
 Oscilloscope.prototype.uiHandlers = {
-    singleShot: function(scope){
-        scope.state.traces.forEach(function(t){
-            if(t.node.source.node.ctrl.single){
-                t.node.source.node.ctrl.single();
-            }
-        });
-    },
     togglePrefPane: function(scope){
         scope.state.ui.prefPane.open = !scope.state.ui.prefPane.open;
     }
@@ -16850,122 +16671,83 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the controller and the view and links them both.
 */
 
+//use default mode
 mithril.route.mode = 'search';
 
 var appState = {
     nodes: {
         traces: [
-            // {
-            //     id: 0,
-            //     name: 'Trace ' + 0,
-            //     top: 50,
-            //     left: 350,
-            //     source: { id: 4},
-            //     type: 'NormalTrace',
-            //     color: '#E8830C'
-            // },
             {
-                id: 1,
+                id: 3,
                 name: 'Trace ' + 1,
                 top: 150,
                 left: 350,
-                source: { id: 5},
+                source: { id: 2 },
                 type: 'NormalTrace',
                 color: '#E85D55'
             },
-            // {
-            //     id: 2,
-            //     name: 'Trace ' + 2,
-            //     top: 250,
-            //     left: 350,
-            //     source: { id: 6},
-            //     type: 'NormalTrace',
-            //     color: '#78FFCE'
-            // },
             {
-                id: 3,
-                name: 'Trace ' + 3,
+                id: 4,
+                name: 'Trace ' + 2,
                 top: 350,
                 left: 350,
-                source: { id: 5},
+                source: { id: 2 },
                 type: 'FFTrace',
                 color: '#E8830C'
             }
         ],
         sources: [
-            // {
-            //     id: 4,
-            //     name: 'Source ' + 4,
-            //     top: 50,
-            //     left: 50,
-            //     type: 'Waveform',
-            //     amplitude: 1,
-            //     frequency: 0.6,
-            // },
             {
-                id: 5,
-                name: 'Source ' + 5,
+                id: 2,
+                name: 'Source ' + 1,
                 top: 300,
                 left: 50,
                 type: 'WebsocketSource',
-                // location: 'ws://10.84.130.54:50090',
-                location: 'ws://localhost:50090',
+                location: 'ws://10.84.130.54:50090',
+                // location: 'ws://localhost:50090',
                 // location: 'ws://yatekii.ch:50090',
                 frameSize: 4096,
                 buffer: {
                     upperSize: 4,
                     lowerSize: 1,
-                }
-            },
-            // {
-            //     id: 6,
-            //     name: 'Source ' + 6,
-            //     top: 550,
-            //     left: 50,
-            //     type: 'Microphone',
-            // }
+                },
+                trigger: {
+                    type: 'risingEdge',
+                    level: 8400,
+                    channel: 1,
+                    hysteresis: 2,
+                    slope: 0
+                },
+                numberOfChannels: 2,
+                mode: 'normal'
+            }
         ],
         scopes: [{
-            id: 7,
-            name: 'Scope ' + 7,
+            id: 1,
+            name: 'Scope ' + 1,
             top: 250,
             left: 650,
             traces: [
-                // {
-                //     id: 0,
-                //     offset: 0,
-                // },
                 {
-                    id: 1,
+                    id: 3,
                     offset: 0,
                     info: {}
                 },
-                // {
-                //     id: 2,
-                //     offset: 0,
-                // },
                 {
-                    id: 3,
+                    id: 4,
                     offset: 0,
                     windowFunction: 'hann',
                     SNRmode: 'auto',
                     info: {}
                 },
             ],
-            triggerLevel: 0,
             markers: [
                 { id: 1, type: 'horizontal', x: 0, y: 0 },
                 { id: 2, type: 'vertical', x: 0.5, y: 0 },
                 { id: 'SNRfirst', type: 'vertical', x: 0 },
                 { id: 'SNRsecond', type: 'vertical', x: 0 },
             ],
-            buttons: [
-                { id: 1, left: 0, top: 0, height: 30, width: 70, text: 'Single', handler: 'singleShot'}
-            ],
             mode: 'normal',
-            autoTriggering: true,
-            triggerTrace: { id: 0 },
-            triggerType: 'rising',
             scaling: {
                 x: 1,
                 y: 1,

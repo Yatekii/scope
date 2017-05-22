@@ -36,38 +36,22 @@ Oscilloscope.prototype.draw = function() {
     context.fillStyle='#222222';
     context.fillRect(0, 0, width, height);
     // Draw trigger level
-    context.strokeStyle = '#278BFF';
-    context.beginPath();
-    context.moveTo(0, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
-    context.lineTo(width, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
-    context.stroke();
+    // context.strokeStyle = '#278BFF';
+    // context.beginPath();
+    // context.moveTo(0, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
+    // context.lineTo(width, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
+    // context.stroke();
 
-    if(this.state.triggerTrace && !(this.state.triggerTrace.node)){
-        this.state.triggerTrace.node = helpers.getNodeByID(this.state.traces.map(function(trace){ return trace.node; }), this.state.triggerTrace.id)[0];
-    }
-    if(this.state.triggerTrace.node && this.state.triggerTrace.node.ctrl.ready){
-        this.state.triggerTrace.node.ctrl.fetch();
-        var triggerLocation = getTriggerLocation(this.state.triggerTrace.node.ctrl.data, width, this.state.triggerLevel, this.state.triggerType);
-        if(triggerLocation === undefined && this.state.autoTriggering){
-            triggerLocation = 0;
-        }
-    } else {
-        triggerLocation = 0;
-    }
     if(this.state.traces){
         this.state.traces.forEach(function(trace) {
             if(trace.node && trace.node.ctrl && trace.node.ctrl.on && trace.node.source && trace.node.source.node && trace.node.source.node.ctrl.ready){
-                trace.node.ctrl.draw(me.canvas, me.state, trace, 0); // TODO: triggering
+                trace.node.ctrl.draw(me.canvas, me.state, trace, 0);
             }
         });
     }
 
     me.state.markers.forEach(function(m) {
         marker.draw(context, me.state, m);
-    });
-
-    me.state.buttons.forEach(function(b) {
-        button.draw(context, me.state, b);
     });
 
     /* Draw scales */
@@ -120,41 +104,15 @@ Oscilloscope.prototype.draw = function() {
     context.fillText('Δt = ' + converting.secondsToString(me.state.samplingRate / (nStart / n)), width - 290, 30);
 };
 
-
-function getTriggerLocation(buf, buflen, triggerLevel, type){
-    switch(type){
-    case 'rising':
-    default:
-        return risingEdgeTrigger(buf, buflen, triggerLevel);
-    case 'falling':
-        return fallingEdgeTrigger(buf, buflen, triggerLevel);
-    }
-}
-
-function risingEdgeTrigger(buf, buflen, triggerLevel) {
-    for(var i=1; i< buflen; i++){
-        if(buf[i] > 128 + triggerLevel && buf[i - 1] < 128 + triggerLevel){
-            return i;
-        }
-    }
-}
-
-function fallingEdgeTrigger(buf, buflen, triggerLevel) {
-    for(var i=1; i< buflen; i++){
-        if(buf[i] < 128 + triggerLevel && buf[i - 1] > 128 + triggerLevel){
-            return i;
-        }
-    }
-}
-
 Oscilloscope.prototype.onMouseDown = function(event){
     // Start moving triggerlevel
-    var halfHeight = this.canvas.height / 2;
-    var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        this.triggerMoving = true;
-        return;
-    }
+    // TODO:
+    // var halfHeight = this.canvas.height / 2;
+    // var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
+    // if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+    //     this.triggerMoving = true;
+    //     return;
+    // }
 
     // Start moving markers
     for(var i = 0; i < this.state.markers.length; i++){
@@ -225,14 +183,14 @@ Oscilloscope.prototype.onMouseMove = function(event){
     var halfHeight = this.canvas.height / 2;
     var halfMoverWidth = this.state.ui.mover.width / 2;
     var halfMoverHeight = this.state.ui.mover.height / 2;
-    var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
+    // var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
     var cursorSet = false;
 
     // Change cursor if trigger set
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        document.body.style.cursor = 'row-resize';
-        cursorSet = true;
-    }
+    // if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+    //     document.body.style.cursor = 'row-resize';
+    //     cursorSet = true;
+    // }
     // Change cursor if marker set
     if(!cursorSet){
         for(var i = 0; i < this.state.markers.length; i++){
@@ -275,17 +233,17 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
 
     // Move triggerlevel
-    if(this.triggerMoving){
-        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
-        if(triggerLevel > 1){
-            triggerLevel = 1;
-        }
-        if(triggerLevel < -1){
-            triggerLevel = -1;
-        }
-        this.state.triggerLevel = triggerLevel;
-        return;
-    }
+    // if(this.triggerMoving){
+    //     triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+    //     if(triggerLevel > 1){
+    //         triggerLevel = 1;
+    //     }
+    //     if(triggerLevel < -1){
+    //         triggerLevel = -1;
+    //     }
+    //     this.state.triggerLevel = triggerLevel;
+    //     return;
+    // }
 
     // Move markers
     if(this.markerMoving !== false){
@@ -392,13 +350,6 @@ Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
 };
 
 Oscilloscope.prototype.uiHandlers = {
-    singleShot: function(scope){
-        scope.state.traces.forEach(function(t){
-            if(t.node.source.node.ctrl.single){
-                t.node.source.node.ctrl.single();
-            }
-        });
-    },
     togglePrefPane: function(scope){
         scope.state.ui.prefPane.open = !scope.state.ui.prefPane.open;
     }
