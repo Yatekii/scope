@@ -108,13 +108,13 @@ export const WebsocketSource = function(state) {
         console.log('Connected!');
         me.isOpen = true;
         me.nextStartTime = 0;
-        me.awaitsSingle = true;
+        me.awaitsFrame = true;
         me.sendJSON({ frameSize: me.state.frameSize });
     };
 
     // Received message event
     this.socket.onmessage = function(e) {
-        if(me.ready && me.awaitsSingle){
+        if(me.ready){
             if (typeof e.data == 'string') {
                 console.log('Text message received: ' + e.data);
             } else {
@@ -128,7 +128,15 @@ export const WebsocketSource = function(state) {
                 }
                 // console.log(me.data)
                 if(me.state.mode == 'single'){
-                    me.awaitsSingle = false;
+                    // We don't have to do anything, we already did our job
+                }
+                if(me.state.mode == 'normal'){
+                    // Immediately request a new frame
+                    me.normal();
+                }
+                if(me.state.mode == 'auto'){
+                    // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
+                    me.auto();
                 }
             }
         }
@@ -142,14 +150,43 @@ export const WebsocketSource = function(state) {
     };
 };
 
-WebsocketSource.prototype.single = function() {
-    this.awaitsSingle = true;
-};
-
 WebsocketSource.prototype.sendMsg = function(txt) {
     this.socket.send(txt);
 };
 
 WebsocketSource.prototype.sendJSON = function(obj) {
     this.socket.send(JSON.stringify(obj));
+};
+
+WebsocketSource.prototype.requestFrame = function() {
+    this.sendJSON({ requestFrame: true });
+};
+
+WebsocketSource.prototype.forceTrigger = function() {
+    this.sendJSON({ forceTrigger: true });
+};
+
+WebsocketSource.prototype.frameConfiguration = function(frameSize, pre, suf) {
+    this.sendJSON({ frameSize: frameSize, pre: pre, suf: suf });
+};
+
+WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hysteresis = 2, slope = 0) {
+    this.sendJSON({ channel: channel, level: level, hysteresis: hysteresis, slope: slope });
+};
+
+WebsocketSource.prototype.single = function() {
+    this.state.mode = 'single';
+    this.requestFrame();
+};
+
+WebsocketSource.prototype.normal = function() {
+    this.state.mode = 'normal';
+    this.requestFrame();
+};
+
+WebsocketSource.prototype.auto = function(timeout) {
+    var me = this;
+    this.state.mode = 'auto';
+    this.requestFrame();
+    setTimeout(function(){ me.forceTrigger() }, 50);
 };
