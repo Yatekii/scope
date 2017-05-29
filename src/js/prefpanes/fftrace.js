@@ -5,6 +5,7 @@ import { withKey, capitalizeFirstLetter } from '../helpers.js';
 export const FFTracePrefPane = {
     view: function(vnode){
         var s = vnode.attrs.traceConf;
+        var scope = vnode.attrs.scopeConf;
         return [
             m('header.columns', ''),
             m('.form-horizontal', [
@@ -50,6 +51,10 @@ export const FFTracePrefPane = {
                     )
                 ]),
                 m('.form-group', [
+                    m('.col-3', m('label.form-label [for=SNR', 'SNR')),
+                    m('.col-9', m('label.form-label', { id: 'SNR' }, s.info.SNR))
+                ]),
+                m('.form-group', [
                     m('.col-12', m('.btn-group.btn-group-block', [
                         m('button.btn' + (s.SNRmode == 'manual' ? '.active' : ''), {
                             onclick: function(e){
@@ -64,8 +69,24 @@ export const FFTracePrefPane = {
                     ]))
                 ]),
                 m('.form-group', [
-                    m('.col-3', m('label.form-label [for=SNR', 'SNR')),
-                    m('.col-9', m('label.form-label', { id: 'SNR' }, s.info.SNR))
+                    m('.col-3', m('label.form-label', 'Lower Marker')),
+                    m('.col-9', m('input.form-input', {
+                        type: 'number',
+                        value: scope.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
+                        onchange: m.withAttr('value', function(value) {
+                            scope.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
+                        }),
+                    }))
+                ]),
+                m('.form-group', [
+                    m('.col-3', m('label.form-label', 'Upper Marker')),
+                    m('.col-9', m('input.form-input', {
+                        type: 'number',
+                        value: scope.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
+                        onchange: m.withAttr('value', function(value) {
+                            scope.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
+                        }),
+                    }))
                 ])
             ])
         ];

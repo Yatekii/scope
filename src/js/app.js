@@ -120,7 +120,7 @@ var appState = {
                     type: 'risingEdge',
                     level: 0,
                     channel: 1,
-                    hysteresis: 2,
+                    hysteresis: 30,
                     slope: 0
                 },
                 numberOfChannels: 2,

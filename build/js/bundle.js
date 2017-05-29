@@ -15174,7 +15174,6 @@ const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-// Creates a new source
 const WebsocketSource = function(state, scope) {
     var me = this;
     // Remember source state
@@ -15195,7 +15194,7 @@ const WebsocketSource = function(state, scope) {
         me.nextStartTime = 0;
         me.awaitsFrame = true;
         me.setNumberOfChannels(me.state.numberOfChannels);
-        me.frameConfiguration(me.state.frameSize, me.state.frameSize / 2, me.state.frameSize / 2);
+        me.frameConfiguration(me.state.frameSize, me.state.frameSize / 8 * 1, me.state.frameSize / 8 * 7);
         me.triggerOn(me.state.trigger);
         if(me.state.mode == 'single'){
             // We don't have to do anything, we already did our job
@@ -15258,7 +15257,7 @@ WebsocketSource.prototype.sendJSON = function(obj) {
 WebsocketSource.prototype.requestFrame = function() {
     this.sendJSON({
         triggerOn: {
-            // TOD: Fix Hack
+            // TODO: Fix Hack
             type: window.appState.nodes.scopes[0].source.trigger.type,
             channel: window.appState.nodes.scopes[0].source.trigger.channel,
             level: Math.round(window.appState.nodes.scopes[0].source.trigger.level * 8192 + 8192),
@@ -16121,6 +16120,7 @@ const router = {
 const FFTracePrefPane = {
     view: function(vnode){
         var s = vnode.attrs.traceConf;
+        var scope = vnode.attrs.scopeConf;
         return [
             mithril('header.columns', ''),
             mithril('.form-horizontal', [
@@ -16166,6 +16166,10 @@ const FFTracePrefPane = {
                     )
                 ]),
                 mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label [for=SNR', 'SNR')),
+                    mithril('.col-9', mithril('label.form-label', { id: 'SNR' }, s.info.SNR))
+                ]),
+                mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block', [
                         mithril('button.btn' + (s.SNRmode == 'manual' ? '.active' : ''), {
                             onclick: function(e){
@@ -16180,8 +16184,24 @@ const FFTracePrefPane = {
                     ]))
                 ]),
                 mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label [for=SNR', 'SNR')),
-                    mithril('.col-9', mithril('label.form-label', { id: 'SNR' }, s.info.SNR))
+                    mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
+                    mithril('.col-9', mithril('input.form-input', {
+                        type: 'number',
+                        value: scope.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
+                        onchange: mithril.withAttr('value', function(value) {
+                            scope.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
+                        }),
+                    }))
+                ]),
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
+                    mithril('.col-9', mithril('input.form-input', {
+                        type: 'number',
+                        value: scope.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
+                        onchange: mithril.withAttr('value', function(value) {
+                            scope.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
+                        }),
+                    }))
                 ])
             ])
         ];
@@ -16674,7 +16694,10 @@ const scopeView = {
             }, [
                 mithril(generalPrefPane, { scope: vnode.attrs.scope }),
                 vnode.attrs.scope.traces.map(function(value){
-                    return value.node.type == 'FFTrace' ? [mithril('.divider'), mithril(FFTracePrefPane, { traceConf: value })] : '';
+                    return value.node.type == 'FFTrace' ? [
+                        mithril('.divider'),
+                        mithril(FFTracePrefPane, { scopeConf: vnode.attrs.scope, traceConf: value })
+                    ] : '';
                 })
             ]),
             mithril('button.btn.btn-primary.btn-action.btn-lg', {
@@ -16810,7 +16833,7 @@ var appState = {
                     type: 'risingEdge',
                     level: 0,
                     channel: 1,
-                    hysteresis: 2,
+                    hysteresis: 30,
                     slope: 0
                 },
                 numberOfChannels: 2,

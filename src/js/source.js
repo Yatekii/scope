@@ -21,7 +21,7 @@ export const WebsocketSource = function(state, scope) {
         me.nextStartTime = 0;
         me.awaitsFrame = true;
         me.setNumberOfChannels(me.state.numberOfChannels);
-        me.frameConfiguration(me.state.frameSize, me.state.frameSize / 2, me.state.frameSize / 2);
+        me.frameConfiguration(me.state.frameSize, me.state.frameSize / 8 * 1, me.state.frameSize / 8 * 7);
         me.triggerOn(me.state.trigger);
         if(me.state.mode == 'single'){
             // We don't have to do anything, we already did our job

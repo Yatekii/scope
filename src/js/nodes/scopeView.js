@@ -31,7 +31,10 @@ export const scopeView = {
             }, [
                 m(generalPrefPane, { scope: vnode.attrs.scope }),
                 vnode.attrs.scope.traces.map(function(value){
-                    return value.node.type == 'FFTrace' ? [m('.divider'), m(FFTracePrefPane, { traceConf: value })] : '';
+                    return value.node.type == 'FFTrace' ? [
+                        m('.divider'),
+                        m(FFTracePrefPane, { scopeConf: vnode.attrs.scope, traceConf: value })
+                    ] : '';
                 })
             ]),
             m('button.btn.btn-primary.btn-action.btn-lg', {
