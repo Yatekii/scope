@@ -15174,10 +15174,12 @@ const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-const WebsocketSource = function(state) {
+// Creates a new source
+const WebsocketSource = function(state, scope) {
     var me = this;
     // Remember source state
     this.state = state;
+    this.scope = scope;
 
     // Assign class variables
     this.ready = true;
@@ -15217,7 +15219,6 @@ const WebsocketSource = function(state) {
                 // New data from stream
                 var arr = new Uint16Array(e.data);
                 me.data = new Float32Array(arr);
-                // console.log(arr)
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit int to float
                     me.data[i] = (arr[i] - 8192) / 8192;
@@ -15255,7 +15256,17 @@ WebsocketSource.prototype.sendJSON = function(obj) {
 };
 
 WebsocketSource.prototype.requestFrame = function() {
-    this.sendJSON({ requestFrame: true });
+    this.sendJSON({
+        triggerOn: {
+            // TOD: Fix Hack
+            type: window.appState.nodes.scopes[0].source.trigger.type,
+            channel: window.appState.nodes.scopes[0].source.trigger.channel,
+            level: Math.round(window.appState.nodes.scopes[0].source.trigger.level * 8192 + 8192),
+            hysteresis: window.appState.nodes.scopes[0].source.trigger.hystresis,
+            slope: window.appState.nodes.scopes[0].source.trigger.slope
+        },
+        requestFrame: true
+    });
 };
 
 WebsocketSource.prototype.forceTrigger = function() {
@@ -15275,7 +15286,7 @@ WebsocketSource.prototype.setNumberOfChannels = function(n) {
 };
 
 WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hysteresis = 2, slope = 0) {
-    this.sendJSON({ type: 'risingEdge', channel: channel, level: level, hysteresis: hysteresis, slope: slope });
+    this.sendJSON({ triggerOn: { type: 'risingEdge', channel: channel, level: level, hysteresis: hysteresis, slope: slope }});
 };
 
 WebsocketSource.prototype.single = function() {
@@ -15552,7 +15563,7 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     this.fetch();
 
     // Draw trace
-    context.strokeStyle = this.state.color;
+    context.strokeStyle = traceConf.color;
     context.beginPath();
 
     // Half height of canvas
@@ -15583,7 +15594,7 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     context.stroke();
 
     // Draw mover (grab and draw to move the trace)
-    context.fillStyle = this.state.color;
+    context.fillStyle = traceConf.color;
     var offset = this.state.offset;
     if(offset > 1){
         offset = 1;
@@ -15672,7 +15683,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         }
 
         // Draw mover
-        context.fillStyle = this.state.color;
+        context.fillStyle = traceConf.color;
         offset = this.state.offset;
         if(offset > 1){
             offset = 1;
@@ -15799,7 +15810,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         context.save();
         context.strokeWidth = 1;
         // Draw trace
-        context.strokeStyle = this.state.color;
+        context.strokeStyle = traceConf.color;
         context.beginPath();
         context.moveTo(0, (halfHeight - (ab[0] + traceConf.offset) * halfHeight * scope.scaling.y));
         for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
@@ -15809,7 +15820,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         context.stroke();
 
         // Draw mover to move the trace
-        context.fillStyle = this.state.color;
+        context.fillStyle = traceConf.color;
         offset = this.state.offset;
         if(offset > 1){
             offset = 1;
@@ -16111,8 +16122,25 @@ const FFTracePrefPane = {
     view: function(vnode){
         var s = vnode.attrs.traceConf;
         return [
-            mithril('header.text-center', mithril('h4', s.node.name)),
+            mithril('header.columns', ''),
             mithril('.form-horizontal', [
+                mithril('.form-group',[
+                    mithril('.col-3.text-center', mithril('input[type=color]', {
+                        value: s.color,
+                        onchange: mithril.withAttr('value', function(v){ s.color = v; })
+                    })),
+                    mithril('h4.col-9', !vnode.state.editName ?
+                        mithril('', { onclick: function(){ vnode.state.editName = true; } }, s.node.name) :
+                        mithril('input.form-input[type=text]', {
+                            value: s.node.name,
+                            onchange: mithril.withAttr('value', function(v){ s.node.name = v; }),
+                            onblur: function(){ vnode.state.editName = false; },
+                            onkeypress: withKey(13, function(target){
+                                vnode.state.editName = false;
+                            })
+                        })
+                    )
+                ]),
                 mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label [for=signalfrequency]', 'Signal Frequency')),
                     mithril('.col-9', mithril('input.form-input', {
@@ -16132,7 +16160,9 @@ const FFTracePrefPane = {
                         onchange: mithril.withAttr('value', function(value) {
                             s.windowFunction = value;
                         }),
-                    }, Object.keys(windowFunctions).map(function(value){ return mithril('option', { value: value }, capitalizeFirstLetter(value)) }))
+                    }, Object.keys(windowFunctions).map(function(value){
+                        return mithril('option', { value: value }, capitalizeFirstLetter(value));
+                    }))
                     )
                 ]),
                 mithril('.form-group', [
@@ -16283,7 +16313,6 @@ Oscilloscope.prototype.draw = function() {
         return;
     }
 
-    // vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none'
     var width = document.body.clientWidth - (me.state.ui.prefPane.open ? me.state.ui.prefPane.width : 0);
     var height = document.body.clientHeight;
     var halfHeight = this.state.height / 2;
@@ -16297,12 +16326,14 @@ Oscilloscope.prototype.draw = function() {
     // Draw background
     context.fillStyle='#222222';
     context.fillRect(0, 0, width, height);
+
     // Draw trigger level
-    // context.strokeStyle = '#278BFF';
-    // context.beginPath();
-    // context.moveTo(0, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
-    // context.lineTo(width, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
-    // context.stroke();
+    // console.log(this.state.source.trigger.level * 8192 + 8192);
+    context.strokeStyle = '#278BFF';
+    context.beginPath();
+    context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
+    context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
+    context.stroke();
 
     if(this.state.traces){
         this.state.traces.forEach(function(trace) {
@@ -16369,12 +16400,12 @@ Oscilloscope.prototype.draw = function() {
 Oscilloscope.prototype.onMouseDown = function(event){
     // Start moving triggerlevel
     // TODO:
-    // var halfHeight = this.canvas.height / 2;
-    // var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
-    // if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-    //     this.triggerMoving = true;
-    //     return;
-    // }
+    var halfHeight = this.canvas.height / 2;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
+    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+        this.triggerMoving = true;
+        return;
+    }
 
     // Start moving markers
     for(var i = 0; i < this.state.markers.length; i++){
@@ -16445,14 +16476,14 @@ Oscilloscope.prototype.onMouseMove = function(event){
     var halfHeight = this.canvas.height / 2;
     var halfMoverWidth = this.state.ui.mover.width / 2;
     var halfMoverHeight = this.state.ui.mover.height / 2;
-    // var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
     var cursorSet = false;
 
     // Change cursor if trigger set
-    // if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-    //     document.body.style.cursor = 'row-resize';
-    //     cursorSet = true;
-    // }
+    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+        document.body.style.cursor = 'row-resize';
+        cursorSet = true;
+    }
     // Change cursor if marker set
     if(!cursorSet){
         for(var i = 0; i < this.state.markers.length; i++){
@@ -16495,17 +16526,17 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
 
     // Move triggerlevel
-    // if(this.triggerMoving){
-    //     triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
-    //     if(triggerLevel > 1){
-    //         triggerLevel = 1;
-    //     }
-    //     if(triggerLevel < -1){
-    //         triggerLevel = -1;
-    //     }
-    //     this.state.triggerLevel = triggerLevel;
-    //     return;
-    // }
+    if(this.triggerMoving){
+        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+        if(triggerLevel > 1){
+            triggerLevel = 1;
+        }
+        if(triggerLevel < -1){
+            triggerLevel = -1;
+        }
+        this.state.source.trigger.level = triggerLevel;
+        return;
+    }
 
     // Move markers
     if(this.markerMoving !== false){
@@ -16643,7 +16674,7 @@ const scopeView = {
             }, [
                 mithril(generalPrefPane, { scope: vnode.attrs.scope }),
                 vnode.attrs.scope.traces.map(function(value){
-                    return value.node.type == 'FFTrace' ? [mithril(FFTracePrefPane, { traceConf: value }), mithril('.divider')] : '';
+                    return value.node.type == 'FFTrace' ? [mithril('.divider'), mithril(FFTracePrefPane, { traceConf: value })] : '';
                 })
             ]),
             mithril('button.btn.btn-primary.btn-action.btn-lg', {
@@ -16671,7 +16702,6 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the controller and the view and links them both.
 */
 
-//use default mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -16683,8 +16713,7 @@ var appState = {
                 top: 150,
                 left: 350,
                 source: { id: 2 },
-                type: 'NormalTrace',
-                color: '#E85D55'
+                type: 'NormalTrace'
             },
             {
                 id: 4,
@@ -16693,7 +16722,6 @@ var appState = {
                 left: 350,
                 source: { id: 2 },
                 type: 'FFTrace',
-                color: '#E8830C'
             }
         ],
         sources: [
@@ -16705,7 +16733,6 @@ var appState = {
                 type: 'WebsocketSource',
                 location: 'ws://10.84.130.54:50090',
                 // location: 'ws://localhost:50090',
-                // location: 'ws://yatekii.ch:50090',
                 frameSize: 4096,
                 buffer: {
                     upperSize: 4,
@@ -16713,7 +16740,7 @@ var appState = {
                 },
                 trigger: {
                     type: 'risingEdge',
-                    level: 8400,
+                    level: 0,
                     channel: 1,
                     hysteresis: 2,
                     slope: 0
@@ -16731,14 +16758,16 @@ var appState = {
                 {
                     id: 3,
                     offset: 0,
-                    info: {}
+                    info: {},
+                    color: '#E85D55'
                 },
                 {
                     id: 4,
                     offset: 0,
                     windowFunction: 'hann',
                     SNRmode: 'auto',
-                    info: {}
+                    info: {},
+                    color: '#E8830C'
                 },
             ],
             markers: [
@@ -16765,10 +16794,34 @@ var appState = {
             },
             frameSize: 4096,
             samplingRate: 1000000,
+            source: {
+                id: 2,
+                name: 'Source ' + 1,
+                top: 300,
+                left: 50,
+                location: 'ws://10.84.130.54:50090',
+                // location: 'ws://localhost:50090',
+                frameSize: 4096,
+                buffer: {
+                    upperSize: 4,
+                    lowerSize: 1,
+                },
+                trigger: {
+                    type: 'risingEdge',
+                    level: 0,
+                    channel: 1,
+                    hysteresis: 2,
+                    slope: 0
+                },
+                numberOfChannels: 2,
+                mode: 'normal'
+            }
         }],
         count: 8
     }
 };
+
+window.appState = appState;
 
 window.addEventListener('load', function() {
     mithril.route(document.body, '/routing', {

@@ -21,7 +21,6 @@ Oscilloscope.prototype.draw = function() {
         return;
     }
 
-    // vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none'
     var width = document.body.clientWidth - (me.state.ui.prefPane.open ? me.state.ui.prefPane.width : 0);
     var height = document.body.clientHeight;
     var halfHeight = this.state.height / 2;
@@ -35,12 +34,14 @@ Oscilloscope.prototype.draw = function() {
     // Draw background
     context.fillStyle='#222222';
     context.fillRect(0, 0, width, height);
+
     // Draw trigger level
-    // context.strokeStyle = '#278BFF';
-    // context.beginPath();
-    // context.moveTo(0, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
-    // context.lineTo(width, halfHeight - this.state.triggerLevel * halfHeight * this.state.scaling.y);
-    // context.stroke();
+    // console.log(this.state.source.trigger.level * 8192 + 8192);
+    context.strokeStyle = '#278BFF';
+    context.beginPath();
+    context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
+    context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
+    context.stroke();
 
     if(this.state.traces){
         this.state.traces.forEach(function(trace) {
@@ -107,12 +108,12 @@ Oscilloscope.prototype.draw = function() {
 Oscilloscope.prototype.onMouseDown = function(event){
     // Start moving triggerlevel
     // TODO:
-    // var halfHeight = this.canvas.height / 2;
-    // var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
-    // if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-    //     this.triggerMoving = true;
-    //     return;
-    // }
+    var halfHeight = this.canvas.height / 2;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
+    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+        this.triggerMoving = true;
+        return;
+    }
 
     // Start moving markers
     for(var i = 0; i < this.state.markers.length; i++){
@@ -183,14 +184,14 @@ Oscilloscope.prototype.onMouseMove = function(event){
     var halfHeight = this.canvas.height / 2;
     var halfMoverWidth = this.state.ui.mover.width / 2;
     var halfMoverHeight = this.state.ui.mover.height / 2;
-    // var triggerLevel = this.state.triggerLevel * halfHeight * this.state.scaling.y;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
     var cursorSet = false;
 
     // Change cursor if trigger set
-    // if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-    //     document.body.style.cursor = 'row-resize';
-    //     cursorSet = true;
-    // }
+    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+        document.body.style.cursor = 'row-resize';
+        cursorSet = true;
+    }
     // Change cursor if marker set
     if(!cursorSet){
         for(var i = 0; i < this.state.markers.length; i++){
@@ -233,17 +234,17 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
 
     // Move triggerlevel
-    // if(this.triggerMoving){
-    //     triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
-    //     if(triggerLevel > 1){
-    //         triggerLevel = 1;
-    //     }
-    //     if(triggerLevel < -1){
-    //         triggerLevel = -1;
-    //     }
-    //     this.state.triggerLevel = triggerLevel;
-    //     return;
-    // }
+    if(this.triggerMoving){
+        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+        if(triggerLevel > 1){
+            triggerLevel = 1;
+        }
+        if(triggerLevel < -1){
+            triggerLevel = -1;
+        }
+        this.state.source.trigger.level = triggerLevel;
+        return;
+    }
 
     // Move markers
     if(this.markerMoving !== false){

@@ -1,13 +1,30 @@
 import m from 'mithril';
 import { windowFunctions } from '../math/windowing.js';
-import { capitalizeFirstLetter } from '../helpers.js';
+import { withKey, capitalizeFirstLetter } from '../helpers.js';
 
 export const FFTracePrefPane = {
     view: function(vnode){
         var s = vnode.attrs.traceConf;
         return [
-            m('header.text-center', m('h4', s.node.name)),
+            m('header.columns', ''),
             m('.form-horizontal', [
+                m('.form-group',[
+                    m('.col-3.text-center', m('input[type=color]', {
+                        value: s.color,
+                        onchange: m.withAttr('value', function(v){ s.color = v; })
+                    })),
+                    m('h4.col-9', !vnode.state.editName ?
+                        m('', { onclick: function(){ vnode.state.editName = true; } }, s.node.name) :
+                        m('input.form-input[type=text]', {
+                            value: s.node.name,
+                            onchange: m.withAttr('value', function(v){ s.node.name = v; }),
+                            onblur: function(){ vnode.state.editName = false; },
+                            onkeypress: withKey(13, function(target){
+                                vnode.state.editName = false;
+                            })
+                        })
+                    )
+                ]),
                 m('.form-group', [
                     m('.col-3', m('label.form-label [for=signalfrequency]', 'Signal Frequency')),
                     m('.col-9', m('input.form-input', {
@@ -27,7 +44,9 @@ export const FFTracePrefPane = {
                         onchange: m.withAttr('value', function(value) {
                             s.windowFunction = value;
                         }),
-                    }, Object.keys(windowFunctions).map(function(value){ return m('option', { value: value }, capitalizeFirstLetter(value)) }))
+                    }, Object.keys(windowFunctions).map(function(value){
+                        return m('option', { value: value }, capitalizeFirstLetter(value));
+                    }))
                     )
                 ]),
                 m('.form-group', [

@@ -23,8 +23,7 @@ var appState = {
                 top: 150,
                 left: 350,
                 source: { id: 2 },
-                type: 'NormalTrace',
-                color: '#E85D55'
+                type: 'NormalTrace'
             },
             {
                 id: 4,
@@ -33,7 +32,6 @@ var appState = {
                 left: 350,
                 source: { id: 2 },
                 type: 'FFTrace',
-                color: '#E8830C'
             }
         ],
         sources: [
@@ -45,7 +43,6 @@ var appState = {
                 type: 'WebsocketSource',
                 location: 'ws://10.84.130.54:50090',
                 // location: 'ws://localhost:50090',
-                // location: 'ws://yatekii.ch:50090',
                 frameSize: 4096,
                 buffer: {
                     upperSize: 4,
@@ -53,7 +50,7 @@ var appState = {
                 },
                 trigger: {
                     type: 'risingEdge',
-                    level: 8400,
+                    level: 0,
                     channel: 1,
                     hysteresis: 2,
                     slope: 0
@@ -71,14 +68,16 @@ var appState = {
                 {
                     id: 3,
                     offset: 0,
-                    info: {}
+                    info: {},
+                    color: '#E85D55'
                 },
                 {
                     id: 4,
                     offset: 0,
                     windowFunction: 'hann',
                     SNRmode: 'auto',
-                    info: {}
+                    info: {},
+                    color: '#E8830C'
                 },
             ],
             markers: [
@@ -105,10 +104,34 @@ var appState = {
             },
             frameSize: 4096,
             samplingRate: 1000000,
+            source: {
+                id: 2,
+                name: 'Source ' + 1,
+                top: 300,
+                left: 50,
+                location: 'ws://10.84.130.54:50090',
+                // location: 'ws://localhost:50090',
+                frameSize: 4096,
+                buffer: {
+                    upperSize: 4,
+                    lowerSize: 1,
+                },
+                trigger: {
+                    type: 'risingEdge',
+                    level: 0,
+                    channel: 1,
+                    hysteresis: 2,
+                    slope: 0
+                },
+                numberOfChannels: 2,
+                mode: 'normal'
+            }
         }],
         count: 8
     }
 };
+
+window.appState = appState;
 
 window.addEventListener('load', function() {
     m.route(document.body, '/routing', {

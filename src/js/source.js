@@ -1,10 +1,11 @@
 import * as helpers from './helpers.js';
 
 // Creates a new source
-export const WebsocketSource = function(state) {
+export const WebsocketSource = function(state, scope) {
     var me = this;
     // Remember source state
     this.state = state;
+    this.scope = scope;
 
     // Assign class variables
     this.ready = true;
@@ -44,7 +45,6 @@ export const WebsocketSource = function(state) {
                 // New data from stream
                 var arr = new Uint16Array(e.data);
                 me.data = new Float32Array(arr);
-                // console.log(arr)
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit int to float
                     me.data[i] = (arr[i] - 8192) / 8192;
@@ -82,7 +82,17 @@ WebsocketSource.prototype.sendJSON = function(obj) {
 };
 
 WebsocketSource.prototype.requestFrame = function() {
-    this.sendJSON({ requestFrame: true });
+    this.sendJSON({
+        triggerOn: {
+            // TODO: Fix Hack
+            type: window.appState.nodes.scopes[0].source.trigger.type,
+            channel: window.appState.nodes.scopes[0].source.trigger.channel,
+            level: Math.round(window.appState.nodes.scopes[0].source.trigger.level * 8192 + 8192),
+            hysteresis: window.appState.nodes.scopes[0].source.trigger.hystresis,
+            slope: window.appState.nodes.scopes[0].source.trigger.slope
+        },
+        requestFrame: true
+    });
 };
 
 WebsocketSource.prototype.forceTrigger = function() {
@@ -102,7 +112,7 @@ WebsocketSource.prototype.setNumberOfChannels = function(n) {
 };
 
 WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hysteresis = 2, slope = 0) {
-    this.sendJSON({ type: 'risingEdge', channel: channel, level: level, hysteresis: hysteresis, slope: slope });
+    this.sendJSON({ triggerOn: { type: 'risingEdge', channel: channel, level: level, hysteresis: hysteresis, slope: slope }});
 };
 
 WebsocketSource.prototype.single = function() {

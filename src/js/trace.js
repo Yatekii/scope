@@ -45,7 +45,7 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     this.fetch();
 
     // Draw trace
-    context.strokeStyle = this.state.color;
+    context.strokeStyle = traceConf.color;
     context.beginPath();
 
     // Half height of canvas
@@ -76,7 +76,7 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     context.stroke();
 
     // Draw mover (grab and draw to move the trace)
-    context.fillStyle = this.state.color;
+    context.fillStyle = traceConf.color;
     var offset = this.state.offset;
     if(offset > 1){
         offset = 1;
@@ -165,7 +165,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         }
 
         // Draw mover
-        context.fillStyle = this.state.color;
+        context.fillStyle = traceConf.color;
         offset = this.state.offset;
         if(offset > 1){
             offset = 1;
@@ -292,7 +292,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         context.save();
         context.strokeWidth = 1;
         // Draw trace
-        context.strokeStyle = this.state.color;
+        context.strokeStyle = traceConf.color;
         context.beginPath();
         context.moveTo(0, (halfHeight - (ab[0] + traceConf.offset) * halfHeight * scope.scaling.y));
         for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
@@ -302,7 +302,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         context.stroke();
 
         // Draw mover to move the trace
-        context.fillStyle = this.state.color;
+        context.fillStyle = traceConf.color;
         offset = this.state.offset;
         if(offset > 1){
             offset = 1;
