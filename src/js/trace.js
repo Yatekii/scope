@@ -9,74 +9,49 @@ export const  NormalTrace = function (state) {
 
     // Init class variables
     this.on = true;
-    this.fetched = false;
-};
-
-// Preemptively fetches a new sample set
-NormalTrace.prototype.fetch = function () {
-    // If it is not a WSS, data must be fetched from the Analyzer node
-    if(this.state.source.node.type != 'WebsocketSource'){
-        if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
-            if(!this.data){
-                this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
-            }
-            this.state.source.node.ctrl.analyzer.getFloatTimeDomainData(this.data);
-        }
-    }
-    // Otherwise it will just be ensured the data is referenced from the source properly
-    else {
-        if(this.state.source.node.ctrl.data){
-            this.data = this.state.source.node.ctrl.data;
-        } else {
-            this.data = new Float32Array();
-        }
-    }
-    this.fetched = true;
 };
 
 // Draws trace on the new frame
-NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
+NormalTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     // Store context state so other painters are presented with their known context state
     context.save();
     context.strokeWidth = 1;
 
-    // Get a new dataset
-    this.fetch();
-
     // Draw trace
-    context.strokeStyle = traceConf.color;
+    context.strokeStyle = this.state.color;
     context.beginPath();
+
+    var scope = this.state.source.scope;
 
     // Half height of canvas
     var halfHeight = scope.height / 2;
 
     // Draw every <skip> sample in data
     var skip = 1;
-
     // Apply sample to every <mul> pixel on canvas
     var mul = 1;
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.data.length * scope.scaling.x;
+    var ratio = scope.width / this.state.source.ctrl.channels[0].length * scope.scaling.x;
     if(ratio > 1){
         mul = ratio;
     } else {
         skip = 1 / ratio;
     }
 
-    // Actually draw the trace, starting at pixel 0 and data point at triggerLocation
+    // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    context.moveTo(0, (halfHeight - (this.data[triggerLocation] + traceConf.offset) * halfHeight * scope.scaling.y));
-    for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (this.data[Math.floor(i)] + traceConf.offset) * halfHeight * scope.scaling.y));
+    context.moveTo(0, (halfHeight - (this.state.source.ctrl.channels[0][0] + this.state.offset) * halfHeight * scope.scaling.y));
+    for (var i=0, j=0; (j < scope.width) && (i < this.state.source.ctrl.channels[0].length); i+=skip, j+=mul){
+        context.lineTo(j, (halfHeight - (this.state.source.ctrl.channels[0][Math.floor(i)] + this.state.offset) * halfHeight * scope.scaling.y));
     }
     context.stroke();
 
     // Draw mover (grab and draw to move the trace)
-    context.fillStyle = traceConf.color;
+    context.fillStyle = this.state.color;
     var offset = this.state.offset;
     if(offset > 1){
         offset = 1;
@@ -85,16 +60,13 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     }
     context.fillRect(
         scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - traceConf.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
+        halfHeight - this.state.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
         scope.ui.mover.width,
         scope.ui.mover.height
     );
 
     // Restore canvas context for next painter
     context.restore();
-
-    // Mark data as deprecated so we will fetch again next cycle
-    this.fetched = false;
 };
 
 // Creates a new source

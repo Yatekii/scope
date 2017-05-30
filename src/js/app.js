@@ -16,70 +16,11 @@ m.route.mode = 'search';
 
 var appState = {
     nodes: {
-        traces: [
-            {
-                id: 3,
-                name: 'Trace ' + 1,
-                top: 150,
-                left: 350,
-                source: { id: 2 },
-                type: 'NormalTrace'
-            },
-            {
-                id: 4,
-                name: 'Trace ' + 2,
-                top: 350,
-                left: 350,
-                source: { id: 2 },
-                type: 'FFTrace',
-            }
-        ],
-        sources: [
-            {
-                id: 2,
-                name: 'Source ' + 1,
-                top: 300,
-                left: 50,
-                type: 'WebsocketSource',
-                location: 'ws://10.84.130.54:50090',
-                // location: 'ws://localhost:50090',
-                frameSize: 4096,
-                buffer: {
-                    upperSize: 4,
-                    lowerSize: 1,
-                },
-                trigger: {
-                    type: 'risingEdge',
-                    level: 0,
-                    channel: 1,
-                    hysteresis: 2,
-                    slope: 0
-                },
-                numberOfChannels: 2,
-                mode: 'normal'
-            }
-        ],
         scopes: [{
             id: 1,
             name: 'Scope ' + 1,
             top: 250,
-            left: 650,
-            traces: [
-                {
-                    id: 3,
-                    offset: 0,
-                    info: {},
-                    color: '#E85D55'
-                },
-                {
-                    id: 4,
-                    offset: 0,
-                    windowFunction: 'hann',
-                    SNRmode: 'auto',
-                    info: {},
-                    color: '#E8830C'
-                },
-            ],
+            left: 350,
             markers: [
                 { id: 1, type: 'horizontal', x: 0, y: 0 },
                 { id: 2, type: 'vertical', x: 0.5, y: 0 },
@@ -102,8 +43,6 @@ var appState = {
                     width: 400,
                 }
             },
-            frameSize: 4096,
-            samplingRate: 1000000,
             source: {
                 id: 2,
                 name: 'Source ' + 1,
@@ -112,6 +51,7 @@ var appState = {
                 location: 'ws://10.84.130.54:50090',
                 // location: 'ws://localhost:50090',
                 frameSize: 4096,
+                samplingRate: 1000000,
                 buffer: {
                     upperSize: 4,
                     lowerSize: 1,
@@ -124,10 +64,31 @@ var appState = {
                     slope: 0
                 },
                 numberOfChannels: 2,
-                mode: 'normal'
+                mode: 'normal',
+                traces: [
+                    {
+                        id: 3,
+                        offset: 0,
+                        info: {},
+                        name: 'Trace ' + 1,
+                        channelID: 1,
+                        type: 'NormalTrace',
+                        color: '#E85D55'
+                    },
+                    {
+                        id: 4,
+                        offset: 0,
+                        windowFunction: 'hann',
+                        SNRmode: 'auto',
+                        info: {},
+                        name: 'Trace ' + 2,
+                        channelID: 1,
+                        type: 'FFTrace',
+                        color: '#E8830C'
+                    },
+                ],
             }
-        }],
-        count: 8
+        }]
     }
 };
 

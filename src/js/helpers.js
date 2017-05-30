@@ -45,7 +45,7 @@ export const withKey = function(key, callback) {
 };
 
 export const getNodeByID = function(nodes, id){
-    var result = nodes.filter(function( obj ) {
+    var result = nodes.find(function( obj ) {
         return obj.id == id;
     });
     return result;

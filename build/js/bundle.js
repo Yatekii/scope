@@ -15100,27 +15100,6 @@ var jsplumb = createCommonjsModule(function (module, exports) {
 
 var jsplumb_6 = jsplumb.jsPlumb;
 
-const radioSelection = {
-    view: (vnode) =>
-        mithril('.form-group', [
-            vnode.attrs.items.map(function(item){
-                return mithril('label.form-radio', [
-                    mithril('input[' + (item == vnode.attrs.type ? 'checked' : '') + ']', {
-                        type: 'radio',
-                        name: vnode.attrs.id + '-items',
-                        id: vnode.attrs.id + '-item-' + item,
-                        onchange: mithril.withAttr('value', function(value) {
-                            vnode.attrs.onchange(value);
-                        }),
-                        value: item
-                    }),
-                    mithril('i.form-icon'),
-                    item
-                ]);
-            }),
-        ])
-};
-
 window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
 
 
@@ -15147,12 +15126,7 @@ const withKey = function(key, callback) {
     };
 };
 
-const getNodeByID = function(nodes, id){
-    var result = nodes.filter(function( obj ) {
-        return obj.id == id;
-    });
-    return result;
-};
+
 
 const sum = function(arr){
     var k = 0;
@@ -15174,179 +15148,54 @@ const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-const WebsocketSource = function(state, scope) {
-    var me = this;
-    // Remember source state
-    this.state = state;
-    this.scope = scope;
-
-    // Assign class variables
-    this.ready = true;
-
-    // Init socket
-    this.socket = new WebSocket(state.location);
-    this.socket.binaryType = 'arraybuffer';
-
-    // Socket open event
-    this.socket.onopen = function() {
-        console.log('Connected!');
-        me.isOpen = true;
-        me.nextStartTime = 0;
-        me.awaitsFrame = true;
-        me.setNumberOfChannels(me.state.numberOfChannels);
-        me.frameConfiguration(me.state.frameSize, me.state.frameSize / 8 * 1, me.state.frameSize / 8 * 7);
-        me.triggerOn(me.state.trigger);
-        if(me.state.mode == 'single'){
-            // We don't have to do anything, we already did our job
-        }
-        if(me.state.mode == 'normal'){
-            // Immediately request a new frame
-            me.normal();
-        }
-        if(me.state.mode == 'auto'){
-            // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-            me.auto();
-        }
-    };
-
-    // Received message event
-    this.socket.onmessage = function(e) {
-        if(me.ready){
-            if (typeof e.data == 'string') {
-                console.log('Text message received: ' + e.data);
-            } else {
-                // New data from stream
-                var arr = new Uint16Array(e.data);
-                me.data = new Float32Array(arr);
-                for(var i = 0; i < arr.length; i++){
-                    // 14 bit int to float
-                    me.data[i] = (arr[i] - 8192) / 8192;
-                }
-                // console.log(me.data)
-                if(me.state.mode == 'single'){
-                    // We don't have to do anything, we already did our job
-                }
-                if(me.state.mode == 'normal'){
-                    // Immediately request a new frame
-                    me.normal();
-                }
-                if(me.state.mode == 'auto'){
-                    // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-                    me.auto();
-                }
-            }
-        }
-    };
-
-    // Socket close event
-    this.socket.onclose = function() {
-        console.log('Connection closed.');
-        me.socket = null;
-        me.isOpen = false;
-    };
-};
-
-WebsocketSource.prototype.sendMsg = function(txt) {
-    this.socket.send(txt);
-};
-
-WebsocketSource.prototype.sendJSON = function(obj) {
-    this.socket.send(JSON.stringify(obj));
-};
-
-WebsocketSource.prototype.requestFrame = function() {
-    this.sendJSON({
-        triggerOn: {
-            // TODO: Fix Hack
-            type: window.appState.nodes.scopes[0].source.trigger.type,
-            channel: window.appState.nodes.scopes[0].source.trigger.channel,
-            level: Math.round(window.appState.nodes.scopes[0].source.trigger.level * 8192 + 8192),
-            hysteresis: window.appState.nodes.scopes[0].source.trigger.hystresis,
-            slope: window.appState.nodes.scopes[0].source.trigger.slope
-        },
-        requestFrame: true
-    });
-};
-
-WebsocketSource.prototype.forceTrigger = function() {
-    this.sendJSON({ forceTrigger: true });
-};
-
-WebsocketSource.prototype.frameConfiguration = function(frameSize, pre, suf) {
-    this.sendJSON({ frameConfiguration: { frameSize: frameSize, pre: pre, suf: suf } });
-};
-
-WebsocketSource.prototype.triggerOn = function(trigger) {
-    this.sendJSON({ triggerOn: trigger });
-};
-
-WebsocketSource.prototype.setNumberOfChannels = function(n) {
-    this.sendJSON({ setNumberOfChannels: n });
-};
-
-WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hysteresis = 2, slope = 0) {
-    this.sendJSON({ triggerOn: { type: 'risingEdge', channel: channel, level: level, hysteresis: hysteresis, slope: slope }});
-};
-
-WebsocketSource.prototype.single = function() {
-    this.state.mode = 'single';
-    this.requestFrame();
-};
-
-WebsocketSource.prototype.normal = function() {
-    this.state.mode = 'normal';
-    var me = this;
-    setTimeout(function(){ me.requestFrame(); }, 5);
-    // this.requestFrame();
-};
-
-WebsocketSource.prototype.auto = function(timeout) {
-    var me = this;
-    this.state.mode = 'auto';
-    this.requestFrame();
-    // TODO: fix
-    // setTimeout(function(){ me.forceTrigger() }, 50);
-};
-
-const sourceNode = {
+const scopeNode = {
+    oninit: function(vnode) {
+        vnode.attrs.editingName = false;
+    },
     view: function(vnode) {
         return mithril('.card.node.unselectable', {
             id: 'node-' + vnode.attrs.id,
             style: {
                 top: vnode.attrs.top + 'px',
                 left: vnode.attrs.left + 'px'
+            },
+            ondblclick: function() {
+                // TODO: Crosswindow stuff
+                var popup = window.open(window.location.pathname + '#!/scope?id=' + vnode.attrs.id);
+                popup.scopeState = vnode.attrs;
             }
         }, [
             mithril('.card-header', [
-                mithril('.card-title', 'Source'),
-                mithril('.card-meta', [
-                    mithril(radioSelection, {
-                        id: vnode.attrs.id,
-                        items: ['WebsocketSource'],
-                        startValue: 'Waveform',
-                        type: vnode.attrs.type,
-                        onchange: (value) => {
-                            vnode.attrs.type = value;
-                            switch(vnode.attrs.type){
-                            default:
-                            case 'WebsocketSource':
-                                vnode.attrs.ctrl = new WebsocketSource(vnode.attrs);
-                                break;
-                            }
-                            mithril.redraw();
+                mithril('.card-title', [
+                    (vnode.attrs.editingName ?
+                    mithril('.form-group', [
+                        mithril('input.form-input', {
+                            type: 'text',
+                            id: 'scope-name-' + vnode.attrs.id,
+                            value: vnode.attrs.name,
+                            onkeypress: withKey(13, function(target){
+                                vnode.attrs.name = target.value;
+                                vnode.attrs.editingName = false;
+                            })
+                        })
+                    ]) :
+                    mithril('span', {
+                        onclick: function() {
+                            vnode.attrs.editingName = true;
                         }
-                    })
-                ])
+                    }, vnode.attrs.name))
+                    // TODO: Colorlabel here
+                ]),
+                mithril('.card-meta', [])
             ]),
             mithril('.card-body',
-                vnode.attrs.type == 'WebsocketSource' ? mithril(wssBody, vnode.attrs) :
-                'Not implemented'
+                mithril(body, vnode.attrs)
             )
         ]);
     },
     oncreate: function(vnode) {
         jsplumb_6.bind('ready', function(){
-            console.log('Handled source jsPlumb');
+            console.log('Handled scope jsPlumb');
             jsplumb_6.draggable(vnode.dom.id, {
                 grid:[50,50],
                 stop: function(e){
@@ -15356,45 +15205,26 @@ const sourceNode = {
             });
 
             jsplumb_6.addEndpoint(vnode.dom.id, { 
-                anchor: ['Right', {shape: 'Rectangle'}],
-                isSource: true,
+                anchor: ['Left', {shape: 'Rectangle'}],
+                isTarget: true,
                 maxConnections: 10,
             });
         });
-
-        switch(vnode.attrs.type){
-        default:
-        case 'WebsocketSource':
-            vnode.attrs.ctrl = new WebsocketSource(vnode.attrs);
-            break;
-        }
     }
 };
 
-const wssBody = {
+const body = {
     view: function(vnode){
         return [
             mithril('.form-group', [
-                mithril('label.form-label [for=wss-loc-' + vnode.attrs.id + ']', 'Location'),
-                mithril('input.form-input', {
-                    type: 'text',
-                    id: 'wss-loc-' + vnode.attrs.id,
-                    value: vnode.attrs.location,
-                    onchange: mithril.withAttr('value', function(value) {
-                        vnode.attrs.location = value;
-                        vnode.attrs.ctrl = new WebsocketSource(vnode.attrs);
-                    }),
-                })
-            ]),
-            mithril('.form-group', [
-                mithril('label.form-label [for=wss-framesize-' + vnode.attrs.id + ']', 'Frame Size'),
+                mithril('label.form-label [for=wss-samplingrate-' + vnode.attrs.id + ']', 'Sampling Rate'),
                 mithril('input.form-input', {
                     type: 'number',
-                    id: 'wss-framesize-' + vnode.attrs.id, 
-                    value: vnode.attrs.frameSize,
+                    id: 'wss-samplingrate-' + vnode.attrs.id, 
+                    value: vnode.attrs.samplingRate,
                     onchange: mithril.withAttr('value', function(value) {
-                        vnode.attrs.frameSize = parseInt(value);
-                        vnode.attrs.ctrl.frameConfiguration(vnode.attrs.frameSize, vnode.attrs.frameSize / 2, vnode.attrs.frameSize / 2);
+                        vnode.attrs.samplingRate = parseInt(value);
+                        // TODO: send sampling rate
                     }),
                 })
             ])
@@ -15402,29 +15232,23 @@ const wssBody = {
     }
 };
 
-const miniFFT = function(re, im) {
-    var N = re.length;
-    var i, j, h, k;
-    for (i = 0; i < N; i++) {
-        for(j = 0, h = i, k = N; k >>= 1; h >>= 1){ // eslint-disable-line no-cond-assign
-            j = (j << 1) | (h & 1);
-        }
-        if (j > i) {
-            re[j] = [re[i], re[i] = re[j]][0];
-            im[j] = [im[i], im[i] = im[j]][0];
-        }
-    }
-    for(var hN = 1; hN * 2 <= N; hN *= 2){
-        for (i = 0; i < N; i += hN * 2){
-            for (j = i; j < i + hN; j++) {
-                var cos = Math.cos(Math.PI * (j - i) / hN);
-                var sin = Math.sin(Math.PI * (j - i) / hN);
-                var tre =  re[j+hN] * cos + im[j+hN] * sin;
-                var tim = -re[j+hN] * sin + im[j+hN] * cos;
-                re[j + hN] = re[j] - tre; im[j + hN] = im[j] - tim;
-                re[j] += tre; im[j] += tim;
-            }
-        }
+const router = {
+    oninit: function(vnode) {
+    },
+    view: function(vnode) {
+        // Display all nodes. For now this is only scopes
+        return [
+            vnode.attrs.nodes.scopes.map(node => mithril(scopeNode, node))
+        ];
+    },
+    oncreate: function(vnode){
+        // Add parents to all traces and sources
+        vnode.attrs.nodes.scopes.forEach(function(scope) {
+            scope.source.traces.forEach(function(trace) {
+                    trace.source = scope.source;
+            }, this);
+            scope.source.scope = scope;
+        });
     }
 };
 
@@ -15520,80 +15344,773 @@ const applyWindow = function(data_array, windowing_function, alpha) {
 	return data_array;
 };
 
+const FFTracePrefPane = {
+    view: function(vnode){
+        var t = vnode.attrs.traceConf;
+        var s = vnode.attrs.scopeConf;
+        return [
+            mithril('header.columns', ''),
+            mithril('.form-horizontal', [
+                // GUI: Change color and name
+                mithril('.form-group',[
+                    mithril('.col-3.text-center', mithril('input[type=color]', {
+                        value: t.color,
+                        onchange: mithril.withAttr('value', function(v){ t.color = v; })
+                    })),
+                    mithril('h4.col-9', !vnode.state.editName ?
+                        mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
+                        mithril('input.form-input[type=text]', {
+                            value: t.node.name,
+                            onchange: mithril.withAttr('value', function(v){ t.name = v; }),
+                            onblur: function(){ vnode.state.editName = false; },
+                            onkeypress: withKey(13, function(target){
+                                vnode.state.editName = false;
+                            })
+                        })
+                    )
+                ]),
+                // TODO: remove/adjust
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label [for=signalfrequency]', 'Signal Frequency')),
+                    mithril('.col-9', mithril('input.form-input', {
+                        type: 'number',
+                        id: 'signalfrequency', 
+                        value: t.signalFrequency,
+                        onchange: mithril.withAttr('value', function(value) {
+                            t.signalFrequency = parseInt(value);
+                        }),
+                    }))
+                ]),
+                // GUI: Select windowing
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label [for=window', 'Window')),
+                    mithril('.col-9', mithril('select.form-input', {
+                        id: 'window',
+                        value: t.windowFunction,
+                        onchange: mithril.withAttr('value', function(value) {
+                            t.windowFunction = value;
+                        }),
+                    }, Object.keys(windowFunctions).map(function(value){
+                        return mithril('option', { value: value }, capitalizeFirstLetter(value));
+                    }))
+                    )
+                ]),
+                // GUI: Display SNR
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label [for=SNR', 'SNR')),
+                    mithril('.col-9', mithril('label.form-label', { id: 'SNR' }, t.info.SNR))
+                ]),
+                // GUI: Select display mode
+                mithril('.form-group', [
+                    mithril('.col-12', mithril('.btn-group.btn-group-block', [
+                        mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
+                            onclick: function(e){
+                                t.SNRmode = 'manual';
+                            }
+                        }, 'Manual'),
+                        mithril('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
+                            onclick: function(e){
+                                t.SNRmode = 'auto';
+                            }
+                        }, 'Auto')
+                    ]))
+                ]),
+                // GUI: Settings for the SNR markers
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
+                    mithril('.col-9', mithril('input.form-input', {
+                        type: 'number',
+                        value: s.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
+                        onchange: mithril.withAttr('value', function(value) {
+                            s.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
+                        }),
+                    }))
+                ]),
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
+                    mithril('.col-9', mithril('input.form-input', {
+                        type: 'number',
+                        value: s.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
+                        onchange: mithril.withAttr('value', function(value) {
+                            s.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
+                        }),
+                    }))
+                ])
+            ])
+        ];
+    }
+};
+
+const generalPrefPane = {
+    view: function(vnode){
+        var s = vnode.attrs.scope;
+        return [
+            mithril('header.text-center', mithril('h4', s)),
+            mithril('.form-horizontal', [
+                mithril('.form-group', [
+                    mithril('.col-12', mithril('.btn-group.btn-group-block', [
+                        mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.normal();
+                                });
+                                s.mode = 'normal';
+                            }
+                        }, 'Normal'),
+                        mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.auto();
+                                });
+                                s.mode = 'auto';
+                            }
+                        }, 'Auto'),
+                        mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
+                            onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    // TODO fix this (will trigger a trace multiple times)
+                                    t.node.source.node.ctrl.single();
+                                });
+                                s.mode = 'single';
+                            }
+                        }, 'Single')
+                    ]))
+                ]),
+                mithril('.form-group', [
+                    mithril('button.btn.col-6', {
+                        onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.single();
+                                });
+                                s.mode = 'single';
+                            }
+                    }, 'Single Shot'),
+                    mithril('button.btn.col-6', {
+                        onclick: function(e){
+                                s.traces.forEach(function(t){
+                                    t.node.source.node.ctrl.forceTrigger();
+                                });
+                            }
+                    }, 'Force Trigger')
+                ]),
+            ])
+        ];
+    }
+};
+
+const draw$1 = function (context, scope, state) {
+    // Store old state
+    context.save();
+
+    // Setup brush
+    context.strokeWidth = 1;
+    context.strokeStyle = '#006644';
+    if (context.setLineDash) {
+        context.setLineDash([5]);
+    }
+
+    // Draw marker
+    if(state.type == 'vertical'){
+        context.beginPath();
+        context.moveTo(state.x * scope.width, 0);
+        context.lineTo(state.x * scope.width, scope.height);
+        context.stroke();
+    } else if(state.type == 'horizontal'){
+        context.beginPath();
+        var halfHeight = scope.height / 2;
+        context.moveTo(0, halfHeight - state.y * halfHeight);
+        context.lineTo(scope.width, halfHeight - state.y * halfHeight);
+        context.stroke();
+    }
+
+    // Restore old brush settings
+    context.restore();
+};
+
+const secondsToString = function(s){
+    if(s < 1e-9){
+        return (s * 1e12).toFixed(2) + 'ps';
+    }
+    if(s < 1e-6){
+        return (s * 1e9).toFixed(2) + 'ns';
+    }
+    if(s < 1e-3){
+        return (s * 1e6).toFixed(2) + 'us';
+    }
+    if(s < 1){
+        return (s * 1e3).toFixed(2) + 'ms';
+    }
+    if(s < 1e3){
+        return (s).toFixed(2) + 's';
+    }
+    if(s < 1e6){
+        return (s * 1e-3).toFixed(2) + 'Ms';
+    }
+};
+
+const Oscilloscope = function(state) {
+    // Remember scope state
+    this.state = state;
+
+    this.canvas = document.getElementById('scope');
+
+    this.markerMoving = false;
+    this.triggerMoving = false;
+    this.traceMoving = false;
+};
+
+Oscilloscope.prototype.draw = function() {
+    var me = this;
+
+    if(this.canvas == null){
+        return;
+    }
+
+    var width = document.body.clientWidth - (me.state.ui.prefPane.open ? me.state.ui.prefPane.width : 0);
+    var height = document.body.clientHeight;
+    var halfHeight = this.state.height / 2;
+    var context = this.canvas.getContext('2d');
+
+    // Assign new scope properties
+    this.canvas.height = this.state.height = height;
+    this.canvas.width = this.state.width = width;
+    context.strokeWidth = 1;
+
+    // Draw background
+    context.fillStyle='#222222';
+    context.fillRect(0, 0, width, height);
+
+    // Draw trigger level
+    // console.log(this.state.source.trigger.level * 8192 + 8192);
+    context.strokeStyle = '#278BFF';
+    context.beginPath();
+    context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
+    context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
+    context.stroke();
+
+    this.state.source.traces.forEach(function(trace) {
+        console.log(me.state.source.ctrl.ready);
+        if(me.state.source.ctrl.ready){
+            trace.ctrl.draw(me.canvas);
+        }
+    });
+
+    me.state.markers.forEach(function(m) {
+        draw$1(context, me.state, m);
+    });
+
+    /* Draw scales */
+    context.strokeWidth = 1;
+    context.strokeStyle = '#ABABAB';
+    context.setLineDash([5]);
+
+    context.font = "30px Arial";
+    context.fillStyle = 'blue';
+
+    var unit = 1e9;
+    var skip = 1;
+    var mul = 1;
+    var ratio = width / me.state.source.frameSize * me.state.scaling.x; // pixel/sample
+    var nStart = 1e18;
+    var n = 1e18;
+    var dt = ratio / me.state.source.samplingRate * n;
+    for(var a = 0; a < 20; a++){
+        if(width / dt > 1 && width / dt < 11){
+            break;
+        }
+        n *= 1e-1;
+        dt = ratio / me.state.source.samplingRate * n;
+    }
+     // pixel / sample * sample / sek
+    var i;
+    for(i = 0; i < 11; i++){
+        context.beginPath();
+        context.moveTo(dt * i, 0);
+        context.lineTo(dt * i, height);
+        context.stroke();
+    }
+        // context.beginPath();
+        // var halfHeight = scope.height / 2;
+        // context.moveTo(0, halfHeight - state.y * halfHeight);
+        // context.lineTo(scope.width, halfHeight - state.y * halfHeight);
+        // context.stroke();
+
+    // Draw legend
+    context.strokeStyle = '#ABABAB';
+    context.fillStyle='#222222';
+    context.setLineDash([0]);
+    context.rect(width - 300, 20, 280, 180);
+    context.stroke();
+    context.fill();
+    context.textAlign = 'left';
+    context.font = '20px Arial';
+    context.fillStyle = '#ABABAB';
+    context.textBaseline = 'hanging';
+    context.fillText('Δt = ' + secondsToString(me.state.source.samplingRate / (nStart / n)), width - 290, 30);
+};
+
+Oscilloscope.prototype.onMouseDown = function(event){
+    // Start moving triggerlevel
+    // TODO: adjust trigger level setup to be dependant on active trace
+    var halfHeight = this.canvas.height / 2;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
+    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+        this.triggerMoving = true;
+        return;
+    }
+
+    // Start moving markers
+    for(var i = 0; i < this.state.markers.length; i++){
+        if(this.state.markers[i].type == 'vertical'){
+            var x = this.state.markers[i].x * this.canvas.width;
+            if(event.offsetX < x + 3 && event.offsetX > x - 3){
+                this.markerMoving = i;
+                return;
+            }
+        } else {
+            var y = this.state.markers[i].y * halfHeight * this.state.scaling.y;
+            if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
+                this.markerMoving = i;
+                return;
+            }
+        }
+    }
+
+    // Start moving traces
+    var me = this;
+    var halfMoverWidth = me.state.ui.mover.width / 2;
+    var halfMoverHeight = me.state.ui.mover.height / 2;
+    this.state.traces.forEach(function(trace) {
+        var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
+        if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
+            var y = trace.offset * halfHeight * me.state.scaling.y;
+            if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
+                me.traceMoving = trace;
+                return;
+            }
+        }
+    });
+};
+
+Oscilloscope.prototype.onMouseUp = function(event){
+    var me = this;
+    // End moving triggerlevel
+    if(this.triggerMoving){
+        this.triggerMoving = false;
+    }
+
+    // End moving markers
+    if(this.markerMoving !== false){
+        this.markerMoving = false;
+    }
+
+    // End moving traces
+    if(this.traceMoving !== false){
+        this.traceMoving = false;
+    }
+
+    if(this.state.buttons){
+        this.state.buttons.forEach(function(button) {
+            var w = button.width;
+            var h = button.height;
+            var x = button.left;
+            var y = button.top;
+            if(event.offsetX < x + w && event.offsetX > x){
+                if(event.offsetY < y + h && event.offsetY > y){
+                    me.uiHandlers[button.handler](me);
+                }
+            }
+        });
+    }
+};
+
+Oscilloscope.prototype.onMouseMove = function(event){
+    var halfHeight = this.canvas.height / 2;
+    var halfMoverWidth = this.state.ui.mover.width / 2;
+    var halfMoverHeight = this.state.ui.mover.height / 2;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
+    var cursorSet = false;
+
+    // Change cursor if trigger set is active
+    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+        document.body.style.cursor = 'row-resize';
+        cursorSet = true;
+    }
+    // Change cursor if marker set is active
+    if(!cursorSet){
+        for(var i = 0; i < this.state.markers.length; i++){
+            if(this.state.markers[i].type == 'vertical'){
+                var x = this.state.markers[i].x * this.canvas.width;
+                if(event.offsetX < x + 3 && event.offsetX > x - 3){
+                    document.body.style.cursor = 'col-resize';
+                    cursorSet = true;
+                    break;
+                }
+            } else {
+                var y = this.state.markers[i].y * halfHeight * this.state.scaling.y;
+                if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
+                    document.body.style.cursor = 'row-resize';
+                    cursorSet = true;
+                    break;
+                }
+            }
+        }
+    }
+    // Change cursor if trace set is active
+    if(!cursorSet){
+        var me = this;
+        this.state.source.traces.forEach(function(trace) {
+            var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
+            if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
+                var y = trace.offset * halfHeight * me.state.scaling.y;
+                if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
+                    document.body.style.cursor = 'move';
+                    cursorSet = true;
+                    return;
+                }
+            }
+        });
+    }
+    // Change cursor if nothing set is active
+    if(!cursorSet){
+        document.body.style.cursor = 'initial';
+    }
+
+
+    // Move triggerlevel is active
+    if(this.triggerMoving){
+        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+        if(triggerLevel > 1){
+            triggerLevel = 1;
+        }
+        if(triggerLevel < -1){
+            triggerLevel = -1;
+        }
+        this.state.source.trigger.level = triggerLevel;
+        return;
+    }
+
+    // Move markers if move markers is active
+    if(this.markerMoving !== false){
+        var markerLevel = 0;
+        if(this.state.markers[this.markerMoving].type == 'vertical'){
+            markerLevel = event.offsetX / this.canvas.width;
+            if(markerLevel > 1){
+                markerLevel = 1;
+            }
+            if(markerLevel < 0){
+                markerLevel = 0;
+            }
+            this.state.markers[this.markerMoving].x = markerLevel;
+            return;
+        } else {
+            markerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+            if(markerLevel > 1){
+                markerLevel = 1;
+            }
+            if(markerLevel < -1){
+                markerLevel = -1;
+            }
+            this.state.markers[this.markerMoving].y = markerLevel;
+            return;
+        }
+    }
+
+    // Move traces if move traces is active
+    if(this.traceMoving !== false){
+        var traceOffset = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+        if(traceOffset > 1){
+            traceOffset = 1;
+        }
+        if(traceOffset < -1){
+            traceOffset = -1;
+        }
+        this.traceMoving.offset = traceOffset;
+        return;
+    }
+};
+
+Oscilloscope.prototype.onScroll = function(event){
+    this.state.scaling.y += event.wheelDeltaY * 0.01;
+    if(this.state.scaling.y < 0){
+        this.state.scaling.y = 0;
+    }
+    this.state.scaling.x += event.wheelDeltaX * 0.01;
+    if(this.state.scaling.x < 1){
+        this.state.scaling.x = 1;
+    }
+};
+
+Oscilloscope.prototype.addMarker = function(id, type, xy){
+    var px = 0;
+    var py = 0;
+    if(type == 'horizontal'){
+        py = xy;
+    } else {
+        px = xy;
+    }
+    this.state.markers.push({
+        id: id, type: type, x: px, y: py
+    });
+};
+
+Oscilloscope.prototype.getMarkerById = function(id){
+    var result = this.state.markers.filter(function( obj ) {
+        return obj.id == id;
+    });
+    return result;
+};
+
+Oscilloscope.prototype.setSNRMarkers = function(firstX, secondX){
+    var first = this.getMarkerById('SNRfirst');
+    var second = this.getMarkerById('SNRsecond');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+    } else {
+        first[0].x = firstX;
+    }
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+    } else {
+        second[0].x = secondX;
+    }
+};
+
+Oscilloscope.prototype.setFirstSNRMarker = function(firstX){
+    var first = this.getMarkerById('SNRfirst');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+        return;
+    }
+    first[0].x = firstX;
+};
+
+Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
+    var second = this.getMarkerById('SNRsecond');
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+        return;
+    }
+    second[0].x = secondX;
+};
+
+Oscilloscope.prototype.uiHandlers = {
+    togglePrefPane: function(scope){
+        scope.state.ui.prefPane.open = !scope.state.ui.prefPane.open;
+    }
+};
+
+// Creates a new source
+const WebsocketSource = function(state) {
+    var me = this;
+    // Remember source state
+    this.state = state;
+
+    this.channels = [new Float32Array(0), new Float32Array(0)];
+
+    // Init socket
+    this.socket = new WebSocket(state.location);
+    this.socket.binaryType = 'arraybuffer';
+
+    // Socket open event
+    this.socket.onopen = function() {
+        console.log('Connected to ' + state.location + '!');
+        me.isOpen = true;
+        // Configure logger initially and start a frame according to the mode
+        me.setNumberOfChannels(me.state.numberOfChannels);
+        me.frameConfiguration(me.state.frameSize, me.state.frameSize / 8 * 1, me.state.frameSize / 8 * 7);
+        me.triggerOn(me.state.trigger);
+        if(me.state.mode == 'single'){
+            // We don't have to do anything, we already did our job
+        }
+        if(me.state.mode == 'normal'){
+            // Immediately request a new frame
+            me.normal();
+        }
+        if(me.state.mode == 'auto'){
+            // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
+            me.auto();
+        }
+        me.channels;
+        me.ready = true;
+    };
+
+    // Received message event
+    this.socket.onmessage = function(e) {
+        if(me.ready){
+            if (typeof e.data == 'string') {
+                console.log('Text message received: ' + e.data);
+            } else {
+                // TODO: distinguish between channels
+                // New data from stream
+                var arr = new Uint16Array(e.data);
+                var data = new Float32Array(arr);
+                for(var i = 0; i < arr.length; i++){
+                    // 14 bit uint to float
+                    data[i] = (arr[i] - 8192) / 8192;
+                }
+                me.channels[0] = data;
+                // Start a new frame if mode is appropriate otherwise just exit
+                if(me.state.mode == 'single'){
+                    // We don't have to do anything, we already did our job
+                }
+                if(me.state.mode == 'normal'){
+                    // Immediately request a new frame
+                    me.normal();
+                }
+                if(me.state.mode == 'auto'){
+                    // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
+                    me.auto();
+                }
+            }
+        }
+    };
+
+    // Socket close event
+    this.socket.onclose = function() {
+        console.log('Connection closed.');
+        me.socket = null;
+        me.isOpen = false;
+        me.ready = false;
+    };
+};
+
+WebsocketSource.prototype.sendMsg = function(txt) {
+    this.socket.send(txt);
+};
+
+WebsocketSource.prototype.sendJSON = function(obj) {
+    this.socket.send(JSON.stringify(obj));
+};
+
+WebsocketSource.prototype.requestFrame = function() {
+    this.sendJSON({
+        triggerOn: {
+            type: this.state.trigger.type,
+            channel: this.state.trigger.channel,
+            // TODO: Fix trigger level sent (+ trace offset)
+            level: Math.round(this.state.trigger.level * 8192 + 8192),
+            hysteresis: this.state.trigger.hystresis,
+            slope: this.state.trigger.slope
+        },
+        requestFrame: true
+    });
+};
+
+WebsocketSource.prototype.forceTrigger = function() {
+    this.sendJSON({ forceTrigger: true });
+};
+
+WebsocketSource.prototype.frameConfiguration = function(frameSize, pre, suf) {
+    this.sendJSON({ frameConfiguration: { frameSize: frameSize, pre: pre, suf: suf } });
+};
+
+WebsocketSource.prototype.triggerOn = function(trigger) {
+    this.sendJSON({ triggerOn: trigger });
+};
+
+WebsocketSource.prototype.setNumberOfChannels = function(n) {
+    this.sendJSON({ setNumberOfChannels: n });
+};
+
+WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hysteresis = 2, slope = 0) {
+    this.sendJSON({ triggerOn: { type: 'risingEdge', channel: channel, level: level, hysteresis: hysteresis, slope: slope }});
+};
+
+WebsocketSource.prototype.single = function() {
+    this.state.mode = 'single';
+    this.requestFrame();
+};
+
+WebsocketSource.prototype.normal = function() {
+    this.state.mode = 'normal';
+    var me = this;
+    setTimeout(function(){ me.requestFrame(); }, 5);
+};
+
+WebsocketSource.prototype.auto = function(timeout) {
+    var me = this;
+    this.state.mode = 'auto';
+    this.requestFrame();
+    // TODO: fix
+    // setTimeout(function(){ me.forceTrigger() }, 50);
+};
+
+const miniFFT = function(re, im) {
+    var N = re.length;
+    var i, j, h, k;
+    for (i = 0; i < N; i++) {
+        for(j = 0, h = i, k = N; k >>= 1; h >>= 1){ // eslint-disable-line no-cond-assign
+            j = (j << 1) | (h & 1);
+        }
+        if (j > i) {
+            re[j] = [re[i], re[i] = re[j]][0];
+            im[j] = [im[i], im[i] = im[j]][0];
+        }
+    }
+    for(var hN = 1; hN * 2 <= N; hN *= 2){
+        for (i = 0; i < N; i += hN * 2){
+            for (j = i; j < i + hN; j++) {
+                var cos = Math.cos(Math.PI * (j - i) / hN);
+                var sin = Math.sin(Math.PI * (j - i) / hN);
+                var tre =  re[j+hN] * cos + im[j+hN] * sin;
+                var tim = -re[j+hN] * sin + im[j+hN] * cos;
+                re[j + hN] = re[j] - tre; im[j + hN] = im[j] - tim;
+                re[j] += tre; im[j] += tim;
+            }
+        }
+    }
+};
+
 const NormalTrace = function (state) {
     // Remember trace state
     this.state = state;
 
     // Init class variables
     this.on = true;
-    this.fetched = false;
-};
-
-// Preemptively fetches a new sample set
-NormalTrace.prototype.fetch = function () {
-    // If it is not a WSS, data must be fetched from the Analyzer node
-    if(this.state.source.node.type != 'WebsocketSource'){
-        if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
-            if(!this.data){
-                this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
-            }
-            this.state.source.node.ctrl.analyzer.getFloatTimeDomainData(this.data);
-        }
-    }
-    // Otherwise it will just be ensured the data is referenced from the source properly
-    else {
-        if(this.state.source.node.ctrl.data){
-            this.data = this.state.source.node.ctrl.data;
-        } else {
-            this.data = new Float32Array();
-        }
-    }
-    this.fetched = true;
 };
 
 // Draws trace on the new frame
-NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation) {
+NormalTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     // Store context state so other painters are presented with their known context state
     context.save();
     context.strokeWidth = 1;
 
-    // Get a new dataset
-    this.fetch();
-
     // Draw trace
-    context.strokeStyle = traceConf.color;
+    context.strokeStyle = this.state.color;
     context.beginPath();
+
+    var scope = this.state.source.scope;
 
     // Half height of canvas
     var halfHeight = scope.height / 2;
 
     // Draw every <skip> sample in data
     var skip = 1;
-
     // Apply sample to every <mul> pixel on canvas
     var mul = 1;
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.data.length * scope.scaling.x;
+    var ratio = scope.width / this.state.source.ctrl.channels[0].length * scope.scaling.x;
     if(ratio > 1){
         mul = ratio;
     } else {
         skip = 1 / ratio;
     }
 
-    // Actually draw the trace, starting at pixel 0 and data point at triggerLocation
+    // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    context.moveTo(0, (halfHeight - (this.data[triggerLocation] + traceConf.offset) * halfHeight * scope.scaling.y));
-    for (var i=triggerLocation, j=0; (j < scope.width) && (i < this.data.length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (this.data[Math.floor(i)] + traceConf.offset) * halfHeight * scope.scaling.y));
+    context.moveTo(0, (halfHeight - (this.state.source.ctrl.channels[0][0] + this.state.offset) * halfHeight * scope.scaling.y));
+    for (var i=0, j=0; (j < scope.width) && (i < this.state.source.ctrl.channels[0].length); i+=skip, j+=mul){
+        context.lineTo(j, (halfHeight - (this.state.source.ctrl.channels[0][Math.floor(i)] + this.state.offset) * halfHeight * scope.scaling.y));
     }
     context.stroke();
 
     // Draw mover (grab and draw to move the trace)
-    context.fillStyle = traceConf.color;
+    context.fillStyle = this.state.color;
     var offset = this.state.offset;
     if(offset > 1){
         offset = 1;
@@ -15602,16 +16119,13 @@ NormalTrace.prototype.draw = function (canvas, scope, traceConf, triggerLocation
     }
     context.fillRect(
         scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - traceConf.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
+        halfHeight - this.state.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
         scope.ui.mover.width,
         scope.ui.mover.height
     );
 
     // Restore canvas context for next painter
     context.restore();
-
-    // Mark data as deprecated so we will fetch again next cycle
-    this.fetched = false;
 };
 
 // Creates a new source
@@ -15841,841 +16355,16 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
     }
 };
 
-const traceNode = {
-    oninit: function(vnode) {
-        vnode.attrs.editingName = false;
-    },
-    view: function(vnode) {
-        return mithril('.card.node.unselectable', {
-            id: 'node-' + vnode.attrs.id,
-            style: {
-                top: vnode.attrs.top + 'px',
-                left: vnode.attrs.left + 'px'
-            }
-        }, [
-            mithril('.card-header', [
-                mithril('.card-title', [
-                    (vnode.attrs.editingName ?
-                    mithril('.form-group', [
-                        mithril('input.form-input', {
-                            type: 'text',
-                            id: 'trace-name-' + vnode.attrs.id,
-                            value: vnode.attrs.name,
-                            onkeypress: withKey(13, function(target){
-                                vnode.attrs.name = target.value;
-                                vnode.attrs.editingName = false;
-                            })
-                        })
-                    ]) :
-                    mithril('span', {
-                        onclick: function() {
-                            vnode.attrs.editingName = true;
-                        }
-                    }, vnode.attrs.name))
-                    // TODO: Colorlabel here
-                ]),
-                mithril('.card-meta', [])
-            ]),
-            mithril('.card-body', '')
-        ]);
-    },
-    oncreate: function(vnode) {
-        jsplumb_6.bind('ready', function(){
-            console.log('Handled trace jsPlumb');
-            jsplumb_6.draggable(vnode.dom.id, {
-                grid:[50,50],
-                stop: function(e){
-                    vnode.attrs.top = e.pos[1];
-                    vnode.attrs.left = e.pos[0];
-                }
-            });
-
-            jsplumb_6.addEndpoint(vnode.dom.id, { 
-                anchor: ['Left', {shape: 'Rectangle'}],
-                isTarget: true,
-                maxConnections: 1,
-            });
-
-            jsplumb_6.addEndpoint(vnode.dom.id, { 
-                anchor: ['Right', {shape: 'Rectangle'}],
-                isSource: true,
-                maxConnections: 10,
-            });
-        });
-
-        switch(vnode.attrs.type){
-        default:
-        case 'NormalTrace':
-            vnode.attrs.ctrl = new NormalTrace(vnode.attrs);
-            break;
-
-        case 'FFTrace':
-            vnode.attrs.ctrl = new FFTrace(vnode.attrs);
-            break;
-        }
-    }
-};
-
-const scopeNode = {
-    oninit: function(vnode) {
-        vnode.attrs.editingName = false;
-    },
-    view: function(vnode) {
-        return mithril('.card.node.unselectable', {
-            id: 'node-' + vnode.attrs.id,
-            style: {
-                top: vnode.attrs.top + 'px',
-                left: vnode.attrs.left + 'px'
-            },
-            ondblclick: function() {
-                // TODO: Crosswindow stuff
-                var popup = window.open(window.location.pathname + '#!/scope?id=' + vnode.attrs.id);
-                popup.scopeState = vnode.attrs;
-            }
-        }, [
-            mithril('.card-header', [
-                mithril('.card-title', [
-                    (vnode.attrs.editingName ?
-                    mithril('.form-group', [
-                        mithril('input.form-input', {
-                            type: 'text',
-                            id: 'scope-name-' + vnode.attrs.id,
-                            value: vnode.attrs.name,
-                            onkeypress: withKey(13, function(target){
-                                vnode.attrs.name = target.value;
-                                vnode.attrs.editingName = false;
-                            })
-                        })
-                    ]) :
-                    mithril('span', {
-                        onclick: function() {
-                            vnode.attrs.editingName = true;
-                        }
-                    }, vnode.attrs.name))
-                    // TODO: Colorlabel here
-                ]),
-                mithril('.card-meta', [])
-            ]),
-            mithril('.card-body',
-                mithril(body, vnode.attrs)
-            )
-        ]);
-    },
-    oncreate: function(vnode) {
-        jsplumb_6.bind('ready', function(){
-            console.log('Handled scope jsPlumb');
-            jsplumb_6.draggable(vnode.dom.id, {
-                grid:[50,50],
-                stop: function(e){
-                    vnode.attrs.top = e.pos[1];
-                    vnode.attrs.left = e.pos[0];
-                }
-            });
-
-            jsplumb_6.addEndpoint(vnode.dom.id, { 
-                anchor: ['Left', {shape: 'Rectangle'}],
-                isTarget: true,
-                maxConnections: 10,
-            });
-        });
-    }
-};
-
-const body = {
-    view: function(vnode){
-        return [
-            mithril('.form-group', [
-                mithril('label.form-label [for=wss-samplingrate-' + vnode.attrs.id + ']', 'Sampling Rate'),
-                mithril('input.form-input', {
-                    type: 'number',
-                    id: 'wss-samplingrate-' + vnode.attrs.id, 
-                    value: vnode.attrs.samplingRate,
-                    onchange: mithril.withAttr('value', function(value) {
-                        vnode.attrs.samplingRate = parseInt(value);
-                        // TODO: send sampling rate
-                    }),
-                })
-            ])
-        ];
-    }
-};
-
-const router = {
-    oninit: function(vnode) {
-        jsplumb_6.bind('ready', function(){
-            // Bind connection event
-            jsplumb_6.bind('connection', function(info) {
-                var sourceID = info.source.id.split('-')[1];
-                var targetID = info.target.id.split('-')[1];
-                
-                var trace = null;
-                var source = getNodeByID(vnode.attrs.nodes.sources, sourceID);
-                if(source.length < 1){
-                    trace = getNodeByID(vnode.attrs.nodes.traces, sourceID)[0];
-                    var scope = getNodeByID(vnode.attrs.nodes.scopes, targetID)[0];
-                    if (getNodeByID(scope.traces, sourceID).length == 0) {
-                        scope.traces.push({ id: sourceID, node: trace, offset: 0 });
-                        console.log('Connected new trace to scope.');
-                        return;
-                    }
-                    console.log('Trace already connected to scope.');
-                    return;
-                    // TODO: Look in sinks too since they can be targets as well!
-                } else {
-                    source = source[0];
-                    trace = getNodeByID(vnode.attrs.nodes.traces, targetID);
-                    if(trace.length > 0){
-                        trace = trace[0];
-                        trace.source = {
-                            id: sourceID,
-                            node: source
-                        };
-                        console.log('Connected source to trace.');
-                        return;
-                    }
-                }
-            });
-
-            // Bind connectionDetached event
-            jsplumb_6.bind('connectionDetached', function(info) {
-                var targetID = info.target.id.split('-')[1];
-                var trace = getNodeByID(vnode.attrs.nodes.traces, targetID);
-                if(trace.length < 1){
-                    var sourceID = info.source.id.split('-')[1];
-                    var scope = getNodeByID(vnode.attrs.nodes.scopes, targetID)[0];
-                    scope.traces = scope.traces.filter(obj => obj.id != sourceID);
-                    console.log('Removed trace from the scope');
-                    return;
-                    // TODO: Look in sinks too since they can be targets as well!
-                } else {
-                    trace = trace[0];
-                    trace.source = null;
-                    console.log('Removed source from trace.');
-                    return;
-                }
-            });
-        });
-    },
-    view: function(vnode) {
-        return [
-            vnode.attrs.nodes.sources.map(node => mithril(sourceNode, node)),
-            vnode.attrs.nodes.traces.map(node => mithril(traceNode, node)),
-            vnode.attrs.nodes.scopes.map(node => mithril(scopeNode, node))
-        ];
-    },
-    oncreate: function(vnode){
-        jsplumb_6.bind('ready', function(){
-            vnode.attrs.nodes.traces.forEach(function(trace) {
-                if(trace.source){
-                    trace.source.node = getNodeByID(vnode.attrs.nodes.sources, trace.source.id)[0];
-                    jsplumb_6.connect({
-                        source: 'node-' + trace.source.node.id,
-                        target: 'node-' + trace.id,
-                        endpoint: 'Dot',
-                        //anchors: [['Right', {shape:'Rectangle'}], ['Left', {shape:'Rectangle'}]]
-                    });
-                }
-            }, this);
-
-            vnode.attrs.nodes.scopes.forEach(function(scope) {
-                if(scope.traces){
-                    scope.traces.forEach(function(trace){
-                        var node = getNodeByID(vnode.attrs.nodes.traces, trace.id)[0];
-                        trace.node = node;
-                        jsplumb_6.connect({
-                            source: 'node-' + node.id,
-                            target: 'node-' + scope.id,
-                            endpoint: 'Dot',
-                            //anchors: [['Right', {shape:'Rectangle'}], ['Left', {shape:'Rectangle'}]]
-                        });
-                    });
-                }
-            }, this);
-        });
-    },
-    addTrace: function(traceNode$$1) {
-        this.state.nodes.traces.push({
-            node: traceNode$$1,
-            state: {
-                id: this.state.nodes.count,
-                name: 'Trace ' + this.state.nodes.count
-            }
-        });
-        this.state.nodes.count++;
-        mithril.redraw();
-    },
-    addSource: function(sourceNode$$1) {
-        this.state.nodes.sources.push({
-            node: sourceNode$$1,
-            state: {
-                id: this.state.nodes.count,
-                name: 'Source ' + this.state.nodes.count
-            }
-        });
-        this.state.nodes.count++;
-        mithril.redraw();
-    }
-};
-
-const FFTracePrefPane = {
-    view: function(vnode){
-        var s = vnode.attrs.traceConf;
-        var scope = vnode.attrs.scopeConf;
-        return [
-            mithril('header.columns', ''),
-            mithril('.form-horizontal', [
-                mithril('.form-group',[
-                    mithril('.col-3.text-center', mithril('input[type=color]', {
-                        value: s.color,
-                        onchange: mithril.withAttr('value', function(v){ s.color = v; })
-                    })),
-                    mithril('h4.col-9', !vnode.state.editName ?
-                        mithril('', { onclick: function(){ vnode.state.editName = true; } }, s.node.name) :
-                        mithril('input.form-input[type=text]', {
-                            value: s.node.name,
-                            onchange: mithril.withAttr('value', function(v){ s.node.name = v; }),
-                            onblur: function(){ vnode.state.editName = false; },
-                            onkeypress: withKey(13, function(target){
-                                vnode.state.editName = false;
-                            })
-                        })
-                    )
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label [for=signalfrequency]', 'Signal Frequency')),
-                    mithril('.col-9', mithril('input.form-input', {
-                        type: 'number',
-                        id: 'signalfrequency', 
-                        value: s.signalFrequency,
-                        onchange: mithril.withAttr('value', function(value) {
-                            s.signalFrequency = parseInt(value);
-                        }),
-                    }))
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label [for=window', 'Window')),
-                    mithril('.col-9', mithril('select.form-input', {
-                        id: 'window',
-                        value: s.windowFunction,
-                        onchange: mithril.withAttr('value', function(value) {
-                            s.windowFunction = value;
-                        }),
-                    }, Object.keys(windowFunctions).map(function(value){
-                        return mithril('option', { value: value }, capitalizeFirstLetter(value));
-                    }))
-                    )
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label [for=SNR', 'SNR')),
-                    mithril('.col-9', mithril('label.form-label', { id: 'SNR' }, s.info.SNR))
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-12', mithril('.btn-group.btn-group-block', [
-                        mithril('button.btn' + (s.SNRmode == 'manual' ? '.active' : ''), {
-                            onclick: function(e){
-                                s.SNRmode = 'manual';
-                            }
-                        }, 'Manual'),
-                        mithril('button.btn' + (s.SNRmode == 'auto' ? '.active' : ''), {
-                            onclick: function(e){
-                                s.SNRmode = 'auto';
-                            }
-                        }, 'Auto')
-                    ]))
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
-                    mithril('.col-9', mithril('input.form-input', {
-                        type: 'number',
-                        value: scope.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
-                        onchange: mithril.withAttr('value', function(value) {
-                            scope.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
-                        }),
-                    }))
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
-                    mithril('.col-9', mithril('input.form-input', {
-                        type: 'number',
-                        value: scope.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
-                        onchange: mithril.withAttr('value', function(value) {
-                            scope.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
-                        }),
-                    }))
-                ])
-            ])
-        ];
-    }
-};
-
-const generalPrefPane = {
-    view: function(vnode){
-        var s = vnode.attrs.scope;
-        return [
-            mithril('header.text-center', mithril('h4', s)),
-            mithril('.form-horizontal', [
-                mithril('.form-group', [
-                    mithril('.col-12', mithril('.btn-group.btn-group-block', [
-                        mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
-                            onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.normal();
-                                });
-                                s.mode = 'normal';
-                            }
-                        }, 'Normal'),
-                        mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
-                            onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.auto();
-                                });
-                                s.mode = 'auto';
-                            }
-                        }, 'Auto'),
-                        mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
-                            onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    // TODO fix this (will trigger a trace multiple times)
-                                    t.node.source.node.ctrl.single();
-                                });
-                                s.mode = 'single';
-                            }
-                        }, 'Single')
-                    ]))
-                ]),
-                mithril('.form-group', [
-                    mithril('button.btn.col-6', {
-                        onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.single();
-                                });
-                                s.mode = 'single';
-                            }
-                    }, 'Single Shot'),
-                    mithril('button.btn.col-6', {
-                        onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.forceTrigger();
-                                });
-                            }
-                    }, 'Force Trigger')
-                ]),
-            ])
-        ];
-    }
-};
-
-const draw$1 = function (context, scope, state) {
-    // Store old state
-    context.save();
-
-    // Setup brush
-    context.strokeWidth = 1;
-    context.strokeStyle = '#006644';
-    if (context.setLineDash) {
-        context.setLineDash([5]);
-    }
-
-    // Draw marker
-    if(state.type == 'vertical'){
-        context.beginPath();
-        context.moveTo(state.x * scope.width, 0);
-        context.lineTo(state.x * scope.width, scope.height);
-        context.stroke();
-    } else if(state.type == 'horizontal'){
-        context.beginPath();
-        var halfHeight = scope.height / 2;
-        context.moveTo(0, halfHeight - state.y * halfHeight);
-        context.lineTo(scope.width, halfHeight - state.y * halfHeight);
-        context.stroke();
-    }
-
-    // Restore old brush settings
-    context.restore();
-};
-
-const secondsToString = function(s){
-    if(s < 1e-9){
-        return (s * 1e12).toFixed(2) + 'ps';
-    }
-    if(s < 1e-6){
-        return (s * 1e9).toFixed(2) + 'ns';
-    }
-    if(s < 1e-3){
-        return (s * 1e6).toFixed(2) + 'us';
-    }
-    if(s < 1){
-        return (s * 1e3).toFixed(2) + 'ms';
-    }
-    if(s < 1e3){
-        return (s).toFixed(2) + 's';
-    }
-    if(s < 1e6){
-        return (s * 1e-3).toFixed(2) + 'Ms';
-    }
-};
-
-const Oscilloscope = function(state) {
-    // Remember scope state
-    this.state = state;
-
-    this.canvas = document.getElementById('scope');
-
-    this.markerMoving = false;
-    this.triggerMoving = false;
-    this.traceMoving = false;
-};
-
-Oscilloscope.prototype.draw = function() {
-    var me = this;
-
-    if(this.canvas == null){
-        return;
-    }
-
-    var width = document.body.clientWidth - (me.state.ui.prefPane.open ? me.state.ui.prefPane.width : 0);
-    var height = document.body.clientHeight;
-    var halfHeight = this.state.height / 2;
-    var context = this.canvas.getContext('2d');
-
-    // Assign new scope properties
-    this.canvas.height = this.state.height = height;
-    this.canvas.width = this.state.width = width;
-    context.strokeWidth = 1;
-
-    // Draw background
-    context.fillStyle='#222222';
-    context.fillRect(0, 0, width, height);
-
-    // Draw trigger level
-    // console.log(this.state.source.trigger.level * 8192 + 8192);
-    context.strokeStyle = '#278BFF';
-    context.beginPath();
-    context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
-    context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
-    context.stroke();
-
-    if(this.state.traces){
-        this.state.traces.forEach(function(trace) {
-            if(trace.node && trace.node.ctrl && trace.node.ctrl.on && trace.node.source && trace.node.source.node && trace.node.source.node.ctrl.ready){
-                trace.node.ctrl.draw(me.canvas, me.state, trace, 0);
-            }
-        });
-    }
-
-    me.state.markers.forEach(function(m) {
-        draw$1(context, me.state, m);
-    });
-
-    /* Draw scales */
-    context.strokeWidth = 1;
-    context.strokeStyle = '#ABABAB';
-    context.setLineDash([5]);
-
-    context.font = "30px Arial";
-    context.fillStyle = 'blue';
-
-    var unit = 1e9;
-    var skip = 1;
-    var mul = 1;
-    var ratio = width / me.state.frameSize * me.state.scaling.x; // pixel/sample
-    var nStart = 1e18;
-    var n = 1e18;
-    var dt = ratio / me.state.samplingRate * n;
-    for(var a = 0; a < 20; a++){
-        if(width / dt > 1 && width / dt < 11){
-            break;
-        }
-        n *= 1e-1;
-        dt = ratio / me.state.samplingRate * n;
-    }
-     // pixel / sample * sample / sek
-    var i;
-    for(i = 0; i < 11; i++){
-        context.beginPath();
-        context.moveTo(dt * i, 0);
-        context.lineTo(dt * i, height);
-        context.stroke();
-    }
-        // context.beginPath();
-        // var halfHeight = scope.height / 2;
-        // context.moveTo(0, halfHeight - state.y * halfHeight);
-        // context.lineTo(scope.width, halfHeight - state.y * halfHeight);
-        // context.stroke();
-
-    // Draw legend
-    context.strokeStyle = '#ABABAB';
-    context.fillStyle='#222222';
-    context.setLineDash([0]);
-    context.rect(width - 300, 20, 280, 180);
-    context.stroke();
-    context.fill();
-    context.textAlign = 'left';
-    context.font = '20px Arial';
-    context.fillStyle = '#ABABAB';
-    context.textBaseline = 'hanging';
-    context.fillText('Δt = ' + secondsToString(me.state.samplingRate / (nStart / n)), width - 290, 30);
-};
-
-Oscilloscope.prototype.onMouseDown = function(event){
-    // Start moving triggerlevel
-    // TODO:
-    var halfHeight = this.canvas.height / 2;
-    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        this.triggerMoving = true;
-        return;
-    }
-
-    // Start moving markers
-    for(var i = 0; i < this.state.markers.length; i++){
-        if(this.state.markers[i].type == 'vertical'){
-            var x = this.state.markers[i].x * this.canvas.width;
-            if(event.offsetX < x + 3 && event.offsetX > x - 3){
-                this.markerMoving = i;
-                return;
-            }
-        } else {
-            var y = this.state.markers[i].y * halfHeight * this.state.scaling.y;
-            if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
-                this.markerMoving = i;
-                return;
-            }
-        }
-    }
-
-    // Start moving traces
-    var me = this;
-    var halfMoverWidth = me.state.ui.mover.width / 2;
-    var halfMoverHeight = me.state.ui.mover.height / 2;
-    this.state.traces.forEach(function(trace) {
-        var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
-        if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
-            var y = trace.offset * halfHeight * me.state.scaling.y;
-            if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
-                me.traceMoving = trace;
-                return;
-            }
-        }
-    });
-};
-
-Oscilloscope.prototype.onMouseUp = function(event){
-    var me = this;
-    // End moving triggerlevel
-    if(this.triggerMoving){
-        this.triggerMoving = false;
-    }
-
-    // End moving markers
-    if(this.markerMoving !== false){
-        this.markerMoving = false;
-    }
-
-    // End moving traces
-    if(this.traceMoving !== false){
-        this.traceMoving = false;
-    }
-
-    if(this.state.buttons){
-        this.state.buttons.forEach(function(button) {
-            var w = button.width;
-            var h = button.height;
-            var x = button.left;
-            var y = button.top;
-            if(event.offsetX < x + w && event.offsetX > x){
-                if(event.offsetY < y + h && event.offsetY > y){
-                    me.uiHandlers[button.handler](me);
-                }
-            }
-        });
-    }
-};
-
-Oscilloscope.prototype.onMouseMove = function(event){
-    var halfHeight = this.canvas.height / 2;
-    var halfMoverWidth = this.state.ui.mover.width / 2;
-    var halfMoverHeight = this.state.ui.mover.height / 2;
-    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
-    var cursorSet = false;
-
-    // Change cursor if trigger set
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        document.body.style.cursor = 'row-resize';
-        cursorSet = true;
-    }
-    // Change cursor if marker set
-    if(!cursorSet){
-        for(var i = 0; i < this.state.markers.length; i++){
-            if(this.state.markers[i].type == 'vertical'){
-                var x = this.state.markers[i].x * this.canvas.width;
-                if(event.offsetX < x + 3 && event.offsetX > x - 3){
-                    document.body.style.cursor = 'col-resize';
-                    cursorSet = true;
-                    break;
-                }
-            } else {
-                var y = this.state.markers[i].y * halfHeight * this.state.scaling.y;
-                if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
-                    document.body.style.cursor = 'row-resize';
-                    cursorSet = true;
-                    break;
-                }
-            }
-        }
-    }
-    // Change cursor if trace set
-    if(!cursorSet){
-        var me = this;
-        this.state.traces.forEach(function(trace) {
-            var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
-            if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
-                var y = trace.offset * halfHeight * me.state.scaling.y;
-                if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
-                    document.body.style.cursor = 'move';
-                    cursorSet = true;
-                    return;
-                }
-            }
-        });
-    }
-    // Change cursor if nothing set
-    if(!cursorSet){
-        document.body.style.cursor = 'initial';
-    }
-
-
-    // Move triggerlevel
-    if(this.triggerMoving){
-        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
-        if(triggerLevel > 1){
-            triggerLevel = 1;
-        }
-        if(triggerLevel < -1){
-            triggerLevel = -1;
-        }
-        this.state.source.trigger.level = triggerLevel;
-        return;
-    }
-
-    // Move markers
-    if(this.markerMoving !== false){
-        var markerLevel = 0;
-        if(this.state.markers[this.markerMoving].type == 'vertical'){
-            markerLevel = event.offsetX / this.canvas.width;
-            if(markerLevel > 1){
-                markerLevel = 1;
-            }
-            if(markerLevel < 0){
-                markerLevel = 0;
-            }
-            this.state.markers[this.markerMoving].x = markerLevel;
-            return;
-        } else {
-            markerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
-            if(markerLevel > 1){
-                markerLevel = 1;
-            }
-            if(markerLevel < -1){
-                markerLevel = -1;
-            }
-            this.state.markers[this.markerMoving].y = markerLevel;
-            return;
-        }
-    }
-
-    // Move traces
-    if(this.traceMoving !== false){
-        var traceOffset = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
-        if(traceOffset > 1){
-            traceOffset = 1;
-        }
-        if(traceOffset < -1){
-            traceOffset = -1;
-        }
-        this.traceMoving.offset = traceOffset;
-        return;
-    }
-};
-
-Oscilloscope.prototype.onScroll = function(event){
-    this.state.scaling.y += event.wheelDeltaY * 0.01;
-    if(this.state.scaling.y < 0){
-        this.state.scaling.y = 0;
-    }
-    this.state.scaling.x += event.wheelDeltaX * 0.01;
-    if(this.state.scaling.x < 1){
-        this.state.scaling.x = 1;
-    }
-};
-
-Oscilloscope.prototype.addMarker = function(id, type, xy){
-    var px = 0;
-    var py = 0;
-    if(type == 'horizontal'){
-        py = xy;
-    } else {
-        px = xy;
-    }
-    this.state.markers.push({
-        id: id, type: type, x: px, y: py
-    });
-};
-
-Oscilloscope.prototype.getMarkerById = function(id){
-    var result = this.state.markers.filter(function( obj ) {
-        return obj.id == id;
-    });
-    return result;
-};
-
-Oscilloscope.prototype.setSNRMarkers = function(firstX, secondX){
-    var first = this.getMarkerById('SNRfirst');
-    var second = this.getMarkerById('SNRsecond');
-    if(first.length < 1){
-        this.addMarker('SNRfirst', 'vertical', firstX);
-    } else {
-        first[0].x = firstX;
-    }
-    if(second.length < 1){
-        this.addMarker('SNRsecond', 'vertical', secondX);
-    } else {
-        second[0].x = secondX;
-    }
-};
-
-Oscilloscope.prototype.setFirstSNRMarker = function(firstX){
-    var first = this.getMarkerById('SNRfirst');
-    if(first.length < 1){
-        this.addMarker('SNRfirst', 'vertical', firstX);
-        return;
-    }
-    first[0].x = firstX;
-};
-
-Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
-    var second = this.getMarkerById('SNRsecond');
-    if(second.length < 1){
-        this.addMarker('SNRsecond', 'vertical', secondX);
-        return;
-    }
-    second[0].x = secondX;
-};
-
-Oscilloscope.prototype.uiHandlers = {
-    togglePrefPane: function(scope){
-        scope.state.ui.prefPane.open = !scope.state.ui.prefPane.open;
-    }
-};
-
 const scopeView = {
     oninit: function(vnode) {
+        // Make sure the on scroll event is listened to
         window.addEventListener('mousewheel', function(event){
             vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
         }, false);
     },
     view: function(vnode) {
         return [
+            // Render a canvas and register all necessary events to it
             mithril('canvas', {
                 id: 'scope',
                 style: {
@@ -16686,33 +16375,53 @@ const scopeView = {
                 onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
                 onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
             }),
+            // Render a settings panel if it is toggled otherwise render none
             mithril('.panel', {
                 id: 'prefpane',
                 style: {
                     display: vnode.attrs.scope.ui.prefPane.open ? 'block' : 'none',
                 }
             }, [
+                // Render one general settings pane and for each trace an individual one
                 mithril(generalPrefPane, { scope: vnode.attrs.scope }),
-                vnode.attrs.scope.traces.map(function(value){
-                    return value.node.type == 'FFTrace' ? [
+                vnode.attrs.scope.source.traces.map(function(trace){
+                    return trace.type == 'FFTrace' ? [
                         mithril('.divider'),
-                        mithril(FFTracePrefPane, { scopeConf: vnode.attrs.scope, traceConf: value })
+                        mithril(FFTracePrefPane, { scopeConf: vnode.attrs.scope, traceConf: trace })
                     ] : '';
                 })
             ]),
+            // Render a button to toggle the settings panel
             mithril('button.btn.btn-primary.btn-action.btn-lg', {
                 id: 'toggle-prefpane',
                 style: {
                     right: vnode.attrs.scope.ui.prefPane.open ? '' + (vnode.attrs.scope.ui.prefPane.width + 20) + 'px' : '' + 20 + 'px',
                 },
-                onclick: function(){
-                    vnode.attrs.scope.ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope.ctrl);
-                }
+                onclick: function(){ vnode.attrs.scope.ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope.ctrl); }
             }, mithril('i.icon.icon-menu', ''))
         ];
     },
     oncreate: function(vnode){
+        // Create a new scope controller and add its reference to the scope state object
         vnode.attrs.scope.ctrl = new Oscilloscope(vnode.attrs.scope);
+
+        // Initialize controllers for the source
+        vnode.attrs.scope.source.ctrl = new WebsocketSource(vnode.attrs.scope.source);
+
+        // Initialize controllers for the traces
+        vnode.attrs.scope.source.traces.forEach(function(trace){
+            switch(vnode.attrs.type){
+            default:
+            case 'NormalTrace':
+                trace.ctrl = new NormalTrace(trace);
+                break;
+
+            case 'FFTrace':
+                trace.ctrl = new FFTrace(trace);
+                break;
+            }
+        });
+
         // First draw to invoke all subsequnt draws on each rendered frame
         draw(vnode.attrs.scope.ctrl);
     },
@@ -16729,70 +16438,11 @@ mithril.route.mode = 'search';
 
 var appState = {
     nodes: {
-        traces: [
-            {
-                id: 3,
-                name: 'Trace ' + 1,
-                top: 150,
-                left: 350,
-                source: { id: 2 },
-                type: 'NormalTrace'
-            },
-            {
-                id: 4,
-                name: 'Trace ' + 2,
-                top: 350,
-                left: 350,
-                source: { id: 2 },
-                type: 'FFTrace',
-            }
-        ],
-        sources: [
-            {
-                id: 2,
-                name: 'Source ' + 1,
-                top: 300,
-                left: 50,
-                type: 'WebsocketSource',
-                location: 'ws://10.84.130.54:50090',
-                // location: 'ws://localhost:50090',
-                frameSize: 4096,
-                buffer: {
-                    upperSize: 4,
-                    lowerSize: 1,
-                },
-                trigger: {
-                    type: 'risingEdge',
-                    level: 0,
-                    channel: 1,
-                    hysteresis: 2,
-                    slope: 0
-                },
-                numberOfChannels: 2,
-                mode: 'normal'
-            }
-        ],
         scopes: [{
             id: 1,
             name: 'Scope ' + 1,
             top: 250,
-            left: 650,
-            traces: [
-                {
-                    id: 3,
-                    offset: 0,
-                    info: {},
-                    color: '#E85D55'
-                },
-                {
-                    id: 4,
-                    offset: 0,
-                    windowFunction: 'hann',
-                    SNRmode: 'auto',
-                    info: {},
-                    color: '#E8830C'
-                },
-            ],
+            left: 350,
             markers: [
                 { id: 1, type: 'horizontal', x: 0, y: 0 },
                 { id: 2, type: 'vertical', x: 0.5, y: 0 },
@@ -16815,8 +16465,6 @@ var appState = {
                     width: 400,
                 }
             },
-            frameSize: 4096,
-            samplingRate: 1000000,
             source: {
                 id: 2,
                 name: 'Source ' + 1,
@@ -16825,6 +16473,7 @@ var appState = {
                 location: 'ws://10.84.130.54:50090',
                 // location: 'ws://localhost:50090',
                 frameSize: 4096,
+                samplingRate: 1000000,
                 buffer: {
                     upperSize: 4,
                     lowerSize: 1,
@@ -16837,10 +16486,31 @@ var appState = {
                     slope: 0
                 },
                 numberOfChannels: 2,
-                mode: 'normal'
+                mode: 'normal',
+                traces: [
+                    {
+                        id: 3,
+                        offset: 0,
+                        info: {},
+                        name: 'Trace ' + 1,
+                        channelID: 1,
+                        type: 'NormalTrace',
+                        color: '#E85D55'
+                    },
+                    {
+                        id: 4,
+                        offset: 0,
+                        windowFunction: 'hann',
+                        SNRmode: 'auto',
+                        info: {},
+                        name: 'Trace ' + 2,
+                        channelID: 1,
+                        type: 'FFTrace',
+                        color: '#E8830C'
+                    },
+                ],
             }
-        }],
-        count: 8
+        }]
     }
 };
 
