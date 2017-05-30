@@ -1,6 +1,5 @@
 import * as helpers from './helpers.js';
 import * as marker from './marker.js';
-import * as button from './button.js';
 import * as converting from './math/converting.js';
 
 export const Oscilloscope = function(state) {
@@ -43,12 +42,11 @@ Oscilloscope.prototype.draw = function() {
     context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
     context.stroke();
 
-    this.state.source.traces.forEach(function(trace) {
-        console.log(me.state.source.ctrl.ready)
-        if(me.state.source.ctrl.ready){
-            trace.ctrl.draw(me.canvas);
-        }
-    });
+    if(this.state.source.ctrl.ready){
+        this.state.source.traces.forEach(function(trace) {
+                trace.ctrl.draw(me.canvas);
+        });
+    }
 
     me.state.markers.forEach(function(m) {
         marker.draw(context, me.state, m);

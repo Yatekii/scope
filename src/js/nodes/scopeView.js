@@ -62,7 +62,7 @@ export const scopeView = {
 
         // Initialize controllers for the traces
         vnode.attrs.scope.source.traces.forEach(function(trace){
-            switch(vnode.attrs.type){
+            switch(trace.type){
             default:
             case 'NormalTrace':
                 trace.ctrl = new NormalTrace(trace);

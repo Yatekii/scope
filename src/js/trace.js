@@ -76,43 +76,17 @@ export const FFTrace = function(state) {
 
     // Init class variables
     this.on = true;
-    this.fetched = false;
-};
-
-// Preemptively fetches a new sample set
-FFTrace.prototype.fetch = function () {
-    // If it is not a WSS, data must be fetched from the Analyzer node
-    if(this.state.source.node.type != 'WebsocketSource'){
-        if(!this.fetched && this.state.source.node && this.state.source.node.ctrl.ready){
-            if(!this.data){
-                this.data = new Float32Array(this.state.source.node.ctrl.analyzer.frequencyBinCount);
-            }
-            this.state.source.node.ctrl.analyzer.getFloatFrequencyData(this.data);
-        }
-        
-    }
-    // Otherwise it will just be ensured the data is referenced from the source properly
-    else {
-        if(this.state.source.node.ctrl.data){
-            this.data = this.state.source.node.ctrl.data;
-        } else {
-            this.data = new Float32Array();
-        }
-    }
-    this.fetched = true;
+    console.log('kek')
 };
 
 // Draws trace on the new frame
-FFTrace.prototype.draw = function (canvas, scope, traceConf) {
-
+FFTrace.prototype.draw = function (canvas) {
     var i, j;
+    var scope = this.state.source.scope;
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
 
-    // Get a new dataset
-    this.fetch();
-
-    if(this.state.source.node.type != 'WebsocketSource'){
+    if(false){
         var SPACING = 1;
         var BAR_WIDTH = 1;
         var numBars = Math.round(scope.width / SPACING);
@@ -133,11 +107,11 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
             }
             magnitude = magnitude / multiplier * 4;
             context.fillStyle = 'hsl(' + Math.round((i * 360) / numBars) + ', 100%, 50%)';
-            context.fillRect(i * SPACING, -magnitude + traceConf.offset * scope.height, BAR_WIDTH, scope.height + magnitude);
+            context.fillRect(i * SPACING, -magnitude + this.state.offset * scope.height, BAR_WIDTH, scope.height + magnitude);
         }
 
         // Draw mover
-        context.fillStyle = traceConf.color;
+        context.fillStyle = this.state.color;
         offset = this.state.offset;
         if(offset > 1){
             offset = 1;
@@ -146,7 +120,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         }
         context.fillRect(
             scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-            halfHeight - traceConf.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
+            halfHeight - this.state.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
             scope.ui.mover.width,
             scope.ui.mover.height
         );
@@ -157,15 +131,13 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         // Mark data as deprecated
         this.fetched = false;
     } else {
-        // console.log(scope);
-
         // Duplicate data
-        var real = this.data.slice(0);
+        var real = this.state.source.ctrl.channels[0].slice(0);
         // Create a complex vector with zeroes sice we only have real input
-        var compl = new Float32Array(this.data.length);
+        var compl = new Float32Array(this.state.source.ctrl.channels[0]);
         // Window data if a valid window was selected
-        if(traceConf.windowFunction && windowFunctions[traceConf.windowFunction]){
-            real = applyWindow(real, windowFunctions[traceConf.windowFunction]);
+        if(this.state.windowFunction && windowFunctions[this.state.windowFunction]){
+            real = applyWindow(real, windowFunctions[this.state.windowFunction]);
         }
         // Do an FFT of the signal
         miniFFT(real, compl);
@@ -179,8 +151,6 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         for(i = 0; i < ab.length; i++){
             ab[i] = real[i]*real[i] + compl[i]*compl[i];
         }
-
-
 
         // Calculate x-Axis scaling
         // mul tells how many pixels have to be skipped after each sample
@@ -196,31 +166,28 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
             skip = 1 / ratio;
         }
 
-
-        
         // Calculate SNR
-        if(traceConf.SNRmode == 'manual'){
+        if(this.state.SNRmode == 'manual'){
             var ss = 0;
             var sn = 0;
             var first = scope.ctrl.getMarkerById('SNRfirst')[0].x / mul * scope.width;
             var second = scope.ctrl.getMarkerById('SNRsecond')[0].x / mul * scope.width;
             console.log(first, second)
-            for(i = 0; i < ab.length; i++){
+            for(i = 1; i < ab.length; i++){
                 if(i < first || i > second){
-                    sn += ab[i];
+                    sn += ab[i] * ab[i];
                 } else {
-                    console.log(ss)
-                    ss += ab[i];
+                    ss += ab[i] * ab[i];
                 }
             }
             var SNR = Math.log10(ss / sn) * 10;
-            traceConf.info.SNR = SNR;
+            this.state.info.SNR = SNR;
         }
-        if(traceConf.SNRmode == 'auto'){
+        if(this.state.SNRmode == 'auto'){
             // Find max
             var max = -3000000;
             var maxi = 0;
-            for(i = 0; i < ab.length; i++){
+            for(i = 1; i < ab.length; i++){
                 if(ab[i] > max){
                     max = ab[i];
                     maxi = i;
@@ -232,26 +199,33 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
             var secondSNRMarker = 0;
             var firstSNRMarker = 0;
             // Add all values under the average and those above each to a list
-            for(i = 0; i < ab.length; i++){
+            for(i = 1; i < ab.length; i++){
                 if(ab[i] < m){
                     n.push(ab[i]);
                 }
                 else {
                     if(secondSNRMarker == 0){
-                        firstSNRMarker = i;
+                        firstSNRMarker = i - 1;
+                        if(firstSNRMarker < 1){
+                            firstSNRMarker = 1;
+                        }
                     }
                     s.push(ab[i]);
-                    secondSNRMarker = i;
+                    secondSNRMarker = i + 1;
+                    if(secondSNRMarker > ab.length){
+                        secondSNRMarker = ab.length;
+                    }
                 }
             }
             // Sum both sets and calculate their ratio which is the SNR
             var ss = ssum(s);
             var sn = ssum(n);
             var SNR = Math.log10(ss / sn) * 10;
-            traceConf.info.SNR = SNR;
+            this.state.info.SNR = SNR;
 
             // Posiion SNR markers
             scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, secondSNRMarker * mul / scope.width);
+            console.log(firstSNRMarker, secondSNRMarker)
          }
 
         // Convert spectral density to a logarithmic scale to be able to better plot it.
@@ -264,17 +238,17 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         context.save();
         context.strokeWidth = 1;
         // Draw trace
-        context.strokeStyle = traceConf.color;
+        context.strokeStyle = this.state.color;
         context.beginPath();
-        context.moveTo(0, (halfHeight - (ab[0] + traceConf.offset) * halfHeight * scope.scaling.y));
+        context.moveTo(0, (halfHeight - (ab[0] + this.state.offset) * halfHeight * scope.scaling.y));
         for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-            context.lineTo(j, (halfHeight - (ab[Math.floor(i)] + traceConf.offset) * halfHeight * scope.scaling.y));
+            context.lineTo(j, (halfHeight - (ab[Math.floor(i)] + this.state.offset) * halfHeight * scope.scaling.y));
         }
         // Fix drawing on canvas
         context.stroke();
 
         // Draw mover to move the trace
-        context.fillStyle = traceConf.color;
+        context.fillStyle = this.state.color;
         offset = this.state.offset;
         if(offset > 1){
             offset = 1;
@@ -283,7 +257,7 @@ FFTrace.prototype.draw = function (canvas, scope, traceConf) {
         }
         context.fillRect(
             scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-            halfHeight - traceConf.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
+            halfHeight - this.state.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
             scope.ui.mover.width,
             scope.ui.mover.height
         );
