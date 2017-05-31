@@ -18,3 +18,13 @@ Additionally special 'Math' traces which can do things like an FFT.
     - Falling edge
     - Normal mode
     - Auto mode
+
+## Installing
+
+To start off, `nodejs` and `yarn` need to be installed.
+
+To install all required packages use `yarn install`.
+
+To fire up the bundler and the webserver, use `yarn watch`.
+
+Now visit the browser at `localhost:8080` and enjoy.
