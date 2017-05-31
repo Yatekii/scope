@@ -18,3 +18,15 @@ export const secondsToString = function(s){
         return (s * 1e-3).toFixed(2) + 'Ms';
     }
 }
+
+export const hertzToString = function(f){
+    if(f < 1e3){
+        return (f).toFixed(2) + 'Hz';
+    }
+    if(f < 1e6){
+        return (f * 1e-3).toFixed(2) + 'kHz';
+    }
+    if(f < 1e9){
+        return (f * 1e-6).toFixed(2) + 'MHz';
+    }
+}

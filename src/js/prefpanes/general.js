@@ -4,6 +4,7 @@ export const generalPrefPane = {
     view: function(vnode){
         var s = vnode.attrs.scope;
         return [
+            // TODO: update code to new tree
             m('header.text-center', m('h4', s)),
             m('.form-horizontal', [
                 m('.form-group', [
@@ -51,6 +52,18 @@ export const generalPrefPane = {
                                 });
                             }
                     }, 'Force Trigger')
+                ]),
+                m('.form-group', [
+                    m('.col-12', m('.btn-group.btn-group-block',
+                        vnode.attrs.scope.source.traces.map(function(trace){
+                            return m('button.btn' + (trace.ctrl && vnode.attrs.scope.source.activeTrace == trace.ctrl.id ? '.active' : ''), {
+                                style: { backgroundColor: trace.color },
+                                onclick: function(e){
+                                    vnode.attrs.scope.source.activeTrace = trace.ctrl.id;
+                                }
+                            }, trace.name);
+                        })
+                    ))
                 ]),
             ])
         ];

@@ -61,15 +61,15 @@ export const scopeView = {
         vnode.attrs.scope.source.ctrl = new WebsocketSource(vnode.attrs.scope.source);
 
         // Initialize controllers for the traces
-        vnode.attrs.scope.source.traces.forEach(function(trace){
+        vnode.attrs.scope.source.traces.forEach(function(trace, i){
             switch(trace.type){
             default:
             case 'NormalTrace':
-                trace.ctrl = new NormalTrace(trace);
+                trace.ctrl = new NormalTrace(i, trace);
                 break;
 
             case 'FFTrace':
-                trace.ctrl = new FFTrace(trace);
+                trace.ctrl = new FFTrace(i, trace);
                 break;
             }
         });

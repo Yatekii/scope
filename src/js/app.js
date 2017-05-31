@@ -22,16 +22,12 @@ var appState = {
             top: 250,
             left: 350,
             markers: [
-                { id: 1, type: 'horizontal', x: 0, y: 0 },
-                { id: 2, type: 'vertical', x: 0.5, y: 0 },
+                // { id: 1, type: 'horizontal', x: 0, y: 0 },
+                // { id: 2, type: 'vertical', x: 0.5, y: 0 },
                 { id: 'SNRfirst', type: 'vertical', x: 0 },
                 { id: 'SNRsecond', type: 'vertical', x: 0 },
             ],
             mode: 'normal',
-            scaling: {
-                x: 1,
-                y: 1,
-            },
             ui: {
                 mover: {
                     width: 50,
@@ -65,6 +61,7 @@ var appState = {
                 },
                 numberOfChannels: 2,
                 mode: 'normal',
+                activeTrace: 0,
                 traces: [
                     {
                         id: 3,
@@ -73,7 +70,11 @@ var appState = {
                         name: 'Trace ' + 1,
                         channelID: 1,
                         type: 'NormalTrace',
-                        color: '#E85D55'
+                        color: '#E85D55',
+                        scaling: {
+                            x: 1,
+                            y: 1,
+                        },
                     },
                     {
                         id: 4,
@@ -84,7 +85,11 @@ var appState = {
                         name: 'Trace ' + 2,
                         channelID: 1,
                         type: 'FFTrace',
-                        color: '#E8830C'
+                        color: '#E8830C',
+                        scaling: {
+                            x: 1,
+                            y: 1,
+                        },
                     },
                 ],
             }

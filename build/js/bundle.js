@@ -15445,6 +15445,7 @@ const generalPrefPane = {
     view: function(vnode){
         var s = vnode.attrs.scope;
         return [
+            // TODO: update code to new tree
             mithril('header.text-center', mithril('h4', s)),
             mithril('.form-horizontal', [
                 mithril('.form-group', [
@@ -15493,6 +15494,18 @@ const generalPrefPane = {
                             }
                     }, 'Force Trigger')
                 ]),
+                mithril('.form-group', [
+                    mithril('.col-12', mithril('.btn-group.btn-group-block',
+                        vnode.attrs.scope.source.traces.map(function(trace){
+                            return mithril('button.btn' + (trace.ctrl && vnode.attrs.scope.source.activeTrace == trace.ctrl.id ? '.active' : ''), {
+                                style: { backgroundColor: trace.color },
+                                onclick: function(e){
+                                    vnode.attrs.scope.source.activeTrace = trace.ctrl.id;
+                                }
+                            }, trace.name);
+                        })
+                    ))
+                ]),
             ])
         ];
     }
@@ -15525,27 +15538,6 @@ const draw$1 = function (context, scope, state) {
 
     // Restore old brush settings
     context.restore();
-};
-
-const secondsToString = function(s){
-    if(s < 1e-9){
-        return (s * 1e12).toFixed(2) + 'ps';
-    }
-    if(s < 1e-6){
-        return (s * 1e9).toFixed(2) + 'ns';
-    }
-    if(s < 1e-3){
-        return (s * 1e6).toFixed(2) + 'us';
-    }
-    if(s < 1){
-        return (s * 1e3).toFixed(2) + 'ms';
-    }
-    if(s < 1e3){
-        return (s).toFixed(2) + 's';
-    }
-    if(s < 1e6){
-        return (s * 1e-3).toFixed(2) + 'Ms';
-    }
 };
 
 const Oscilloscope = function(state) {
@@ -15584,8 +15576,8 @@ Oscilloscope.prototype.draw = function() {
     // console.log(this.state.source.trigger.level * 8192 + 8192);
     context.strokeStyle = '#278BFF';
     context.beginPath();
-    context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
-    context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * this.state.scaling.y);
+    context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y);
+    context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y);
     context.stroke();
 
     if(this.state.source.ctrl.ready){
@@ -15598,61 +15590,28 @@ Oscilloscope.prototype.draw = function() {
         draw$1(context, me.state, m);
     });
 
-    /* Draw scales */
-    context.strokeWidth = 1;
-    context.strokeStyle = '#ABABAB';
-    context.setLineDash([5]);
-
-    context.font = "30px Arial";
-    context.fillStyle = 'blue';
-
-    var unit = 1e9;
-    var skip = 1;
-    var mul = 1;
-    var ratio = width / me.state.source.frameSize * me.state.scaling.x; // pixel/sample
-    var nStart = 1e18;
-    var n = 1e18;
-    var dt = ratio / me.state.source.samplingRate * n;
-    for(var a = 0; a < 20; a++){
-        if(width / dt > 1 && width / dt < 11){
-            break;
-        }
-        n *= 1e-1;
-        dt = ratio / me.state.source.samplingRate * n;
-    }
-     // pixel / sample * sample / sek
-    var i;
-    for(i = 0; i < 11; i++){
-        context.beginPath();
-        context.moveTo(dt * i, 0);
-        context.lineTo(dt * i, height);
-        context.stroke();
-    }
         // context.beginPath();
         // var halfHeight = scope.height / 2;
         // context.moveTo(0, halfHeight - state.y * halfHeight);
         // context.lineTo(scope.width, halfHeight - state.y * halfHeight);
         // context.stroke();
 
-    // Draw legend
-    context.strokeStyle = '#ABABAB';
-    context.fillStyle='#222222';
-    context.setLineDash([0]);
-    context.rect(width - 300, 20, 280, 180);
-    context.stroke();
-    context.fill();
-    context.textAlign = 'left';
-    context.font = '20px Arial';
-    context.fillStyle = '#ABABAB';
-    context.textBaseline = 'hanging';
-    context.fillText('Δt = ' + secondsToString(me.state.source.samplingRate / (nStart / n)), width - 290, 30);
+    // context.fillText('Δt = ' + converting.secondsToString(me.state.source.samplingRate / (nStart / n)), width - 290, 30);
+    // dt == pixels / Time
+    // df == pixels / frequency
+    // pixel / sample == ratio
+    // (frequency / sample) == k
+
+    // pixel / (frequency) == ratio / k
+    // console.log((me.state.source.samplingRate / me.state.source.frameSize) * (n / nStart))
+    // context.fillText('Δf = ' + converting.hertzToString(me.state.source.samplingRate / (nStart / n)), width - 290, 50);
 };
 
 Oscilloscope.prototype.onMouseDown = function(event){
     // Start moving triggerlevel
     // TODO: adjust trigger level setup to be dependant on active trace
     var halfHeight = this.canvas.height / 2;
-    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
         this.triggerMoving = true;
         return;
@@ -15667,7 +15626,7 @@ Oscilloscope.prototype.onMouseDown = function(event){
                 return;
             }
         } else {
-            var y = this.state.markers[i].y * halfHeight * this.state.scaling.y;
+            var y = this.state.markers[i].y * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
             if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
                 this.markerMoving = i;
                 return;
@@ -15679,10 +15638,10 @@ Oscilloscope.prototype.onMouseDown = function(event){
     var me = this;
     var halfMoverWidth = me.state.ui.mover.width / 2;
     var halfMoverHeight = me.state.ui.mover.height / 2;
-    this.state.traces.forEach(function(trace) {
+    this.state.source.traces.forEach(function(trace) {
         var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
         if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
-            var y = trace.offset * halfHeight * me.state.scaling.y;
+            var y = trace.offset * halfHeight * me.state.source.traces[me.state.source.activeTrace].scaling.y;
             if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
                 me.traceMoving = trace;
                 return;
@@ -15727,7 +15686,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
     var halfHeight = this.canvas.height / 2;
     var halfMoverWidth = this.state.ui.mover.width / 2;
     var halfMoverHeight = this.state.ui.mover.height / 2;
-    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.scaling.y;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
     var cursorSet = false;
 
     // Change cursor if trigger set is active
@@ -15746,7 +15705,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
                     break;
                 }
             } else {
-                var y = this.state.markers[i].y * halfHeight * this.state.scaling.y;
+                var y = this.state.markers[i].y * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
                 if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
                     document.body.style.cursor = 'row-resize';
                     cursorSet = true;
@@ -15761,7 +15720,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
         this.state.source.traces.forEach(function(trace) {
             var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
             if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
-                var y = trace.offset * halfHeight * me.state.scaling.y;
+                var y = trace.offset * halfHeight * me.state.source.traces[me.state.source.activeTrace].scaling.y;
                 if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
                     document.body.style.cursor = 'move';
                     cursorSet = true;
@@ -15778,7 +15737,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
     // Move triggerlevel is active
     if(this.triggerMoving){
-        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y);
         if(triggerLevel > 1){
             triggerLevel = 1;
         }
@@ -15803,7 +15762,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
             this.state.markers[this.markerMoving].x = markerLevel;
             return;
         } else {
-            markerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+            markerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y);
             if(markerLevel > 1){
                 markerLevel = 1;
             }
@@ -15817,7 +15776,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
     // Move traces if move traces is active
     if(this.traceMoving !== false){
-        var traceOffset = (halfHeight - event.offsetY) / (halfHeight * this.state.scaling.y);
+        var traceOffset = (halfHeight - event.offsetY) / (halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y);
         if(traceOffset > 1){
             traceOffset = 1;
         }
@@ -15830,13 +15789,13 @@ Oscilloscope.prototype.onMouseMove = function(event){
 };
 
 Oscilloscope.prototype.onScroll = function(event){
-    this.state.scaling.y += event.wheelDeltaY * 0.01;
-    if(this.state.scaling.y < 0){
-        this.state.scaling.y = 0;
+    this.state.source.traces[this.state.source.activeTrace].scaling.y += event.wheelDeltaY * 0.01;
+    if(this.state.source.traces[this.state.source.activeTrace].scaling.y < 0){
+        this.state.source.traces[this.state.source.activeTrace].scaling.y = 0;
     }
-    this.state.scaling.x += event.wheelDeltaX * 0.01;
-    if(this.state.scaling.x < 1){
-        this.state.scaling.x = 1;
+    this.state.source.traces[this.state.source.activeTrace].scaling.x += event.wheelDeltaX * 0.01;
+    if(this.state.source.traces[this.state.source.activeTrace].scaling.x < 1){
+        this.state.source.traces[this.state.source.activeTrace].scaling.x = 1;
     }
 };
 
@@ -15899,7 +15858,6 @@ Oscilloscope.prototype.uiHandlers = {
     }
 };
 
-// Creates a new source
 const WebsocketSource = function(state) {
     var me = this;
     // Remember source state
@@ -16061,10 +16019,10 @@ const miniFFT = function(re, im) {
     }
 };
 
-// Creates a new trace
-const NormalTrace = function (state) {
+const NormalTrace = function (id, state) {
     // Remember trace state
     this.state = state;
+    this.id = id;
 
     // Init class variables
     this.on = true;
@@ -16075,11 +16033,6 @@ NormalTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     // Store context state so other painters are presented with their known context state
     context.save();
-    context.strokeWidth = 1;
-
-    // Draw trace
-    context.strokeStyle = this.state.color;
-    context.beginPath();
 
     var scope = this.state.source.scope;
 
@@ -16093,19 +16046,65 @@ NormalTrace.prototype.draw = function (canvas) {
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state.source.ctrl.channels[0].length * scope.scaling.x;
+    var ratio = scope.width / this.state.source.ctrl.channels[0].length * this.state.scaling.x; // pixel/sample
     if(ratio > 1){
         mul = ratio;
     } else {
         skip = 1 / ratio;
     }
 
+    // Draw scales
+    if(this.id == this.state.source.activeTrace){
+        context.strokeWidth = 1;
+        context.strokeStyle = '#ABABAB';
+        context.setLineDash([5]);
+
+        context.font = "30px Arial";
+        context.fillStyle = 'blue';
+
+        var unit = 1e9;
+        var nStart = 1e18;
+        var n = 1e18;
+        var dt = ratio / this.state.source.samplingRate * n;
+        for(var a = 0; a < 20; a++){
+            if(scope.width / dt > 1 && scope.width / dt < 11){
+                break;
+            }
+            n *= 1e-1;
+            dt = ratio / this.state.source.samplingRate * n;
+        }
+
+        var i;
+        for(i = 0; i < 11; i++){
+            context.save();
+            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / dt)) + ')';
+            for(var j = 1; j < 10; j++){
+                context.beginPath();
+                context.moveTo(dt * i + dt / 10 * j, 0);
+                context.lineTo(dt * i + dt / 10 * j, scope.height);
+                context.stroke();
+            }
+            context.restore();
+            context.beginPath();
+            context.moveTo(dt * i, 0);
+            context.lineTo(dt * i, scope.height);
+            context.stroke();
+        }
+        context.restore();
+    }
+
+    // Draw trace
+    context.strokeWidth = 1;
+    context.strokeStyle = this.state.color;
+    context.beginPath();
+    context.strokeWidth = 1;
+
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    context.moveTo(0, (halfHeight - (this.state.source.ctrl.channels[0][0] + this.state.offset) * halfHeight * scope.scaling.y));
+    context.moveTo(0, (halfHeight - (this.state.source.ctrl.channels[0][0] + this.state.offset) * halfHeight * this.state.scaling.y));
     for (var i=0, j=0; (j < scope.width) && (i < this.state.source.ctrl.channels[0].length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (this.state.source.ctrl.channels[0][Math.floor(i)] + this.state.offset) * halfHeight * scope.scaling.y));
+        context.lineTo(j, (halfHeight - (this.state.source.ctrl.channels[0][Math.floor(i)] + this.state.offset) * halfHeight * this.state.scaling.y));
     }
     context.stroke();
 
@@ -16119,7 +16118,7 @@ NormalTrace.prototype.draw = function (canvas) {
     }
     context.fillRect(
         scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - this.state.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
+        halfHeight - this.state.offset * halfHeight * this.state.scaling.y - scope.ui.mover.height / 2,
         scope.ui.mover.width,
         scope.ui.mover.height
     );
@@ -16129,13 +16128,13 @@ NormalTrace.prototype.draw = function (canvas) {
 };
 
 // Creates a new source
-const FFTrace = function(state) {
+const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
+    this.id = id;
 
     // Init class variables
     this.on = true;
-    console.log('kek');
 };
 
 // Draws trace on the new frame
@@ -16145,146 +16144,183 @@ FFTrace.prototype.draw = function (canvas) {
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
 
-    var offset;
-
-{
-        // Duplicate data
-        var real = this.state.source.ctrl.channels[0].slice(0);
-        // Create a complex vector with zeroes sice we only have real input
-        var compl = new Float32Array(this.state.source.ctrl.channels[0]);
-        // Window data if a valid window was selected
-        if(this.state.windowFunction && windowFunctions[this.state.windowFunction]){
-            real = applyWindow(real, windowFunctions[this.state.windowFunction]);
-        }
-        // Do an FFT of the signal
-        miniFFT(real, compl);
-        // Only use half of the FFT since we only need the upper half
-        real = real.slice(0, real.length / 2);
-        compl = compl.slice(0, compl.length / 2);
-
-        // Create the the total power of the signal
-        // P = V^2
-        var ab = new Float32Array(real.length);
-        for(i = 0; i < ab.length; i++){
-            ab[i] = real[i]*real[i] + compl[i]*compl[i];
-        }
-
-        // Calculate x-Axis scaling
-        // mul tells how many pixels have to be skipped after each sample
-        // If the signal has more points than the canvas, this will always be 1
-        // skip tells how many samples have to be skipped after each pixel
-        // If the signal has less points than the canvas, this will always be 1
-        var skip = 1;
-        var mul = 1;
-        var ratio = scope.width / ab.length * scope.scaling.x;
-        if(ratio > 1){
-            mul = ratio;
-        } else {
-            skip = 1 / ratio;
-        }
-
-        // Calculate SNR
-        if(this.state.SNRmode == 'manual'){
-            var ss = 0;
-            var sn = 0;
-            var first = scope.ctrl.getMarkerById('SNRfirst')[0].x / mul * scope.width;
-            var second = scope.ctrl.getMarkerById('SNRsecond')[0].x / mul * scope.width;
-            console.log(first, second);
-            for(i = 1; i < ab.length; i++){
-                if(i < first || i > second){
-                    sn += ab[i] * ab[i];
-                } else {
-                    ss += ab[i] * ab[i];
-                }
-            }
-            var SNR = Math.log10(ss / sn) * 10;
-            this.state.info.SNR = SNR;
-        }
-        if(this.state.SNRmode == 'auto'){
-            // Find max
-            var max = -3000000;
-            var maxi = 0;
-            for(i = 1; i < ab.length; i++){
-                if(ab[i] > max){
-                    max = ab[i];
-                    maxi = i;
-                }
-            }
-            var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
-            var n = [];
-            var s = [];
-            var secondSNRMarker = 0;
-            var firstSNRMarker = 0;
-            // Add all values under the average and those above each to a list
-            for(i = 1; i < ab.length; i++){
-                if(ab[i] < m){
-                    n.push(ab[i]);
-                }
-                else {
-                    if(secondSNRMarker == 0){
-                        firstSNRMarker = i - 1;
-                        if(firstSNRMarker < 1){
-                            firstSNRMarker = 1;
-                        }
-                    }
-                    s.push(ab[i]);
-                    secondSNRMarker = i + 1;
-                    if(secondSNRMarker > ab.length){
-                        secondSNRMarker = ab.length;
-                    }
-                }
-            }
-            // Sum both sets and calculate their ratio which is the SNR
-            var ss = ssum(s);
-            var sn = ssum(n);
-            var SNR = Math.log10(ss / sn) * 10;
-            this.state.info.SNR = SNR;
-
-            // Posiion SNR markers
-            scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, secondSNRMarker * mul / scope.width);
-            console.log(firstSNRMarker, secondSNRMarker);
-         }
-
-        // Convert spectral density to a logarithmic scale to be able to better plot it.
-        // Scale it down by 200 for a nicer plot
-        for(i = 0; i < ab.length; i++){
-            ab[i] = Math.log10(ab[i])*20/200;
-        }
-
-        // Store brush
-        context.save();
-        context.strokeWidth = 1;
-        // Draw trace
-        context.strokeStyle = this.state.color;
-        context.beginPath();
-        context.moveTo(0, (halfHeight - (ab[0] + this.state.offset) * halfHeight * scope.scaling.y));
-        for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-            context.lineTo(j, (halfHeight - (ab[Math.floor(i)] + this.state.offset) * halfHeight * scope.scaling.y));
-        }
-        // Fix drawing on canvas
-        context.stroke();
-
-        // Draw mover to move the trace
-        context.fillStyle = this.state.color;
-        offset = this.state.offset;
-        if(offset > 1){
-            offset = 1;
-        } else if(offset < -1){
-            offset = -1;
-        }
-        context.fillRect(
-            scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-            halfHeight - this.state.offset * halfHeight * scope.scaling.y - scope.ui.mover.height / 2,
-            scope.ui.mover.width,
-            scope.ui.mover.height
-        );
-
-        // Restore brush
-        context.restore();
-
-        // Mark data as deprecated
-        this.fetched = false;
+    // Duplicate data
+    var real = this.state.source.ctrl.channels[0].slice(0);
+    // Create a complex vector with zeroes sice we only have real input
+    var compl = new Float32Array(this.state.source.ctrl.channels[0]);
+    // Window data if a valid window was selected
+    if(this.state.windowFunction && windowFunctions[this.state.windowFunction]){
+        real = applyWindow(real, windowFunctions[this.state.windowFunction]);
     }
+    // Do an FFT of the signal
+    miniFFT(real, compl);
+    // Only use half of the FFT since we only need the upper half
+    real = real.slice(0, real.length / 2);
+    compl = compl.slice(0, compl.length / 2);
+
+    // Create the the total power of the signal
+    // P = V^2
+    var ab = new Float32Array(real.length);
+    for(i = 0; i < ab.length; i++){
+        ab[i] = real[i]*real[i] + compl[i]*compl[i];
+    }
+
+    // Calculate x-Axis scaling
+    // mul tells how many pixels have to be skipped after each sample
+    // If the signal has more points than the canvas, this will always be 1
+    // skip tells how many samples have to be skipped after each pixel
+    // If the signal has less points than the canvas, this will always be 1
+    var skip = 1;
+    var mul = 1;
+    var ratio = scope.width / ab.length * this.state.scaling.x; // pixel / sample
+    if(ratio > 1){
+        mul = ratio;
+    } else {
+        skip = 1 / ratio;
+    }
+    // (fs / 2) / samples // f / samples
+    // df // samples / dec
+
+    // 1 / ratio * df * this.state.source.samplingRate / 2 / this.state.source.frameSize
+
+    // Calculate SNR
+    if(this.state.SNRmode == 'manual'){
+        var ss = 0;
+        var sn = 0;
+        var first = scope.ctrl.getMarkerById('SNRfirst')[0].x / mul * scope.width;
+        var second = scope.ctrl.getMarkerById('SNRsecond')[0].x / mul * scope.width;
+        for(i = 1; i < ab.length; i++){
+            if(i < first || i > second){
+                sn += ab[i] * ab[i];
+            } else {
+                ss += ab[i] * ab[i];
+            }
+        }
+        var SNR = Math.log10(ss / sn) * 10;
+        this.state.info.SNR = SNR;
+    }
+    if(this.state.SNRmode == 'auto'){
+        // Find max
+        var max = -3000000;
+        var maxi = 0;
+        for(i = 1; i < ab.length; i++){
+            if(ab[i] > max){
+                max = ab[i];
+                maxi = i;
+            }
+        }
+        var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
+        var n = [];
+        var s = [];
+        var secondSNRMarker = 0;
+        var firstSNRMarker = 0;
+        // Add all values under the average and those above each to a list
+        for(i = 1; i < ab.length; i++){
+            if(ab[i] < m){
+                n.push(ab[i]);
+            }
+            else {
+                if(secondSNRMarker == 0){
+                    firstSNRMarker = i - 1;
+                    if(firstSNRMarker < 1){
+                        firstSNRMarker = 1;
+                    }
+                }
+                s.push(ab[i]);
+                secondSNRMarker = i + 1;
+                if(secondSNRMarker > ab.length){
+                    secondSNRMarker = ab.length;
+                }
+            }
+        }
+        // Sum both sets and calculate their ratio which is the SNR
+        var ss = ssum(s);
+        var sn = ssum(n);
+        var SNR = Math.log10(ss / sn) * 10;
+        this.state.info.SNR = SNR;
+
+        // Posiion SNR markers
+        scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, secondSNRMarker * mul / scope.width);
+        }
+
+    // Convert spectral density to a logarithmic scale to be able to better plot it.
+    // Scale it down by 200 for a nicer plot
+    for(i = 0; i < ab.length; i++){
+        ab[i] = Math.log10(ab[i])*20/200;
+    }
+
+    // Store brush
+    context.save();
+    if(this.id == this.state.source.activeTrace){
+        // Draw scales
+        context.strokeWidth = 1;
+        context.strokeStyle = '#ABABAB';
+        context.setLineDash([5]);
+
+        context.font = "30px Arial";
+        context.fillStyle = 'blue';
+
+        var unit = 1e9;
+        var nStart = 1;
+        var n = 1;
+        var df = ratio * this.state.source.samplingRate / 2 * n;
+        for(var a = 0; a < 20; a++){
+            if(scope.width / df > 1 && scope.width / df < 11){
+                break;
+            }
+            n *= 1e-1;
+            df = ratio * this.state.source.samplingRate / 2 * n;
+        }
+
+        // df
+        console.log(1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize);
+
+        var i;
+        for(i = 0; i < 11; i++){
+            context.save();
+            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
+            for(var j = 1; j < 10; j++){
+                context.beginPath();
+                context.moveTo(df * i + df / 10 * j, 0);
+                context.lineTo(df * i + df / 10 * j, scope.height);
+                context.stroke();
+            }
+            context.restore();
+            context.beginPath();
+            context.moveTo(df * i, 0);
+            context.lineTo(df * i, scope.height);
+            context.stroke();
+        }
+        context.restore();
+    }
+    context.strokeWidth = 1;
+    // Draw trace
+    context.strokeStyle = this.state.color;
+    context.beginPath();
+    context.moveTo(0, (halfHeight - (ab[0] + this.state.offset) * halfHeight * this.state.scaling.y));
+    for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
+        context.lineTo(j, (halfHeight - (ab[Math.floor(i)] + this.state.offset) * halfHeight * this.state.scaling.y));
+    }
+    // Fix drawing on canvas
+    context.stroke();
+
+    // Draw mover to move the trace
+    context.fillStyle = this.state.color;
+    var offset = this.state.offset;
+    if(offset > 1){
+        offset = 1;
+    } else if(offset < -1){
+        offset = -1;
+    }
+    context.fillRect(
+        scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
+        halfHeight - this.state.offset * halfHeight * this.state.scaling.y - scope.ui.mover.height / 2,
+        scope.ui.mover.width,
+        scope.ui.mover.height
+    );
+
+    // Restore brush
+    context.restore();
 };
 
 const scopeView = {
@@ -16341,15 +16377,15 @@ const scopeView = {
         vnode.attrs.scope.source.ctrl = new WebsocketSource(vnode.attrs.scope.source);
 
         // Initialize controllers for the traces
-        vnode.attrs.scope.source.traces.forEach(function(trace){
+        vnode.attrs.scope.source.traces.forEach(function(trace, i){
             switch(trace.type){
             default:
             case 'NormalTrace':
-                trace.ctrl = new NormalTrace(trace);
+                trace.ctrl = new NormalTrace(i, trace);
                 break;
 
             case 'FFTrace':
-                trace.ctrl = new FFTrace(trace);
+                trace.ctrl = new FFTrace(i, trace);
                 break;
             }
         });
@@ -16366,7 +16402,6 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the controller and the view and links them both.
 */
 
-//use default mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -16377,16 +16412,12 @@ var appState = {
             top: 250,
             left: 350,
             markers: [
-                { id: 1, type: 'horizontal', x: 0, y: 0 },
-                { id: 2, type: 'vertical', x: 0.5, y: 0 },
+                // { id: 1, type: 'horizontal', x: 0, y: 0 },
+                // { id: 2, type: 'vertical', x: 0.5, y: 0 },
                 { id: 'SNRfirst', type: 'vertical', x: 0 },
                 { id: 'SNRsecond', type: 'vertical', x: 0 },
             ],
             mode: 'normal',
-            scaling: {
-                x: 1,
-                y: 1,
-            },
             ui: {
                 mover: {
                     width: 50,
@@ -16420,6 +16451,7 @@ var appState = {
                 },
                 numberOfChannels: 2,
                 mode: 'normal',
+                activeTrace: 0,
                 traces: [
                     {
                         id: 3,
@@ -16428,7 +16460,11 @@ var appState = {
                         name: 'Trace ' + 1,
                         channelID: 1,
                         type: 'NormalTrace',
-                        color: '#E85D55'
+                        color: '#E85D55',
+                        scaling: {
+                            x: 1,
+                            y: 1,
+                        },
                     },
                     {
                         id: 4,
@@ -16439,7 +16475,11 @@ var appState = {
                         name: 'Trace ' + 2,
                         channelID: 1,
                         type: 'FFTrace',
-                        color: '#E8830C'
+                        color: '#E8830C',
+                        scaling: {
+                            x: 1,
+                            y: 1,
+                        },
                     },
                 ],
             }
