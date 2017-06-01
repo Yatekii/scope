@@ -3,7 +3,7 @@ import { sum, ssum } from './helpers.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
 
 // Creates a new trace
-export const  NormalTrace = function (id, state) {
+export const  TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
     this.id = id;
@@ -13,7 +13,7 @@ export const  NormalTrace = function (id, state) {
 };
 
 // Draws trace on the new frame
-NormalTrace.prototype.draw = function (canvas) {
+TimeTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     // Store context state so other painters are presented with their known context state
     context.save();
@@ -57,6 +57,8 @@ NormalTrace.prototype.draw = function (canvas) {
             n *= 1e-1;
             dt = ratio / this.state.source.samplingRate * n;
         }
+
+        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate).toFixed(15);
 
         var i;
         for(i = 0; i < 11; i++){
@@ -257,7 +259,7 @@ FFTrace.prototype.draw = function (canvas) {
         }
 
         // df
-        console.log(1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize);
+        this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
 
         var i;
         for(i = 0; i < 11; i++){

@@ -69,7 +69,7 @@ var appState = {
                         info: {},
                         name: 'Trace ' + 1,
                         channelID: 1,
-                        type: 'NormalTrace',
+                        type: 'TimeTrace',
                         color: '#E85D55',
                         scaling: {
                             x: 1,

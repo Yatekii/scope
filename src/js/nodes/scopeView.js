@@ -1,17 +1,19 @@
 import m from 'mithril';
 import { draw } from '../helpers.js';
 import { FFTracePrefPane } from '../prefpanes/fftrace.js';
+import { TimeTracePrefPane } from '../prefpanes/timetrace.js';
 import { generalPrefPane } from '../prefpanes/general.js';
 
 import * as oscilloscope from '../oscilloscope.js';
 import { WebsocketSource } from '../source.js';
-import { NormalTrace, FFTrace } from '../trace.js';
+import { TimeTrace, FFTrace } from '../trace.js';
 
 export const scopeView = {
     oninit: function(vnode) {
         // Make sure the on scroll event is listened to
         window.addEventListener('mousewheel', function(event){
             vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
+            m.redraw();
         }, false);
     },
     view: function(vnode) {
@@ -40,6 +42,9 @@ export const scopeView = {
                     return trace.type == 'FFTrace' ? [
                         m('.divider'),
                         m(FFTracePrefPane, { scopeConf: vnode.attrs.scope, traceConf: trace })
+                    ] : trace.type == 'TimeTrace' ? [
+                        m('.divider'),
+                        m(TimeTracePrefPane, { scopeConf: vnode.attrs.scope, traceConf: trace })
                     ] : '';
                 })
             ]),
@@ -64,8 +69,8 @@ export const scopeView = {
         vnode.attrs.scope.source.traces.forEach(function(trace, i){
             switch(trace.type){
             default:
-            case 'NormalTrace':
-                trace.ctrl = new NormalTrace(i, trace);
+            case 'TimeTrace':
+                trace.ctrl = new TimeTrace(i, trace);
                 break;
 
             case 'FFTrace':

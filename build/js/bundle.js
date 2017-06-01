@@ -15344,6 +15344,39 @@ const applyWindow = function(data_array, windowing_function, alpha) {
 	return data_array;
 };
 
+const secondsToString = function(s){
+    if(s < 1e-9){
+        return (s * 1e12).toFixed(2) + 'ps';
+    }
+    if(s < 1e-6){
+        return (s * 1e9).toFixed(2) + 'ns';
+    }
+    if(s < 1e-3){
+        return (s * 1e6).toFixed(2) + 'us';
+    }
+    if(s < 1){
+        return (s * 1e3).toFixed(2) + 'ms';
+    }
+    if(s < 1e3){
+        return (s).toFixed(2) + 's';
+    }
+    if(s < 1e6){
+        return (s * 1e-3).toFixed(2) + 'Ms';
+    }
+};
+
+const hertzToString = function(f){
+    if(f < 1e3){
+        return (f).toFixed(2) + 'Hz';
+    }
+    if(f < 1e6){
+        return (f * 1e-3).toFixed(2) + 'kHz';
+    }
+    if(f < 1e9){
+        return (f * 1e-6).toFixed(2) + 'MHz';
+    }
+};
+
 const FFTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
@@ -15369,17 +15402,10 @@ const FFTracePrefPane = {
                         })
                     )
                 ]),
-                // TODO: remove/adjust
+                // GUI: Display Δf
                 mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label [for=signalfrequency]', 'Signal Frequency')),
-                    mithril('.col-9', mithril('input.form-input', {
-                        type: 'number',
-                        id: 'signalfrequency', 
-                        value: t.signalFrequency,
-                        onchange: mithril.withAttr('value', function(value) {
-                            t.signalFrequency = parseInt(value);
-                        }),
-                    }))
+                    mithril('.col-3', mithril('label.form-label', 'Δf')),
+                    mithril('.col-9', mithril('label.form-label', hertzToString(t.info.deltaf)))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -15436,6 +15462,41 @@ const FFTracePrefPane = {
                         }),
                     }))
                 ])
+            ])
+        ];
+    }
+};
+
+const TimeTracePrefPane = {
+    view: function(vnode){
+        var t = vnode.attrs.traceConf;
+        var s = vnode.attrs.scopeConf;
+        return [
+            mithril('header.columns', ''),
+            mithril('.form-horizontal', [
+                // GUI: Change color and name
+                mithril('.form-group',[
+                    mithril('.col-3.text-center', mithril('input[type=color]', {
+                        value: t.color,
+                        onchange: mithril.withAttr('value', function(v){ t.color = v; })
+                    })),
+                    mithril('h4.col-9', !vnode.state.editName ?
+                        mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
+                        mithril('input.form-input[type=text]', {
+                            value: t.node.name,
+                            onchange: mithril.withAttr('value', function(v){ t.name = v; }),
+                            onblur: function(){ vnode.state.editName = false; },
+                            onkeypress: withKey(13, function(target){
+                                vnode.state.editName = false;
+                            })
+                        })
+                    )
+                ]),
+                // GUI: Display Δt
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'Δt')),
+                    mithril('.col-9', mithril('label.form-label', secondsToString(t.info.deltat)))
+                ]),
             ])
         ];
     }
@@ -16019,7 +16080,8 @@ const miniFFT = function(re, im) {
     }
 };
 
-const NormalTrace = function (id, state) {
+// Creates a new trace
+const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
     this.id = id;
@@ -16029,7 +16091,7 @@ const NormalTrace = function (id, state) {
 };
 
 // Draws trace on the new frame
-NormalTrace.prototype.draw = function (canvas) {
+TimeTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     // Store context state so other painters are presented with their known context state
     context.save();
@@ -16073,6 +16135,8 @@ NormalTrace.prototype.draw = function (canvas) {
             n *= 1e-1;
             dt = ratio / this.state.source.samplingRate * n;
         }
+
+        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate).toFixed(15);
 
         var i;
         for(i = 0; i < 11; i++){
@@ -16273,7 +16337,7 @@ FFTrace.prototype.draw = function (canvas) {
         }
 
         // df
-        console.log(1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize);
+        this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
 
         var i;
         for(i = 0; i < 11; i++){
@@ -16328,6 +16392,7 @@ const scopeView = {
         // Make sure the on scroll event is listened to
         window.addEventListener('mousewheel', function(event){
             vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
+            mithril.redraw();
         }, false);
     },
     view: function(vnode) {
@@ -16356,6 +16421,9 @@ const scopeView = {
                     return trace.type == 'FFTrace' ? [
                         mithril('.divider'),
                         mithril(FFTracePrefPane, { scopeConf: vnode.attrs.scope, traceConf: trace })
+                    ] : trace.type == 'TimeTrace' ? [
+                        mithril('.divider'),
+                        mithril(TimeTracePrefPane, { scopeConf: vnode.attrs.scope, traceConf: trace })
                     ] : '';
                 })
             ]),
@@ -16380,8 +16448,8 @@ const scopeView = {
         vnode.attrs.scope.source.traces.forEach(function(trace, i){
             switch(trace.type){
             default:
-            case 'NormalTrace':
-                trace.ctrl = new NormalTrace(i, trace);
+            case 'TimeTrace':
+                trace.ctrl = new TimeTrace(i, trace);
                 break;
 
             case 'FFTrace':
@@ -16459,7 +16527,7 @@ var appState = {
                         info: {},
                         name: 'Trace ' + 1,
                         channelID: 1,
-                        type: 'NormalTrace',
+                        type: 'TimeTrace',
                         color: '#E85D55',
                         scaling: {
                             x: 1,

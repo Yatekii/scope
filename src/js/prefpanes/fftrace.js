@@ -1,6 +1,7 @@
 import m from 'mithril';
 import { windowFunctions } from '../math/windowing.js';
 import { withKey, capitalizeFirstLetter } from '../helpers.js';
+import { hertzToString } from '../math/converting.js';
 
 export const FFTracePrefPane = {
     view: function(vnode){
@@ -27,17 +28,10 @@ export const FFTracePrefPane = {
                         })
                     )
                 ]),
-                // TODO: remove/adjust
+                // GUI: Display Δf
                 m('.form-group', [
-                    m('.col-3', m('label.form-label [for=signalfrequency]', 'Signal Frequency')),
-                    m('.col-9', m('input.form-input', {
-                        type: 'number',
-                        id: 'signalfrequency', 
-                        value: t.signalFrequency,
-                        onchange: m.withAttr('value', function(value) {
-                            t.signalFrequency = parseInt(value);
-                        }),
-                    }))
+                    m('.col-3', m('label.form-label', 'Δf')),
+                    m('.col-9', m('label.form-label', hertzToString(t.info.deltaf)))
                 ]),
                 // GUI: Select windowing
                 m('.form-group', [
