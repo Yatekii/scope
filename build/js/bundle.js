@@ -15634,7 +15634,6 @@ Oscilloscope.prototype.draw = function() {
     context.fillRect(0, 0, width, height);
 
     // Draw trigger level
-    // console.log(this.state.source.trigger.level * 8192 + 8192);
     context.strokeStyle = '#278BFF';
     context.beginPath();
     context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y);
@@ -15919,6 +15918,7 @@ Oscilloscope.prototype.uiHandlers = {
     }
 };
 
+// Creates a new source
 const WebsocketSource = function(state) {
     var me = this;
     // Remember source state
@@ -15965,7 +15965,7 @@ const WebsocketSource = function(state) {
                 var data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit uint to float
-                    data[i] = (arr[i] - 8192) / 8192;
+                    data[i] = (arr[i] - Math.pow(2, (me.state.bits - 1))) / Math.pow(2, (me.state.bits - 1));
                 }
                 me.channels[0] = data;
                 // Start a new frame if mode is appropriate otherwise just exit
@@ -16007,7 +16007,7 @@ WebsocketSource.prototype.requestFrame = function() {
             type: this.state.trigger.type,
             channel: this.state.trigger.channel,
             // TODO: Fix trigger level sent (+ trace offset)
-            level: Math.round(this.state.trigger.level * 8192 + 8192),
+            level: Math.round(this.state.trigger.level * Math.pow(2, (this.state.bits - 1)) + Math.pow(2, (this.state.bits - 1))),
             hysteresis: this.state.trigger.hystresis,
             slope: this.state.trigger.slope
         },
@@ -16080,7 +16080,6 @@ const miniFFT = function(re, im) {
     }
 };
 
-// Creates a new trace
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
@@ -16506,6 +16505,7 @@ var appState = {
                 // location: 'ws://localhost:50090',
                 frameSize: 4096,
                 samplingRate: 1000000,
+                bits: 14,
                 buffer: {
                     upperSize: 4,
                     lowerSize: 1,

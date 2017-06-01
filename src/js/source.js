@@ -47,7 +47,7 @@ export const WebsocketSource = function(state) {
                 var data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit uint to float
-                    data[i] = (arr[i] - 8192) / 8192;
+                    data[i] = (arr[i] - Math.pow(2, (me.state.bits - 1))) / Math.pow(2, (me.state.bits - 1));
                 }
                 me.channels[0] = data;
                 // Start a new frame if mode is appropriate otherwise just exit
@@ -89,7 +89,7 @@ WebsocketSource.prototype.requestFrame = function() {
             type: this.state.trigger.type,
             channel: this.state.trigger.channel,
             // TODO: Fix trigger level sent (+ trace offset)
-            level: Math.round(this.state.trigger.level * 8192 + 8192),
+            level: Math.round(this.state.trigger.level * Math.pow(2, (this.state.bits - 1)) + Math.pow(2, (this.state.bits - 1))),
             hysteresis: this.state.trigger.hystresis,
             slope: this.state.trigger.slope
         },

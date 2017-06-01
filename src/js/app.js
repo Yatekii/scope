@@ -48,6 +48,7 @@ var appState = {
                 // location: 'ws://localhost:50090',
                 frameSize: 4096,
                 samplingRate: 1000000,
+                bits: 14,
                 buffer: {
                     upperSize: 4,
                     lowerSize: 1,

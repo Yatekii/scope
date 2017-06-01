@@ -35,7 +35,6 @@ Oscilloscope.prototype.draw = function() {
     context.fillRect(0, 0, width, height);
 
     // Draw trigger level
-    // console.log(this.state.source.trigger.level * 8192 + 8192);
     context.strokeStyle = '#278BFF';
     context.beginPath();
     context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y);
