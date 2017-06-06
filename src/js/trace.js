@@ -39,14 +39,12 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Draw scales
     if(this.id == this.state.source.activeTrace){
+        // Draw horizontal scales
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
-        context.setLineDash([5]);
-
         context.font = "30px Arial";
         context.fillStyle = 'blue';
 
-        var unit = 1e9
         var nStart = 1e18;
         var n = 1e18;
         var dt = ratio / this.state.source.samplingRate * n;
@@ -63,6 +61,7 @@ TimeTrace.prototype.draw = function (canvas) {
         var i;
         for(i = 0; i < 11; i++){
             context.save();
+            context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / dt)) + ')';
             for(var j = 1; j < 10; j++){
                 context.beginPath();
@@ -74,6 +73,43 @@ TimeTrace.prototype.draw = function (canvas) {
             context.beginPath();
             context.moveTo(dt * i, 0);
             context.lineTo(dt * i, scope.height);
+            context.stroke();
+        }
+        context.restore();
+
+        // Draw vertical scales
+        context.strokeWidth = 1;
+        context.strokeStyle = '#ABABAB';
+        context.font = "30px Arial";
+        context.fillStyle = 'blue';
+
+        n = 1;
+        var dA = this.state.scaling.y;
+        for(a = 0; a < 20; a++){
+            if(scope.height * 0.5 / dA > 1 && scope.height * 0.5 / dA < 6){
+                break;
+            }
+            n *= 5;
+            dA = this.state.scaling.y * n;
+        }
+        // dA
+        this.state.info.deltaA = (n * (this.state.source.bits - 1) * this.state.source.vpb).toFixed(15);
+
+        var i;
+        for(i = -6; i < 6; i++){
+            context.save();
+            context.setLineDash([5]);
+            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.height / dA)) + ')';
+            for(var j = 1; j < 10; j++){
+                context.beginPath();
+                context.moveTo(0, 0.5 * scope.height + dA * i + dA / 10 * j);
+                context.lineTo(scope.width, 0.5 * scope.height + dA * i + dA / 10 * j);
+                context.stroke();
+            }
+            context.restore();
+            context.beginPath();
+            context.moveTo(0, 0.5 * scope.height + dA * i);
+            context.lineTo(scope.width, 0.5 * scope.height + dA * i);
             context.stroke();
         }
         context.restore();
@@ -238,11 +274,9 @@ FFTrace.prototype.draw = function (canvas) {
     // Store brush
     context.save();
     if(this.id == this.state.source.activeTrace){
-        // Draw scales
+        // Draw horizontal scales
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
-        context.setLineDash([5]);
-
         context.font = "30px Arial";
         context.fillStyle = 'blue';
 
@@ -264,6 +298,7 @@ FFTrace.prototype.draw = function (canvas) {
         var i;
         for(i = 0; i < 11; i++){
             context.save();
+            context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
             for(var j = 1; j < 10; j++){
                 context.beginPath();
@@ -278,6 +313,46 @@ FFTrace.prototype.draw = function (canvas) {
             context.stroke();
         }
         context.restore();
+
+        // // Draw vertical scales
+        // context.strokeWidth = 1;
+        // context.strokeStyle = '#ABABAB';
+        // context.font = "30px Arial";
+        // context.fillStyle = 'blue';
+
+        // var unit = 1e9
+        // var nStart = 1;
+        // var n = 1;
+        // var df = ratio * this.state.source.samplingRate / 2 * n;
+        // for(var a = 0; a < 20; a++){
+        //     if(scope.width / df > 1 && scope.width / df < 11){
+        //         break;
+        //     }
+        //     n *= 1e-1;
+        //     df = ratio * this.state.source.samplingRate / 2 * n;
+        // }
+
+        // // df
+        // this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
+
+        // var i;
+        // for(i = 0; i < 11; i++){
+        //     context.save();
+        //     context.setLineDash([5]);
+        //     context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
+        //     for(var j = 1; j < 10; j++){
+        //         context.beginPath();
+        //         context.moveTo(0, df * i + df / 10 * j);
+        //         context.lineTo(scope.width, df * i + df / 10 * j);
+        //         context.stroke();
+        //     }
+        //     context.restore();
+        //     context.beginPath();
+        //     context.moveTo(0, df * i);
+        //     context.lineTo(scope.width, df * i);
+        //     context.stroke();
+        // }
+        // context.restore();
     }
     context.strokeWidth = 1;
     // Draw trace

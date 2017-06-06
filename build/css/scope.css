@@ -23,6 +23,7 @@ p { margin: 1em 0;}
     width: 200px;
     height: 100%;
     background-color:white;
+    opacity:0.5;
 }
 #freqbars {
     background: black;

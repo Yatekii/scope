@@ -32,6 +32,11 @@ export const TimeTracePrefPane = {
                     m('.col-3', m('label.form-label', 'Δt')),
                     m('.col-9', m('label.form-label', secondsToString(t.info.deltat)))
                 ]),
+                // GUI: Display ΔA
+                m('.form-group', [
+                    m('.col-3', m('label.form-label', 'ΔA')),
+                    m('.col-9', m('label.form-label', t.info.deltaA))
+                ]),
             ])
         ];
     }

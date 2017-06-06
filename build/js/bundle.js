@@ -15497,6 +15497,11 @@ const TimeTracePrefPane = {
                     mithril('.col-3', mithril('label.form-label', 'Δt')),
                     mithril('.col-9', mithril('label.form-label', secondsToString(t.info.deltat)))
                 ]),
+                // GUI: Display ΔA
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'ΔA')),
+                    mithril('.col-9', mithril('label.form-label', t.info.deltaA))
+                ]),
             ])
         ];
     }
@@ -15918,7 +15923,6 @@ Oscilloscope.prototype.uiHandlers = {
     }
 };
 
-// Creates a new source
 const WebsocketSource = function(state) {
     var me = this;
     // Remember source state
@@ -16080,6 +16084,7 @@ const miniFFT = function(re, im) {
     }
 };
 
+// Creates a new trace
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
@@ -16116,14 +16121,12 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Draw scales
     if(this.id == this.state.source.activeTrace){
+        // Draw horizontal scales
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
-        context.setLineDash([5]);
-
         context.font = "30px Arial";
         context.fillStyle = 'blue';
 
-        var unit = 1e9;
         var nStart = 1e18;
         var n = 1e18;
         var dt = ratio / this.state.source.samplingRate * n;
@@ -16140,6 +16143,7 @@ TimeTrace.prototype.draw = function (canvas) {
         var i;
         for(i = 0; i < 11; i++){
             context.save();
+            context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / dt)) + ')';
             for(var j = 1; j < 10; j++){
                 context.beginPath();
@@ -16151,6 +16155,43 @@ TimeTrace.prototype.draw = function (canvas) {
             context.beginPath();
             context.moveTo(dt * i, 0);
             context.lineTo(dt * i, scope.height);
+            context.stroke();
+        }
+        context.restore();
+
+        // Draw vertical scales
+        context.strokeWidth = 1;
+        context.strokeStyle = '#ABABAB';
+        context.font = "30px Arial";
+        context.fillStyle = 'blue';
+
+        n = 1;
+        var dA = this.state.scaling.y;
+        for(a = 0; a < 20; a++){
+            if(scope.height * 0.5 / dA > 1 && scope.height * 0.5 / dA < 6){
+                break;
+            }
+            n *= 5;
+            dA = this.state.scaling.y * n;
+        }
+        // dA
+        this.state.info.deltaA = (n * (this.state.source.bits - 1) * this.state.source.vpb).toFixed(15);
+
+        var i;
+        for(i = -6; i < 6; i++){
+            context.save();
+            context.setLineDash([5]);
+            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.height / dA)) + ')';
+            for(var j = 1; j < 10; j++){
+                context.beginPath();
+                context.moveTo(0, 0.5 * scope.height + dA * i + dA / 10 * j);
+                context.lineTo(scope.width, 0.5 * scope.height + dA * i + dA / 10 * j);
+                context.stroke();
+            }
+            context.restore();
+            context.beginPath();
+            context.moveTo(0, 0.5 * scope.height + dA * i);
+            context.lineTo(scope.width, 0.5 * scope.height + dA * i);
             context.stroke();
         }
         context.restore();
@@ -16315,11 +16356,9 @@ FFTrace.prototype.draw = function (canvas) {
     // Store brush
     context.save();
     if(this.id == this.state.source.activeTrace){
-        // Draw scales
+        // Draw horizontal scales
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
-        context.setLineDash([5]);
-
         context.font = "30px Arial";
         context.fillStyle = 'blue';
 
@@ -16341,6 +16380,7 @@ FFTrace.prototype.draw = function (canvas) {
         var i;
         for(i = 0; i < 11; i++){
             context.save();
+            context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
             for(var j = 1; j < 10; j++){
                 context.beginPath();
@@ -16355,6 +16395,46 @@ FFTrace.prototype.draw = function (canvas) {
             context.stroke();
         }
         context.restore();
+
+        // // Draw vertical scales
+        // context.strokeWidth = 1;
+        // context.strokeStyle = '#ABABAB';
+        // context.font = "30px Arial";
+        // context.fillStyle = 'blue';
+
+        // var unit = 1e9
+        // var nStart = 1;
+        // var n = 1;
+        // var df = ratio * this.state.source.samplingRate / 2 * n;
+        // for(var a = 0; a < 20; a++){
+        //     if(scope.width / df > 1 && scope.width / df < 11){
+        //         break;
+        //     }
+        //     n *= 1e-1;
+        //     df = ratio * this.state.source.samplingRate / 2 * n;
+        // }
+
+        // // df
+        // this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
+
+        // var i;
+        // for(i = 0; i < 11; i++){
+        //     context.save();
+        //     context.setLineDash([5]);
+        //     context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
+        //     for(var j = 1; j < 10; j++){
+        //         context.beginPath();
+        //         context.moveTo(0, df * i + df / 10 * j);
+        //         context.lineTo(scope.width, df * i + df / 10 * j);
+        //         context.stroke();
+        //     }
+        //     context.restore();
+        //     context.beginPath();
+        //     context.moveTo(0, df * i);
+        //     context.lineTo(scope.width, df * i);
+        //     context.stroke();
+        // }
+        // context.restore();
     }
     context.strokeWidth = 1;
     // Draw trace
@@ -16462,7 +16542,7 @@ const scopeView = {
     },
 };
 
-__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n    float: left;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n#prefpane {\n    width: 400px;\n    height: 100%;\n    float: right;\n    /*position:fixed;\n    right: 0;\n    top: 0;*/\n    background-color: #ABABAB;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n\n#toggle-prefpane {\n    position:fixed;\n    bottom: 20px;\n}\n\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
+__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n    float: left;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n#prefpane {\n    width: 400px;\n    height: 100%;\n    float: right;\n    /*position:fixed;\n    right: 0;\n    top: 0;*/\n    background-color: #ABABAB;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n    \n}\n\n#toggle-prefpane {\n    position:fixed;\n    bottom: 20px;\n}\n\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
 
 /*
 * This file is the main app file.
@@ -16506,6 +16586,7 @@ var appState = {
                 frameSize: 4096,
                 samplingRate: 1000000,
                 bits: 14,
+                vpb: 2.2 / Math.pow(2,14), // Volts per bit
                 buffer: {
                     upperSize: 4,
                     lowerSize: 1,
