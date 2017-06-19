@@ -1,4 +1,3 @@
-+ Make markers relative to the dataframe and not the screen
 - Fix moving markers
 - Display trigger location
 - Drag display to move active trace

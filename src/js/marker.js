@@ -14,7 +14,7 @@ export const draw = function (context, scopeState, markerState, d, length) {
         context.beginPath();
         context.moveTo(markerState.x * d * length, 0);
         context.lineTo(markerState.x * d * length, scopeState.height);
-        console.log(markerState.x, d, length, scopeState.height, scopeState.height, markerState.x * d * length);
+        // console.log(markerState.x, d, length, scopeState.height, scopeState.height, markerState.x * d * length);
         context.stroke();
     } else if(markerState.type == 'horizontal'){
         context.beginPath();
@@ -28,3 +28,10 @@ export const draw = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
+export const convertToSampleNumber = function (marker){
+
+}
+
+export const convertToPercentage = function (marker){
+    
+}

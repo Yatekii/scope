@@ -16027,7 +16027,7 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
         context.beginPath();
         context.moveTo(markerState.x * d * length, 0);
         context.lineTo(markerState.x * d * length, scopeState.height);
-        console.log(markerState.x, d, length, scopeState.height, scopeState.height, markerState.x * d * length);
+        // console.log(markerState.x, d, length, scopeState.height, scopeState.height, markerState.x * d * length);
         context.stroke();
     } else if(markerState.type == 'horizontal'){
         context.beginPath();
@@ -16041,7 +16041,6 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
-// Creates a new trace
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
@@ -16433,7 +16432,7 @@ const scopeView = {
         window.addEventListener('mousewheel', function(event){
             vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
             mithril.redraw();
-        }, false);
+        }, {passive: true});
     },
     view: function(vnode) {
         return [
@@ -16446,7 +16445,7 @@ const scopeView = {
                 },
                 onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
                 onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
-                onmousemove: function(event) { vnode.attrs.scope.ctrl.onMouseMove(event); },
+                onmousemove: function(event) { event.preventDefault(); vnode.attrs.scope.ctrl.onMouseMove(event); },
             }),
             // Render a settings panel if it is toggled otherwise render none
             mithril('.panel', {
@@ -16536,8 +16535,8 @@ var appState = {
                 name: 'Source ' + 1,
                 top: 300,
                 left: 50,
-                // location: 'ws://10.84.130.54:50090',
-                location: 'ws://localhost:50090',
+                location: 'ws://10.84.130.54:50090',
+                // location: 'ws://localhost:50090',
                 frameSize: 4096,
                 samplingRate: 1000000,
                 bits: 14,
