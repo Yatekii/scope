@@ -15509,7 +15509,7 @@ const TimeTracePrefPane = {
 
 const generalPrefPane = {
     view: function(vnode){
-        var s = vnode.attrs.scope;
+        var s = vnode.attrs.scopeConf;
         return [
             // TODO: update code to new tree
             mithril('header.text-center', mithril('h4', s)),
@@ -15518,26 +15518,19 @@ const generalPrefPane = {
                     mithril('.col-12', mithril('.btn-group.btn-group-block', [
                         mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
                             onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.normal();
-                                });
+                                s.source.ctrl.normal();
                                 s.mode = 'normal';
                             }
                         }, 'Normal'),
                         mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
                             onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.auto();
-                                });
+                                s.source.ctrl.single();
                                 s.mode = 'auto';
                             }
                         }, 'Auto'),
                         mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
                             onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    // TODO fix this (will trigger a trace multiple times)
-                                    t.node.source.node.ctrl.single();
-                                });
+                                s.source.ctrl.single();
                                 s.mode = 'single';
                             }
                         }, 'Single')
@@ -15546,27 +15539,23 @@ const generalPrefPane = {
                 mithril('.form-group', [
                     mithril('button.btn.col-6', {
                         onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.single();
-                                });
+                                s.source.ctrl.single();
                                 s.mode = 'single';
                             }
                     }, 'Single Shot'),
                     mithril('button.btn.col-6', {
                         onclick: function(e){
-                                s.traces.forEach(function(t){
-                                    t.node.source.node.ctrl.forceTrigger();
-                                });
-                            }
+                            s.source.ctrl.forceTrigger();
+                        }
                     }, 'Force Trigger')
                 ]),
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block',
-                        vnode.attrs.scope.source.traces.map(function(trace){
-                            return mithril('button.btn' + (trace.ctrl && vnode.attrs.scope.source.activeTrace == trace.ctrl.id ? '.active' : ''), {
+                        s.source.traces.map(function(trace){
+                            return mithril('button.btn' + (trace.ctrl && s.source.activeTrace == trace.ctrl.id ? '.active' : ''), {
                                 style: { backgroundColor: trace.color },
                                 onclick: function(e){
-                                    vnode.attrs.scope.source.activeTrace = trace.ctrl.id;
+                                    s.source.activeTrace = trace.ctrl.id;
                                 }
                             }, trace.name);
                         })
@@ -16455,7 +16444,7 @@ const scopeView = {
                 }
             }, [
                 // Render one general settings pane and for each trace an individual one
-                mithril(generalPrefPane, { scope: vnode.attrs.scope }),
+                mithril(generalPrefPane, { scopeConf: vnode.attrs.scope }),
                 vnode.attrs.scope.source.traces.map(function(trace){
                     return trace.type == 'FFTrace' ? [
                         mithril('.divider'),

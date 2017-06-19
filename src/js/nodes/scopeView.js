@@ -37,7 +37,7 @@ export const scopeView = {
                 }
             }, [
                 // Render one general settings pane and for each trace an individual one
-                m(generalPrefPane, { scope: vnode.attrs.scope }),
+                m(generalPrefPane, { scopeConf: vnode.attrs.scope }),
                 vnode.attrs.scope.source.traces.map(function(trace){
                     return trace.type == 'FFTrace' ? [
                         m('.divider'),

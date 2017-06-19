@@ -4,8 +4,6 @@
     - fft simply gets moved
     - time traces will have the trigger location moved
 
-- Fix General pref panel
-
 - Calculate RMS of signal power
 
 - Add an amplitude display for FFTrace
