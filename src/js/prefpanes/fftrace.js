@@ -1,7 +1,13 @@
 import m from 'mithril';
 import { windowFunctions } from '../math/windowing.js';
 import { withKey, capitalizeFirstLetter } from '../helpers.js';
-import { hertzToString } from '../math/converting.js';
+import {
+    hertzToString,
+    percentageToSample,
+    sampleToFrequency,
+    sampleToPercentage,
+    frequencyToSample
+} from '../math/converting.js';
 
 export const FFTracePrefPane = {
     view: function(vnode){
@@ -70,23 +76,57 @@ export const FFTracePrefPane = {
                 // GUI: Settings for the SNR markers
                 m('.form-group', [
                     m('.col-3', m('label.form-label', 'Lower Marker')),
-                    m('.col-9', m('input.form-input', {
+                    m('.col-8', m('input.form-input', {
+                        disabled: t.SNRmode == 'auto',
                         type: 'number',
-                        value: t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
+                        value: Math.floor(sampleToFrequency(
+                            percentageToSample(
+                                t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
+                                s.source.frameSize
+                            ),
+                            s.source.samplingRate / 2,
+                            s.source.frameSize
+                        )),
                         onchange: m.withAttr('value', function(value) {
-                            t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
+                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; })
+                            marker.x = sampleToPercentage(
+                                frequencyToSample(
+                                    parseInt(value),
+                                    s.source.samplingRate / 2,
+                                    s.source.frameSize
+                                ),
+                                s.source.frameSize
+                            );
                         }),
-                    }))
+                    })),
+                    m('.col-1', m('label.form-label', 'Hz'))
                 ]),
                 m('.form-group', [
                     m('.col-3', m('label.form-label', 'Upper Marker')),
-                    m('.col-9', m('input.form-input', {
+                    m('.col-8', m('input.form-input', {
+                        disabled: t.SNRmode == 'auto',
                         type: 'number',
-                        value: t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
+                        value: Math.floor(sampleToFrequency(
+                            percentageToSample(
+                                t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
+                                s.source.frameSize
+                            ),
+                            s.source.samplingRate / 2,
+                            s.source.frameSize
+                        )),
                         onchange: m.withAttr('value', function(value) {
-                            t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
+                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; })
+                            marker.x = sampleToPercentage(
+                                frequencyToSample(
+                                    parseInt(value),
+                                    s.source.samplingRate / 2,
+                                    s.source.frameSize
+                                ),
+                                s.source.frameSize
+                            );
                         }),
-                    }))
+                    })),
+                    m('.col-1', m('label.form-label', 'Hz'))
                 ])
             ])
         ];

@@ -15377,6 +15377,24 @@ const hertzToString = function(f){
     }
 };
 
+
+
+const sampleToFrequency = function(sample, samplingRate, frameSize){
+    return sample * samplingRate / frameSize;
+};
+
+const frequencyToSample = function(frequency, samplingRate, frameSize){
+    return frequency * frameSize / samplingRate;
+};
+
+const sampleToPercentage = function(sample, frameSize){
+    return sample / frameSize;
+};
+
+const percentageToSample = function(percentage, frameSize){
+    return percentage * frameSize;
+};
+
 const FFTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
@@ -15444,23 +15462,57 @@ const FFTracePrefPane = {
                 // GUI: Settings for the SNR markers
                 mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
-                    mithril('.col-9', mithril('input.form-input', {
+                    mithril('.col-8', mithril('input.form-input', {
+                        disabled: t.SNRmode == 'auto',
                         type: 'number',
-                        value: t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
+                        value: Math.floor(sampleToFrequency(
+                            percentageToSample(
+                                t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
+                                s.source.frameSize
+                            ),
+                            s.source.samplingRate / 2,
+                            s.source.frameSize
+                        )),
                         onchange: mithril.withAttr('value', function(value) {
-                            t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
+                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
+                            marker.x = sampleToPercentage(
+                                frequencyToSample(
+                                    parseInt(value),
+                                    s.source.samplingRate / 2,
+                                    s.source.frameSize
+                                ),
+                                s.source.frameSize
+                            );
                         }),
-                    }))
+                    })),
+                    mithril('.col-1', mithril('label.form-label', 'Hz'))
                 ]),
                 mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
-                    mithril('.col-9', mithril('input.form-input', {
+                    mithril('.col-8', mithril('input.form-input', {
+                        disabled: t.SNRmode == 'auto',
                         type: 'number',
-                        value: t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
+                        value: Math.floor(sampleToFrequency(
+                            percentageToSample(
+                                t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
+                                s.source.frameSize
+                            ),
+                            s.source.samplingRate / 2,
+                            s.source.frameSize
+                        )),
                         onchange: mithril.withAttr('value', function(value) {
-                            t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
+                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
+                            marker.x = sampleToPercentage(
+                                frequencyToSample(
+                                    parseInt(value),
+                                    s.source.samplingRate / 2,
+                                    s.source.frameSize
+                                ),
+                                s.source.frameSize
+                            );
                         }),
-                    }))
+                    })),
+                    mithril('.col-1', mithril('label.form-label', 'Hz'))
                 ])
             ])
         ];
@@ -16030,7 +16082,6 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
-// Creates a new trace
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
@@ -16239,63 +16290,67 @@ FFTrace.prototype.draw = function (canvas) {
     }
 
     // Calculate SNR
-    if(this.state.SNRmode == 'manual'){
-        var ss = 0;
-        var sn = 0;
-        var first = this.getMarkerById('SNRfirst')[0].x / ab.length;
-        var second = this.getMarkerById('SNRsecond')[0].x / ab.length;
-        for(i = 1; i < ab.length; i++){
-            if(i < first || i > second){
-                sn += ab[i] * ab[i];
-            } else {
-                ss += ab[i] * ab[i];
+    if(ab.length > 0){
+        if(this.state.SNRmode == 'manual'){
+            var ss = 0;
+            var sn = 0;
+            var first = this.getMarkerById('SNRfirst')[0].x / ab.length;
+            var second = this.getMarkerById('SNRsecond')[0].x / ab.length;
+            for(i = 1; i < ab.length; i++){
+                if(i < first || i > second){
+                    sn += ab[i] * ab[i];
+                } else {
+                    ss += ab[i] * ab[i];
+                }
             }
+            var SNR = Math.log10(ss / sn) * 10;
+            this.state.info.SNR = SNR;
         }
-        var SNR = Math.log10(ss / sn) * 10;
-        this.state.info.SNR = SNR;
-    }
-    if(this.state.SNRmode == 'auto'){
-        // Find max
-        var max = -3000000;
-        var maxi = 0;
-        for(i = 1; i < ab.length; i++){
-            if(ab[i] > max){
-                max = ab[i];
-                maxi = i;
+        if(this.state.SNRmode == 'auto'){
+            // Find max
+            var max = -3000000;
+            var maxi = 0;
+            for(i = 1; i < ab.length; i++){
+                if(ab[i] > max){
+                    max = ab[i];
+                    maxi = i;
+                }
             }
-        }
-        var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
-        var n = [];
-        var s = [];
-        var secondSNRMarker = 0;
-        var firstSNRMarker = 0;
-        // Add all values under the average and those above each to a list
-        for(i = 1; i < ab.length; i++){
-            if(ab[i] < m){
-                n.push(ab[i]);
-            }
-            else {
-                if(secondSNRMarker == 0){
-                    firstSNRMarker = i - 1;
-                    if(firstSNRMarker < 1){
-                        firstSNRMarker = 1;
+            var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
+            var n = [];
+            var s = [];
+            var secondSNRMarker = 0;
+            var firstSNRMarker = 0;
+            // Add all values under the average and those above each to a list
+            for(i = 1; i < ab.length; i++){
+                if(ab[i] < m){
+                    n.push(ab[i]);
+                }
+                else {
+                    if(secondSNRMarker == 0){
+                        firstSNRMarker = i - 1;
+                        if(firstSNRMarker < 1){
+                            firstSNRMarker = 1;
+                        }
+                    }
+                    s.push(ab[i]);
+                    secondSNRMarker = i + 1;
+                    if(secondSNRMarker > ab.length){
+                        secondSNRMarker = ab.length;
                     }
                 }
-                s.push(ab[i]);
-                secondSNRMarker = i + 1;
-                if(secondSNRMarker > ab.length){
-                    secondSNRMarker = ab.length;
-                }
             }
-        }
-        // Sum both sets and calculate their ratio which is the SNR
-        var ss = ssum(s);
-        var sn = ssum(n);
-        var SNR = Math.log10(ss / sn) * 10;
-        this.state.info.SNR = SNR;
+            // Sum both sets and calculate their ratio which is the SNR
+            var ss = ssum(s);
+            var sn = ssum(n);
+            var SNR = Math.log10(ss / sn) * 10;
+            this.state.info.SNR = SNR;
 
-        // Posiion SNR markers
-        this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
+            // Posiion SNR markers
+            this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
+        }
+    } else {
+        this.state.info.SNR = '	\u26A0 No signal';
     }
 
     this.state.markers.forEach(function(m) {

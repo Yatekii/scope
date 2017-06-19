@@ -1,4 +1,3 @@
-- Fix moving markers
 - Drag display to move active trace
     - fft simply gets moved
     - time traces will have the trigger location moved

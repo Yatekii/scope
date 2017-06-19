@@ -30,3 +30,23 @@ export const hertzToString = function(f){
         return (f * 1e-6).toFixed(2) + 'MHz';
     }
 }
+
+export const voltsToString = function(V){
+    return (V).toFixed(2) + 'V';
+};
+
+export const sampleToFrequency = function(sample, samplingRate, frameSize){
+    return sample * samplingRate / frameSize;
+};
+
+export const frequencyToSample = function(frequency, samplingRate, frameSize){
+    return frequency * frameSize / samplingRate;
+};
+
+export const sampleToPercentage = function(sample, frameSize){
+    return sample / frameSize;
+};
+
+export const percentageToSample = function(percentage, frameSize){
+    return percentage * frameSize;
+};
