@@ -1,8 +1,8 @@
 - Drag display to move active trace
     - fft simply gets moved
     - time traces will have the trigger location moved
-
-- Calculate RMS of signal power
+    
+- Fix all unit calculations
 
 - Add an amplitude display for FFTrace
 

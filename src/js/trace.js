@@ -1,5 +1,5 @@
 import { miniFFT} from './math/fft.js';
-import { sum, ssum } from './helpers.js';
+import { sum, ssum, rms } from './math/math.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
 import * as marker from './marker.js';
 
@@ -175,9 +175,12 @@ FFTrace.prototype.draw = function (canvas) {
     var scope = this.state.source.scope;
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
-
     // Duplicate data
     var real = this.state.source.ctrl.channels[0].slice(0);
+    var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits)
+    for(i = 0; i < real.length; i++){
+        real[i] = real[i] / vmax;
+    }
     // Create a complex vector with zeroes sice we only have real input
     var compl = new Float32Array(this.state.source.ctrl.channels[0]);
     // Window data if a valid window was selected
@@ -190,7 +193,7 @@ FFTrace.prototype.draw = function (canvas) {
     real = real.slice(0, real.length / 2);
     compl = compl.slice(0, compl.length / 2);
 
-    // Create the the total power of the signal
+    // Calculate the the total power of the signal
     // P = V^2
     var ab = new Float32Array(real.length);
     for(i = 0; i < ab.length; i++){
@@ -211,8 +214,11 @@ FFTrace.prototype.draw = function (canvas) {
         skip = 1 / ratio;
     }
 
-    // Calculate SNR
     if(ab.length > 0){
+        // Set RMS
+        this.state.info.RMSPower = rms(ab);
+
+        // Calculate SNR
         if(this.state.SNRmode == 'manual'){
             var ss = 0;
             var sn = 0;
@@ -272,7 +278,8 @@ FFTrace.prototype.draw = function (canvas) {
             this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
         }
     } else {
-        this.state.info.SNR = '	\u26A0 No signal'
+        this.state.info.RMSPower = '\u26A0 No signal';
+        this.state.info.SNR = '\u26A0 No signal';
     }
 
     this.state.markers.forEach(function(m) {

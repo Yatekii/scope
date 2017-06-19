@@ -18,7 +18,7 @@ export const TimeTracePrefPane = {
                     m('h4.col-9', !vnode.state.editName ?
                         m('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         m('input.form-input[type=text]', {
-                            value: t.node.name,
+                            value: t.name,
                             onchange: m.withAttr('value', function(v){ t.name = v; }),
                             onblur: function(){ vnode.state.editName = false; },
                             onkeypress: withKey(13, function(target){

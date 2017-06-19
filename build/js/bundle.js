@@ -15128,22 +15128,6 @@ const withKey = function(key, callback) {
 
 
 
-const sum = function(arr){
-    var k = 0;
-    for(var i = 0; i < arr.length; i++){
-        k += arr[i];
-    }
-    return k;
-};
-
-const ssum = function(arr){
-    var k = 0;
-    for(var i = 0; i < arr.length; i++){
-        k += arr[i]*arr[i];
-    }
-    return k;
-};
-
 const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
@@ -15411,7 +15395,7 @@ const FFTracePrefPane = {
                     mithril('h4.col-9', !vnode.state.editName ?
                         mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         mithril('input.form-input[type=text]', {
-                            value: t.node.name,
+                            value: t.name,
                             onchange: mithril.withAttr('value', function(v){ t.name = v; }),
                             onblur: function(){ vnode.state.editName = false; },
                             onkeypress: withKey(13, function(target){
@@ -15424,6 +15408,11 @@ const FFTracePrefPane = {
                 mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label', 'Δf')),
                     mithril('.col-9', mithril('label.form-label', hertzToString(t.info.deltaf)))
+                ]),
+                // GUI: Display RMS Signal Power
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', ['P', mithril('sub', 'rms')])),
+                    mithril('.col-9', mithril('label.form-label', t.info.RMSPower + ' V/\u221AHz'))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -15535,7 +15524,7 @@ const TimeTracePrefPane = {
                     mithril('h4.col-9', !vnode.state.editName ?
                         mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         mithril('input.form-input[type=text]', {
-                            value: t.node.name,
+                            value: t.name,
                             onchange: mithril.withAttr('value', function(v){ t.name = v; }),
                             onblur: function(){ vnode.state.editName = false; },
                             onkeypress: withKey(13, function(target){
@@ -16052,6 +16041,26 @@ const miniFFT = function(re, im) {
     }
 };
 
+const sum = function(arr){
+    var k = 0;
+    for(var i = 0; i < arr.length; i++){
+        k += arr[i];
+    }
+    return k;
+};
+
+const ssum = function(arr){
+    var k = 0;
+    for(var i = 0; i < arr.length; i++){
+        k += arr[i]*arr[i];
+    }
+    return k;
+};
+
+const rms = function(arr){
+    return Math.sqrt(ssum(arr) / arr.length);
+};
+
 const draw$1 = function (context, scopeState, markerState, d, length) {
     // Store old state
     context.save();
@@ -16082,6 +16091,7 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
+// Creates a new trace
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
@@ -16253,9 +16263,12 @@ FFTrace.prototype.draw = function (canvas) {
     var scope = this.state.source.scope;
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
-
     // Duplicate data
     var real = this.state.source.ctrl.channels[0].slice(0);
+    var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits);
+    for(i = 0; i < real.length; i++){
+        real[i] = real[i] / vmax;
+    }
     // Create a complex vector with zeroes sice we only have real input
     var compl = new Float32Array(this.state.source.ctrl.channels[0]);
     // Window data if a valid window was selected
@@ -16268,7 +16281,7 @@ FFTrace.prototype.draw = function (canvas) {
     real = real.slice(0, real.length / 2);
     compl = compl.slice(0, compl.length / 2);
 
-    // Create the the total power of the signal
+    // Calculate the the total power of the signal
     // P = V^2
     var ab = new Float32Array(real.length);
     for(i = 0; i < ab.length; i++){
@@ -16289,8 +16302,11 @@ FFTrace.prototype.draw = function (canvas) {
         skip = 1 / ratio;
     }
 
-    // Calculate SNR
     if(ab.length > 0){
+        // Set RMS
+        this.state.info.RMSPower = rms(ab);
+
+        // Calculate SNR
         if(this.state.SNRmode == 'manual'){
             var ss = 0;
             var sn = 0;
@@ -16350,7 +16366,8 @@ FFTrace.prototype.draw = function (canvas) {
             this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
         }
     } else {
-        this.state.info.SNR = '	\u26A0 No signal';
+        this.state.info.RMSPower = '\u26A0 No signal';
+        this.state.info.SNR = '\u26A0 No signal';
     }
 
     this.state.markers.forEach(function(m) {

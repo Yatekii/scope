@@ -25,7 +25,7 @@ export const FFTracePrefPane = {
                     m('h4.col-9', !vnode.state.editName ?
                         m('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         m('input.form-input[type=text]', {
-                            value: t.node.name,
+                            value: t.name,
                             onchange: m.withAttr('value', function(v){ t.name = v; }),
                             onblur: function(){ vnode.state.editName = false; },
                             onkeypress: withKey(13, function(target){
@@ -38,6 +38,11 @@ export const FFTracePrefPane = {
                 m('.form-group', [
                     m('.col-3', m('label.form-label', 'Δf')),
                     m('.col-9', m('label.form-label', hertzToString(t.info.deltaf)))
+                ]),
+                // GUI: Display RMS Signal Power
+                m('.form-group', [
+                    m('.col-3', m('label.form-label', ['P', m('sub', 'rms')])),
+                    m('.col-9', m('label.form-label', t.info.RMSPower + ' V/\u221AHz'))
                 ]),
                 // GUI: Select windowing
                 m('.form-group', [
