@@ -15,5 +15,5 @@ export const ssum = function(arr){
 };
 
 export const rms = function(arr){
-    return Math.sqrt(ssum(arr) / arr.length);
+    return Math.sqrt(sum(arr) / arr.length);
 }

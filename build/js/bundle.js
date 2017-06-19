@@ -15409,6 +15409,11 @@ const FFTracePrefPane = {
                     mithril('.col-3', mithril('label.form-label', 'Δf')),
                     mithril('.col-9', mithril('label.form-label', hertzToString(t.info.deltaf)))
                 ]),
+                // GUI: Display ΔA
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'ΔA')),
+                    mithril('.col-9', mithril('label.form-label', t.info.deltaA))
+                ]),
                 // GUI: Display RMS Signal Power
                 mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label', ['P', mithril('sub', 'rms')])),
@@ -16058,7 +16063,7 @@ const ssum = function(arr){
 };
 
 const rms = function(arr){
-    return Math.sqrt(ssum(arr) / arr.length);
+    return Math.sqrt(sum(arr) / arr.length);
 };
 
 const draw$1 = function (context, scopeState, markerState, d, length) {
@@ -16091,7 +16096,6 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
-// Creates a new trace
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;

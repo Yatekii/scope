@@ -39,6 +39,11 @@ export const FFTracePrefPane = {
                     m('.col-3', m('label.form-label', 'Δf')),
                     m('.col-9', m('label.form-label', hertzToString(t.info.deltaf)))
                 ]),
+                // GUI: Display ΔA
+                m('.form-group', [
+                    m('.col-3', m('label.form-label', 'ΔA')),
+                    m('.col-9', m('label.form-label', t.info.deltaA))
+                ]),
                 // GUI: Display RMS Signal Power
                 m('.form-group', [
                     m('.col-3', m('label.form-label', ['P', m('sub', 'rms')])),
