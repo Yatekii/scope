@@ -1,4 +1,4 @@
-export const draw = function (context, scope, state) {
+export const draw = function (context, scopeState, markerState, d, length) {
     // Store old state
     context.save();
 
@@ -10,16 +10,17 @@ export const draw = function (context, scope, state) {
     }
 
     // Draw marker
-    if(state.type == 'vertical'){
+    if(markerState.type == 'vertical'){
         context.beginPath();
-        context.moveTo(state.x * scope.width, 0);
-        context.lineTo(state.x * scope.width, scope.height);
+        context.moveTo(markerState.x * d * length, 0);
+        context.lineTo(markerState.x * d * length, scopeState.height);
+        console.log(markerState.x, d, length, scopeState.height, scopeState.height, markerState.x * d * length);
         context.stroke();
-    } else if(state.type == 'horizontal'){
+    } else if(markerState.type == 'horizontal'){
         context.beginPath();
-        var halfHeight = scope.height / 2;
-        context.moveTo(0, halfHeight - state.y * halfHeight);
-        context.lineTo(scope.width, halfHeight - state.y * halfHeight);
+        var halfHeight = scopeState.height / 2;
+        context.moveTo(0, halfHeight - markerState.y * d * length);
+        context.lineTo(scopeState.width, halfHeight - markerState.y * d)* length;
         context.stroke();
     }
 

@@ -15446,9 +15446,9 @@ const FFTracePrefPane = {
                     mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
                     mithril('.col-9', mithril('input.form-input', {
                         type: 'number',
-                        value: s.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
+                        value: t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
                         onchange: mithril.withAttr('value', function(value) {
-                            s.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
+                            t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
                         }),
                     }))
                 ]),
@@ -15456,9 +15456,9 @@ const FFTracePrefPane = {
                     mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
                     mithril('.col-9', mithril('input.form-input', {
                         type: 'number',
-                        value: s.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
+                        value: t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
                         onchange: mithril.withAttr('value', function(value) {
-                            s.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
+                            t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
                         }),
                     }))
                 ])
@@ -15577,35 +15577,6 @@ const generalPrefPane = {
     }
 };
 
-const draw$1 = function (context, scope, state) {
-    // Store old state
-    context.save();
-
-    // Setup brush
-    context.strokeWidth = 1;
-    context.strokeStyle = '#006644';
-    if (context.setLineDash) {
-        context.setLineDash([5]);
-    }
-
-    // Draw marker
-    if(state.type == 'vertical'){
-        context.beginPath();
-        context.moveTo(state.x * scope.width, 0);
-        context.lineTo(state.x * scope.width, scope.height);
-        context.stroke();
-    } else if(state.type == 'horizontal'){
-        context.beginPath();
-        var halfHeight = scope.height / 2;
-        context.moveTo(0, halfHeight - state.y * halfHeight);
-        context.lineTo(scope.width, halfHeight - state.y * halfHeight);
-        context.stroke();
-    }
-
-    // Restore old brush settings
-    context.restore();
-};
-
 const Oscilloscope = function(state) {
     // Remember scope state
     this.state = state;
@@ -15651,16 +15622,6 @@ Oscilloscope.prototype.draw = function() {
         });
     }
 
-    me.state.markers.forEach(function(m) {
-        draw$1(context, me.state, m);
-    });
-
-        // context.beginPath();
-        // var halfHeight = scope.height / 2;
-        // context.moveTo(0, halfHeight - state.y * halfHeight);
-        // context.lineTo(scope.width, halfHeight - state.y * halfHeight);
-        // context.stroke();
-
     // context.fillText('Δt = ' + converting.secondsToString(me.state.source.samplingRate / (nStart / n)), width - 290, 30);
     // dt == pixels / Time
     // df == pixels / frequency
@@ -15675,6 +15636,7 @@ Oscilloscope.prototype.draw = function() {
 Oscilloscope.prototype.onMouseDown = function(event){
     // Start moving triggerlevel
     // TODO: adjust trigger level setup to be dependant on active trace
+    var me = this;
     var halfHeight = this.canvas.height / 2;
     var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
@@ -15683,21 +15645,23 @@ Oscilloscope.prototype.onMouseDown = function(event){
     }
 
     // Start moving markers
-    for(var i = 0; i < this.state.markers.length; i++){
-        if(this.state.markers[i].type == 'vertical'){
-            var x = this.state.markers[i].x * this.canvas.width;
-            if(event.offsetX < x + 3 && event.offsetX > x - 3){
-                this.markerMoving = i;
-                return;
+    this.state.source.traces.forEach(function(trace){
+        trace.markers && trace.markers.forEach(function(marker){
+            if(marker.type == 'vertical'){
+                var x = marker.x * me.canvas.width;
+                if(event.offsetX < x + 3 && event.offsetX > x - 3){
+                    me.markerMoving = marker;
+                    return;
+                }
+            } else {
+                var y = marker.y * halfHeight * me.state.source.traces[me.state.source.activeTrace].scaling.y;
+                if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
+                    me.markerMoving = marker;
+                    return;
+                }
             }
-        } else {
-            var y = this.state.markers[i].y * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
-            if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
-                this.markerMoving = i;
-                return;
-            }
-        }
-    }
+        });
+    });
 
     // Start moving traces
     var me = this;
@@ -15748,6 +15712,7 @@ Oscilloscope.prototype.onMouseUp = function(event){
 };
 
 Oscilloscope.prototype.onMouseMove = function(event){
+    var me = this;
     var halfHeight = this.canvas.height / 2;
     var halfMoverWidth = this.state.ui.mover.width / 2;
     var halfMoverHeight = this.state.ui.mover.height / 2;
@@ -15761,23 +15726,25 @@ Oscilloscope.prototype.onMouseMove = function(event){
     }
     // Change cursor if marker set is active
     if(!cursorSet){
-        for(var i = 0; i < this.state.markers.length; i++){
-            if(this.state.markers[i].type == 'vertical'){
-                var x = this.state.markers[i].x * this.canvas.width;
-                if(event.offsetX < x + 3 && event.offsetX > x - 3){
-                    document.body.style.cursor = 'col-resize';
-                    cursorSet = true;
-                    break;
+        this.state.source.traces.forEach(function(trace){
+            trace.markers && trace.markers.forEach(function(marker){
+                if(marker.type == 'vertical'){
+                    var x = marker.x * me.canvas.width;
+                    if(event.offsetX < x + 3 && event.offsetX > x - 3){
+                        document.body.style.cursor = 'col-resize';
+                        cursorSet = true;
+                        return;
+                    }
+                } else {
+                    var y = marker.y * halfHeight * me.state.source.traces[me.state.source.activeTrace].scaling.y;
+                    if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
+                        document.body.style.cursor = 'row-resize';
+                        cursorSet = true;
+                        return;
+                    }
                 }
-            } else {
-                var y = this.state.markers[i].y * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
-                if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
-                    document.body.style.cursor = 'row-resize';
-                    cursorSet = true;
-                    break;
-                }
-            }
-        }
+            });
+        });
     }
     // Change cursor if trace set is active
     if(!cursorSet){
@@ -15816,7 +15783,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
     // Move markers if move markers is active
     if(this.markerMoving !== false){
         var markerLevel = 0;
-        if(this.state.markers[this.markerMoving].type == 'vertical'){
+        if(this.markerMoving.type == 'vertical'){
             markerLevel = event.offsetX / this.canvas.width;
             if(markerLevel > 1){
                 markerLevel = 1;
@@ -15824,7 +15791,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
             if(markerLevel < 0){
                 markerLevel = 0;
             }
-            this.state.markers[this.markerMoving].x = markerLevel;
+            this.markerMoving.x = markerLevel;
             return;
         } else {
             markerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y);
@@ -15834,7 +15801,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
             if(markerLevel < -1){
                 markerLevel = -1;
             }
-            this.state.markers[this.markerMoving].y = markerLevel;
+            this.markerMoving.y = markerLevel;
             return;
         }
     }
@@ -15877,46 +15844,6 @@ Oscilloscope.prototype.addMarker = function(id, type, xy){
     });
 };
 
-Oscilloscope.prototype.getMarkerById = function(id){
-    var result = this.state.markers.filter(function( obj ) {
-        return obj.id == id;
-    });
-    return result;
-};
-
-Oscilloscope.prototype.setSNRMarkers = function(firstX, secondX){
-    var first = this.getMarkerById('SNRfirst');
-    var second = this.getMarkerById('SNRsecond');
-    if(first.length < 1){
-        this.addMarker('SNRfirst', 'vertical', firstX);
-    } else {
-        first[0].x = firstX;
-    }
-    if(second.length < 1){
-        this.addMarker('SNRsecond', 'vertical', secondX);
-    } else {
-        second[0].x = secondX;
-    }
-};
-
-Oscilloscope.prototype.setFirstSNRMarker = function(firstX){
-    var first = this.getMarkerById('SNRfirst');
-    if(first.length < 1){
-        this.addMarker('SNRfirst', 'vertical', firstX);
-        return;
-    }
-    first[0].x = firstX;
-};
-
-Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
-    var second = this.getMarkerById('SNRsecond');
-    if(second.length < 1){
-        this.addMarker('SNRsecond', 'vertical', secondX);
-        return;
-    }
-    second[0].x = secondX;
-};
-
 Oscilloscope.prototype.uiHandlers = {
     togglePrefPane: function(scope){
         scope.state.ui.prefPane.open = !scope.state.ui.prefPane.open;
@@ -15940,7 +15867,7 @@ const WebsocketSource = function(state) {
         me.isOpen = true;
         // Configure logger initially and start a frame according to the mode
         me.setNumberOfChannels(me.state.numberOfChannels);
-        me.frameConfiguration(me.state.frameSize, me.state.frameSize / 8 * 1, me.state.frameSize / 8 * 7);
+        me.frameConfiguration(me.state.frameSize, me.state.frameSize * me.state.trigerLoc, me.state.frameSize * (1 - me.state.trigerLoc));
         me.triggerOn(me.state.trigger);
         if(me.state.mode == 'single'){
             // We don't have to do anything, we already did our job
@@ -16084,6 +16011,36 @@ const miniFFT = function(re, im) {
     }
 };
 
+const draw$1 = function (context, scopeState, markerState, d, length) {
+    // Store old state
+    context.save();
+
+    // Setup brush
+    context.strokeWidth = 1;
+    context.strokeStyle = '#006644';
+    if (context.setLineDash) {
+        context.setLineDash([5]);
+    }
+
+    // Draw marker
+    if(markerState.type == 'vertical'){
+        context.beginPath();
+        context.moveTo(markerState.x * d * length, 0);
+        context.lineTo(markerState.x * d * length, scopeState.height);
+        console.log(markerState.x, d, length, scopeState.height, scopeState.height, markerState.x * d * length);
+        context.stroke();
+    } else if(markerState.type == 'horizontal'){
+        context.beginPath();
+        var halfHeight = scopeState.height / 2;
+        context.moveTo(0, halfHeight - markerState.y * d * length);
+        context.lineTo(scopeState.width, halfHeight - markerState.y * d)* length;
+        context.stroke();
+    }
+
+    // Restore old brush settings
+    context.restore();
+};
+
 // Creates a new trace
 const TimeTrace = function (id, state) {
     // Remember trace state
@@ -16201,7 +16158,6 @@ TimeTrace.prototype.draw = function (canvas) {
     context.strokeWidth = 1;
     context.strokeStyle = this.state.color;
     context.beginPath();
-    context.strokeWidth = 1;
 
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
@@ -16243,6 +16199,7 @@ const FFTrace = function(id, state) {
 
 // Draws trace on the new frame
 FFTrace.prototype.draw = function (canvas) {
+    var me = this;
     var i, j;
     var scope = this.state.source.scope;
     var halfHeight = scope.height / 2;
@@ -16282,17 +16239,13 @@ FFTrace.prototype.draw = function (canvas) {
     } else {
         skip = 1 / ratio;
     }
-    // (fs / 2) / samples // f / samples
-    // df // samples / dec
-
-    // 1 / ratio * df * this.state.source.samplingRate / 2 / this.state.source.frameSize
 
     // Calculate SNR
     if(this.state.SNRmode == 'manual'){
         var ss = 0;
         var sn = 0;
-        var first = scope.ctrl.getMarkerById('SNRfirst')[0].x / mul * scope.width;
-        var second = scope.ctrl.getMarkerById('SNRsecond')[0].x / mul * scope.width;
+        var first = this.getMarkerById('SNRfirst')[0].x / ab.length;
+        var second = this.getMarkerById('SNRsecond')[0].x / ab.length;
         for(i = 1; i < ab.length; i++){
             if(i < first || i > second){
                 sn += ab[i] * ab[i];
@@ -16344,8 +16297,12 @@ FFTrace.prototype.draw = function (canvas) {
         this.state.info.SNR = SNR;
 
         // Posiion SNR markers
-        scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, secondSNRMarker * mul / scope.width);
-        }
+        this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
+    }
+
+    this.state.markers.forEach(function(m) {
+        draw$1(context, me.state.source.scope, m, ratio, ab.length);
+    });
 
     // Convert spectral density to a logarithmic scale to be able to better plot it.
     // Scale it down by 200 for a nicer plot
@@ -16395,46 +16352,6 @@ FFTrace.prototype.draw = function (canvas) {
             context.stroke();
         }
         context.restore();
-
-        // // Draw vertical scales
-        // context.strokeWidth = 1;
-        // context.strokeStyle = '#ABABAB';
-        // context.font = "30px Arial";
-        // context.fillStyle = 'blue';
-
-        // var unit = 1e9
-        // var nStart = 1;
-        // var n = 1;
-        // var df = ratio * this.state.source.samplingRate / 2 * n;
-        // for(var a = 0; a < 20; a++){
-        //     if(scope.width / df > 1 && scope.width / df < 11){
-        //         break;
-        //     }
-        //     n *= 1e-1;
-        //     df = ratio * this.state.source.samplingRate / 2 * n;
-        // }
-
-        // // df
-        // this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
-
-        // var i;
-        // for(i = 0; i < 11; i++){
-        //     context.save();
-        //     context.setLineDash([5]);
-        //     context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
-        //     for(var j = 1; j < 10; j++){
-        //         context.beginPath();
-        //         context.moveTo(0, df * i + df / 10 * j);
-        //         context.lineTo(scope.width, df * i + df / 10 * j);
-        //         context.stroke();
-        //     }
-        //     context.restore();
-        //     context.beginPath();
-        //     context.moveTo(0, df * i);
-        //     context.lineTo(scope.width, df * i);
-        //     context.stroke();
-        // }
-        // context.restore();
     }
     context.strokeWidth = 1;
     // Draw trace
@@ -16464,6 +16381,50 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Restore brush
     context.restore();
+
+    // TODO: Draw triangle at trig loc
+    var trigLoc = ratio * me.state.source.scope.triggerLoc * ab.length;
+
+};
+
+FFTrace.prototype.getMarkerById = function(id){
+    var result = this.state.markers.filter(function( obj ) {
+        return obj.id == id;
+    });
+    return result;
+};
+
+FFTrace.prototype.setSNRMarkers = function(firstX, secondX){
+    var first = this.getMarkerById('SNRfirst');
+    var second = this.getMarkerById('SNRsecond');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+    } else {
+        first[0].x = firstX;
+    }
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+    } else {
+        second[0].x = secondX;
+    }
+};
+
+FFTrace.prototype.setFirstSNRMarker = function(firstX){
+    var first = this.getMarkerById('SNRfirst');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+        return;
+    }
+    first[0].x = firstX;
+};
+
+FFTrace.prototype.setSecondSNRMarker = function(secondX){
+    var second = this.getMarkerById('SNRsecond');
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+        return;
+    }
+    second[0].x = secondX;
 };
 
 const scopeView = {
@@ -16558,12 +16519,6 @@ var appState = {
             name: 'Scope ' + 1,
             top: 250,
             left: 350,
-            markers: [
-                // { id: 1, type: 'horizontal', x: 0, y: 0 },
-                // { id: 2, type: 'vertical', x: 0.5, y: 0 },
-                { id: 'SNRfirst', type: 'vertical', x: 0 },
-                { id: 'SNRsecond', type: 'vertical', x: 0 },
-            ],
             mode: 'normal',
             ui: {
                 mover: {
@@ -16581,8 +16536,8 @@ var appState = {
                 name: 'Source ' + 1,
                 top: 300,
                 left: 50,
-                location: 'ws://10.84.130.54:50090',
-                // location: 'ws://localhost:50090',
+                // location: 'ws://10.84.130.54:50090',
+                location: 'ws://localhost:50090',
                 frameSize: 4096,
                 samplingRate: 1000000,
                 bits: 14,
@@ -16598,6 +16553,8 @@ var appState = {
                     hysteresis: 30,
                     slope: 0
                 },
+                triggerTrace: 0,
+                triggerPosition: 1 / 8,
                 numberOfChannels: 2,
                 mode: 'normal',
                 activeTrace: 0,
@@ -16629,6 +16586,10 @@ var appState = {
                             x: 1,
                             y: 1,
                         },
+                        markers: [
+                            { id: 'SNRfirst', type: 'vertical', x: 0 },
+                            { id: 'SNRsecond', type: 'vertical', x: 0 },
+                        ]
                     },
                 ],
             }

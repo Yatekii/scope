@@ -72,9 +72,9 @@ export const FFTracePrefPane = {
                     m('.col-3', m('label.form-label', 'Lower Marker')),
                     m('.col-9', m('input.form-input', {
                         type: 'number',
-                        value: s.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
+                        value: t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
                         onchange: m.withAttr('value', function(value) {
-                            s.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
+                            t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x = parseInt(value);
                         }),
                     }))
                 ]),
@@ -82,9 +82,9 @@ export const FFTracePrefPane = {
                     m('.col-3', m('label.form-label', 'Upper Marker')),
                     m('.col-9', m('input.form-input', {
                         type: 'number',
-                        value: s.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
+                        value: t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
                         onchange: m.withAttr('value', function(value) {
-                            s.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
+                            t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x = parseInt(value);
                         }),
                     }))
                 ])

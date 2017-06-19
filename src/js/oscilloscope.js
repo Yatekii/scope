@@ -1,5 +1,4 @@
 import * as helpers from './helpers.js';
-import * as marker from './marker.js';
 import * as converting from './math/converting.js';
 
 export const Oscilloscope = function(state) {
@@ -47,16 +46,6 @@ Oscilloscope.prototype.draw = function() {
         });
     }
 
-    me.state.markers.forEach(function(m) {
-        marker.draw(context, me.state, m);
-    });
-
-        // context.beginPath();
-        // var halfHeight = scope.height / 2;
-        // context.moveTo(0, halfHeight - state.y * halfHeight);
-        // context.lineTo(scope.width, halfHeight - state.y * halfHeight);
-        // context.stroke();
-
     // context.fillText('Δt = ' + converting.secondsToString(me.state.source.samplingRate / (nStart / n)), width - 290, 30);
     // dt == pixels / Time
     // df == pixels / frequency
@@ -71,6 +60,7 @@ Oscilloscope.prototype.draw = function() {
 Oscilloscope.prototype.onMouseDown = function(event){
     // Start moving triggerlevel
     // TODO: adjust trigger level setup to be dependant on active trace
+    var me = this;
     var halfHeight = this.canvas.height / 2;
     var triggerLevel = this.state.source.trigger.level * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
@@ -79,21 +69,23 @@ Oscilloscope.prototype.onMouseDown = function(event){
     }
 
     // Start moving markers
-    for(var i = 0; i < this.state.markers.length; i++){
-        if(this.state.markers[i].type == 'vertical'){
-            var x = this.state.markers[i].x * this.canvas.width;
-            if(event.offsetX < x + 3 && event.offsetX > x - 3){
-                this.markerMoving = i;
-                return;
+    this.state.source.traces.forEach(function(trace){
+        trace.markers && trace.markers.forEach(function(marker){
+            if(marker.type == 'vertical'){
+                var x = marker.x * me.canvas.width;
+                if(event.offsetX < x + 3 && event.offsetX > x - 3){
+                    me.markerMoving = marker;
+                    return;
+                }
+            } else {
+                var y = marker.y * halfHeight * me.state.source.traces[me.state.source.activeTrace].scaling.y;
+                if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
+                    me.markerMoving = marker;
+                    return;
+                }
             }
-        } else {
-            var y = this.state.markers[i].y * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
-            if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
-                this.markerMoving = i;
-                return;
-            }
-        }
-    }
+        });
+    });
 
     // Start moving traces
     var me = this;
@@ -144,6 +136,7 @@ Oscilloscope.prototype.onMouseUp = function(event){
 };
 
 Oscilloscope.prototype.onMouseMove = function(event){
+    var me = this;
     var halfHeight = this.canvas.height / 2;
     var halfMoverWidth = this.state.ui.mover.width / 2;
     var halfMoverHeight = this.state.ui.mover.height / 2;
@@ -157,23 +150,25 @@ Oscilloscope.prototype.onMouseMove = function(event){
     }
     // Change cursor if marker set is active
     if(!cursorSet){
-        for(var i = 0; i < this.state.markers.length; i++){
-            if(this.state.markers[i].type == 'vertical'){
-                var x = this.state.markers[i].x * this.canvas.width;
-                if(event.offsetX < x + 3 && event.offsetX > x - 3){
-                    document.body.style.cursor = 'col-resize';
-                    cursorSet = true;
-                    break;
+        this.state.source.traces.forEach(function(trace){
+            trace.markers && trace.markers.forEach(function(marker){
+                if(marker.type == 'vertical'){
+                    var x = marker.x * me.canvas.width;
+                    if(event.offsetX < x + 3 && event.offsetX > x - 3){
+                        document.body.style.cursor = 'col-resize';
+                        cursorSet = true;
+                        return;
+                    }
+                } else {
+                    var y = marker.y * halfHeight * me.state.source.traces[me.state.source.activeTrace].scaling.y;
+                    if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
+                        document.body.style.cursor = 'row-resize';
+                        cursorSet = true;
+                        return;
+                    }
                 }
-            } else {
-                var y = this.state.markers[i].y * halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y;
-                if(halfHeight - event.offsetY < y + 3 && halfHeight - event.offsetY > y - 3){
-                    document.body.style.cursor = 'row-resize';
-                    cursorSet = true;
-                    break;
-                }
-            }
-        }
+            });
+        });
     }
     // Change cursor if trace set is active
     if(!cursorSet){
@@ -212,7 +207,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
     // Move markers if move markers is active
     if(this.markerMoving !== false){
         var markerLevel = 0;
-        if(this.state.markers[this.markerMoving].type == 'vertical'){
+        if(this.markerMoving.type == 'vertical'){
             markerLevel = event.offsetX / this.canvas.width;
             if(markerLevel > 1){
                 markerLevel = 1;
@@ -220,7 +215,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
             if(markerLevel < 0){
                 markerLevel = 0;
             }
-            this.state.markers[this.markerMoving].x = markerLevel;
+            this.markerMoving.x = markerLevel;
             return;
         } else {
             markerLevel = (halfHeight - event.offsetY) / (halfHeight * this.state.source.traces[this.state.source.activeTrace].scaling.y);
@@ -230,7 +225,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
             if(markerLevel < -1){
                 markerLevel = -1;
             }
-            this.state.markers[this.markerMoving].y = markerLevel;
+            this.markerMoving.y = markerLevel;
             return;
         }
     }
@@ -271,46 +266,6 @@ Oscilloscope.prototype.addMarker = function(id, type, xy){
     this.state.markers.push({
         id: id, type: type, x: px, y: py
     });
-};
-
-Oscilloscope.prototype.getMarkerById = function(id){
-    var result = this.state.markers.filter(function( obj ) {
-        return obj.id == id;
-    });
-    return result;
-};
-
-Oscilloscope.prototype.setSNRMarkers = function(firstX, secondX){
-    var first = this.getMarkerById('SNRfirst');
-    var second = this.getMarkerById('SNRsecond');
-    if(first.length < 1){
-        this.addMarker('SNRfirst', 'vertical', firstX);
-    } else {
-        first[0].x = firstX;
-    }
-    if(second.length < 1){
-        this.addMarker('SNRsecond', 'vertical', secondX);
-    } else {
-        second[0].x = secondX;
-    }
-};
-
-Oscilloscope.prototype.setFirstSNRMarker = function(firstX){
-    var first = this.getMarkerById('SNRfirst');
-    if(first.length < 1){
-        this.addMarker('SNRfirst', 'vertical', firstX);
-        return;
-    }
-    first[0].x = firstX;
-};
-
-Oscilloscope.prototype.setSecondSNRMarker = function(secondX){
-    var second = this.getMarkerById('SNRsecond');
-    if(second.length < 1){
-        this.addMarker('SNRsecond', 'vertical', secondX);
-        return;
-    }
-    second[0].x = secondX;
 };
 
 Oscilloscope.prototype.uiHandlers = {

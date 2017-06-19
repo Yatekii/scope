@@ -1,5 +1,5 @@
-- Add an amplitude display
-- Make markers relative to the dataframe and not the screen
++ Make markers relative to the dataframe and not the screen
+- Fix moving markers
 - Display trigger location
 - Drag display to move active trace
     - fft simply gets moved
@@ -8,6 +8,8 @@
 - Fix General pref panel
 
 - Calculate RMS of signal power
+
+- Add an amplitude display for FFTrace
 
 - SNR calculations
     - auto mode

@@ -1,6 +1,7 @@
 import { miniFFT} from './math/fft.js';
 import { sum, ssum } from './helpers.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
+import * as marker from './marker.js';
 
 // Creates a new trace
 export const  TimeTrace = function (id, state) {
@@ -119,7 +120,6 @@ TimeTrace.prototype.draw = function (canvas) {
     context.strokeWidth = 1;
     context.strokeStyle = this.state.color;
     context.beginPath();
-    context.strokeWidth = 1;
 
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
@@ -161,6 +161,7 @@ export const FFTrace = function(id, state) {
 
 // Draws trace on the new frame
 FFTrace.prototype.draw = function (canvas) {
+    var me = this;
     var i, j;
     var scope = this.state.source.scope;
     var halfHeight = scope.height / 2;
@@ -200,17 +201,13 @@ FFTrace.prototype.draw = function (canvas) {
     } else {
         skip = 1 / ratio;
     }
-    // (fs / 2) / samples // f / samples
-    // df // samples / dec
-
-    // 1 / ratio * df * this.state.source.samplingRate / 2 / this.state.source.frameSize
 
     // Calculate SNR
     if(this.state.SNRmode == 'manual'){
         var ss = 0;
         var sn = 0;
-        var first = scope.ctrl.getMarkerById('SNRfirst')[0].x / mul * scope.width;
-        var second = scope.ctrl.getMarkerById('SNRsecond')[0].x / mul * scope.width;
+        var first = this.getMarkerById('SNRfirst')[0].x / ab.length;
+        var second = this.getMarkerById('SNRsecond')[0].x / ab.length;
         for(i = 1; i < ab.length; i++){
             if(i < first || i > second){
                 sn += ab[i] * ab[i];
@@ -262,8 +259,12 @@ FFTrace.prototype.draw = function (canvas) {
         this.state.info.SNR = SNR;
 
         // Posiion SNR markers
-        scope.ctrl.setSNRMarkers(firstSNRMarker * mul / scope.width, secondSNRMarker * mul / scope.width);
-        }
+        this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
+    }
+
+    this.state.markers.forEach(function(m) {
+        marker.draw(context, me.state.source.scope, m, ratio, ab.length);
+    });
 
     // Convert spectral density to a logarithmic scale to be able to better plot it.
     // Scale it down by 200 for a nicer plot
@@ -313,46 +314,6 @@ FFTrace.prototype.draw = function (canvas) {
             context.stroke();
         }
         context.restore();
-
-        // // Draw vertical scales
-        // context.strokeWidth = 1;
-        // context.strokeStyle = '#ABABAB';
-        // context.font = "30px Arial";
-        // context.fillStyle = 'blue';
-
-        // var unit = 1e9
-        // var nStart = 1;
-        // var n = 1;
-        // var df = ratio * this.state.source.samplingRate / 2 * n;
-        // for(var a = 0; a < 20; a++){
-        //     if(scope.width / df > 1 && scope.width / df < 11){
-        //         break;
-        //     }
-        //     n *= 1e-1;
-        //     df = ratio * this.state.source.samplingRate / 2 * n;
-        // }
-
-        // // df
-        // this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
-
-        // var i;
-        // for(i = 0; i < 11; i++){
-        //     context.save();
-        //     context.setLineDash([5]);
-        //     context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
-        //     for(var j = 1; j < 10; j++){
-        //         context.beginPath();
-        //         context.moveTo(0, df * i + df / 10 * j);
-        //         context.lineTo(scope.width, df * i + df / 10 * j);
-        //         context.stroke();
-        //     }
-        //     context.restore();
-        //     context.beginPath();
-        //     context.moveTo(0, df * i);
-        //     context.lineTo(scope.width, df * i);
-        //     context.stroke();
-        // }
-        // context.restore();
     }
     context.strokeWidth = 1;
     // Draw trace
@@ -382,4 +343,48 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Restore brush
     context.restore();
+
+    // TODO: Draw triangle at trig loc
+    var trigLoc = ratio * me.state.source.scope.triggerLoc * ab.length;
+
+};
+
+FFTrace.prototype.getMarkerById = function(id){
+    var result = this.state.markers.filter(function( obj ) {
+        return obj.id == id;
+    });
+    return result;
+};
+
+FFTrace.prototype.setSNRMarkers = function(firstX, secondX){
+    var first = this.getMarkerById('SNRfirst');
+    var second = this.getMarkerById('SNRsecond');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+    } else {
+        first[0].x = firstX;
+    }
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+    } else {
+        second[0].x = secondX;
+    }
+};
+
+FFTrace.prototype.setFirstSNRMarker = function(firstX){
+    var first = this.getMarkerById('SNRfirst');
+    if(first.length < 1){
+        this.addMarker('SNRfirst', 'vertical', firstX);
+        return;
+    }
+    first[0].x = firstX;
+};
+
+FFTrace.prototype.setSecondSNRMarker = function(secondX){
+    var second = this.getMarkerById('SNRsecond');
+    if(second.length < 1){
+        this.addMarker('SNRsecond', 'vertical', secondX);
+        return;
+    }
+    second[0].x = secondX;
 };

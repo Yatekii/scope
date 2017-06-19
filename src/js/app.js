@@ -21,12 +21,6 @@ var appState = {
             name: 'Scope ' + 1,
             top: 250,
             left: 350,
-            markers: [
-                // { id: 1, type: 'horizontal', x: 0, y: 0 },
-                // { id: 2, type: 'vertical', x: 0.5, y: 0 },
-                { id: 'SNRfirst', type: 'vertical', x: 0 },
-                { id: 'SNRsecond', type: 'vertical', x: 0 },
-            ],
             mode: 'normal',
             ui: {
                 mover: {
@@ -44,8 +38,8 @@ var appState = {
                 name: 'Source ' + 1,
                 top: 300,
                 left: 50,
-                location: 'ws://10.84.130.54:50090',
-                // location: 'ws://localhost:50090',
+                // location: 'ws://10.84.130.54:50090',
+                location: 'ws://localhost:50090',
                 frameSize: 4096,
                 samplingRate: 1000000,
                 bits: 14,
@@ -61,6 +55,8 @@ var appState = {
                     hysteresis: 30,
                     slope: 0
                 },
+                triggerTrace: 0,
+                triggerPosition: 1 / 8,
                 numberOfChannels: 2,
                 mode: 'normal',
                 activeTrace: 0,
@@ -92,6 +88,10 @@ var appState = {
                             x: 1,
                             y: 1,
                         },
+                        markers: [
+                            { id: 'SNRfirst', type: 'vertical', x: 0 },
+                            { id: 'SNRsecond', type: 'vertical', x: 0 },
+                        ]
                     },
                 ],
             }

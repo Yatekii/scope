@@ -18,7 +18,7 @@ export const WebsocketSource = function(state) {
         me.isOpen = true;
         // Configure logger initially and start a frame according to the mode
         me.setNumberOfChannels(me.state.numberOfChannels);
-        me.frameConfiguration(me.state.frameSize, me.state.frameSize / 8 * 1, me.state.frameSize / 8 * 7);
+        me.frameConfiguration(me.state.frameSize, me.state.frameSize * me.state.trigerLoc, me.state.frameSize * (1 - me.state.trigerLoc));
         me.triggerOn(me.state.trigger);
         if(me.state.mode == 'single'){
             // We don't have to do anything, we already did our job
