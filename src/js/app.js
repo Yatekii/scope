@@ -63,7 +63,7 @@ var appState = {
                 traces: [
                     {
                         id: 3,
-                        offset: 0,
+                        offset: { x: 0, y: 0 },
                         info: {},
                         name: 'Trace ' + 1,
                         channelID: 1,
@@ -76,7 +76,7 @@ var appState = {
                     },
                     {
                         id: 4,
-                        offset: 0,
+                        offset: { x: 0, y: 0 },
                         windowFunction: 'hann',
                         SNRmode: 'auto',
                         info: {},

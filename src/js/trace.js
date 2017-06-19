@@ -124,23 +124,23 @@ TimeTrace.prototype.draw = function (canvas) {
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    context.moveTo(0, (halfHeight - (this.state.source.ctrl.channels[0][0] + this.state.offset) * halfHeight * this.state.scaling.y));
+    context.moveTo(0, (halfHeight - (this.state.source.ctrl.channels[0][0] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (var i=0, j=0; (j < scope.width) && (i < this.state.source.ctrl.channels[0].length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (this.state.source.ctrl.channels[0][Math.floor(i)] + this.state.offset) * halfHeight * this.state.scaling.y));
+        context.lineTo(j, (halfHeight - (this.state.source.ctrl.channels[0][Math.floor(i)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     context.stroke();
 
     // Draw mover (grab and draw to move the trace)
     context.fillStyle = this.state.color;
-    var offset = this.state.offset;
-    if(offset > 1){
-        offset = 1;
-    } else if(offset < -1){
-        offset = -1;
+    var offsetY = this.state.offset.y;
+    if(offsetY > 1){
+        offsetY = 1;
+    } else if(offsetY < -1){
+        offsetY = -1;
     }
     context.fillRect(
         scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - this.state.offset * halfHeight * this.state.scaling.y - scope.ui.mover.height / 2,
+        halfHeight - offsetY * halfHeight * this.state.scaling.y - scope.ui.mover.height / 2,
         scope.ui.mover.width,
         scope.ui.mover.height
     );
@@ -339,24 +339,24 @@ FFTrace.prototype.draw = function (canvas) {
     // Draw trace
     context.strokeStyle = this.state.color;
     context.beginPath();
-    context.moveTo(0, (halfHeight - (ab[0] + this.state.offset) * halfHeight * this.state.scaling.y));
+    context.moveTo(0, (halfHeight - (ab[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (ab[Math.floor(i)] + this.state.offset) * halfHeight * this.state.scaling.y));
+        context.lineTo(j, (halfHeight - (ab[Math.floor(i) + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     // Fix drawing on canvas
     context.stroke();
 
     // Draw mover to move the trace
     context.fillStyle = this.state.color;
-    var offset = this.state.offset;
-    if(offset > 1){
-        offset = 1;
-    } else if(offset < -1){
-        offset = -1;
+    var offsetY = this.state.offset.y;
+    if(offsetY > 1){
+        offsetY = 1;
+    } else if(offsetY < -1){
+        offsetY = -1;
     }
     context.fillRect(
         scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - this.state.offset * halfHeight * this.state.scaling.y - scope.ui.mover.height / 2,
+        halfHeight - offsetY * halfHeight * this.state.scaling.y - scope.ui.mover.height / 2,
         scope.ui.mover.width,
         scope.ui.mover.height
     );
