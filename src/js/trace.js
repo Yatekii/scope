@@ -124,9 +124,10 @@ TimeTrace.prototype.draw = function (canvas) {
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    context.moveTo(0, (halfHeight - (this.state.source.ctrl.channels[0][0] + this.state.offset.y) * halfHeight * this.state.scaling.y));
-    for (var i=0, j=0; (j < scope.width) && (i < this.state.source.ctrl.channels[0].length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (this.state.source.ctrl.channels[0][Math.floor(i)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    var data = this.state.source.ctrl.channels[0];
+    context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    for (var i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
+        context.lineTo(j, (halfHeight - (data[Math.floor(i) + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     context.stroke();
 
@@ -147,7 +148,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Draw trigger location
     context.fillStyle = 'white';
-    var trgMiddle = scope.width * scope.source.triggerPosition;
+    var trgMiddle = scope.width * scope.source.triggerPosition - this.state.offset.x * ratio;
     context.beginPath();
     context.moveTo(trgMiddle, scope.height - 15);
     context.lineTo(trgMiddle + 15, scope.height);

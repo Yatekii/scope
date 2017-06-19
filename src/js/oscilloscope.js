@@ -243,6 +243,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
     if(this.traceMovingX !== false){
         this.traceMovingX.offset.x -= event.movementX;
+        this.state.source.triggerPosition += event.movementX / this.state.source.frameSize;
         return;
     }
 };

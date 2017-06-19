@@ -18,7 +18,11 @@ export const WebsocketSource = function(state) {
         me.isOpen = true;
         // Configure logger initially and start a frame according to the mode
         me.setNumberOfChannels(me.state.numberOfChannels);
-        me.frameConfiguration(me.state.frameSize, me.state.frameSize * me.state.trigerLoc, me.state.frameSize * (1 - me.state.trigerLoc));
+        me.frameConfiguration(
+            me.state.frameSize,
+            me.state.frameSize * me.state.triggerPosition,
+            me.state.frameSize * (1 - me.state.triggerPosition)
+        );
         me.triggerOn(me.state.trigger);
         if(me.state.mode == 'single'){
             // We don't have to do anything, we already did our job
@@ -62,6 +66,11 @@ export const WebsocketSource = function(state) {
                     // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
                     me.auto();
                 }
+                me.state.traces.forEach(function(trace){
+                    if(trace.type == 'TimeTrace'){
+                        trace.offset.x = 0;
+                    }
+                });
             }
         }
     };
@@ -85,6 +94,11 @@ WebsocketSource.prototype.sendJSON = function(obj) {
 
 WebsocketSource.prototype.requestFrame = function() {
     this.sendJSON({
+        frameConfiguration: {
+            frameSize: this.state.frameSize,
+            pre: this.state.frameSize * this.state.triggerPosition,
+            suf: this.state.frameSize * (1 - this.state.triggerPosition)
+        },
         triggerOn: {
             type: this.state.trigger.type,
             channel: this.state.trigger.channel,
