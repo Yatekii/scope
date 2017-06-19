@@ -1,5 +1,4 @@
 - Fix moving markers
-- Display trigger location
 - Drag display to move active trace
     - fft simply gets moved
     - time traces will have the trigger location moved
@@ -7,6 +6,11 @@
 - Calculate RMS of signal power
 
 - Add an amplitude display for FFTrace
+
+- Fix mithril warnings when displaying a NaN for marker position
+    - why is it NaN -> Fix!
+
+- Add an option to display half or the entire fourier spectrum
 
 - SNR calculations
     - auto mode

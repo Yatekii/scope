@@ -16030,6 +16030,7 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
+// Creates a new trace
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
@@ -16170,6 +16171,15 @@ TimeTrace.prototype.draw = function (canvas) {
         scope.ui.mover.width,
         scope.ui.mover.height
     );
+
+    // Draw trigger location
+    context.fillStyle = 'white';
+    var trgMiddle = scope.width * scope.source.triggerPosition;
+    context.beginPath();
+    context.moveTo(trgMiddle, scope.height - 15);
+    context.lineTo(trgMiddle + 15, scope.height);
+    context.lineTo(trgMiddle - 15, scope.height);
+    context.fill();
 
     // Restore canvas context for next painter
     context.restore();
