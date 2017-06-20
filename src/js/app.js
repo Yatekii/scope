@@ -1,17 +1,16 @@
 /*
 * This file is the main app file.
-* It holds the controller and the view and links them both.
+* It holds the app state and initializes the scope.
 */
 
 import m from 'mithril';
 
-import * as conf from './conf.js';
 import { router } from './nodes/router.js';
 import { scopeView } from './nodes/scopeView.js';
 
 import '../css/main.css';
 
-//use default mode
+//use default routing mode
 m.route.mode = 'search';
 
 var appState = {
@@ -100,8 +99,10 @@ var appState = {
     }
 };
 
+// Store the app state for later uses to the window
 window.appState = appState;
 
+// Add a mithril router to the page
 window.addEventListener('load', function() {
     m.route(document.body, '/routing', {
         '/routing': {
@@ -110,6 +111,7 @@ window.addEventListener('load', function() {
                 return m(router, appState);
             },
             oncreate: function(){
+                // Open scope 1 by default
                 var popup = window.open(window.location.pathname + '#!/scope?id=1');
                 popup.scopeState = appState.nodes.scopes[0];
             }
@@ -118,8 +120,6 @@ window.addEventListener('load', function() {
             controller: function() {},
             view: function() {
                 return m(scopeView, {
-                    // width: conf.canvasSize.width,
-                    // height: conf.canvasSize.height,
                     scope: window.scopeState
                 });
             },

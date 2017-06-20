@@ -1,8 +1,8 @@
-- Add an option to display half or the entire fourier spectrum
-
 -----------------------------------------------
 R E S T R U C T U R E   C O D E
 -----------------------------------------------
+
+- Fix trigger level sent (+ trace offset)
 
 - SNR calculations
     - auto mode

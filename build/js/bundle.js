@@ -1,4 +1,3 @@
-document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>');
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
@@ -15881,11 +15880,15 @@ Oscilloscope.prototype.uiHandlers = {
     }
 };
 
+/* This file contains the source class which is responsible for
+ * communicating to the server and parse it's data.
+ */
+
+// Creates a new source
 const WebsocketSource = function(state) {
     var me = this;
     // Remember source state
     this.state = state;
-
     this.channels = [new Float32Array(0), new Float32Array(0)];
 
     // Init socket
@@ -15964,21 +15967,26 @@ const WebsocketSource = function(state) {
     };
 };
 
-WebsocketSource.prototype.sendMsg = function(txt) {
-    this.socket.send(txt);
-};
-
+/*
+ * Sends a JS object as JSON to the source websocket.
+ * <obj> : Object : Object to be sent over the network as a JSON string
+ */
 WebsocketSource.prototype.sendJSON = function(obj) {
     this.socket.send(JSON.stringify(obj));
 };
 
+/*
+ * Requests a new frame from the webserver. Includes all necessary config.
+ */
 WebsocketSource.prototype.requestFrame = function() {
     this.sendJSON({
+        // Always set the current frameSize and triggerPosition
         frameConfiguration: {
             frameSize: this.state.frameSize,
             pre: this.state.frameSize * this.state.triggerPosition,
             suf: this.state.frameSize * (1 - this.state.triggerPosition)
         },
+        // Always set the current trigger
         triggerOn: {
             type: this.state.trigger.type,
             channel: this.state.trigger.channel,
@@ -15991,43 +15999,88 @@ WebsocketSource.prototype.requestFrame = function() {
     });
 };
 
+/*
+ * Sends a force trigger command to the server to issue an immediate frame.
+ */
 WebsocketSource.prototype.forceTrigger = function() {
     this.sendJSON({ forceTrigger: true });
 };
 
+/*
+ * Configures the frame the server will send.
+ * <frameSize> : uint : The number of samples returned by the server
+ * <pre> : uint : The number of samples that have to be recorded before a trigger can be fired
+ * <suf> : uint : The number of samples that have to be recorded after a trigger has been fired
+ */
 WebsocketSource.prototype.frameConfiguration = function(frameSize, pre, suf) {
     this.sendJSON({ frameConfiguration: { frameSize: frameSize, pre: pre, suf: suf } });
 };
 
+/*
+ * Setup a trigger with a given <trigger> object.
+ * <trigger> : TriggerObject : {
+ *   type: ['risingEdge'],
+ *   level: uint[0:65536],
+ *   channel: uint[0:1],
+ *   hysteresis: uint[0:4096],
+ *   slope: uint[0:4096]
+ * }
+ */
 WebsocketSource.prototype.triggerOn = function(trigger) {
     this.sendJSON({ triggerOn: trigger });
 };
 
+/*
+ * Configures the number of channels the server should record.
+ * <n> : uint[0:8] : The number of channels. If an odd number is chosen,
+ *                   the next bigger even number iwll be configured
+ * NOTE: The default implementation of the FPGA logger could theoretically log 8 channels
+ * but it is restricted to two by the RedPitaya hardware.
+*/
 WebsocketSource.prototype.setNumberOfChannels = function(n) {
     this.sendJSON({ setNumberOfChannels: n });
 };
 
+/* Configures a rising edge trigger
+ * <channel> : uint[0:1] : The channel for which the trigger is configured
+ * <level> : uint[0, 65536] : The level at which the trigger shoots
+ * <hysteresis> : uint[0:4096] : TODO:
+ * <slope> : uint[0:4096] : TODO:
+ */
 WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hysteresis = 2, slope = 0) {
     this.sendJSON({ triggerOn: { type: 'risingEdge', channel: channel, level: level, hysteresis: hysteresis, slope: slope }});
 };
 
+/*
+ * Issue a single frame from the server.
+*/
 WebsocketSource.prototype.single = function() {
     this.state.mode = 'single';
     this.requestFrame();
 };
 
+/*
+ * Start normal mode.
+*/
 WebsocketSource.prototype.normal = function() {
-    this.state.mode = 'normal';
     var me = this;
+    this.state.mode = 'normal';
+    // Wait 5ms until requesting a new frame because otherwise we deadlock
     setTimeout(function(){ me.requestFrame(); }, 5);
 };
 
+/*
+ * Start auto mode.
+ * <timeout> : uint : Milliseconds to wait until forcing triggering
+ */
 WebsocketSource.prototype.auto = function(timeout) {
     var me = this;
     this.state.mode = 'auto';
-    this.requestFrame();
-    // TODO: fix
-    // setTimeout(function(){ me.forceTrigger() }, 50);
+    // Wait 5ms until requesting a new frame because otherwise we deadlock
+    setTimeout(function(){ me.requestFrame(); }, 5);
+    setTimeout(function(){
+        me.forceTrigger();
+    }, timeout);
 };
 
 const miniFFT = function(re, im) {
@@ -16106,6 +16159,7 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
+// Creates a new trace
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
@@ -16595,10 +16649,10 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 
 /*
 * This file is the main app file.
-* It holds the controller and the view and links them both.
+* It holds the app state and initializes the scope.
 */
 
-//use default mode
+//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -16687,8 +16741,10 @@ var appState = {
     }
 };
 
+// Store the app state for later uses to the window
 window.appState = appState;
 
+// Add a mithril router to the page
 window.addEventListener('load', function() {
     mithril.route(document.body, '/routing', {
         '/routing': {
@@ -16697,6 +16753,7 @@ window.addEventListener('load', function() {
                 return mithril(router, appState);
             },
             oncreate: function(){
+                // Open scope 1 by default
                 var popup = window.open(window.location.pathname + '#!/scope?id=1');
                 popup.scopeState = appState.nodes.scopes[0];
             }
@@ -16705,8 +16762,6 @@ window.addEventListener('load', function() {
             controller: function() {},
             view: function() {
                 return mithril(scopeView, {
-                    // width: conf.canvasSize.width,
-                    // height: conf.canvasSize.height,
                     scope: window.scopeState
                 });
             },
