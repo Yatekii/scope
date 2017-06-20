@@ -190,9 +190,12 @@ FFTrace.prototype.draw = function (canvas) {
     }
     // Do an FFT of the signal
     miniFFT(real, compl);
-    // Only use half of the FFT since we only need the upper half
-    real = real.slice(0, real.length / 2);
-    compl = compl.slice(0, compl.length / 2);
+
+    // Only use half of the FFT since we only need the upper half if settings say so
+    if(this.state.halfSpectrum){
+        real = real.slice(0, real.length / 2);
+        compl = compl.slice(0, compl.length / 2);
+    }
 
     // Calculate the the total power of the signal
     // P = V^2

@@ -15658,16 +15658,6 @@ Oscilloscope.prototype.draw = function() {
                 trace.ctrl.draw(me.canvas);
         });
     }
-
-    // context.fillText('Δt = ' + converting.secondsToString(me.state.source.samplingRate / (nStart / n)), width - 290, 30);
-    // dt == pixels / Time
-    // df == pixels / frequency
-    // pixel / sample == ratio
-    // (frequency / sample) == k
-
-    // pixel / (frequency) == ratio / k
-    // console.log((me.state.source.samplingRate / me.state.source.frameSize) * (n / nStart))
-    // context.fillText('Δf = ' + converting.hertzToString(me.state.source.samplingRate / (nStart / n)), width - 290, 50);
 };
 
 Oscilloscope.prototype.onMouseDown = function(event){
@@ -15855,6 +15845,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
     if(this.traceMovingX !== false){
         this.traceMovingX.offset.x -= event.movementX;
         this.state.source.triggerPosition += event.movementX / this.state.source.frameSize;
+        console.log(this.state.source.triggerPosition);
         return;
     }
 };
@@ -15890,7 +15881,6 @@ Oscilloscope.prototype.uiHandlers = {
     }
 };
 
-// Creates a new source
 const WebsocketSource = function(state) {
     var me = this;
     // Remember source state
@@ -15941,7 +15931,7 @@ const WebsocketSource = function(state) {
                 var data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
                     // 14 bit uint to float
-                    data[i] = (arr[i] - Math.pow(2, (me.state.bits - 1))) / Math.pow(2, (me.state.bits - 1));
+                    data[i] = (arr[i] - Math.pow(2, (me.state.bits - 1))) / Math.pow(2, (me.state.bits - 1 - 2));
                 }
                 me.channels[0] = data;
                 // Start a new frame if mode is appropriate otherwise just exit
@@ -16302,9 +16292,12 @@ FFTrace.prototype.draw = function (canvas) {
     }
     // Do an FFT of the signal
     miniFFT(real, compl);
-    // Only use half of the FFT since we only need the upper half
-    real = real.slice(0, real.length / 2);
-    compl = compl.slice(0, compl.length / 2);
+
+    // Only use half of the FFT since we only need the upper half if settings say so
+    if(this.state.halfSpectrum){
+        real = real.slice(0, real.length / 2);
+        compl = compl.slice(0, compl.length / 2);
+    }
 
     // Calculate the the total power of the signal
     // P = V^2
@@ -16605,6 +16598,7 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the controller and the view and links them both.
 */
 
+//use default mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -16635,7 +16629,7 @@ var appState = {
                 // location: 'ws://localhost:50090',
                 frameSize: 4096,
                 samplingRate: 1000000,
-                bits: 14,
+                bits: 16,
                 vpb: 2.2 / Math.pow(2,14), // Volts per bit
                 buffer: {
                     upperSize: 4,
@@ -16671,6 +16665,7 @@ var appState = {
                         id: 4,
                         offset: { x: 0, y: 0 },
                         windowFunction: 'hann',
+                        halfSpectrum: true,
                         SNRmode: 'auto',
                         info: {},
                         name: 'Trace ' + 2,

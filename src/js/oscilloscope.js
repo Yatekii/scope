@@ -47,16 +47,6 @@ Oscilloscope.prototype.draw = function() {
                 trace.ctrl.draw(me.canvas);
         });
     }
-
-    // context.fillText('Δt = ' + converting.secondsToString(me.state.source.samplingRate / (nStart / n)), width - 290, 30);
-    // dt == pixels / Time
-    // df == pixels / frequency
-    // pixel / sample == ratio
-    // (frequency / sample) == k
-
-    // pixel / (frequency) == ratio / k
-    // console.log((me.state.source.samplingRate / me.state.source.frameSize) * (n / nStart))
-    // context.fillText('Δf = ' + converting.hertzToString(me.state.source.samplingRate / (nStart / n)), width - 290, 50);
 };
 
 Oscilloscope.prototype.onMouseDown = function(event){
@@ -244,6 +234,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
     if(this.traceMovingX !== false){
         this.traceMovingX.offset.x -= event.movementX;
         this.state.source.triggerPosition += event.movementX / this.state.source.frameSize;
+        console.log(this.state.source.triggerPosition);
         return;
     }
 };

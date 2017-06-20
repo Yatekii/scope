@@ -42,7 +42,7 @@ var appState = {
                 // location: 'ws://localhost:50090',
                 frameSize: 4096,
                 samplingRate: 1000000,
-                bits: 14,
+                bits: 16,
                 vpb: 2.2 / Math.pow(2,14), // Volts per bit
                 buffer: {
                     upperSize: 4,
@@ -78,6 +78,7 @@ var appState = {
                         id: 4,
                         offset: { x: 0, y: 0 },
                         windowFunction: 'hann',
+                        halfSpectrum: true,
                         SNRmode: 'auto',
                         info: {},
                         name: 'Trace ' + 2,
