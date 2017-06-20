@@ -97,12 +97,13 @@ WebsocketSource.prototype.sendJSON = function(obj) {
  * Requests a new frame from the webserver. Includes all necessary config.
  */
 WebsocketSource.prototype.requestFrame = function() {
+    console.log(this.state.triggerPosition)
     this.sendJSON({
         // Always set the current frameSize and triggerPosition
         frameConfiguration: {
             frameSize: this.state.frameSize,
-            pre: this.state.frameSize * this.state.triggerPosition,
-            suf: this.state.frameSize * (1 - this.state.triggerPosition)
+            pre: Math.round(this.state.frameSize * this.state.triggerPosition),
+            suf: Math.round(this.state.frameSize * (1 - this.state.triggerPosition))
         },
         // Always set the current trigger
         triggerOn: {

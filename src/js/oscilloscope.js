@@ -5,8 +5,10 @@ export const Oscilloscope = function(state) {
     // Remember scope state
     this.state = state;
 
+    // remember our canvas
     this.canvas = document.getElementById('scope');
 
+    // Initialize moving elements to not move
     this.markerMoving = false;
     this.triggerMoving = false;
     this.traceMovingY = false;
@@ -16,10 +18,12 @@ export const Oscilloscope = function(state) {
 Oscilloscope.prototype.draw = function() {
     var me = this;
 
+    // If no canvas was yet created or found, we have no business here, return.
     if(this.canvas == null){
         return;
     }
 
+    // Remember important sizes
     var width = document.body.clientWidth - (me.state.ui.prefPane.open ? me.state.ui.prefPane.width : 0);
     var height = document.body.clientHeight;
     var halfHeight = this.state.height / 2;
@@ -42,6 +46,7 @@ Oscilloscope.prototype.draw = function() {
     context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * activeTrace.scaling.y);
     context.stroke();
 
+    // Draw all traces if the source is ready
     if(this.state.source.ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
                 trace.ctrl.draw(me.canvas);
@@ -50,14 +55,14 @@ Oscilloscope.prototype.draw = function() {
 };
 
 Oscilloscope.prototype.onMouseDown = function(event){
-    // Start moving triggerlevel
-    // TODO: adjust trigger level setup to be dependant on active trace
     var me = this;
     var activeTrace = this.state.source.traces[this.state.source.activeTrace];
     var halfHeight = this.canvas.height / 2;
+    // Start moving triggerlevel
+    // TODO: adjust trigger level setup to be dependant on active trace
     var triggerLevel = this.state.source.trigger.level * halfHeight * activeTrace.scaling.y;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        this.triggerMoving = true;
+        this.triggerMoving = activeTrace;
         return;
     }
 
@@ -80,15 +85,15 @@ Oscilloscope.prototype.onMouseDown = function(event){
         });
     });
 
-    // Start moving traces
-    var me = this;
+    // Start moving traces in Y direction
     var halfMoverWidth = me.state.ui.mover.width / 2;
     var halfMoverHeight = me.state.ui.mover.height / 2;
     this.state.source.traces.forEach(function(trace) {
         var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
         if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
             var y = trace.offset.y * halfHeight * activeTrace.scaling.y;
-            if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
+            if(halfHeight - event.offsetY < y + halfMoverHeight
+            && halfHeight - event.offsetY > y - halfMoverHeight){
                 me.traceMovingY = trace;
                 return;
             }
@@ -136,6 +141,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
         document.body.style.cursor = 'row-resize';
         cursorSet = true;
     }
+    
     // Change cursor if marker set is active
     if(!cursorSet){
         this.state.source.traces.forEach(function(trace){
@@ -158,6 +164,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
             });
         });
     }
+    
     // Change cursor if trace set is active
     if(!cursorSet){
         var me = this;
@@ -165,7 +172,8 @@ Oscilloscope.prototype.onMouseMove = function(event){
             var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
             if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
                 var y = trace.offset.y * halfHeight * activeTrace.scaling.y;
-                if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
+                if(halfHeight - event.offsetY < y + halfMoverHeight
+                && halfHeight - event.offsetY > y - halfMoverHeight){
                     document.body.style.cursor = 'move';
                     cursorSet = true;
                     return;
@@ -173,14 +181,14 @@ Oscilloscope.prototype.onMouseMove = function(event){
             }
         });
     }
+
     // Change cursor if nothing set is active
     if(!cursorSet){
         document.body.style.cursor = 'initial';
     }
 
-
     // Move triggerlevel is active
-    if(this.triggerMoving){
+    if(this.triggerMoving !== false){
         triggerLevel = (halfHeight - event.offsetY) / (halfHeight * activeTrace.scaling.y);
         if(triggerLevel > 1){
             triggerLevel = 1;
@@ -218,7 +226,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
         }
     }
 
-    // Move traces if move traces is active
+    // Move traces Y if move traces Y is active
     if(this.traceMovingY !== false){
         var traceOffset = (halfHeight - event.offsetY) / (halfHeight * activeTrace.scaling.y);
         if(traceOffset > 1){
@@ -231,10 +239,20 @@ Oscilloscope.prototype.onMouseMove = function(event){
         return;
     }
 
+    // Move traces X if move traces X is active
     if(this.traceMovingX !== false){
-        this.traceMovingX.offset.x -= event.movementX;
-        this.state.source.triggerPosition += event.movementX / this.state.source.frameSize;
-        console.log(this.state.source.triggerPosition);
+        var offsetX = this.state.source.frameSize / this.canvas.width * event.movementX
+        this.traceMovingX.offset.x -= offsetX;
+        if(this.traceMovingX.offset.x < 0){
+            this.traceMovingX.offset.x = 0;
+        }
+        if(this.traceMovingX.offset.x > this.state.source.frameSize){
+            this.traceMovingX.offset.x = this.state.source.frameSize;
+        }
+        this.state.source.triggerPosition += offsetX / this.state.source.frameSize;
+        if(this.state.source.triggerPosition < 0){
+            this.state.source.triggerPosition = 0;
+        }
         return;
     }
 };
@@ -251,19 +269,9 @@ Oscilloscope.prototype.onScroll = function(event){
     }
 };
 
-Oscilloscope.prototype.addMarker = function(id, type, xy){
-    var px = 0;
-    var py = 0;
-    if(type == 'horizontal'){
-        py = xy;
-    } else {
-        px = xy;
-    }
-    this.state.markers.push({
-        id: id, type: type, x: px, y: py
-    });
-};
-
+/*
+ * UI handler controls for buttons etc
+ */
 Oscilloscope.prototype.uiHandlers = {
     togglePrefPane: function(scope){
         scope.state.ui.prefPane.open = !scope.state.ui.prefPane.open;
