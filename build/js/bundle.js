@@ -15100,8 +15100,10 @@ var jsplumb = createCommonjsModule(function (module, exports) {
 
 var jsplumb_6 = jsplumb.jsPlumb;
 
+/*
+ * This file contains various helper functions
+*/
 window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
-
 
 const draw = function(scope) {  
     if(scope) {
@@ -15112,12 +15114,6 @@ const draw = function(scope) {
     });
 };
 
-
-
-
-
-
-
 const withKey = function(key, callback) {
     return function(e) {
         if (e.keyCode == key) {
@@ -15126,8 +15122,11 @@ const withKey = function(key, callback) {
     };
 };
 
-
-
+/*
+ * Capitalizes the first letter of a string
+ * EXAMPLE: capitalizeFirstLetter('top kek') == 'Top kek'.
+ * <string> : string : The string to captalize
+ */
 const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };

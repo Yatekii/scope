@@ -1,7 +1,6 @@
 import m from 'mithril';
 import { jsPlumb } from 'jsplumb';
 import { scopeNode } from './scope.js';
-import { getNodeByID } from '../helpers.js';
 
 export const router = {
     oninit: function(vnode) {

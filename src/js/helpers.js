@@ -1,5 +1,7 @@
+/*
+ * This file contains various helper functions
+*/
 window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
-
 
 export const draw = function(scope) {  
     if(scope) {
@@ -10,32 +12,6 @@ export const draw = function(scope) {
     });
 };
 
-export const htmlToElement = function(html) {
-    var template = document.createElement('template');
-    template.innerHTML = html;
-    return template.content.firstChild;
-};
-
-export const initRepr = function(html, container) {
-    var element = htmlToElement(html);
-    if(container) {
-        container.appendChild(element);
-    } else {
-        document.body.appendChild(element);
-    }
-    return element;
-};
-
-var audioContext = null;
-export const getAudioContext = function() {
-    window.AudioContext = window.AudioContext || window.webkitAudioContext;
-    if(audioContext){
-        return audioContext;
-    }
-    audioContext = new AudioContext();
-    return audioContext;
-};
-
 export const withKey = function(key, callback) {
     return function(e) {
         if (e.keyCode == key) {
@@ -44,13 +20,11 @@ export const withKey = function(key, callback) {
     };
 };
 
-export const getNodeByID = function(nodes, id){
-    var result = nodes.find(function( obj ) {
-        return obj.id == id;
-    });
-    return result;
-};
-
+/*
+ * Capitalizes the first letter of a string
+ * EXAMPLE: capitalizeFirstLetter('top kek') == 'Top kek'.
+ * <string> : string : The string to captalize
+ */
 export const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
