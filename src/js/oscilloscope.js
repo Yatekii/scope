@@ -1,5 +1,7 @@
-import * as helpers from './helpers.js';
-import * as converting from './math/converting.js';
+/*
+ * This file holds the main control logic for drawing and interfacing a scope.
+ * It calls onto various sub objects like traces and markers.
+ */
 
 export const Oscilloscope = function(state) {
     // Remember scope state
@@ -49,7 +51,7 @@ Oscilloscope.prototype.draw = function() {
     // Draw all traces if the source is ready
     if(this.state.source.ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
-                trace.ctrl.draw(me.canvas);
+            trace.ctrl.draw(me.canvas);
         });
     }
 };
@@ -104,8 +106,7 @@ Oscilloscope.prototype.onMouseDown = function(event){
     me.traceMovingX = activeTrace;
 };
 
-Oscilloscope.prototype.onMouseUp = function(event){
-    var me = this;
+Oscilloscope.prototype.onMouseUp = function(){
     // End moving triggerlevel
     if(this.triggerMoving){
         this.triggerMoving = false;
@@ -167,7 +168,6 @@ Oscilloscope.prototype.onMouseMove = function(event){
     
     // Change cursor if trace set is active
     if(!cursorSet){
-        var me = this;
         this.state.source.traces.forEach(function(trace) {
             var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
             if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
@@ -241,7 +241,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
     // Move traces X if move traces X is active
     if(this.traceMovingX !== false){
-        var offsetX = this.state.source.frameSize / this.canvas.width * event.movementX
+        var offsetX = this.state.source.frameSize / this.canvas.width * event.movementX;
         this.traceMovingX.offset.x -= offsetX;
         if(this.traceMovingX.offset.x < 0){
             this.traceMovingX.offset.x = 0;

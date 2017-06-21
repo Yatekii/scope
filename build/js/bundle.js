@@ -15216,8 +15216,6 @@ const body = {
 };
 
 const router = {
-    oninit: function(vnode) {
-    },
     view: function(vnode) {
         // Display all nodes. For now this is only scopes
         return [
@@ -15228,7 +15226,7 @@ const router = {
         // Add parents to all traces and sources
         vnode.attrs.nodes.scopes.forEach(function(scope) {
             scope.source.traces.forEach(function(trace) {
-                    trace.source = scope.source;
+                trace.source = scope.source;
             }, this);
             scope.source.scope = scope;
         });
@@ -15611,6 +15609,11 @@ const generalPrefPane = {
     }
 };
 
+/*
+ * This file holds the main control logic for drawing and interfacing a scope.
+ * It calls onto various sub objects like traces and markers.
+ */
+
 const Oscilloscope = function(state) {
     // Remember scope state
     this.state = state;
@@ -15659,7 +15662,7 @@ Oscilloscope.prototype.draw = function() {
     // Draw all traces if the source is ready
     if(this.state.source.ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
-                trace.ctrl.draw(me.canvas);
+            trace.ctrl.draw(me.canvas);
         });
     }
 };
@@ -15714,8 +15717,7 @@ Oscilloscope.prototype.onMouseDown = function(event){
     me.traceMovingX = activeTrace;
 };
 
-Oscilloscope.prototype.onMouseUp = function(event){
-    var me = this;
+Oscilloscope.prototype.onMouseUp = function(){
     // End moving triggerlevel
     if(this.triggerMoving){
         this.triggerMoving = false;
@@ -15777,7 +15779,6 @@ Oscilloscope.prototype.onMouseMove = function(event){
     
     // Change cursor if trace set is active
     if(!cursorSet){
-        var me = this;
         this.state.source.traces.forEach(function(trace) {
             var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
             if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){

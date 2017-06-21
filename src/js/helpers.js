@@ -27,4 +27,4 @@ export const withKey = function(key, callback) {
  */
 export const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
-}
+};
