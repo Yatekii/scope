@@ -1,11 +1,14 @@
+/* 
+ * File to hold the preferences GUI for timetraces.
+ */
+
 import m from 'mithril';
-import { withKey, capitalizeFirstLetter } from '../helpers.js';
+import { withKey } from '../helpers.js';
 import { secondsToString } from '../math/converting.js';
 
 export const TimeTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
-        var s = vnode.attrs.scopeConf;
         return [
             m('header.columns', ''),
             m('.form-horizontal', [
@@ -21,7 +24,7 @@ export const TimeTracePrefPane = {
                             value: t.name,
                             onchange: m.withAttr('value', function(v){ t.name = v; }),
                             onblur: function(){ vnode.state.editName = false; },
-                            onkeypress: withKey(13, function(target){
+                            onkeypress: withKey(13, function(){
                                 vnode.state.editName = false;
                             })
                         })
@@ -40,4 +43,4 @@ export const TimeTracePrefPane = {
             ])
         ];
     }
-}
+};

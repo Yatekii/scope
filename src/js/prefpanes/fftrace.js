@@ -14,7 +14,6 @@ export const FFTracePrefPane = {
         var t = vnode.attrs.traceConf;
         var s = vnode.attrs.scopeConf;
         return [
-            m('header.columns', ''),
             m('.form-horizontal', [
                 // GUI: Change color and name
                 m('.form-group',[
@@ -28,7 +27,7 @@ export const FFTracePrefPane = {
                             value: t.name,
                             onchange: m.withAttr('value', function(v){ t.name = v; }),
                             onblur: function(){ vnode.state.editName = false; },
-                            onkeypress: withKey(13, function(target){
+                            onkeypress: withKey(13, function(){
                                 vnode.state.editName = false;
                             })
                         })
@@ -72,12 +71,12 @@ export const FFTracePrefPane = {
                 m('.form-group', [
                     m('.col-12', m('.btn-group.btn-group-block', [
                         m('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
-                            onclick: function(e){
+                            onclick: function(){
                                 t.SNRmode = 'manual';
                             }
                         }, 'Manual'),
                         m('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
-                            onclick: function(e){
+                            onclick: function(){
                                 t.SNRmode = 'auto';
                             }
                         }, 'Auto')
@@ -98,7 +97,7 @@ export const FFTracePrefPane = {
                             s.source.frameSize
                         )),
                         onchange: m.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; })
+                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
                             marker.x = sampleToPercentage(
                                 frequencyToSample(
                                     parseInt(value),
@@ -125,7 +124,7 @@ export const FFTracePrefPane = {
                             s.source.frameSize
                         )),
                         onchange: m.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; })
+                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
                             marker.x = sampleToPercentage(
                                 frequencyToSample(
                                     parseInt(value),
@@ -141,4 +140,4 @@ export const FFTracePrefPane = {
             ])
         ];
     }
-}
+};

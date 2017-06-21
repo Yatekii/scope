@@ -15381,7 +15381,6 @@ const FFTracePrefPane = {
         var t = vnode.attrs.traceConf;
         var s = vnode.attrs.scopeConf;
         return [
-            mithril('header.columns', ''),
             mithril('.form-horizontal', [
                 // GUI: Change color and name
                 mithril('.form-group',[
@@ -15395,7 +15394,7 @@ const FFTracePrefPane = {
                             value: t.name,
                             onchange: mithril.withAttr('value', function(v){ t.name = v; }),
                             onblur: function(){ vnode.state.editName = false; },
-                            onkeypress: withKey(13, function(target){
+                            onkeypress: withKey(13, function(){
                                 vnode.state.editName = false;
                             })
                         })
@@ -15439,12 +15438,12 @@ const FFTracePrefPane = {
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block', [
                         mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
-                            onclick: function(e){
+                            onclick: function(){
                                 t.SNRmode = 'manual';
                             }
                         }, 'Manual'),
                         mithril('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
-                            onclick: function(e){
+                            onclick: function(){
                                 t.SNRmode = 'auto';
                             }
                         }, 'Auto')
@@ -15510,10 +15509,13 @@ const FFTracePrefPane = {
     }
 };
 
+/* 
+ * File to hold the preferences GUI for timetraces.
+ */
+
 const TimeTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
-        var s = vnode.attrs.scopeConf;
         return [
             mithril('header.columns', ''),
             mithril('.form-horizontal', [
@@ -15529,7 +15531,7 @@ const TimeTracePrefPane = {
                             value: t.name,
                             onchange: mithril.withAttr('value', function(v){ t.name = v; }),
                             onblur: function(){ vnode.state.editName = false; },
-                            onkeypress: withKey(13, function(target){
+                            onkeypress: withKey(13, function(){
                                 vnode.state.editName = false;
                             })
                         })
@@ -15550,54 +15552,60 @@ const TimeTracePrefPane = {
     }
 };
 
+/*
+ * This file holds the general settings GUI.
+ */
+
 const generalPrefPane = {
     view: function(vnode){
         var s = vnode.attrs.scopeConf;
         return [
-            // TODO: update code to new tree
             mithril('header.text-center', mithril('h4', s)),
             mithril('.form-horizontal', [
+                // GUI: Select mode
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block', [
                         mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
-                            onclick: function(e){
+                            onclick: function(){
                                 s.source.ctrl.normal();
                                 s.mode = 'normal';
                             }
                         }, 'Normal'),
                         mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
-                            onclick: function(e){
+                            onclick: function(){
                                 s.source.ctrl.single();
                                 s.mode = 'auto';
                             }
                         }, 'Auto'),
                         mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
-                            onclick: function(e){
+                            onclick: function(){
                                 s.source.ctrl.single();
                                 s.mode = 'single';
                             }
                         }, 'Single')
                     ]))
                 ]),
+                // GUI: Single Shot and Force Trigger
                 mithril('.form-group', [
                     mithril('button.btn.col-6', {
-                        onclick: function(e){
-                                s.source.ctrl.single();
-                                s.mode = 'single';
-                            }
+                        onclick: function(){
+                            s.source.ctrl.single();
+                            s.mode = 'single';
+                        }
                     }, 'Single Shot'),
                     mithril('button.btn.col-6', {
-                        onclick: function(e){
+                        onclick: function(){
                             s.source.ctrl.forceTrigger();
                         }
                     }, 'Force Trigger')
                 ]),
+                // GUI: Display and select all traces
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block',
                         s.source.traces.map(function(trace){
                             return mithril('button.btn' + (trace.ctrl && s.source.activeTrace == trace.ctrl.id ? '.active' : ''), {
                                 style: { backgroundColor: trace.color },
-                                onclick: function(e){
+                                onclick: function(){
                                     s.source.activeTrace = trace.ctrl.id;
                                 }
                             }, trace.name);
