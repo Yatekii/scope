@@ -15131,6 +15131,12 @@ const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
+/*
+ * This file contains all the relevant DOM stuff to initialize the router and it's controllers.
+ * From here on scopes will be launched.
+ * In here all the flow-chart operations for the flow of data is done.
+ */
+
 const scopeNode = {
     oninit: function(vnode) {
         vnode.attrs.editingName = false;
@@ -15143,7 +15149,8 @@ const scopeNode = {
                 left: vnode.attrs.left + 'px'
             },
             ondblclick: function() {
-                // TODO: Crosswindow stuff
+                // Open a new window
+                // Attach some data to it
                 var popup = window.open(window.location.pathname + '#!/scope?id=' + vnode.attrs.id);
                 popup.scopeState = vnode.attrs;
             }
@@ -15167,12 +15174,10 @@ const scopeNode = {
                             vnode.attrs.editingName = true;
                         }
                     }, vnode.attrs.name))
-                    // TODO: Colorlabel here
-                ]),
-                mithril('.card-meta', [])
+                ])
             ]),
             mithril('.card-body',
-                mithril(body, vnode.attrs)
+                [] // Here could be some content for the GUI of the node to change params
             )
         ]);
     },
@@ -15196,24 +15201,10 @@ const scopeNode = {
     }
 };
 
-const body = {
-    view: function(vnode){
-        return [
-            mithril('.form-group', [
-                mithril('label.form-label [for=wss-samplingrate-' + vnode.attrs.id + ']', 'Sampling Rate'),
-                mithril('input.form-input', {
-                    type: 'number',
-                    id: 'wss-samplingrate-' + vnode.attrs.id, 
-                    value: vnode.attrs.samplingRate,
-                    onchange: mithril.withAttr('value', function(value) {
-                        vnode.attrs.samplingRate = parseInt(value);
-                        // TODO: send sampling rate
-                    }),
-                })
-            ])
-        ];
-    }
-};
+/*
+ * This is the main router component that gets instantiated by mithril when the root page is called
+ * From here on all the components for the Flow Graph are added and routed.
+ */
 
 const router = {
     view: function(vnode) {
@@ -16591,7 +16582,7 @@ const scopeView = {
         window.addEventListener('mousewheel', function(event){
             vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
             mithril.redraw();
-        }, {passive: true});
+        });
     },
     view: function(vnode) {
         return [
@@ -16602,9 +16593,13 @@ const scopeView = {
                     width: vnode.attrs.width,
                     height: vnode.attrs.height
                 },
+                oninit: function(){
+                },
                 onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
                 onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
-                onmousemove: function(event) { event.preventDefault(); vnode.attrs.scope.ctrl.onMouseMove(event); },
+                onmousemove: function(event) {
+                    event.preventDefault(); vnode.attrs.scope.ctrl.onMouseMove(event);
+                },
             }),
             // Render a settings panel if it is toggled otherwise render none
             mithril('.panel', {
@@ -16661,7 +16656,7 @@ const scopeView = {
     },
 };
 
-__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n    float: left;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n#prefpane {\n    width: 400px;\n    height: 100%;\n    float: right;\n    /*position:fixed;\n    right: 0;\n    top: 0;*/\n    background-color: #ABABAB;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n    \n}\n\n#toggle-prefpane {\n    position:fixed;\n    bottom: 20px;\n}\n\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
+__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n    float: left;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n#prefpane {\n    width: 400px;\n    height: 100%;\n    float: right;\n    /*position:fixed;\n    right: 0;\n    top: 0;*/\n    background-color: #ABABAB;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n    overflow: scroll;\n}\n\n#toggle-prefpane {\n    position:fixed;\n    bottom: 20px;\n}\n\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
 
 /*
 * This file is the main app file.

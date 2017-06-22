@@ -1,3 +1,9 @@
+/*
+ * This file contains all the relevant DOM stuff to initialize the router and it's controllers.
+ * From here on scopes will be launched.
+ * In here all the flow-chart operations for the flow of data is done.
+ */
+
 import m from 'mithril';
 import { jsPlumb } from 'jsplumb';
 import { withKey } from '../helpers.js';
@@ -14,7 +20,8 @@ export const scopeNode = {
                 left: vnode.attrs.left + 'px'
             },
             ondblclick: function() {
-                // TODO: Crosswindow stuff
+                // Open a new window
+                // Attach some data to it
                 var popup = window.open(window.location.pathname + '#!/scope?id=' + vnode.attrs.id);
                 popup.scopeState = vnode.attrs;
             }
@@ -38,12 +45,10 @@ export const scopeNode = {
                             vnode.attrs.editingName = true;
                         }
                     }, vnode.attrs.name))
-                    // TODO: Colorlabel here
-                ]),
-                m('.card-meta', [])
+                ])
             ]),
             m('.card-body',
-                m(body, vnode.attrs)
+                [] // Here could be some content for the GUI of the node to change params
             )
         ]);
     },
@@ -64,24 +69,5 @@ export const scopeNode = {
                 maxConnections: 10,
             });
         });
-    }
-};
-
-const body = {
-    view: function(vnode){
-        return [
-            m('.form-group', [
-                m('label.form-label [for=wss-samplingrate-' + vnode.attrs.id + ']', 'Sampling Rate'),
-                m('input.form-input', {
-                    type: 'number',
-                    id: 'wss-samplingrate-' + vnode.attrs.id, 
-                    value: vnode.attrs.samplingRate,
-                    onchange: m.withAttr('value', function(value) {
-                        vnode.attrs.samplingRate = parseInt(value);
-                        // TODO: send sampling rate
-                    }),
-                })
-            ])
-        ];
     }
 };

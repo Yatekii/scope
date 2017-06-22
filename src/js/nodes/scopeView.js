@@ -14,7 +14,7 @@ export const scopeView = {
         window.addEventListener('mousewheel', function(event){
             vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
             m.redraw();
-        }, {passive: true});
+        });
     },
     view: function(vnode) {
         return [
@@ -25,9 +25,13 @@ export const scopeView = {
                     width: vnode.attrs.width,
                     height: vnode.attrs.height
                 },
+                oninit: function(){
+                },
                 onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
                 onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
-                onmousemove: function(event) { event.preventDefault(); vnode.attrs.scope.ctrl.onMouseMove(event); },
+                onmousemove: function(event) {
+                    event.preventDefault(); vnode.attrs.scope.ctrl.onMouseMove(event);
+                },
             }),
             // Render a settings panel if it is toggled otherwise render none
             m('.panel', {
