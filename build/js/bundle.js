@@ -16633,6 +16633,10 @@ FFTrace.prototype.draw = function (canvas) {
     context.restore();
 };
 
+/*
+ * Returns a marker corresponding to <id>
+ * <id> : <string> : The name of the marker
+ */
 FFTrace.prototype.getMarkerById = function(id){
     var result = this.state.markers.filter(function( obj ) {
         return obj.id == id;
@@ -16640,6 +16644,11 @@ FFTrace.prototype.getMarkerById = function(id){
     return result;
 };
 
+/*
+ * Sets the location of both SNR measurement markers
+ * <firstX> : uint : Position of the first marker in samples
+ * <secondX> : uint : Position of the second marker in samples
+ */
 FFTrace.prototype.setSNRMarkers = function(firstX, secondX){
     var first = this.getMarkerById('SNRfirst');
     var second = this.getMarkerById('SNRsecond');
@@ -16655,6 +16664,10 @@ FFTrace.prototype.setSNRMarkers = function(firstX, secondX){
     }
 };
 
+/*
+ * Sets the location of the first SNR measurement marker
+ * <firstX> : uint : Position of the first marker in samples
+ */
 FFTrace.prototype.setFirstSNRMarker = function(firstX){
     var first = this.getMarkerById('SNRfirst');
     if(first.length < 1){
@@ -16664,6 +16677,10 @@ FFTrace.prototype.setFirstSNRMarker = function(firstX){
     first[0].x = firstX;
 };
 
+/*
+ * Sets the location of the second SNR measurement marker
+ * <secondX> : uint : Position of the second marker in samples
+ */
 FFTrace.prototype.setSecondSNRMarker = function(secondX){
     var second = this.getMarkerById('SNRsecond');
     if(second.length < 1){
