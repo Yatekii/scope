@@ -15271,10 +15271,22 @@ Math.bessi0 = function(x) {
  * Windowing functions.
  */
 const windowFunctions = {
-    hann:        function (n, points) { return 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (points - 1)); },
-    hamming:    function (n, points) { return 0.54 - 0.46 * Math.cos(2 * Math.PI * n/ (points - 1)); },
-    cosine:        function (n, points) { return Math.sin(Math.PI * n / (points - 1)); },
-    lanczos:    function (n, points) { return Math.sinc((2 * n / (points - 1)) - 1); },
+    hann: {
+        fn: function (n, points) { return 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (points - 1)); },
+        lines: 3
+    },
+    hamming: {
+        fn: function (n, points) { return 0.54 - 0.46 * Math.cos(2 * Math.PI * n/ (points - 1)); },
+        lines: 3
+    },
+    // cosine: {
+    //     fn: function (n, points) { return Math.sin(Math.PI * n / (points - 1)); },
+    //     lines: 1
+    // },
+    // lanczos: {
+    //     fn: function (n, points) { return Math.sinc((2 * n / (points - 1)) - 1); },
+    //     lines: 1
+    // },
     // gaussian:    function (n, points, alpha) {
     //             if (!alpha) { alpha = 0.4; }
     //             return Math.pow(Math.E, -0.5*Math.pow((n-(points-1)/2)/(alpha*(points-1)/2), 2));
@@ -15294,34 +15306,40 @@ const windowFunctions = {
     //             if (!alpha) { alpha = 0.16; }
     //             return 0.42 - 0.5*Math.cos(2*Math.PI*n/(points-1)) + 0.08*Math.cos(4*Math.PI*n/(points-1));
     //         },
-    exact_blackman:    function (n, points) {
-        return 0.4243801 - 0.4973406 * Math.cos( 2 * Math.PI * n / (points - 1))
-             + 0.0782793 * Math.cos(4 * Math.PI * n / (points - 1));
+    exact_blackman: {
+        fn: function (n, points) {
+            return 0.4243801 - 0.4973406 * Math.cos( 2 * Math.PI * n / (points - 1))
+                + 0.0782793 * Math.cos(4 * Math.PI * n / (points - 1));
+        },
+        lines: 5
     },
     // kaiser:        function (n, points, alpha) {
     //             if (!alpha) { alpha = 3; }
     //             return Math.bessi0(Math.PI*alpha*Math.sqrt(1-Math.pow((2*n/(points-1))-1, 2))) / Math.bessi0(Math.PI*alpha);
     //         },
-    nuttall:    function (n, points) {
-        return 0.355768 - 0.487396 * Math.cos(2 * Math.PI * n / (points - 1))
-            + 0.144232 * Math.cos(4 * Math.PI * n / (points - 1))
-            - 0.012604 * Math.cos(6 * Math.PI * n / (points - 1));
-    },
-    blackman_harris:function (n, points) {
-        return 0.35875 - 0.48829 * Math.cos(2 * Math.PI * n / (points - 1))
-            + 0.14128 * Math.cos(4 * Math.PI * n / (points - 1))
-            - 0.01168 * Math.cos(6 * Math.PI * n / (points - 1));
-    },
-    blackman_nuttall:function (n, points) {
-        return 0.3635819 - 0.3635819 * Math.cos(2 * Math.PI * n / (points - 1))
-            + 0.1365995 * Math.cos(4 * Math.PI * n / (points - 1))
-            - 0.0106411 * Math.cos(6 * Math.PI * n / (points - 1));
-    },
-    flat_top:    function (n, points) {
-        return 1 - 1.93 * Math.cos(2 * Math.PI * n / (points - 1))
-            + 1.29 * Math.cos(4 * Math.PI * n / (points - 1))
-            - 0.388 * Math.cos(6 * Math.PI * n / (points - 1))
-            + 0.032 * Math.cos(8 * Math.PI * n / (points - 1));
+    // nuttall:    function (n, points) {
+    //     return 0.355768 - 0.487396 * Math.cos(2 * Math.PI * n / (points - 1))
+    //         + 0.144232 * Math.cos(4 * Math.PI * n / (points - 1))
+    //         - 0.012604 * Math.cos(6 * Math.PI * n / (points - 1));
+    // },
+    // blackman_harris:function (n, points) {
+    //     return 0.35875 - 0.48829 * Math.cos(2 * Math.PI * n / (points - 1))
+    //         + 0.14128 * Math.cos(4 * Math.PI * n / (points - 1))
+    //         - 0.01168 * Math.cos(6 * Math.PI * n / (points - 1));
+    // },
+    // blackman_nuttall:function (n, points) {
+    //     return 0.3635819 - 0.3635819 * Math.cos(2 * Math.PI * n / (points - 1))
+    //         + 0.1365995 * Math.cos(4 * Math.PI * n / (points - 1))
+    //         - 0.0106411 * Math.cos(6 * Math.PI * n / (points - 1));
+    // },
+    flat_top: {
+        fn: function (n, points) {
+            return 1 - 1.93 * Math.cos(2 * Math.PI * n / (points - 1))
+                + 1.29 * Math.cos(4 * Math.PI * n / (points - 1))
+                - 0.388 * Math.cos(6 * Math.PI * n / (points - 1))
+                + 0.032 * Math.cos(8 * Math.PI * n / (points - 1));
+        },
+        lines: 9
     },
 };
 
@@ -16362,13 +16380,7 @@ const sum = function(arr){
  * Calculate the quadratic sum of all elements in an array.
  * <arr> : int[] : An array-like containing all values to sum up
  */
-const ssum = function(arr){
-    var k = 0;
-    for(var i = 0; i < arr.length; i++){
-        k += arr[i]*arr[i];
-    }
-    return k;
-};
+
 
 /*
  * Calculate the RMS of all elements in an array.
@@ -16407,14 +16419,6 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
-/*
- * Trace constructor
- * Constructs a new FFTrace
- * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
- * A window can be applied and several measurements such as SNR and Signal RMS can be done.
- * <id> : uint : Unique trace id, which is assigned when loading a trace
- * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
- */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16436,6 +16440,7 @@ FFTrace.prototype.draw = function (canvas) {
     var scope = this.state.source.scope;
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
+    var currentWindow = windowFunctions[this.state.windowFunction];
     // Duplicate data
     var real = this.state.source.ctrl.channels[0].slice(0);
     var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits);
@@ -16445,8 +16450,8 @@ FFTrace.prototype.draw = function (canvas) {
     // Create a complex vector with zeroes sice we only have real input
     var compl = new Float32Array(this.state.source.ctrl.channels[0]);
     // Window data if a valid window was selected
-    if(this.state.windowFunction && windowFunctions[this.state.windowFunction]){
-        real = applyWindow(real, windowFunctions[this.state.windowFunction]);
+    if(this.state.windowFunction && currentWindow){
+        real = applyWindow(real, currentWindow.fn);
     }
     // Do an FFT of the signal
     miniFFT(real, compl);
@@ -16486,8 +16491,8 @@ FFTrace.prototype.draw = function (canvas) {
         if(this.state.SNRmode == 'manual'){
             var ss = 0;
             var sn = 0;
-            var first = this.getMarkerById('SNRfirst')[0].x / ab.length;
-            var second = this.getMarkerById('SNRsecond')[0].x / ab.length;
+            var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
+            var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
 
             // Add up all values between the markers and those around each
             for(i = 1; i < ab.length; i++){
@@ -16511,39 +16516,24 @@ FFTrace.prototype.draw = function (canvas) {
                 }
             }
 
-            // Calculate sum around max
-            var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
-            var n = [];
-            var s = [];
-            var secondSNRMarker = 0;
-            var firstSNRMarker = 0;
-            // Add all values under the average and those above each to a list
-            for(i = 1; i < ab.length; i++){
-                if(ab[i] < m){
-                    n.push(ab[i]);
-                }
-                else {
-                    if(secondSNRMarker == 0){
-                        firstSNRMarker = i - 1;
-                        if(firstSNRMarker < 1){
-                            firstSNRMarker = 1;
-                        }
-                    }
-                    s.push(ab[i]);
-                    secondSNRMarker = i + 1;
-                    if(secondSNRMarker > ab.length){
-                        secondSNRMarker = ab.length;
-                    }
-                }
-            }
+            var l = Math.floor(currentWindow.lines / 2);
+            // Sum all values in the bundle around max
+            var s = sum(ab.slice(
+                maxi - l,
+                maxi + l
+            ));
+            // Sum all the other values except DC
+            var n = sum(ab.slice(l));
+            
             // Sum both sets and calculate their ratio which is the SNR
-            ss = ssum(s);
-            sn = ssum(n);
-            SNR = Math.log10(ss / sn) * 10;
+            SNR = Math.log10(s / n) * 10;
             this.state.info.SNR = SNR;
 
             // Posiion SNR markers
-            this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
+            this.setSNRMarkers(
+                (maxi - l) / ab.length,
+                (maxi + l) / ab.length
+            );
         }
     } else {
         this.state.info.RMSPower = '\u26A0 No signal';

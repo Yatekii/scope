@@ -32,6 +32,7 @@ FFTrace.prototype.draw = function (canvas) {
     var scope = this.state.source.scope;
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
+    var currentWindow = windowFunctions[this.state.windowFunction];
     // Duplicate data
     var real = this.state.source.ctrl.channels[0].slice(0);
     var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits);
@@ -41,8 +42,8 @@ FFTrace.prototype.draw = function (canvas) {
     // Create a complex vector with zeroes sice we only have real input
     var compl = new Float32Array(this.state.source.ctrl.channels[0]);
     // Window data if a valid window was selected
-    if(this.state.windowFunction && windowFunctions[this.state.windowFunction]){
-        real = applyWindow(real, windowFunctions[this.state.windowFunction]);
+    if(this.state.windowFunction && currentWindow){
+        real = applyWindow(real, currentWindow.fn);
     }
     // Do an FFT of the signal
     miniFFT(real, compl);
@@ -82,8 +83,8 @@ FFTrace.prototype.draw = function (canvas) {
         if(this.state.SNRmode == 'manual'){
             var ss = 0;
             var sn = 0;
-            var first = this.getMarkerById('SNRfirst')[0].x / ab.length;
-            var second = this.getMarkerById('SNRsecond')[0].x / ab.length;
+            var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
+            var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
 
             // Add up all values between the markers and those around each
             for(i = 1; i < ab.length; i++){
@@ -107,39 +108,24 @@ FFTrace.prototype.draw = function (canvas) {
                 }
             }
 
-            // Calculate sum around max
-            var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
-            var n = [];
-            var s = [];
-            var secondSNRMarker = 0;
-            var firstSNRMarker = 0;
-            // Add all values under the average and those above each to a list
-            for(i = 1; i < ab.length; i++){
-                if(ab[i] < m){
-                    n.push(ab[i]);
-                }
-                else {
-                    if(secondSNRMarker == 0){
-                        firstSNRMarker = i - 1;
-                        if(firstSNRMarker < 1){
-                            firstSNRMarker = 1;
-                        }
-                    }
-                    s.push(ab[i]);
-                    secondSNRMarker = i + 1;
-                    if(secondSNRMarker > ab.length){
-                        secondSNRMarker = ab.length;
-                    }
-                }
-            }
+            var l = Math.floor(currentWindow.lines / 2);
+            // Sum all values in the bundle around max
+            var s = sum(ab.slice(
+                maxi - l,
+                maxi + l
+            ));
+            // Sum all the other values except DC
+            var n = sum(ab.slice(l));
+            
             // Sum both sets and calculate their ratio which is the SNR
-            ss = ssum(s);
-            sn = ssum(n);
-            SNR = Math.log10(ss / sn) * 10;
+            SNR = Math.log10(s / n) * 10;
             this.state.info.SNR = SNR;
 
             // Posiion SNR markers
-            this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
+            this.setSNRMarkers(
+                (maxi - l) / ab.length,
+                (maxi + l) / ab.length
+            );
         }
     } else {
         this.state.info.RMSPower = '\u26A0 No signal';
