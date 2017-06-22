@@ -1,3 +1,9 @@
+/*
+ * Calculates an FFT over a set of samples.
+ * <re> : float[] : An array containing the real parts of the samples
+ * <im> : float[] : An array containing the imaginary parts of the samples
+ * NOTE: The calculated FFT will be contained within the input vectors.
+ */
 export const miniFFT = function(re, im) {
     var N = re.length;
     var i, j, h, k;
