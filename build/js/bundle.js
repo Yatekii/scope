@@ -16299,11 +16299,11 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Draw trigger location
     context.fillStyle = 'white';
-    var trgMiddle = scope.width * scope.source.triggerPosition - this.state.offset.x * ratio;
+    var trgLoc = (this.state.source.scope.triggerLoc * data.length - this.state.offset.x) * ratio;
     context.beginPath();
-    context.moveTo(trgMiddle, scope.height - 15);
-    context.lineTo(trgMiddle + 15, scope.height);
-    context.lineTo(trgMiddle - 15, scope.height);
+    context.moveTo(trgLoc, scope.height - 15);
+    context.lineTo(trgLoc + 15, scope.height);
+    context.lineTo(trgLoc - 15, scope.height);
     context.fill();
 
     // Restore canvas context for next painter
@@ -16407,6 +16407,14 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
+/*
+ * Trace constructor
+ * Constructs a new FFTrace
+ * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
+ * A window can be applied and several measurements such as SNR and Signal RMS can be done.
+ * <id> : uint : Unique trace id, which is assigned when loading a trace
+ * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
+ */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16529,9 +16537,9 @@ FFTrace.prototype.draw = function (canvas) {
                 }
             }
             // Sum both sets and calculate their ratio which is the SNR
-            var ss = ssum(s);
-            var sn = ssum(n);
-            var SNR = Math.log10(ss / sn) * 10;
+            ss = ssum(s);
+            sn = ssum(n);
+            SNR = Math.log10(ss / sn) * 10;
             this.state.info.SNR = SNR;
 
             // Posiion SNR markers
@@ -16559,13 +16567,11 @@ FFTrace.prototype.draw = function (canvas) {
         // Horizontal grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
-        context.font = "30px Arial";
+        context.font = '30px Arial';
         context.fillStyle = 'blue';
 
         // Calculate the current horizontal grid width dt according to screen size
-        var unit = 1e9;
-        var nStart = 1;
-        var n = 1;
+        n = 1;
         var df = ratio * this.state.source.samplingRate / 2 * n;
         for(var a = 0; a < 20; a++){
             if(scope.width / df > 1 && scope.width / df < 11){
@@ -16579,12 +16585,11 @@ FFTrace.prototype.draw = function (canvas) {
         this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
 
         // Draw horizontal grid
-        var i;
         for(i = 0; i < 11; i++){
             context.save();
             context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
-            for(var j = 1; j < 10; j++){
+            for(j = 1; j < 10; j++){
                 context.beginPath();
                 context.moveTo(df * i + df / 10 * j, 0);
                 context.lineTo(df * i + df / 10 * j, scope.height);
@@ -16626,10 +16631,6 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Restore brush
     context.restore();
-
-    // TODO: Draw triangle at trig loc
-    var trigLoc = ratio * me.state.source.scope.triggerLoc * ab.length;
-
 };
 
 FFTrace.prototype.getMarkerById = function(id){

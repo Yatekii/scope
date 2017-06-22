@@ -34,7 +34,7 @@ FFTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     // Duplicate data
     var real = this.state.source.ctrl.channels[0].slice(0);
-    var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits)
+    var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits);
     for(i = 0; i < real.length; i++){
         real[i] = real[i] / vmax;
     }
@@ -133,9 +133,9 @@ FFTrace.prototype.draw = function (canvas) {
                 }
             }
             // Sum both sets and calculate their ratio which is the SNR
-            var ss = ssum(s);
-            var sn = ssum(n);
-            var SNR = Math.log10(ss / sn) * 10;
+            ss = ssum(s);
+            sn = ssum(n);
+            SNR = Math.log10(ss / sn) * 10;
             this.state.info.SNR = SNR;
 
             // Posiion SNR markers
@@ -163,13 +163,11 @@ FFTrace.prototype.draw = function (canvas) {
         // Horizontal grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
-        context.font = "30px Arial";
+        context.font = '30px Arial';
         context.fillStyle = 'blue';
 
         // Calculate the current horizontal grid width dt according to screen size
-        var unit = 1e9
-        var nStart = 1;
-        var n = 1;
+        n = 1;
         var df = ratio * this.state.source.samplingRate / 2 * n;
         for(var a = 0; a < 20; a++){
             if(scope.width / df > 1 && scope.width / df < 11){
@@ -183,12 +181,11 @@ FFTrace.prototype.draw = function (canvas) {
         this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
 
         // Draw horizontal grid
-        var i;
         for(i = 0; i < 11; i++){
             context.save();
             context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
-            for(var j = 1; j < 10; j++){
+            for(j = 1; j < 10; j++){
                 context.beginPath();
                 context.moveTo(df * i + df / 10 * j, 0);
                 context.lineTo(df * i + df / 10 * j, scope.height);
@@ -230,10 +227,6 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Restore brush
     context.restore();
-
-    // TODO: Draw triangle at trig loc
-    var trigLoc = ratio * me.state.source.scope.triggerLoc * ab.length;
-
 };
 
 FFTrace.prototype.getMarkerById = function(id){
