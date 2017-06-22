@@ -6,7 +6,8 @@ import { generalPrefPane } from '../prefpanes/general.js';
 
 import * as oscilloscope from '../oscilloscope.js';
 import { WebsocketSource } from '../source.js';
-import { TimeTrace, FFTrace } from '../trace.js';
+import { TimeTrace } from '../timetrace.js';
+import { FFTrace } from '../fftrace.js';
 
 export const scopeView = {
     oninit: function(vnode) {

@@ -3,163 +3,14 @@ import { sum, ssum, rms } from './math/math.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
 import * as marker from './marker.js';
 
-// Creates a new trace
-export const  TimeTrace = function (id, state) {
-    // Remember trace state
-    this.state = state;
-    this.id = id;
-
-    // Init class variables
-    this.on = true;
-};
-
-// Draws trace on the new frame
-TimeTrace.prototype.draw = function (canvas) {
-    var context = canvas.getContext('2d');
-    // Store context state so other painters are presented with their known context state
-    context.save();
-
-    var scope = this.state.source.scope;
-
-    // Half height of canvas
-    var halfHeight = scope.height / 2;
-
-    // Draw every <skip> sample in data
-    var skip = 1;
-    // Apply sample to every <mul> pixel on canvas
-    var mul = 1;
-
-    // Calculate ratio of number of samples to number of pixels and factor in x-scaling
-    // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state.source.ctrl.channels[0].length * this.state.scaling.x; // pixel/sample
-    if(ratio > 1){
-        mul = ratio;
-    } else {
-        skip = 1 / ratio;
-    }
-
-    // Draw scales
-    if(this.id == this.state.source.activeTrace){
-        // Draw horizontal scales
-        context.strokeWidth = 1;
-        context.strokeStyle = '#ABABAB';
-        context.font = "30px Arial";
-        context.fillStyle = 'blue';
-
-        var nStart = 1e18;
-        var n = 1e18;
-        var dt = ratio / this.state.source.samplingRate * n;
-        for(var a = 0; a < 20; a++){
-            if(scope.width / dt > 1 && scope.width / dt < 11){
-                break;
-            }
-            n *= 1e-1;
-            dt = ratio / this.state.source.samplingRate * n;
-        }
-
-        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate).toFixed(15);
-
-        var i;
-        for(i = 0; i < 11; i++){
-            context.save();
-            context.setLineDash([5]);
-            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / dt)) + ')';
-            for(var j = 1; j < 10; j++){
-                context.beginPath();
-                context.moveTo(dt * i + dt / 10 * j, 0);
-                context.lineTo(dt * i + dt / 10 * j, scope.height);
-                context.stroke();
-            }
-            context.restore();
-            context.beginPath();
-            context.moveTo(dt * i, 0);
-            context.lineTo(dt * i, scope.height);
-            context.stroke();
-        }
-        context.restore();
-
-        // Draw vertical scales
-        context.strokeWidth = 1;
-        context.strokeStyle = '#ABABAB';
-        context.font = "30px Arial";
-        context.fillStyle = 'blue';
-
-        n = 1;
-        var dA = this.state.scaling.y;
-        for(a = 0; a < 20; a++){
-            if(scope.height * 0.5 / dA > 1 && scope.height * 0.5 / dA < 6){
-                break;
-            }
-            n *= 5;
-            dA = this.state.scaling.y * n;
-        }
-        // dA
-        this.state.info.deltaA = (n * (this.state.source.bits - 1) * this.state.source.vpb).toFixed(15);
-
-        var i;
-        for(i = -6; i < 6; i++){
-            context.save();
-            context.setLineDash([5]);
-            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.height / dA)) + ')';
-            for(var j = 1; j < 10; j++){
-                context.beginPath();
-                context.moveTo(0, 0.5 * scope.height + dA * i + dA / 10 * j);
-                context.lineTo(scope.width, 0.5 * scope.height + dA * i + dA / 10 * j);
-                context.stroke();
-            }
-            context.restore();
-            context.beginPath();
-            context.moveTo(0, 0.5 * scope.height + dA * i);
-            context.lineTo(scope.width, 0.5 * scope.height + dA * i);
-            context.stroke();
-        }
-        context.restore();
-    }
-
-    // Draw trace
-    context.strokeWidth = 1;
-    context.strokeStyle = this.state.color;
-    context.beginPath();
-
-    // Actually draw the trace, starting at pixel 0 and data point at 0
-    // triggerLocation is only relevant when using WebAudio
-    // using an external source the source handles triggering
-    var data = this.state.source.ctrl.channels[0];
-    context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
-    for (var i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (data[Math.floor(i) + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
-    }
-    context.stroke();
-
-    // Draw mover (grab and draw to move the trace)
-    context.fillStyle = this.state.color;
-    var offsetY = this.state.offset.y;
-    if(offsetY > 1){
-        offsetY = 1;
-    } else if(offsetY < -1){
-        offsetY = -1;
-    }
-    context.fillRect(
-        scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - offsetY * halfHeight * this.state.scaling.y - scope.ui.mover.height / 2,
-        scope.ui.mover.width,
-        scope.ui.mover.height
-    );
-
-    // Draw trigger location
-    context.fillStyle = 'white';
-    var trgMiddle = scope.width * scope.source.triggerPosition - this.state.offset.x * ratio;
-    context.beginPath();
-    context.moveTo(trgMiddle, scope.height - 15);
-    context.lineTo(trgMiddle + 15, scope.height);
-    context.lineTo(trgMiddle - 15, scope.height);
-    context.fill();
-
-    // Restore canvas context for next painter
-    context.restore();
-};
-
-// Creates a new source
+/*
+ * Trace constructor
+ * Constructs a new FFTrace
+ * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
+ * A window can be applied and several measurements such as SNR and Signal RMS can be done.
+ * <id> : uint : Unique trace id, which is assigned when loading a trace
+ * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
+ */
 export const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -169,7 +20,12 @@ export const FFTrace = function(id, state) {
     this.on = true;
 };
 
-// Draws trace on the new frame
+/*
+ * Draw handler
+ * The draw handler gets called once every frame and displays the current set of samples.
+ * It also does all the transformations and calculations.
+ * <canvas> : Canvas : the canvas to draw the samples on
+ */
 FFTrace.prototype.draw = function (canvas) {
     var me = this;
     var i, j;
@@ -228,6 +84,8 @@ FFTrace.prototype.draw = function (canvas) {
             var sn = 0;
             var first = this.getMarkerById('SNRfirst')[0].x / ab.length;
             var second = this.getMarkerById('SNRsecond')[0].x / ab.length;
+
+            // Add up all values between the markers and those around each
             for(i = 1; i < ab.length; i++){
                 if(i < first || i > second){
                     sn += ab[i] * ab[i];
@@ -239,7 +97,7 @@ FFTrace.prototype.draw = function (canvas) {
             this.state.info.SNR = SNR;
         }
         if(this.state.SNRmode == 'auto'){
-            // Find max
+            // Find max in all values
             var max = -3000000;
             var maxi = 0;
             for(i = 1; i < ab.length; i++){
@@ -248,6 +106,8 @@ FFTrace.prototype.draw = function (canvas) {
                     maxi = i;
                 }
             }
+
+            // Calculate sum around max
             var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
             var n = [];
             var s = [];
@@ -286,6 +146,7 @@ FFTrace.prototype.draw = function (canvas) {
         this.state.info.SNR = '\u26A0 No signal';
     }
 
+    // Draw the markers
     this.state.markers.forEach(function(m) {
         marker.draw(context, me.state.source.scope, m, ratio, ab.length);
     });
@@ -299,12 +160,13 @@ FFTrace.prototype.draw = function (canvas) {
     // Store brush
     context.save();
     if(this.id == this.state.source.activeTrace){
-        // Draw horizontal scales
+        // Horizontal grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
         context.font = "30px Arial";
         context.fillStyle = 'blue';
 
+        // Calculate the current horizontal grid width dt according to screen size
         var unit = 1e9
         var nStart = 1;
         var n = 1;
@@ -317,9 +179,10 @@ FFTrace.prototype.draw = function (canvas) {
             df = ratio * this.state.source.samplingRate / 2 * n;
         }
 
-        // df
+        // Store grid width
         this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
 
+        // Draw horizontal grid
         var i;
         for(i = 0; i < 11; i++){
             context.save();
