@@ -16682,30 +16682,30 @@ FFTrace.prototype.setSecondSNRMarker = function(secondX){
 };
 
 const scopeView = {
-    oninit: function(vnode) {
-        // Make sure the on scroll event is listened to
-        window.addEventListener('mousewheel', function(event){
-            vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
-            mithril.redraw();
-        });
-    },
     view: function(vnode) {
+        const onode = vnode;
         return [
             // Render a canvas and register all necessary events to it
-            mithril('canvas', {
+            mithril('', { 
+                oncreate: function(vnode){
+                    // Make sure the on scroll event is listened to
+                    vnode.dom.addEventListener('mousewheel', function(event){
+                        onode.attrs.scope.ctrl.onScroll(event, onode.attrs.scope.ctrl);
+                        mithril.redraw();
+                    });
+                }
+            }, mithril('canvas', {
                 id: 'scope',
                 style: {
                     width: vnode.attrs.width,
                     height: vnode.attrs.height
-                },
-                oninit: function(){
                 },
                 onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
                 onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
                 onmousemove: function(event) {
                     event.preventDefault(); vnode.attrs.scope.ctrl.onMouseMove(event);
                 },
-            }),
+            })),
             // Render a settings panel if it is toggled otherwise render none
             mithril('.panel', {
                 id: 'prefpane',
