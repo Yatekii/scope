@@ -161,11 +161,11 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Draw trigger location
     context.fillStyle = 'white';
-    var trgMiddle = (scope.width * scope.source.triggerPosition - this.state.offset.x * ratio) * this.state.scaling.x;
+    var trgLoc = (scope.width * scope.source.triggerPosition - this.state.offset.x * ratio) * this.state.scaling.x;
     context.beginPath();
-    context.moveTo(trgMiddle, scope.height - 15);
-    context.lineTo(trgMiddle + 15, scope.height);
-    context.lineTo(trgMiddle - 15, scope.height);
+    context.moveTo(trgLoc, scope.height - 15);
+    context.lineTo(trgLoc + 15, scope.height);
+    context.lineTo(trgLoc - 15, scope.height);
     context.fill();
 
     // Restore canvas context for next painter

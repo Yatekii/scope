@@ -32,13 +32,14 @@ FFTrace.prototype.draw = function (canvas) {
     var scope = this.state.source.scope;
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
+    var currentWindow = windowFunctions[this.state.windowFunction];
     // Duplicate data
     var real = this.state.source.ctrl.channels[0].slice(0);
     // Create a complex vector with zeroes sice we only have real input
     var compl = new Float32Array(this.state.source.ctrl.channels[0]);
     // Window data if a valid window was selected
-    if(this.state.windowFunction && windowFunctions[this.state.windowFunction]){
-        real = applyWindow(real, windowFunctions[this.state.windowFunction]);
+    if(this.state.windowFunction && currentWindow){
+        real = applyWindow(real, currentWindow.fn);
     }
     // Do an FFT of the signal
     miniFFT(real, compl);
@@ -78,8 +79,8 @@ FFTrace.prototype.draw = function (canvas) {
         if(this.state.SNRmode == 'manual'){
             var ss = 0;
             var sn = 0;
-            var first = this.getMarkerById('SNRfirst')[0].x / ab.length;
-            var second = this.getMarkerById('SNRsecond')[0].x / ab.length;
+            var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
+            var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
 
             // Add up all values between the markers and those around each
             for(i = 1; i < ab.length; i++){
@@ -103,39 +104,24 @@ FFTrace.prototype.draw = function (canvas) {
                 }
             }
 
-            // Calculate sum around max
-            var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
-            var n = [];
-            var s = [];
-            var secondSNRMarker = 0;
-            var firstSNRMarker = 0;
-            // Add all values under the average and those above each to a list
-            for(i = 1; i < ab.length; i++){
-                if(ab[i] < m){
-                    n.push(ab[i]);
-                }
-                else {
-                    if(secondSNRMarker == 0){
-                        firstSNRMarker = i - 1;
-                        if(firstSNRMarker < 1){
-                            firstSNRMarker = 1;
-                        }
-                    }
-                    s.push(ab[i]);
-                    secondSNRMarker = i + 1;
-                    if(secondSNRMarker > ab.length){
-                        secondSNRMarker = ab.length;
-                    }
-                }
-            }
+            var l = Math.floor(currentWindow.lines / 2);
+            // Sum all values in the bundle around max
+            var s = sum(ab.slice(
+                maxi - l,
+                maxi + l
+            ));
+            // Sum all the other values except DC
+            var n = sum(ab.slice(l));
+            
             // Sum both sets and calculate their ratio which is the SNR
-            var ss = ssum(s);
-            var sn = ssum(n);
-            var SNR = Math.log10(ss / sn) * 10;
+            SNR = Math.log10(s / n) * 10;
             this.state.info.SNR = SNR;
 
             // Posiion SNR markers
-            this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
+            this.setSNRMarkers(
+                (maxi - l) / ab.length,
+                (maxi + l) / ab.length
+            );
         }
     } else {
         this.state.info.RMSPower = '\u26A0 No signal';
@@ -159,13 +145,11 @@ FFTrace.prototype.draw = function (canvas) {
         // Horizontal grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
-        context.font = "30px Arial";
+        context.font = '30px Arial';
         context.fillStyle = 'blue';
 
         // Calculate the current horizontal grid width dt according to screen size
-        var unit = 1e9
-        var nStart = 1;
-        var n = 1;
+        n = 1;
         var df = ratio * this.state.source.samplingRate / 2 * n;
         for(var a = 0; a < 20; a++){
             if(scope.width / df > 1 && scope.width / df < 11){
@@ -179,12 +163,11 @@ FFTrace.prototype.draw = function (canvas) {
         this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
 
         // Draw horizontal grid
-        var i;
         for(i = 0; i < 11; i++){
             context.save();
             context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
-            for(var j = 1; j < 10; j++){
+            for(j = 1; j < 10; j++){
                 context.beginPath();
                 context.moveTo(df * i + df / 10 * j, 0);
                 context.lineTo(df * i + df / 10 * j, scope.height);
@@ -226,12 +209,12 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Restore brush
     context.restore();
-
-    // TODO: Draw triangle at trig loc
-    var trigLoc = ratio * me.state.source.scope.triggerLoc * ab.length;
-
 };
 
+/*
+ * Returns a marker corresponding to <id>
+ * <id> : <string> : The name of the marker
+ */
 FFTrace.prototype.getMarkerById = function(id){
     var result = this.state.markers.filter(function( obj ) {
         return obj.id == id;
@@ -239,6 +222,11 @@ FFTrace.prototype.getMarkerById = function(id){
     return result;
 };
 
+/*
+ * Sets the location of both SNR measurement markers
+ * <firstX> : uint : Position of the first marker in samples
+ * <secondX> : uint : Position of the second marker in samples
+ */
 FFTrace.prototype.setSNRMarkers = function(firstX, secondX){
     var first = this.getMarkerById('SNRfirst');
     var second = this.getMarkerById('SNRsecond');
@@ -254,6 +242,10 @@ FFTrace.prototype.setSNRMarkers = function(firstX, secondX){
     }
 };
 
+/*
+ * Sets the location of the first SNR measurement marker
+ * <firstX> : uint : Position of the first marker in samples
+ */
 FFTrace.prototype.setFirstSNRMarker = function(firstX){
     var first = this.getMarkerById('SNRfirst');
     if(first.length < 1){
@@ -263,6 +255,10 @@ FFTrace.prototype.setFirstSNRMarker = function(firstX){
     first[0].x = firstX;
 };
 
+/*
+ * Sets the location of the second SNR measurement marker
+ * <secondX> : uint : Position of the second marker in samples
+ */
 FFTrace.prototype.setSecondSNRMarker = function(secondX){
     var second = this.getMarkerById('SNRsecond');
     if(second.length < 1){
