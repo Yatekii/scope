@@ -1,5 +1,5 @@
 import { miniFFT} from './math/fft.js';
-import { sum, ssum, rms } from './math/math.js';
+import { sum } from './math/math.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
 import * as marker from './marker.js';
 
@@ -81,13 +81,14 @@ FFTrace.prototype.draw = function (canvas) {
             var sn = 0;
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
             var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
+            console.log(first, second)
 
             // Add up all values between the markers and those around each
             for(i = 1; i < ab.length; i++){
-                if(i < first || i > second){
-                    sn += ab[i] * ab[i];
+                if(i > (second - first) / 2 && i < first || i > second){
+                    sn += ab[i];
                 } else {
-                    ss += ab[i] * ab[i];
+                    ss += ab[i];
                 }
             }
             var SNR = Math.log10(ss / sn) * 10;
@@ -106,13 +107,13 @@ FFTrace.prototype.draw = function (canvas) {
 
             var l = Math.floor(currentWindow.lines / 2);
             // Sum all values in the bundle around max
+            console.log(maxi - l, maxi + l)
             var s = sum(ab.slice(
                 maxi - l,
-                maxi + l
+                maxi + l + 1
             ));
             // Sum all the other values except DC
-            var n = sum(ab.slice(l));
-            
+            var n = sum(ab.slice(l, maxi - l)) + sum(ab.slice(maxi + l + 1));
             // Sum both sets and calculate their ratio which is the SNR
             SNR = Math.log10(s / n) * 10;
             this.state.info.SNR = SNR;

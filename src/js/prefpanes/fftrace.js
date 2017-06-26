@@ -97,7 +97,7 @@ export const FFTracePrefPane = {
                             s.source.frameSize
                         )),
                         onchange: m.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
+                            var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
                             marker.x = sampleToPercentage(
                                 frequencyToSample(
                                     parseInt(value),

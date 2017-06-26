@@ -15524,7 +15524,7 @@ const FFTracePrefPane = {
                             s.source.frameSize
                         )),
                         onchange: mithril.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
+                            var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
                             marker.x = sampleToPercentage(
                                 frequencyToSample(
                                     parseInt(value),
@@ -16324,11 +16324,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Draw trigger location
     context.fillStyle = 'white';
-<<<<<<< HEAD
-    var trgMiddle = (scope.width * scope.source.triggerPosition - this.state.offset.x * ratio) * this.state.scaling.x;
-=======
-    var trgLoc = (this.state.source.scope.triggerLoc * data.length - this.state.offset.x) * ratio;
->>>>>>> 931d319470480b77b2f073542b593056a8a57ce6
+    var trgLoc = (scope.width * scope.source.triggerPosition - this.state.offset.x * ratio) * this.state.scaling.x;
     context.beginPath();
     context.moveTo(trgLoc, scope.height - 15);
     context.lineTo(trgLoc + 15, scope.height);
@@ -16497,13 +16493,14 @@ FFTrace.prototype.draw = function (canvas) {
             var sn = 0;
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
             var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
+            console.log(first, second);
 
             // Add up all values between the markers and those around each
             for(i = 1; i < ab.length; i++){
-                if(i < first || i > second){
-                    sn += ab[i] * ab[i];
+                if(i > (second - first) / 2 && i < first || i > second){
+                    sn += ab[i];
                 } else {
-                    ss += ab[i] * ab[i];
+                    ss += ab[i];
                 }
             }
             var SNR = Math.log10(ss / sn) * 10;
@@ -16522,13 +16519,13 @@ FFTrace.prototype.draw = function (canvas) {
 
             var l = Math.floor(currentWindow.lines / 2);
             // Sum all values in the bundle around max
+            console.log(maxi - l, maxi + l);
             var s = sum(ab.slice(
                 maxi - l,
-                maxi + l
+                maxi + l + 1
             ));
             // Sum all the other values except DC
-            var n = sum(ab.slice(l));
-            
+            var n = sum(ab.slice(l, maxi - l)) + sum(ab.slice(maxi + l + 1));
             // Sum both sets and calculate their ratio which is the SNR
             SNR = Math.log10(s / n) * 10;
             this.state.info.SNR = SNR;

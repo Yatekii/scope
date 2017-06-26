@@ -1,19 +1,9 @@
 - Fix trigger level sent (+ trace offset)
-- Make trigger relative to active trace
-
-+ SNR calculations
-    + auto mode
-        + calculate box width from window
-        + remove half box with at dc
-        + find max peak
-        + calculate SNR
-    + manual mode
-        + calculate SNR between markers
 
 - Fix all unit calculations
     - Freq amplitude
     - RMS
-    - Maybe SNR
+    - SNR calculation has a mistake; maybe correlates with power too => ask mr. gut
 
 - THD
     - TODO: add todo description ;)
