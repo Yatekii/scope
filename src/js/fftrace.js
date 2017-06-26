@@ -34,10 +34,6 @@ FFTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     // Duplicate data
     var real = this.state.source.ctrl.channels[0].slice(0);
-    var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits)
-    for(i = 0; i < real.length; i++){
-        real[i] = real[i] / vmax;
-    }
     // Create a complex vector with zeroes sice we only have real input
     var compl = new Float32Array(this.state.source.ctrl.channels[0]);
     // Window data if a valid window was selected
@@ -76,7 +72,7 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = rms(ab);
+        this.state.info.RMSPower = sum(ab) / scope.source.samplingRate * (this.state.halfSpectrum ? 2 : 1);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){

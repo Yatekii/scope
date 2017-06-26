@@ -42,7 +42,7 @@ var appState = {
                 frameSize: 4096,
                 samplingRate: 1000000,
                 bits: 16,
-                vpb: 2.2 / Math.pow(2,14), // Volts per bit
+                vpp: 2.2, // Volts per bit
                 buffer: {
                     upperSize: 4,
                     lowerSize: 1,

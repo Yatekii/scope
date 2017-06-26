@@ -101,7 +101,13 @@ TimeTrace.prototype.draw = function (canvas) {
             dA = this.state.scaling.y * n;
         }
         // Store vertical grid size
-        this.state.info.deltaA = (n * (this.state.source.bits - 1) * this.state.source.vpb).toFixed(15);
+        // vpp / canvas = v * scaling / px
+        // px = v * scaling * canvas
+        // da = px / dec
+        // da = v * scaling * canvas / dec
+        // da / canvas / scaling = v / dec
+        // v / dec = n / canvas
+        this.state.info.deltaA = (scope.source.vpp * n / scope.height).toFixed(15);
 
         // Draw vertical grid
         for(i = -6; i < 6; i++){

@@ -15992,8 +15992,9 @@ const WebsocketSource = function(state) {
                 var arr = new Uint16Array(e.data);
                 var data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
-                    // 14 bit uint to float
-                    data[i] = (arr[i] - Math.pow(2, (me.state.bits - 1))) / Math.pow(2, (me.state.bits - 1 - 2));
+                    // 16 bit uint to float
+                    data[i] = (arr[i] - Math.pow(2, (me.state.bits - 1)))
+                            / Math.pow(2, (me.state.bits)) * me.state.vpp;
                 }
                 me.channels[0] = data;
                 // Start a new frame if mode is appropriate otherwise just exit
@@ -16245,7 +16246,13 @@ TimeTrace.prototype.draw = function (canvas) {
             dA = this.state.scaling.y * n;
         }
         // Store vertical grid size
-        this.state.info.deltaA = (n * (this.state.source.bits - 1) * this.state.source.vpb).toFixed(15);
+        // vpp / canvas = v * scaling / px
+        // px = v * scaling * canvas
+        // da = px / dec
+        // da = v * scaling * canvas / dec
+        // da / canvas / scaling = v / dec
+        // v / dec = n / canvas
+        this.state.info.deltaA = (scope.source.vpp * n / scope.height).toFixed(15);
 
         // Draw vertical grid
         for(i = -6; i < 6; i++){
@@ -16374,9 +16381,6 @@ const ssum = function(arr){
  * Calculate the RMS of all elements in an array.
  * <arr> : int[] : An array-like containing all values to sum up
  */
-const rms = function(arr){
-    return Math.sqrt(sum(arr) / arr.length);
-};
 
 const draw$1 = function (context, scopeState, markerState, d, length) {
     // Store old state
@@ -16407,6 +16411,14 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
+/*
+ * Trace constructor
+ * Constructs a new FFTrace
+ * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
+ * A window can be applied and several measurements such as SNR and Signal RMS can be done.
+ * <id> : uint : Unique trace id, which is assigned when loading a trace
+ * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
+ */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16430,10 +16442,6 @@ FFTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     // Duplicate data
     var real = this.state.source.ctrl.channels[0].slice(0);
-    var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits);
-    for(i = 0; i < real.length; i++){
-        real[i] = real[i] / vmax;
-    }
     // Create a complex vector with zeroes sice we only have real input
     var compl = new Float32Array(this.state.source.ctrl.channels[0]);
     // Window data if a valid window was selected
@@ -16472,7 +16480,7 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = rms(ab);
+        this.state.info.RMSPower = sum(ab) / scope.source.samplingRate * (this.state.halfSpectrum ? 2 : 1);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
@@ -16759,6 +16767,7 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
+//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -16790,7 +16799,7 @@ var appState = {
                 frameSize: 4096,
                 samplingRate: 1000000,
                 bits: 16,
-                vpb: 2.2 / Math.pow(2,14), // Volts per bit
+                vpp: 2.2, // Volts per bit
                 buffer: {
                     upperSize: 4,
                     lowerSize: 1,
