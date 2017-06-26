@@ -4,7 +4,6 @@ R E S T R U C T U R E   C O D E
 
 - Fix trigger level sent (+ trace offset)
 - Make trigger relative to active trace
-- FIx moving trace X
 
 - SNR calculations
     - auto mode
@@ -16,7 +15,6 @@ R E S T R U C T U R E   C O D E
         - calculate SNR between markers
 
 - Fix all unit calculations
-    - V amplitude
     - Freq amplitude
     - RMS
     - Maybe SNR

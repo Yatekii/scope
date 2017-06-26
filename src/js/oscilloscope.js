@@ -241,7 +241,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
     // Move traces X if move traces X is active
     if(this.traceMovingX !== false){
-        var offsetX = this.state.source.frameSize / this.canvas.width * event.movementX;
+        var offsetX = this.state.source.frameSize / this.canvas.width * event.movementX / this.traceMovingX.scaling.x;
         this.traceMovingX.offset.x -= offsetX;
         if(this.traceMovingX.offset.x < 0){
             this.traceMovingX.offset.x = 0;

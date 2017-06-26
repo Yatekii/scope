@@ -15902,7 +15902,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
     // Move traces X if move traces X is active
     if(this.traceMovingX !== false){
-        var offsetX = this.state.source.frameSize / this.canvas.width * event.movementX;
+        var offsetX = this.state.source.frameSize / this.canvas.width * event.movementX / this.traceMovingX.scaling.x;
         this.traceMovingX.offset.x -= offsetX;
         if(this.traceMovingX.offset.x < 0){
             this.traceMovingX.offset.x = 0;
@@ -16306,7 +16306,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Draw trigger location
     context.fillStyle = 'white';
-    var trgMiddle = scope.width * scope.source.triggerPosition - this.state.offset.x * ratio;
+    var trgMiddle = (scope.width * scope.source.triggerPosition - this.state.offset.x * ratio) * this.state.scaling.x;
     context.beginPath();
     context.moveTo(trgMiddle, scope.height - 15);
     context.lineTo(trgMiddle + 15, scope.height);
@@ -16411,14 +16411,6 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
-/*
- * Trace constructor
- * Constructs a new FFTrace
- * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
- * A window can be applied and several measurements such as SNR and Signal RMS can be done.
- * <id> : uint : Unique trace id, which is assigned when loading a trace
- * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
- */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16767,7 +16759,6 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
-//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {
