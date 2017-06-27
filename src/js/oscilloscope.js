@@ -31,6 +31,7 @@ Oscilloscope.prototype.draw = function() {
     var halfHeight = this.state.height / 2;
     var context = this.canvas.getContext('2d');
     var activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const triggerTrace = this.state.source.traces[this.state.source.triggerTrace];
 
     // Assign new scope properties
     this.canvas.height = this.state.height = height;
@@ -42,10 +43,12 @@ Oscilloscope.prototype.draw = function() {
     context.fillRect(0, 0, width, height);
 
     // Draw trigger level
+    const triggerHeight = (halfHeight - this.state.source.trigger.level)
+                        * halfHeight * activeTrace.scaling.y + triggerTrace.offset.y;
     context.strokeStyle = '#278BFF';
     context.beginPath();
-    context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * activeTrace.scaling.y);
-    context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * activeTrace.scaling.y);
+    context.moveTo(0, triggerHeight);
+    context.lineTo(width, triggerHeight);
     context.stroke();
 
     // Draw all traces if the source is ready
@@ -59,10 +62,11 @@ Oscilloscope.prototype.draw = function() {
 Oscilloscope.prototype.onMouseDown = function(event){
     var me = this;
     var activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const triggerTrace = this.state.source.traces[this.state.source.triggerTrace];
     var halfHeight = this.canvas.height / 2;
     // Start moving triggerlevel
     // TODO: adjust trigger level setup to be dependant on active trace
-    var triggerLevel = this.state.source.trigger.level * halfHeight * activeTrace.scaling.y;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * triggerTrace.scaling.y;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
         this.triggerMoving = activeTrace;
         return;

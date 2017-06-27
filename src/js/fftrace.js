@@ -38,9 +38,10 @@ FFTrace.prototype.draw = function (canvas) {
     // Create a complex vector with zeroes sice we only have real input
     var compl = new Float32Array(this.state.source.ctrl.channels[0]);
     // Window data if a valid window was selected
-    if(this.state.windowFunction && currentWindow){
-        real = applyWindow(real, currentWindow.fn);
-    }
+    // TODO: Uncomment again after debug
+    // if(this.state.windowFunction && currentWindow){
+    //     real = applyWindow(real, currentWindow.fn);
+    // }
     // Do an FFT of the signal
     miniFFT(real, compl);
 
@@ -73,7 +74,8 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = sum(ab) / scope.source.samplingRate * (this.state.halfSpectrum ? 2 : 1);
+        console.log(sum(ab))
+        this.state.info.RMSPower = Math.sqrt(sum(ab) * scope.source.samplingRate / ab.length);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
@@ -81,7 +83,6 @@ FFTrace.prototype.draw = function (canvas) {
             var sn = 0;
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
             var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
-            console.log(first, second)
 
             // Add up all values between the markers and those around each
             for(i = 1; i < ab.length; i++){
@@ -107,7 +108,6 @@ FFTrace.prototype.draw = function (canvas) {
 
             var l = Math.floor(currentWindow.lines / 2);
             // Sum all values in the bundle around max
-            console.log(maxi - l, maxi + l)
             var s = sum(ab.slice(
                 maxi - l,
                 maxi + l + 1
@@ -143,6 +143,51 @@ FFTrace.prototype.draw = function (canvas) {
     // Store brush
     context.save();
     if(this.id == this.state.source.activeTrace){
+        // TODO:: ======================
+
+        // Horizontal grid
+        context.strokeWidth = 1;
+        context.strokeStyle = '#ABABAB';
+        context.font = '30px Arial';
+        context.fillStyle = 'blue';
+
+        // Calculate the current horizontal grid width dt according to screen size
+        var n = 1e18;
+        var dt = ratio / this.state.source.samplingRate * n;
+        for(a = 0; a < 20; a++){
+            if(scope.width / dt > 1 && scope.width / dt < 11){
+                break;
+            }
+            n *= 1e-1;
+            dt = ratio / this.state.source.samplingRate * n;
+        }
+
+        // Store grid width
+        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate).toFixed(15);
+
+        // Draw horizontal grid
+        for(i = 0; i < 11; i++){
+            context.save();
+            context.setLineDash([5]);
+            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / dt)) + ')';
+            for(j = 1; j < 10; j++){
+                context.beginPath();
+                context.moveTo(dt * i + dt / 10 * j, 0);
+                context.lineTo(dt * i + dt / 10 * j, scope.height);
+                context.stroke();
+            }
+            context.restore();
+            context.beginPath();
+            context.moveTo(dt * i, 0);
+            context.lineTo(dt * i, scope.height);
+            context.stroke();
+        }
+        context.restore();
+
+
+
+        // TODO:: ======================
+
         // Horizontal grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';

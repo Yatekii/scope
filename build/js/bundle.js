@@ -15347,17 +15347,6 @@ const windowFunctions = {
  * Applies a Windowing Function to an array.
  * <dataArray>
  */
-const applyWindow = function(dataArray, windowing_function, alpha) {
-    var datapoints = dataArray.length;
-
-    /* For each item in the array */
-    for (var n=0; n<datapoints; ++n) {
-        /* Apply the windowing function */
-        dataArray[n] *= windowing_function(n, datapoints, alpha);
-    }
-
-    return dataArray;
-};
 
 /*
  * This file holds helper functions to convert different unitspaces into one another.
@@ -15710,6 +15699,7 @@ Oscilloscope.prototype.draw = function() {
     var halfHeight = this.state.height / 2;
     var context = this.canvas.getContext('2d');
     var activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const triggerTrace = this.state.source.traces[this.state.source.triggerTrace];
 
     // Assign new scope properties
     this.canvas.height = this.state.height = height;
@@ -15721,10 +15711,12 @@ Oscilloscope.prototype.draw = function() {
     context.fillRect(0, 0, width, height);
 
     // Draw trigger level
+    const triggerHeight = (halfHeight - this.state.source.trigger.level)
+                        * halfHeight * activeTrace.scaling.y + triggerTrace.offset.y;
     context.strokeStyle = '#278BFF';
     context.beginPath();
-    context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * activeTrace.scaling.y);
-    context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * activeTrace.scaling.y);
+    context.moveTo(0, triggerHeight);
+    context.lineTo(width, triggerHeight);
     context.stroke();
 
     // Draw all traces if the source is ready
@@ -15738,10 +15730,11 @@ Oscilloscope.prototype.draw = function() {
 Oscilloscope.prototype.onMouseDown = function(event){
     var me = this;
     var activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const triggerTrace = this.state.source.traces[this.state.source.triggerTrace];
     var halfHeight = this.canvas.height / 2;
     // Start moving triggerlevel
     // TODO: adjust trigger level setup to be dependant on active trace
-    var triggerLevel = this.state.source.trigger.level * halfHeight * activeTrace.scaling.y;
+    var triggerLevel = this.state.source.trigger.level * halfHeight * triggerTrace.scaling.y;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
         this.triggerMoving = activeTrace;
         return;
@@ -16450,9 +16443,10 @@ FFTrace.prototype.draw = function (canvas) {
     // Create a complex vector with zeroes sice we only have real input
     var compl = new Float32Array(this.state.source.ctrl.channels[0]);
     // Window data if a valid window was selected
-    if(this.state.windowFunction && currentWindow){
-        real = applyWindow(real, currentWindow.fn);
-    }
+    // TODO: Uncomment again after debug
+    // if(this.state.windowFunction && currentWindow){
+    //     real = applyWindow(real, currentWindow.fn);
+    // }
     // Do an FFT of the signal
     miniFFT(real, compl);
 
@@ -16485,7 +16479,8 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = sum(ab) / scope.source.samplingRate * (this.state.halfSpectrum ? 2 : 1);
+        console.log(sum(ab));
+        this.state.info.RMSPower = Math.sqrt(sum(ab) * scope.source.samplingRate / ab.length);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
@@ -16493,7 +16488,6 @@ FFTrace.prototype.draw = function (canvas) {
             var sn = 0;
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
             var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
-            console.log(first, second);
 
             // Add up all values between the markers and those around each
             for(i = 1; i < ab.length; i++){
@@ -16519,7 +16513,6 @@ FFTrace.prototype.draw = function (canvas) {
 
             var l = Math.floor(currentWindow.lines / 2);
             // Sum all values in the bundle around max
-            console.log(maxi - l, maxi + l);
             var s = sum(ab.slice(
                 maxi - l,
                 maxi + l + 1
@@ -16555,6 +16548,51 @@ FFTrace.prototype.draw = function (canvas) {
     // Store brush
     context.save();
     if(this.id == this.state.source.activeTrace){
+        // TODO:: ======================
+
+        // Horizontal grid
+        context.strokeWidth = 1;
+        context.strokeStyle = '#ABABAB';
+        context.font = '30px Arial';
+        context.fillStyle = 'blue';
+
+        // Calculate the current horizontal grid width dt according to screen size
+        var n = 1e18;
+        var dt = ratio / this.state.source.samplingRate * n;
+        for(a = 0; a < 20; a++){
+            if(scope.width / dt > 1 && scope.width / dt < 11){
+                break;
+            }
+            n *= 1e-1;
+            dt = ratio / this.state.source.samplingRate * n;
+        }
+
+        // Store grid width
+        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate).toFixed(15);
+
+        // Draw horizontal grid
+        for(i = 0; i < 11; i++){
+            context.save();
+            context.setLineDash([5]);
+            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / dt)) + ')';
+            for(j = 1; j < 10; j++){
+                context.beginPath();
+                context.moveTo(dt * i + dt / 10 * j, 0);
+                context.lineTo(dt * i + dt / 10 * j, scope.height);
+                context.stroke();
+            }
+            context.restore();
+            context.beginPath();
+            context.moveTo(dt * i, 0);
+            context.lineTo(dt * i, scope.height);
+            context.stroke();
+        }
+        context.restore();
+
+
+
+        // TODO:: ======================
+
         // Horizontal grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
@@ -16798,7 +16836,7 @@ var appState = {
                 // location: 'ws://localhost:50090',
                 frameSize: 4096,
                 samplingRate: 1000000,
-                bits: 16,
+                bits: 14,
                 vpp: 2.2, // Volts per bit
                 buffer: {
                     upperSize: 4,
