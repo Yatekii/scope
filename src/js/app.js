@@ -40,8 +40,8 @@ var appState = {
                 location: 'ws://10.84.130.54:50090',
                 // location: 'ws://localhost:50090',
                 frameSize: 4096,
-                samplingRate: 1000000,
-                bits: 14,
+                samplingRate: 1000000 / 5,
+                bits: 16,
                 vpp: 2.2, // Volts per bit
                 buffer: {
                     upperSize: 4,

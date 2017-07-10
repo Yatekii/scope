@@ -2,7 +2,6 @@
 
 - Fix all unit calculations
     - Freq amplitude
-    - RMS
     - SNR calculation has a mistake; maybe correlates with power too => ask mr. gut
 
 - THD
@@ -11,5 +10,6 @@
     - num harmonics
         - square integrate
 
+- Fix FFT
 - Make trigger relative to chosen trace
 - 2 Channel support

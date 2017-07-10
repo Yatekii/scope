@@ -1,5 +1,5 @@
 import { miniFFT} from './math/fft.js';
-import { sum } from './math/math.js';
+import { sum, power } from './math/math.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
 import * as marker from './marker.js';
 
@@ -47,17 +47,21 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Only use half of the FFT since we only need the upper half if settings say so
     if(this.state.halfSpectrum){
-        real = real.slice(0, real.length / 2);
-        compl = compl.slice(0, compl.length / 2);
+        // Double the halfband spectrum, but don't double the DC
+        real = real.slice(0, real.length / 2 + 1);
+        compl = compl.slice(0, compl.length / 2 + 1);
+        for(i = 1; i < real.length; i++){
+            real[i] *= 2;
+            compl[i] *= 2;
+        }
     }
 
     // Calculate the the total power of the signal
     // P = V^2
     var ab = new Float32Array(real.length);
     for(i = 0; i < ab.length; i++){
-        ab[i] = real[i]*real[i] + compl[i]*compl[i];
+        ab[i] = real[i] * real[i] + compl[i] * compl[i];
     }
-
     // Calculate x-Axis scaling
     // mul tells how many pixels have to be skipped after each sample
     // If the signal has more points than the canvas, this will always be 1
@@ -74,8 +78,7 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        console.log(sum(ab))
-        this.state.info.RMSPower = Math.sqrt(sum(ab) * scope.source.samplingRate / ab.length);
+        this.state.info.RMSPower = power(ab, scope.source.samplingRate);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
@@ -137,7 +140,7 @@ FFTrace.prototype.draw = function (canvas) {
     // Convert spectral density to a logarithmic scale to be able to better plot it.
     // Scale it down by 200 for a nicer plot
     for(i = 0; i < ab.length; i++){
-        ab[i] = Math.log10(ab[i])*20/200;
+        ab[i] = Math.log10(ab[i])*10/200;//Math.sqrt(ab[i]) / 200; //Math.log10(ab[i])*10/200;
     }
 
     // Store brush

@@ -33,3 +33,12 @@ export const ssum = function(arr){
 export const rms = function(arr){
     return Math.sqrt(sum(arr) / arr.length);
 };
+
+/*
+ * Calculate the Power of a signal.
+ * <arr> : int[] : An array-like containing all values to sum up
+ */
+export const power = function(arr, fs){
+    const deltaf = fs / arr.length;
+    return sum(arr) / (2 * arr.length * arr.length * deltaf);
+};
