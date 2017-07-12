@@ -15462,7 +15462,7 @@ const FFTracePrefPane = {
                 // GUI: Display RMS Signal Power
                 mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label', ['P', mithril('sub', 'rms')])),
-                    mithril('.col-9', mithril('label.form-label', t.info.RMSPower + ' V/\u221AHz'))
+                    mithril('.col-9', mithril('label.form-label', t.info.RMSPower + ' P/Hz'))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -16004,8 +16004,7 @@ const WebsocketSource = function(state) {
                 var data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
                     // 16 bit uint to float
-                    data[i] = (arr[i] - Math.pow(2, (me.state.bits - 1)))
-                            / Math.pow(2, (me.state.bits)) * me.state.vpp;
+                    data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp;
                 }
                 me.channels[0] = data;
                 // Start a new frame if mode is appropriate otherwise just exit
@@ -16392,9 +16391,10 @@ const sum = function(arr){
  * Calculate the Power of a signal.
  * <arr> : int[] : An array-like containing all values to sum up
  */
-const power = function(arr, fs){
-    const deltaf = fs / arr.length;
-    return sum(arr) / (2 * arr.length * arr.length * deltaf);
+
+
+const power = function(arr){
+    return sum(arr) / (arr.length * arr.length);
 };
 
 const draw$1 = function (context, scopeState, markerState, d, length) {

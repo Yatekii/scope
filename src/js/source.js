@@ -52,8 +52,7 @@ export const WebsocketSource = function(state) {
                 var data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
                     // 16 bit uint to float
-                    data[i] = (arr[i] - Math.pow(2, (me.state.bits - 1)))
-                            / Math.pow(2, (me.state.bits)) * me.state.vpp;
+                    data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp;
                 }
                 me.channels[0] = data;
                 // Start a new frame if mode is appropriate otherwise just exit

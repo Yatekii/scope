@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Oscilloscope</title>
+    <script src="fft_testdata.js"></script>
+    </script>
+    <script>
+        window.addEventListener('load', function() {
+            re = x.slice(0, 512);
+            im = new Float32Array(512);
+            miniFFT(re, im);
+            P = [];
+            for(var i = 0; i < re.length; i++)
+                P.push(re[i] * re[i] + im[i] * im[i]);
+            document.body.innerHTML = P.join(',')
+        });
+        miniFFT = function(re, im) {
+            var N = re.length;
+            var i, j, h, k;
+            for (i = 0; i < N; i++) {
+                for(j = 0, h = i, k = N; k >>= 1; h >>= 1){ // eslint-disable-line no-cond-assign
+                    j = (j << 1) | (h & 1);
+                }
+                if (j > i) {
+                    re[j] = [re[i], re[i] = re[j]][0];
+                    im[j] = [im[i], im[i] = im[j]][0];
+                }
+            }
+            for(var hN = 1; hN * 2 <= N; hN *= 2){
+                for (i = 0; i < N; i += hN * 2){
+                    for (j = i; j < i + hN; j++) {
+                        var cos = Math.cos(Math.PI * (j - i) / hN);
+                        var sin = Math.sin(Math.PI * (j - i) / hN);
+                        var tre =  re[j+hN] * cos + im[j+hN] * sin;
+                        var tim = -re[j+hN] * sin + im[j+hN] * cos;
+                        re[j + hN] = re[j] - tre; im[j + hN] = im[j] - tim;
+                        re[j] += tre; im[j] += tim;
+                    }
+                }
+            }
+        };
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

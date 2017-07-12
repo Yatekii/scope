@@ -1,5 +1,5 @@
 import { miniFFT} from './math/fft.js';
-import { sum, power } from './math/math.js';
+import { sum, power, powerDensity } from './math/math.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
 import * as marker from './marker.js';
 

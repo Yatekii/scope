@@ -38,7 +38,11 @@ export const rms = function(arr){
  * Calculate the Power of a signal.
  * <arr> : int[] : An array-like containing all values to sum up
  */
-export const power = function(arr, fs){
-    const deltaf = fs / arr.length;
-    return sum(arr) / (2 * arr.length * arr.length * deltaf);
+export const powerDensity = function(arr, fs){
+    // const deltaf = fs / arr.length;
+    return sum(arr) / (2 * arr.length * arr.length * fs);
+};
+
+export const power = function(arr){
+    return sum(arr) / (arr.length * arr.length);
 };

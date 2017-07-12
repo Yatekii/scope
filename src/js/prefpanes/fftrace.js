@@ -46,7 +46,7 @@ export const FFTracePrefPane = {
                 // GUI: Display RMS Signal Power
                 m('.form-group', [
                     m('.col-3', m('label.form-label', ['P', m('sub', 'rms')])),
-                    m('.col-9', m('label.form-label', t.info.RMSPower + ' V/\u221AHz'))
+                    m('.col-9', m('label.form-label', t.info.RMSPower + ' P/Hz'))
                 ]),
                 // GUI: Select windowing
                 m('.form-group', [
