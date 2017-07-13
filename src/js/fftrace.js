@@ -97,6 +97,9 @@ FFTrace.prototype.draw = function (canvas) {
                     ss += ab[i];
                 }
             }
+            // console.log(sn, ss);
+            // var Ns = this.state.halfSpectrum ? (ss.length * 2 * ss.length * 2) : (ss.length * ss.length);
+            // ss = ss / ()
             var SNR = Math.log10(ss / sn) * 10;
             this.state.info.SNR = SNR;
         }
@@ -211,7 +214,8 @@ FFTrace.prototype.draw = function (canvas) {
         }
 
         // Store grid width
-        this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
+        console.log(ratio, df, this.state.source.samplingRate, this.state.source.frameSize)
+        this.state.info.deltaf = 1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize;
 
         // Draw horizontal grid
         for(i = 0; i < 11; i++){
