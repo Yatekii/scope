@@ -15749,7 +15749,7 @@ Oscilloscope.prototype.onMouseDown = function(event){
     this.state.source.traces.forEach(function(trace){
         trace.markers && trace.markers.forEach(function(marker){
             if(marker.type == 'vertical'){
-                var x = marker.x * me.canvas.width;
+                var x = marker.x * me.canvas.width * activeTrace.scaling.x;
                 if(event.offsetX < x + 3 && event.offsetX > x - 3){
                     me.markerMoving = marker;
                     return;
@@ -15825,7 +15825,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
         this.state.source.traces.forEach(function(trace){
             trace.markers && trace.markers.forEach(function(marker){
                 if(marker.type == 'vertical'){
-                    var x = marker.x * me.canvas.width;
+                    var x = marker.x * me.canvas.width * activeTrace.scaling.x;
                     if(event.offsetX < x + 3 && event.offsetX > x - 3){
                         document.body.style.cursor = 'col-resize';
                         cursorSet = true;
@@ -15881,7 +15881,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
     if(this.markerMoving !== false){
         var markerLevel = 0;
         if(this.markerMoving.type == 'vertical'){
-            markerLevel = event.offsetX / this.canvas.width;
+            markerLevel = event.offsetX / (this.canvas.width * activeTrace.scaling.x);
             if(markerLevel > 1){
                 markerLevel = 1;
             }
@@ -16439,6 +16439,7 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
 
     // Draw marker
     if(markerState.type == 'vertical'){
+        // TODO: draw a label to better find a marker
         context.beginPath();
         context.moveTo(markerState.x * d * length, 0);
         context.lineTo(markerState.x * d * length, scopeState.height);
@@ -16447,7 +16448,7 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
         context.beginPath();
         var halfHeight = scopeState.height / 2;
         context.moveTo(0, halfHeight - markerState.y * d * length);
-        context.lineTo(scopeState.width, halfHeight - markerState.y * d)* length;
+        context.lineTo(scopeState.width, halfHeight - markerState.y * d * length);
         context.stroke();
     }
 
@@ -16455,6 +16456,14 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
+/*
+ * Trace constructor
+ * Constructs a new FFTrace
+ * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
+ * A window can be applied and several measurements such as SNR and Signal RMS can be done.
+ * <id> : uint : Unique trace id, which is assigned when loading a trace
+ * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
+ */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16541,6 +16550,9 @@ FFTrace.prototype.draw = function (canvas) {
                     ss += ab[i];
                 }
             }
+            // console.log(sn, ss);
+            // var Ns = this.state.halfSpectrum ? (ss.length * 2 * ss.length * 2) : (ss.length * ss.length);
+            // ss = ss / ()
             var SNR = Math.log10(ss / sn) * 10;
             this.state.info.SNR = SNR;
         }
@@ -16655,7 +16667,8 @@ FFTrace.prototype.draw = function (canvas) {
         }
 
         // Store grid width
-        this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
+        console.log(ratio, df, this.state.source.samplingRate, this.state.source.frameSize);
+        this.state.info.deltaf = 1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize;
 
         // Draw horizontal grid
         for(i = 0; i < 11; i++){

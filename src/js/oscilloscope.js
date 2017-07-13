@@ -76,7 +76,7 @@ Oscilloscope.prototype.onMouseDown = function(event){
     this.state.source.traces.forEach(function(trace){
         trace.markers && trace.markers.forEach(function(marker){
             if(marker.type == 'vertical'){
-                var x = marker.x * me.canvas.width;
+                var x = marker.x * me.canvas.width * activeTrace.scaling.x;
                 if(event.offsetX < x + 3 && event.offsetX > x - 3){
                     me.markerMoving = marker;
                     return;
@@ -152,7 +152,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
         this.state.source.traces.forEach(function(trace){
             trace.markers && trace.markers.forEach(function(marker){
                 if(marker.type == 'vertical'){
-                    var x = marker.x * me.canvas.width;
+                    var x = marker.x * me.canvas.width * activeTrace.scaling.x;
                     if(event.offsetX < x + 3 && event.offsetX > x - 3){
                         document.body.style.cursor = 'col-resize';
                         cursorSet = true;
@@ -208,7 +208,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
     if(this.markerMoving !== false){
         var markerLevel = 0;
         if(this.markerMoving.type == 'vertical'){
-            markerLevel = event.offsetX / this.canvas.width;
+            markerLevel = event.offsetX / (this.canvas.width * activeTrace.scaling.x);
             if(markerLevel > 1){
                 markerLevel = 1;
             }
