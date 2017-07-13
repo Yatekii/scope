@@ -78,7 +78,9 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = power(ab, scope.source.samplingRate);
+        this.state.info.RMSPower = power(ab);
+        // Set P/f
+        this.state.info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){

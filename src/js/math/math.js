@@ -35,14 +35,35 @@ export const rms = function(arr){
 };
 
 /*
- * Calculate the Power of a signal.
+ * Calculate the Power Density of a signal.
  * <arr> : int[] : An array-like containing all values to sum up
+ * <fs> : uint : The sample frequency
+ * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
  */
-export const powerDensity = function(arr, fs){
+export const powerDensity = function(arr, fs, half){
     // const deltaf = fs / arr.length;
-    return sum(arr) / (2 * arr.length * arr.length * fs);
+    // If it is the one-sided spectrum, we need a factor of two
+    if(half){
+        half = 2;
+    } else {
+        half = 1;
+    }
+    var N = (arr.length * half);
+    return sum(arr) / (half * N * N * fs);
 };
 
-export const power = function(arr){
-    return sum(arr) / (arr.length * arr.length);
+/*
+ * Calculate the Power Density of a signal.
+ * <arr> : int[] : An array-like containing all values to sum up
+ * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
+ */
+export const power = function(arr, half){
+    // If it is the one-sided spectrum, we need a factor of two
+    if(half){
+        half = 2;
+    } else {
+        half = 1;
+    }
+    var N = (arr.length * half);
+    return sum(arr) / (half * N * N);
 };

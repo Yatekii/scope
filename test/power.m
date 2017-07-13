@@ -25,6 +25,7 @@ Xone = X(1:N/2+1);
 Xone(2:end) = 2*Xone(2:end);
 
 PXone = sum(abs(Xone).^2)/(2*N^2)
+N
 
 df = fs;
 

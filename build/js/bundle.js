@@ -15462,7 +15462,12 @@ const FFTracePrefPane = {
                 // GUI: Display RMS Signal Power
                 mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label', ['P', mithril('sub', 'rms')])),
-                    mithril('.col-9', mithril('label.form-label', t.info.RMSPower + ' P/Hz'))
+                    mithril('.col-9', mithril('label.form-label', t.info.RMSPower + ' W'))
+                ]),
+                // GUI: Display Signal Power Density
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', ['dP/df', ])),
+                    mithril('.col-9', mithril('label.form-label', t.info.powerDensity + ' W/Hz'))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -16388,13 +16393,37 @@ const sum = function(arr){
 
 
 /*
- * Calculate the Power of a signal.
+ * Calculate the Power Density of a signal.
  * <arr> : int[] : An array-like containing all values to sum up
+ * <fs> : uint : The sample frequency
+ * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
  */
+const powerDensity = function(arr, fs, half){
+    // const deltaf = fs / arr.length;
+    // If it is the one-sided spectrum, we need a factor of two
+    if(half){
+        half = 2;
+    } else {
+        half = 1;
+    }
+    var N = (arr.length * half);
+    return sum(arr) / (half * N * N * fs);
+};
 
-
-const power = function(arr){
-    return sum(arr) / (arr.length * arr.length);
+/*
+ * Calculate the Power Density of a signal.
+ * <arr> : int[] : An array-like containing all values to sum up
+ * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
+ */
+const power = function(arr, half){
+    // If it is the one-sided spectrum, we need a factor of two
+    if(half){
+        half = 2;
+    } else {
+        half = 1;
+    }
+    var N = (arr.length * half);
+    return sum(arr) / (half * N * N);
 };
 
 const draw$1 = function (context, scopeState, markerState, d, length) {
@@ -16426,14 +16455,6 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
-/*
- * Trace constructor
- * Constructs a new FFTrace
- * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
- * A window can be applied and several measurements such as SNR and Signal RMS can be done.
- * <id> : uint : Unique trace id, which is assigned when loading a trace
- * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
- */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16501,7 +16522,9 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = power(ab, scope.source.samplingRate);
+        this.state.info.RMSPower = power(ab);
+        // Set P/f
+        this.state.info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
