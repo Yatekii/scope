@@ -1,6 +1,7 @@
 import { miniFFT} from './math/fft.js';
 import { sum, power, powerDensity } from './math/math.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
+import * as converting from './math/converting.js';
 import * as marker from './marker.js';
 
 /*
@@ -59,7 +60,6 @@ FFTrace.prototype.draw = function (canvas) {
     // Calculate the the total power of the signal
     // P = V^2
     var ab = new Float32Array(real.length);
-    console.log(ab.length)
     for(i = 0; i < ab.length; i++){
         ab[i] = real[i] * real[i] + compl[i] * compl[i];
     }
@@ -79,9 +79,9 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = power(ab, true);
+        this.state.info.RMSPower = power(ab, true, ab.length - 1);
         // Set P/f
-        this.state.info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true);
+        this.state.info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
@@ -126,6 +126,35 @@ FFTrace.prototype.draw = function (canvas) {
                 (maxi + l) / ab.length
             );
         }
+
+        // THD
+
+        var f = 1000;
+        var n = 10;
+        
+        // Draw the <n> next harmonic locations
+        for(i = 1; i <= n; i++){
+            context.fillStyle = 'blue';
+            var sample = converting.frequencyToSample(f * i, scope.source.samplingRate / 2, ab.length);
+            var harmonicX = (
+                converting.sampleToPercentage(
+                    sample,
+                    ab.length
+                ) * scope.width
+                - this.state.offset.x * ratio
+            ) * this.state.scaling.x;
+            var harmonicY = (
+                halfHeight - (
+                    Math.log10(ab[Math.floor(sample) + this.state.offset.x])*10/200 + this.state.offset.y
+                ) * halfHeight * this.state.scaling.y
+            );
+            context.beginPath();
+            context.moveTo(harmonicX, harmonicY);
+            context.lineTo(harmonicX + 15, harmonicY - 15);
+            context.lineTo(harmonicX - 15, harmonicY - 15);
+            context.fill();
+        }
+
     } else {
         this.state.info.RMSPower = '\u26A0 No signal';
         this.state.info.SNR = '\u26A0 No signal';
