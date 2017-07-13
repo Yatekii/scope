@@ -16,6 +16,7 @@ X = X.^(1/2)
 % figure; plot(n, x)
 % 
 X = fft(x);
+r = snr(x)
 
 Px = sum(x.^2)/N
 

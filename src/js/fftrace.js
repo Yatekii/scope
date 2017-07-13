@@ -59,6 +59,7 @@ FFTrace.prototype.draw = function (canvas) {
     // Calculate the the total power of the signal
     // P = V^2
     var ab = new Float32Array(real.length);
+    console.log(ab.length)
     for(i = 0; i < ab.length; i++){
         ab[i] = real[i] * real[i] + compl[i] * compl[i];
     }
@@ -78,9 +79,9 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = power(ab);
+        this.state.info.RMSPower = power(ab, true);
         // Set P/f
-        this.state.info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2);
+        this.state.info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
@@ -89,18 +90,13 @@ FFTrace.prototype.draw = function (canvas) {
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
             var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
 
-            // Add up all values between the markers and those around each
-            for(i = 1; i < ab.length; i++){
-                if(i > (second - first) / 2 && i < first || i > second){
-                    sn += ab[i];
-                } else {
-                    ss += ab[i];
-                }
-            }
-            // console.log(sn, ss);
-            // var Ns = this.state.halfSpectrum ? (ss.length * 2 * ss.length * 2) : (ss.length * ss.length);
-            // ss = ss / ()
-            var SNR = Math.log10(ss / sn) * 10;
+            // Sum all values in the bundle around max
+            var Ps = power(ab.slice(first, second + 1), true, ab.length);
+            // Sum all the other values except DC
+            var Pn = power(ab.slice((second - first) / 2, first), true, ab.length)
+                   + power(ab.slice(second + 1), true, ab.length);
+            // Sum both sets and calculate their ratio which is the SNR
+            var SNR = Math.log10(Ps / Pn) * 10;
             this.state.info.SNR = SNR;
         }
         if(this.state.SNRmode == 'auto'){
@@ -116,14 +112,12 @@ FFTrace.prototype.draw = function (canvas) {
 
             var l = Math.floor(currentWindow.lines / 2);
             // Sum all values in the bundle around max
-            var s = sum(ab.slice(
-                maxi - l,
-                maxi + l + 1
-            ));
+            var Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
             // Sum all the other values except DC
-            var n = sum(ab.slice(l, maxi - l)) + sum(ab.slice(maxi + l + 1));
+            var Pn = power(ab.slice(l, maxi - l), true, ab.length)
+                   + power(ab.slice(maxi + l + 1), true, ab.length);
             // Sum both sets and calculate their ratio which is the SNR
-            SNR = Math.log10(s / n) * 10;
+            SNR = Math.log10(Ps / Pn) * 10;
             this.state.info.SNR = SNR;
 
             // Posiion SNR markers
@@ -196,13 +190,13 @@ FFTrace.prototype.draw = function (canvas) {
 
         // TODO:: ======================
 
-        // Horizontal grid
+        // Vertical grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
         context.font = '30px Arial';
         context.fillStyle = 'blue';
 
-        // Calculate the current horizontal grid width dt according to screen size
+        // Calculate the current vertical grid width dF according to screen size
         n = 1;
         var df = ratio * this.state.source.samplingRate / 2 * n;
         for(var a = 0; a < 20; a++){
@@ -214,10 +208,9 @@ FFTrace.prototype.draw = function (canvas) {
         }
 
         // Store grid width
-        console.log(ratio, df, this.state.source.samplingRate, this.state.source.frameSize)
         this.state.info.deltaf = 1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize;
 
-        // Draw horizontal grid
+        // Draw vertical grid
         for(i = 0; i < 11; i++){
             context.save();
             context.setLineDash([5]);
@@ -237,6 +230,7 @@ FFTrace.prototype.draw = function (canvas) {
         context.restore();
     }
     context.strokeWidth = 1;
+
     // Draw trace
     context.strokeStyle = this.state.color;
     context.beginPath();

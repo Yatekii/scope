@@ -40,7 +40,7 @@ export const rms = function(arr){
  * <fs> : uint : The sample frequency
  * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
  */
-export const powerDensity = function(arr, fs, half){
+export const powerDensity = function(arr, fs, half, N){
     // const deltaf = fs / arr.length;
     // If it is the one-sided spectrum, we need a factor of two
     if(half){
@@ -48,7 +48,7 @@ export const powerDensity = function(arr, fs, half){
     } else {
         half = 1;
     }
-    var N = (arr.length * half);
+    N = N ? N * half : (arr.length * half);
     return sum(arr) / (half * N * N * fs);
 };
 
@@ -57,13 +57,13 @@ export const powerDensity = function(arr, fs, half){
  * <arr> : int[] : An array-like containing all values to sum up
  * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
  */
-export const power = function(arr, half){
+export const power = function(arr, half, N){
     // If it is the one-sided spectrum, we need a factor of two
     if(half){
         half = 2;
     } else {
         half = 1;
     }
-    var N = (arr.length * half);
+    N = N ? N * half : (arr.length * half);
     return sum(arr) / (half * N * N);
 };
