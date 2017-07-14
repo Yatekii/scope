@@ -43,8 +43,8 @@ Oscilloscope.prototype.draw = function() {
     context.fillRect(0, 0, width, height);
 
     // Draw trigger level
-    const triggerHeight = (halfHeight - this.state.source.trigger.level)
-                        * halfHeight * activeTrace.scaling.y + triggerTrace.offset.y;
+    const triggerHeight = (1 - this.state.source.trigger.level - triggerTrace.offset.y)
+                        * halfHeight * activeTrace.scaling.y;
     context.strokeStyle = '#278BFF';
     context.beginPath();
     context.moveTo(0, triggerHeight);
@@ -66,7 +66,7 @@ Oscilloscope.prototype.onMouseDown = function(event){
     var halfHeight = this.canvas.height / 2;
     // Start moving triggerlevel
     // TODO: adjust trigger level setup to be dependant on active trace
-    var triggerLevel = this.state.source.trigger.level * halfHeight * triggerTrace.scaling.y;
+    var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * triggerTrace.scaling.y;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
         this.triggerMoving = activeTrace;
         return;
@@ -135,10 +135,12 @@ Oscilloscope.prototype.onMouseUp = function(){
 Oscilloscope.prototype.onMouseMove = function(event){
     var me = this;
     var activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const triggerTrace = this.state.source.traces[this.state.source.triggerTrace];
     var halfHeight = this.canvas.height / 2;
     var halfMoverWidth = this.state.ui.mover.width / 2;
     var halfMoverHeight = this.state.ui.mover.height / 2;
-    var triggerLevel = this.state.source.trigger.level * halfHeight * activeTrace.scaling.y;
+    // Trigger level on the screen
+    var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * activeTrace.scaling.y;
     var cursorSet = false;
 
     // Change cursor if trigger set is active
@@ -193,7 +195,8 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
     // Move triggerlevel is active
     if(this.triggerMoving !== false){
-        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * activeTrace.scaling.y);
+        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * activeTrace.scaling.y) - triggerTrace.offset.y;
+        console.log(triggerLevel);
         if(triggerLevel > 1){
             triggerLevel = 1;
         }
