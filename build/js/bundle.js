@@ -15716,7 +15716,7 @@ Oscilloscope.prototype.draw = function() {
     context.fillRect(0, 0, width, height);
 
     // Draw trigger level
-    const triggerHeight = (1 - this.state.source.trigger.level - triggerTrace.offset.y)
+    const triggerHeight = halfHeight + (- this.state.source.trigger.level - triggerTrace.offset.y)
                         * halfHeight * activeTrace.scaling.y;
     context.strokeStyle = '#278BFF';
     context.beginPath();

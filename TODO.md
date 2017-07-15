@@ -5,6 +5,7 @@
     - THD
         - Actually calculate THD
         - GUI
-
+        
 - Make trigger relative to chosen trace
+    - Select between traces
 - 2 Channel support
