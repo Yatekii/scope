@@ -16350,15 +16350,18 @@ TimeTrace.prototype.draw = function (canvas) {
         context.fillStyle = 'blue';
 
         // Calculate the current vertical grid height dA according to screen size
+        // Start at 1mV grid
+        const baseGrid = 1e-3;
         n = 1;
-        var dA = this.state.scaling.y;
+        var dA = baseGrid * halfHeight / (scope.source.vpp / 2) * this.state.scaling.y;
         for(a = 0; a < 20; a++){
-            if(scope.height * 0.5 / dA > 1 && scope.height * 0.5 / dA < 6){
+            if(scope.height * 0.5 / dA > 1 && scope.height * 0.5 / dA < 11){
                 break;
             }
-            n *= 5;
-            dA = this.state.scaling.y * n;
+            n *= 10;
+            dA = baseGrid * halfHeight / (scope.source.vpp / 2) * this.state.scaling.y * n;
         }
+        console.log(dA);
         // Store vertical grid size
         // vpp / canvas = v * scaling / px
         // px = v * scaling * canvas
@@ -16366,10 +16369,10 @@ TimeTrace.prototype.draw = function (canvas) {
         // da = v * scaling * canvas / dec
         // da / canvas / scaling = v / dec
         // v / dec = n / canvas
-        this.state.info.deltaA = (scope.source.vpp * n / scope.height).toFixed(15);
+        this.state.info.deltaA = (baseGrid * n).toFixed(15);
 
         // Draw vertical grid
-        for(i = -6; i < 6; i++){
+        for(i = -11; i < 11; i++){
             context.save();
             context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.height / dA)) + ')';
