@@ -34,16 +34,17 @@ FFTrace.prototype.draw = function (canvas) {
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
     var currentWindow = windowFunctions[this.state.windowFunction];
-    // Duplicate data
+    // Duplicate data because the fft will store the results in the input vectors
     var real = this.state.source.ctrl.channels[0].slice(0);
     // Create a complex vector with zeroes sice we only have real input
-    var compl = new Float32Array(this.state.source.ctrl.channels[0]);
+    var compl = new Float32Array(this.state.source.ctrl.channels[0].length);
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
     // if(this.state.windowFunction && currentWindow){
     //     real = applyWindow(real, currentWindow.fn);
     // }
     // Do an FFT of the signal
+    // The results are now stored in the input vectors
     miniFFT(real, compl);
 
     // Only use half of the FFT since we only need the upper half if settings say so
@@ -60,9 +61,11 @@ FFTrace.prototype.draw = function (canvas) {
     // Calculate the the total power of the signal
     // P = V^2
     var ab = new Float32Array(real.length);
+
     for(i = 0; i < ab.length; i++){
         ab[i] = real[i] * real[i] + compl[i] * compl[i];
     }
+    this.state.data = ab.slice(0);
     // Calculate x-Axis scaling
     // mul tells how many pixels have to be skipped after each sample
     // If the signal has more points than the canvas, this will always be 1

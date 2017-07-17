@@ -49,6 +49,7 @@ export const TimeTracePrefPane = {
                         }
                     }, 'Export Data')
                 ]),
+                // GUI: Display Export Data
                 m('.modal' + (vnode.state.exportActive ? 'active' : ''), [
                     m('.modal-overlay'),
                     m('.modal-container', [
