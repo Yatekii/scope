@@ -15601,6 +15601,33 @@ const TimeTracePrefPane = {
                     mithril('.col-3', mithril('label.form-label', 'ΔA')),
                     mithril('.col-9', mithril('label.form-label', t.info.deltaA))
                 ]),
+                // GUI: Display Export Button
+                mithril('.form-group', [
+                    mithril('button.btn.col-12', {
+                        onclick: function(){
+                            vnode.state.exportActive = !vnode.state.exportActive;
+                            vnode.state.exportData = '[' + t.ctrl.state.source.ctrl.channels[0].join(', ') + ']';
+                        }
+                    }, 'Export Data')
+                ]),
+                mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                    mithril('.modal-overlay'),
+                    mithril('.modal-container', [
+                        mithril('.modal-header', [
+                            mithril('button.btn.btn-clear.float-right', {
+                                onclick: function(){
+                                    vnode.state.exportActive = !vnode.state.exportActive;
+                                }
+                            }),
+                            mithril('.modal-title', 'Time Data')
+                        ]),
+                        mithril('.modal-body', 
+                            mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
+                                vnode.state.exportData
+                            ))
+                        )
+                    ])
+                ])
             ])
         ];
     }
@@ -15652,6 +15679,19 @@ const generalPrefPane = {
                             s.source.ctrl.forceTrigger();
                         }
                     }, 'Force Trigger')
+                ]),
+                // GUI: Trigger Trace
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'Trigger Trace')),
+                    mithril('select.form-select.col-9', {
+                        value: s.source.triggerTrace,
+                        onchange: mithril.withAttr('value', function(v){
+                            s.source.triggerTrace = v;
+                            s.source.trigger.channel = s.source.traces[s.source.triggerTrace].channelID;
+                        })
+                    }, s.source.traces.filter(function(t){ return t.type == 'TimeTrace'; }).map(function(t, i){
+                        return mithril('option', { value: i }, t.name);
+                    }))
                 ]),
                 // GUI: Display and select all traces
                 mithril('.form-group', [
@@ -16066,6 +16106,7 @@ WebsocketSource.prototype.requestFrame = function() {
             suf: Math.round(this.state.frameSize * (1 - this.state.triggerPosition))
         },
         // Always set the current trigger
+        // TODO: Zero out triggers for other channels
         triggerOn: {
             type: this.state.trigger.type,
             channel: this.state.trigger.channel,

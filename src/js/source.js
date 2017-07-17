@@ -106,6 +106,7 @@ WebsocketSource.prototype.requestFrame = function() {
             suf: Math.round(this.state.frameSize * (1 - this.state.triggerPosition))
         },
         // Always set the current trigger
+        // TODO: Zero out triggers for other channels
         triggerOn: {
             type: this.state.trigger.type,
             channel: this.state.trigger.channel,

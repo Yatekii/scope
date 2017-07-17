@@ -47,6 +47,19 @@ export const generalPrefPane = {
                         }
                     }, 'Force Trigger')
                 ]),
+                // GUI: Trigger Trace
+                m('.form-group', [
+                    m('.col-3', m('label.form-label', 'Trigger Trace')),
+                    m('select.form-select.col-9', {
+                        value: s.source.triggerTrace,
+                        onchange: m.withAttr('value', function(v){
+                            s.source.triggerTrace = v;
+                            s.source.trigger.channel = s.source.traces[s.source.triggerTrace].channelID;
+                        })
+                    }, s.source.traces.filter(function(t){ return t.type == 'TimeTrace'; }).map(function(t, i){
+                        return m('option', { value: i }, t.name);
+                    }))
+                ]),
                 // GUI: Display and select all traces
                 m('.form-group', [
                     m('.col-12', m('.btn-group.btn-group-block',

@@ -40,6 +40,33 @@ export const TimeTracePrefPane = {
                     m('.col-3', m('label.form-label', 'ΔA')),
                     m('.col-9', m('label.form-label', t.info.deltaA))
                 ]),
+                // GUI: Display Export Button
+                m('.form-group', [
+                    m('button.btn.col-12', {
+                        onclick: function(){
+                            vnode.state.exportActive = !vnode.state.exportActive;
+                            vnode.state.exportData = '[' + t.ctrl.state.source.ctrl.channels[0].join(', ') + ']';
+                        }
+                    }, 'Export Data')
+                ]),
+                m('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                    m('.modal-overlay'),
+                    m('.modal-container', [
+                        m('.modal-header', [
+                            m('button.btn.btn-clear.float-right', {
+                                onclick: function(){
+                                    vnode.state.exportActive = !vnode.state.exportActive;
+                                }
+                            }),
+                            m('.modal-title', 'Time Data')
+                        ]),
+                        m('.modal-body', 
+                            m('.content', m('textarea[style=height:200px;width:100%]', 
+                                vnode.state.exportData
+                            ))
+                        )
+                    ])
+                ])
             ])
         ];
     }
