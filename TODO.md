@@ -1,7 +1,6 @@
 - Fix all unit calculations
     - Freq amplitude
-    - SNR calculation has a mistake; maybe correlates with power too => ask mr. gut
-    - Power nearly fixed but something is odd ...
+    - SNR calculation has a mistake => ask mr. gut
     - THD
         - Actually calculate THD
         - GUI

@@ -7,6 +7,7 @@ import m from 'mithril';
 export const generalPrefPane = {
     view: function(vnode){
         var s = vnode.attrs.scopeConf;
+        var activeTrace = s.source.traces[s.source.activeTrace];
         return [
             m('header.text-center', m('h4', s)),
             m('.form-horizontal', [
@@ -72,6 +73,31 @@ export const generalPrefPane = {
                             }, trace.name);
                         })
                     ))
+                ]),
+                // GUI: Single Shot and Force Trigger
+                m('.form-group', [
+                    m('button.btn.col-2[title="Pan Horizontal"]', {
+                        onclick: function(){
+                            // Pan horizontal
+                            activeTrace.scaling.x = 1;
+                        }
+                    }, m('i.icon.icon-resize-horiz')),
+                    m('button.btn.col-2[title="Pan Vertical"]', {
+                        onclick: function(){
+                            // an vertical
+                            activeTrace.scaling.y = 1;
+                        }
+                    }, m('i.icon.icon-resize-vert')),
+                    m('button.btn.col-2', {
+                        onclick: function(){
+                            // TODO: Zoom +
+                        }
+                    }, m('i.icon.icon-plus')),
+                    m('button.btn.col-2', {
+                        onclick: function(){
+                            // TODO: Zoom -
+                        }
+                    }, m('i.icon.icon-minus'))
                 ]),
             ])
         ];

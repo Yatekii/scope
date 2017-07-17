@@ -15669,6 +15669,7 @@ const TimeTracePrefPane = {
 const generalPrefPane = {
     view: function(vnode){
         var s = vnode.attrs.scopeConf;
+        var activeTrace = s.source.traces[s.source.activeTrace];
         return [
             mithril('header.text-center', mithril('h4', s)),
             mithril('.form-horizontal', [
@@ -15734,6 +15735,31 @@ const generalPrefPane = {
                             }, trace.name);
                         })
                     ))
+                ]),
+                // GUI: Single Shot and Force Trigger
+                mithril('.form-group', [
+                    mithril('button.btn.col-2[title="Pan Horizontal"]', {
+                        onclick: function(){
+                            // Pan horizontal
+                            activeTrace.scaling.x = 1;
+                        }
+                    }, mithril('i.icon.icon-resize-horiz')),
+                    mithril('button.btn.col-2[title="Pan Vertical"]', {
+                        onclick: function(){
+                            // an vertical
+                            activeTrace.scaling.y = 1;
+                        }
+                    }, mithril('i.icon.icon-resize-vert')),
+                    mithril('button.btn.col-2', {
+                        onclick: function(){
+                            // TODO: Zoom +
+                        }
+                    }, mithril('i.icon.icon-plus')),
+                    mithril('button.btn.col-2', {
+                        onclick: function(){
+                            // TODO: Zoom -
+                        }
+                    }, mithril('i.icon.icon-minus'))
                 ]),
             ])
         ];
