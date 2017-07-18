@@ -58,7 +58,7 @@ var appState = {
                 triggerPosition: 1 / 8,
                 numberOfChannels: 2,
                 mode: 'normal',
-                activeTrace: 0,
+                activeTrace: 1,
                 traces: [
                     {
                         id: 3,

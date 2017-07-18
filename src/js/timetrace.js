@@ -102,7 +102,6 @@ TimeTrace.prototype.draw = function (canvas) {
             n *= 10;
             dA = baseGrid * halfHeight / (scope.source.vpp / 2) * this.state.scaling.y * n;
         }
-        console.log(dA)
         // Store vertical grid size
         // vpp / canvas = v * scaling / px
         // px = v * scaling * canvas

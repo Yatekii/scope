@@ -16361,7 +16361,6 @@ TimeTrace.prototype.draw = function (canvas) {
             n *= 10;
             dA = baseGrid * halfHeight / (scope.source.vpp / 2) * this.state.scaling.y * n;
         }
-        console.log(dA);
         // Store vertical grid size
         // vpp / canvas = v * scaling / px
         // px = v * scaling * canvas
@@ -16558,6 +16557,14 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
+/*
+ * Trace constructor
+ * Constructs a new FFTrace
+ * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
+ * A window can be applied and several measurements such as SNR and Signal RMS can be done.
+ * <id> : uint : Unique trace id, which is assigned when loading a trace
+ * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
+ */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16694,7 +16701,7 @@ FFTrace.prototype.draw = function (canvas) {
             ) * this.state.scaling.x;
             var harmonicY = (
                 halfHeight - (
-                    Math.log10(ab[Math.floor(sample) + this.state.offset.x])*10/200 + this.state.offset.y
+                    Math.log10(ab[Math.floor(sample) + this.state.offset.x])*10/100 + this.state.offset.y
                 ) * halfHeight * this.state.scaling.y
             );
             context.beginPath();
@@ -16717,56 +16724,52 @@ FFTrace.prototype.draw = function (canvas) {
     // Convert spectral density to a logarithmic scale to be able to better plot it.
     // Scale it down by 200 for a nicer plot
     for(i = 0; i < ab.length; i++){
-        ab[i] = Math.log10(ab[i])*10/200;//Math.sqrt(ab[i]) / 200; //Math.log10(ab[i])*10/200;
+        ab[i] = Math.log10(ab[i])*10/100;
     }
 
     // Store brush
     context.save();
     if(this.id == this.state.source.activeTrace){
-        // TODO:: ======================
-
-        // Horizontal grid
+        // Vertical grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
         context.font = '30px Arial';
         context.fillStyle = 'blue';
 
-        // Calculate the current horizontal grid width dt according to screen size
-        var n = 1e18;
-        var dt = ratio / this.state.source.samplingRate * n;
+        // Calculate the current vertical grid height dA according to screen size
+        // Start at 1mdB grid
+        const baseGrid = 1e-3;
+        n = 1;
+        var dA = baseGrid * halfHeight / (1) * this.state.scaling.y;
         for(a = 0; a < 20; a++){
-            if(scope.width / dt > 1 && scope.width / dt < 11){
+            if(scope.height * 0.5 / dA > 1 && scope.height * 0.5 / dA < 11){
                 break;
             }
-            n *= 1e-1;
-            dt = ratio / this.state.source.samplingRate * n;
+            n *= 10;
+            dA = baseGrid * halfHeight / (1) * this.state.scaling.y * n;
         }
+        // Store vertical grid size
+        // Mulitply by 100 because we scale the signal constant by that factor.
+        this.state.info.deltaA = (baseGrid * n * 100).toFixed(2);
 
-        // Store grid width
-        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate).toFixed(15);
-
-        // Draw horizontal grid
-        for(i = 0; i < 11; i++){
+        // Draw vertical grid
+        for(i = -11; i < 11; i++){
             context.save();
             context.setLineDash([5]);
-            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / dt)) + ')';
+            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.height / dA)) + ')';
             for(j = 1; j < 10; j++){
                 context.beginPath();
-                context.moveTo(dt * i + dt / 10 * j, 0);
-                context.lineTo(dt * i + dt / 10 * j, scope.height);
+                context.moveTo(0, 0.5 * scope.height + dA * i + dA / 10 * j);
+                context.lineTo(scope.width, 0.5 * scope.height + dA * i + dA / 10 * j);
                 context.stroke();
             }
             context.restore();
             context.beginPath();
-            context.moveTo(dt * i, 0);
-            context.lineTo(dt * i, scope.height);
+            context.moveTo(0, 0.5 * scope.height + dA * i);
+            context.lineTo(scope.width, 0.5 * scope.height + dA * i);
             context.stroke();
         }
         context.restore();
-
-
-
-        // TODO:: ======================
 
         // Vertical grid
         context.strokeWidth = 1;
@@ -17029,7 +17032,7 @@ var appState = {
                 triggerPosition: 1 / 8,
                 numberOfChannels: 2,
                 mode: 'normal',
-                activeTrace: 0,
+                activeTrace: 1,
                 traces: [
                     {
                         id: 3,
