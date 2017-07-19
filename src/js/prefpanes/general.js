@@ -88,9 +88,10 @@ export const generalPrefPane = {
                             activeTrace.scaling.y = 1;
                         }
                     }, m('i.icon.icon-resize-vert')),
-                    m('button.btn.col-2', {
+                    m('button.btn.col-2' + (s.ctrl && s.ctrl.addingMarker ? '.btn-primary' : ''), {
                         onclick: function(){
-                            // TODO: Zoom +
+                            // TODO: Add Marker
+                            s.ctrl.addingMarker = !s.ctrl.addingMarker;
                         }
                     }, m('i.icon.icon-plus')),
                     m('button.btn.col-2', {

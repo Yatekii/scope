@@ -1,5 +1,5 @@
 import { miniFFT} from './math/fft.js';
-import { sum, power, powerDensity } from './math/math.js';
+import { power, powerDensity } from './math/math.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
 import * as converting from './math/converting.js';
 import * as marker from './marker.js';
@@ -88,8 +88,6 @@ FFTrace.prototype.draw = function (canvas) {
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
-            var ss = 0;
-            var sn = 0;
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
             var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
 
@@ -115,9 +113,9 @@ FFTrace.prototype.draw = function (canvas) {
 
             var l = Math.floor(currentWindow.lines / 2);
             // Sum all values in the bundle around max
-            var Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
+            Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
             // Sum all the other values except DC
-            var Pn = power(ab.slice(l, maxi - l), true, ab.length)
+            Pn = power(ab.slice(l, maxi - l), true, ab.length)
                    + power(ab.slice(maxi + l + 1), true, ab.length);
             // Sum both sets and calculate their ratio which is the SNR
             SNR = Math.log10(Ps / Pn) * 10;
@@ -264,7 +262,7 @@ FFTrace.prototype.draw = function (canvas) {
     context.beginPath();
     context.moveTo(0, (halfHeight - (ab[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (ab[Math.floor(i) + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+        context.lineTo(j, (halfHeight - (ab[Math.floor(i + this.state.offset.x)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     // Fix drawing on canvas
     context.stroke();
@@ -297,6 +295,20 @@ FFTrace.prototype.getMarkerById = function(id){
         return obj.id == id;
     });
     return result;
+};
+
+// TODO: description
+FFTrace.prototype.addMarker = function(id, type, xy){
+    var px = 0;
+    var py = 0;
+    if(type == 'horizontal'){
+        py = xy;
+    } else {
+        px = xy;
+    }
+    this.state.markers.push({
+        id: id, type: type, x: px, y: py
+    });
 };
 
 /*

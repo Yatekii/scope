@@ -4,8 +4,8 @@ export const draw = function (context, scopeState, markerState, d, length) {
 
     // Setup brush
     context.strokeWidth = 1;
-    context.strokeStyle = '#006644';
-    if (context.setLineDash) {
+    context.strokeStyle = markerState.color;
+    if (markerState.dashed && context.setLineDash) {
         context.setLineDash([5]);
     }
 

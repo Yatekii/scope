@@ -89,8 +89,20 @@ var appState = {
                             y: 1,
                         },
                         markers: [
-                            { id: 'SNRfirst', type: 'vertical', x: 0 },
-                            { id: 'SNRsecond', type: 'vertical', x: 0 },
+                            {
+                                id: 'SNRfirst',
+                                type: 'vertical',
+                                x: 0,
+                                dashed: true,
+                                color: '#006644',
+                            },
+                            {
+                                id: 'SNRsecond',
+                                type: 'vertical',
+                                x: 0,
+                                dashed: true,
+                                color: '#006644',
+                            },
                         ]
                     },
                 ],
