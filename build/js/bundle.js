@@ -15851,7 +15851,7 @@ Oscilloscope.prototype.onMouseDown = function(event){
     this.state.source.traces.forEach(function(trace){
         trace.markers && trace.markers.forEach(function(marker){
             if(marker.type == 'vertical'){
-                var x = marker.x * me.canvas.width * activeTrace.scaling.x;
+                var x = (marker.x - activeTrace.offset.x) * me.canvas.width * activeTrace.scaling.x;
                 if(event.offsetX < x + 3 && event.offsetX > x - 3){
                     me.markerMoving = marker;
                     return;
@@ -15936,7 +15936,8 @@ Oscilloscope.prototype.onMouseMove = function(event){
         this.state.source.traces.forEach(function(trace){
             trace.markers && trace.markers.forEach(function(marker){
                 if(marker.type == 'vertical'){
-                    var x = marker.x * me.canvas.width * activeTrace.scaling.x;
+                    // (event.offsetX / this.canvas.width + activeTrace.offset.x) * activeTrace.scaling.x
+                    var x = (marker.x - activeTrace.offset.x) * me.canvas.width * activeTrace.scaling.x;
                     if(event.offsetX < x + 3 && event.offsetX > x - 3){
                         document.body.style.cursor = 'col-resize';
                         cursorSet = true;
@@ -15978,7 +15979,6 @@ Oscilloscope.prototype.onMouseMove = function(event){
     // Move triggerlevel is active
     if(this.triggerMoving !== false){
         triggerLevel = (halfHeight - event.offsetY) / (halfHeight * activeTrace.scaling.y) - triggerTrace.offset.y;
-        console.log(triggerLevel);
         if(triggerLevel > 1){
             triggerLevel = 1;
         }
@@ -15993,7 +15993,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
     if(this.markerMoving !== false){
         var markerLevel = 0;
         if(this.markerMoving.type == 'vertical'){
-            markerLevel = event.offsetX / (this.canvas.width * activeTrace.scaling.x);
+            markerLevel = (event.offsetX / this.canvas.width + activeTrace.offset.x) / activeTrace.scaling.x;
             if(markerLevel > 1){
                 markerLevel = 1;
             }
@@ -16030,16 +16030,17 @@ Oscilloscope.prototype.onMouseMove = function(event){
 
     // Move traces X if move traces X is active
     if(this.traceMovingX !== false){
-        var offsetX = this.state.source.frameSize / this.canvas.width * event.movementX / this.traceMovingX.scaling.x;
+        const ratio = 1 / this.canvas.width;
+        var offsetX = ratio * event.movementX / this.traceMovingX.scaling.x;
         this.traceMovingX.offset.x -= offsetX;
         if(this.traceMovingX.offset.x < 0){
             this.traceMovingX.offset.x = 0;
         }
-        if(this.traceMovingX.offset.x > this.state.source.frameSize){
-            this.traceMovingX.offset.x = this.state.source.frameSize;
+        if(this.traceMovingX.offset.x > 1){
+            this.traceMovingX.offset.x = 1;
         }
         if(this.traceMovingX == triggerTrace){
-            this.state.source.triggerPosition += offsetX / this.state.source.frameSize;
+            this.state.source.triggerPosition += offsetX;
         }
         if(this.state.source.triggerPosition < 0){
             this.state.source.triggerPosition = 0;
@@ -16419,9 +16420,9 @@ TimeTrace.prototype.draw = function (canvas) {
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
     var data = this.state.source.ctrl.channels[0];
-    context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x * data.length] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+        context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     context.stroke();
 
@@ -16442,7 +16443,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Draw trigger location
     context.fillStyle = 'white';
-    var trgLoc = (scope.width * scope.source.triggerPosition - this.state.offset.x * ratio) * this.state.scaling.x;
+    var trgLoc = (scope.width * (scope.source.triggerPosition - this.state.offset.x * ratio)) * this.state.scaling.x;
     context.beginPath();
     context.moveTo(trgLoc, scope.height - 15);
     context.lineTo(trgLoc + 15, scope.height);
@@ -16560,18 +16561,18 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
 
     // Draw marker
     if(markerState.type == 'vertical'){
+        const x = Math.ceil((markerState.x - traceState.offset.x) * length * d);
         context.beginPath();
-        context.moveTo(markerState.x * d * length, 0);
+        context.moveTo(x, 0);
         if(!markerState.active){
             // If the marker is not active, just draw it
-            context.lineTo(markerState.x * d * length, scopeState.height);
+            context.lineTo(x, scopeState.height);
             context.stroke();
         } else {
             // If the marker is active, draw additional info
             context.font = '14px Arial';
-            console.log(traceState.source);
             // Calculate frequency at marker and convert it to string
-            const text = Math.round(sampleToFrequency(
+            const text = Math.floor(sampleToFrequency(
                 percentageToSample(markerState.x, length),
                 scopeState.source.samplingRate / (traceState.halfSpectrum ? 2 : 1),
                 length
@@ -16579,15 +16580,15 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
             const width = context.measureText(text).width;
             const height = 14;
             // Draw the line for the marker with a gap
-            context.lineTo(markerState.x * d * length, scopeState.height - (height + 10 + 6 * 2));
-            context.moveTo(markerState.x * d * length, scopeState.height - 10);
-            context.lineTo(markerState.x * d * length, scopeState.height);
+            context.lineTo(x, scopeState.height - (height + 10 + 6 * 2));
+            context.moveTo(x, scopeState.height - 10);
+            context.lineTo(x, scopeState.height);
             context.save();
             context.fillStyle = '#FFFFFF';
             // Calculate size of the rectangle around the text left and right from the marker
             // (if it is at the border of the screen it's not half/half)
-            const leftFree = Math.min(markerState.x * d * length, (width / 2 + 6));
-            const rightFree = Math.min(markerState.x * d * length, scopeState.width - (width / 2 + 6));
+            const leftFree = Math.min(x, (width / 2 + 6));
+            const rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
             // Fill the rectangle background with white so text will be readable
             context.fillRect(
                 rightFree - leftFree,
@@ -16606,6 +16607,7 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
             context.stroke();
             context.restore();
             // Draw the text
+            context.fillStyle = markerState.color;
             context.fillText(
                 text,
                 rightFree - (leftFree - 6),
@@ -16751,15 +16753,15 @@ FFTrace.prototype.draw = function (canvas) {
             context.fillStyle = 'blue';
             var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, ab.length);
             var harmonicX = (
-                sampleToPercentage(
+                (sampleToPercentage(
                     sample,
                     ab.length
-                ) * scope.width
-                - this.state.offset.x * ratio
+                ) - this.state.offset.x
+                ) * scope.width * ratio
             ) * this.state.scaling.x;
             var harmonicY = (
                 halfHeight - (
-                    Math.log10(ab[Math.floor(sample) + this.state.offset.x])*10/100 + this.state.offset.y
+                    Math.log10(ab[Math.floor(sample + this.state.offset.x * ab.length)])*10/100 + this.state.offset.y
                 ) * halfHeight * this.state.scaling.y
             );
             context.beginPath();
@@ -16868,9 +16870,9 @@ FFTrace.prototype.draw = function (canvas) {
     // Draw trace
     context.strokeStyle = this.state.color;
     context.beginPath();
-    context.moveTo(0, (halfHeight - (ab[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    context.moveTo(0, (halfHeight - (ab[Math.floor(0 + this.state.offset.x * ab.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (ab[Math.floor(i + this.state.offset.x)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+        context.lineTo(j, (halfHeight - (ab[Math.floor(i + this.state.offset.x * ab.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     // Fix drawing on canvas
     context.stroke();
@@ -17148,14 +17150,16 @@ var appState = {
                                 type: 'vertical',
                                 x: 0,
                                 dashed: true,
-                                color: '#006644',
+                                color: 'purple',
+                                active: true,
                             },
                             {
                                 id: 'SNRsecond',
                                 type: 'vertical',
                                 x: 0,
                                 dashed: true,
-                                color: '#006644',
+                                color: 'purple',
+                                active: true,
                             },
                         ]
                     },

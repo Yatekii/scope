@@ -94,14 +94,16 @@ var appState = {
                                 type: 'vertical',
                                 x: 0,
                                 dashed: true,
-                                color: '#006644',
+                                color: 'purple',
+                                active: true,
                             },
                             {
                                 id: 'SNRsecond',
                                 type: 'vertical',
                                 x: 0,
                                 dashed: true,
-                                color: '#006644',
+                                color: 'purple',
+                                active: true,
                             },
                         ]
                     },

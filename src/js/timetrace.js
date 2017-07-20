@@ -140,9 +140,9 @@ TimeTrace.prototype.draw = function (canvas) {
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
     var data = this.state.source.ctrl.channels[0];
-    context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x * data.length] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+        context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     context.stroke();
 
@@ -163,7 +163,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Draw trigger location
     context.fillStyle = 'white';
-    var trgLoc = (scope.width * scope.source.triggerPosition - this.state.offset.x * ratio) * this.state.scaling.x;
+    var trgLoc = (scope.width * (scope.source.triggerPosition - this.state.offset.x * ratio)) * this.state.scaling.x;
     context.beginPath();
     context.moveTo(trgLoc, scope.height - 15);
     context.lineTo(trgLoc + 15, scope.height);

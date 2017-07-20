@@ -13,18 +13,18 @@ export const draw = function (context, scopeState, markerState, traceState, d, l
 
     // Draw marker
     if(markerState.type == 'vertical'){
+        const x = Math.ceil((markerState.x - traceState.offset.x) * length * d);
         context.beginPath();
-        context.moveTo(markerState.x * d * length, 0);
+        context.moveTo(x, 0);
         if(!markerState.active){
             // If the marker is not active, just draw it
-            context.lineTo(markerState.x * d * length, scopeState.height);
+            context.lineTo(x, scopeState.height);
             context.stroke();
         } else {
             // If the marker is active, draw additional info
             context.font = '14px Arial';
-            console.log(traceState.source)
             // Calculate frequency at marker and convert it to string
-            const text = Math.round(converting.sampleToFrequency(
+            const text = Math.floor(converting.sampleToFrequency(
                 converting.percentageToSample(markerState.x, length),
                 scopeState.source.samplingRate / (traceState.halfSpectrum ? 2 : 1),
                 length
@@ -32,15 +32,15 @@ export const draw = function (context, scopeState, markerState, traceState, d, l
             const width = context.measureText(text).width;
             const height = 14;
             // Draw the line for the marker with a gap
-            context.lineTo(markerState.x * d * length, scopeState.height - (height + 10 + 6 * 2));
-            context.moveTo(markerState.x * d * length, scopeState.height - 10);
-            context.lineTo(markerState.x * d * length, scopeState.height);
+            context.lineTo(x, scopeState.height - (height + 10 + 6 * 2));
+            context.moveTo(x, scopeState.height - 10);
+            context.lineTo(x, scopeState.height);
             context.save();
             context.fillStyle = '#FFFFFF';
             // Calculate size of the rectangle around the text left and right from the marker
             // (if it is at the border of the screen it's not half/half)
-            const leftFree = Math.min(markerState.x * d * length, (width / 2 + 6));
-            const rightFree = Math.min(markerState.x * d * length, scopeState.width - (width / 2 + 6));
+            const leftFree = Math.min(x, (width / 2 + 6));
+            const rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
             // Fill the rectangle background with white so text will be readable
             context.fillRect(
                 rightFree - leftFree,
@@ -59,6 +59,7 @@ export const draw = function (context, scopeState, markerState, traceState, d, l
             context.stroke();
             context.restore();
             // Draw the text
+            context.fillStyle = markerState.color;
             context.fillText(
                 text,
                 rightFree - (leftFree - 6),

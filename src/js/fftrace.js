@@ -138,15 +138,15 @@ FFTrace.prototype.draw = function (canvas) {
             context.fillStyle = 'blue';
             var sample = converting.frequencyToSample(f * i, scope.source.samplingRate / 2, ab.length);
             var harmonicX = (
-                converting.sampleToPercentage(
+                (converting.sampleToPercentage(
                     sample,
                     ab.length
-                ) * scope.width
-                - this.state.offset.x * ratio
+                ) - this.state.offset.x
+                ) * scope.width * ratio
             ) * this.state.scaling.x;
             var harmonicY = (
                 halfHeight - (
-                    Math.log10(ab[Math.floor(sample) + this.state.offset.x])*10/100 + this.state.offset.y
+                    Math.log10(ab[Math.floor(sample + this.state.offset.x * ab.length)])*10/100 + this.state.offset.y
                 ) * halfHeight * this.state.scaling.y
             );
             context.beginPath();
@@ -255,9 +255,9 @@ FFTrace.prototype.draw = function (canvas) {
     // Draw trace
     context.strokeStyle = this.state.color;
     context.beginPath();
-    context.moveTo(0, (halfHeight - (ab[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    context.moveTo(0, (halfHeight - (ab[Math.floor(0 + this.state.offset.x * ab.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (ab[Math.floor(i + this.state.offset.x)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+        context.lineTo(j, (halfHeight - (ab[Math.floor(i + this.state.offset.x * ab.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     // Fix drawing on canvas
     context.stroke();
