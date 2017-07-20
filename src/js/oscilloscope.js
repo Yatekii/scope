@@ -65,12 +65,6 @@ Oscilloscope.prototype.onMouseDown = function(event){
     const triggerTrace = this.state.source.traces[this.state.source.triggerTrace];
     var halfHeight = this.canvas.height / 2;
 
-    // If we are in marker adding mode, add new marker
-    if(this.addingMarker){
-        this.addMarker(this.state.source.activeTrace, '', 'vertical', event.offsetX / (me.canvas.width * activeTrace.scaling.x));
-        return;
-    }
-
     // Start moving triggerlevel
     var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * triggerTrace.scaling.y;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
@@ -98,6 +92,12 @@ Oscilloscope.prototype.onMouseDown = function(event){
     });
 
     if(me.markerMoving) return;
+
+    // If we are in marker adding mode, add new marker
+    if(this.addingMarker){
+        this.markerMoving = this.addMarker(this.state.source.activeTrace, '', 'vertical', event.offsetX / (me.canvas.width * activeTrace.scaling.x));
+        return;
+    }
 
     // Start moving traces in Y direction
     var halfMoverWidth = me.state.ui.mover.width / 2;
@@ -302,5 +302,5 @@ Oscilloscope.prototype.uiHandlers = {
 };
 
 Oscilloscope.prototype.addMarker = function(trace, id, type, xy){
-    this.state.source.traces[trace].ctrl.addMarker(id, type, xy, true);
+    return this.state.source.traces[trace].ctrl.addMarker(id, type, xy, true);
 };

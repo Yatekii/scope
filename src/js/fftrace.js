@@ -317,6 +317,7 @@ FFTrace.prototype.addMarker = function(id, type, xy, active){
     this.state.markers.push({
         id: id, type: type, x: px, y: py, active: active
     });
+    return this.state.markers[this.state.markers.length - 1];
 };
 
 /*
