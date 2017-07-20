@@ -107,6 +107,53 @@ var appState = {
                             },
                         ]
                     },
+                    {
+                        id: 5,
+                        offset: { x: 0, y: 0.25 },
+                        info: {},
+                        name: 'Trace ' + 9001,
+                        channelID: 0,
+                        type: 'TimeTrace',
+                        color: 'red',
+                        scaling: {
+                            x: 1,
+                            y: 1,
+                        },
+                    },
+                    {
+                        id: 6,
+                        offset: { x: 0, y: 0.5 },
+                        windowFunction: 'hann',
+                        halfSpectrum: true,
+                        SNRmode: 'auto',
+                        info: {},
+                        name: 'Trace ' + 3000,
+                        channelID: 0,
+                        type: 'FFTrace',
+                        color: 'pink',
+                        scaling: {
+                            x: 1,
+                            y: 1,
+                        },
+                        markers: [
+                            {
+                                id: 'SNRfirst',
+                                type: 'vertical',
+                                x: 0,
+                                dashed: true,
+                                color: 'purple',
+                                active: true,
+                            },
+                            {
+                                id: 'SNRsecond',
+                                type: 'vertical',
+                                x: 0,
+                                dashed: true,
+                                color: 'purple',
+                                active: true,
+                            },
+                        ]
+                    }
                 ],
             }
         }]

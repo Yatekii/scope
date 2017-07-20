@@ -31,11 +31,11 @@ export const WebsocketSource = function(state) {
         }
         if(me.state.mode == 'normal'){
             // Immediately request a new frame
-            me.normal();
+            me.normal(0);
         }
         if(me.state.mode == 'auto'){
             // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-            me.auto();
+            me.auto(0);
         }
         me.channels;
         me.ready = true;
@@ -70,11 +70,11 @@ export const WebsocketSource = function(state) {
                 }
                 if(me.state.mode == 'normal'){
                     // Immediately request a new frame
-                    me.normal();
+                    me.normal(0);
                 }
                 if(me.state.mode == 'auto'){
                     // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-                    me.auto();
+                    me.auto(0);
                 }
                 me.state.traces.forEach(function(trace){
                     if(trace.type == 'TimeTrace'){
@@ -99,6 +99,8 @@ export const WebsocketSource = function(state) {
  * <obj> : Object : Object to be sent over the network as a JSON string
  */
 WebsocketSource.prototype.sendJSON = function(obj) {
+    console.log(obj);
+    console.log(JSON.stringify(obj));
     this.socket.send(JSON.stringify(obj));
 };
 

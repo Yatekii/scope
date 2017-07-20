@@ -15678,19 +15678,19 @@ const generalPrefPane = {
                     mithril('.col-12', mithril('.btn-group.btn-group-block', [
                         mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.normal();
+                                s.source.ctrl.normal(0);
                                 s.mode = 'normal';
                             }
                         }, 'Normal'),
                         mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.single();
+                                s.source.ctrl.single(0);
                                 s.mode = 'auto';
                             }
                         }, 'Auto'),
                         mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.single();
+                                s.source.ctrl.single(0);
                                 s.mode = 'single';
                             }
                         }, 'Single')
@@ -15700,7 +15700,7 @@ const generalPrefPane = {
                 mithril('.form-group', [
                     mithril('button.btn.col-6', {
                         onclick: function(){
-                            s.source.ctrl.single();
+                            s.source.ctrl.single(0);
                             s.mode = 'single';
                         }
                     }, 'Single Shot'),
@@ -16107,11 +16107,11 @@ const WebsocketSource = function(state) {
         }
         if(me.state.mode == 'normal'){
             // Immediately request a new frame
-            me.normal();
+            me.normal(0);
         }
         if(me.state.mode == 'auto'){
             // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-            me.auto();
+            me.auto(0);
         }
         me.channels;
         me.ready = true;
@@ -16146,11 +16146,11 @@ const WebsocketSource = function(state) {
                 }
                 if(me.state.mode == 'normal'){
                     // Immediately request a new frame
-                    me.normal();
+                    me.normal(0);
                 }
                 if(me.state.mode == 'auto'){
                     // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-                    me.auto();
+                    me.auto(0);
                 }
                 me.state.traces.forEach(function(trace){
                     if(trace.type == 'TimeTrace'){
@@ -16175,6 +16175,8 @@ const WebsocketSource = function(state) {
  * <obj> : Object : Object to be sent over the network as a JSON string
  */
 WebsocketSource.prototype.sendJSON = function(obj) {
+    console.log(obj);
+    console.log(JSON.stringify(obj));
     this.socket.send(JSON.stringify(obj));
 };
 
@@ -17087,6 +17089,7 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
+//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -17183,6 +17186,53 @@ var appState = {
                             },
                         ]
                     },
+                    {
+                        id: 5,
+                        offset: { x: 0, y: 0.25 },
+                        info: {},
+                        name: 'Trace ' + 9001,
+                        channelID: 0,
+                        type: 'TimeTrace',
+                        color: 'red',
+                        scaling: {
+                            x: 1,
+                            y: 1,
+                        },
+                    },
+                    {
+                        id: 6,
+                        offset: { x: 0, y: 0.5 },
+                        windowFunction: 'hann',
+                        halfSpectrum: true,
+                        SNRmode: 'auto',
+                        info: {},
+                        name: 'Trace ' + 3000,
+                        channelID: 0,
+                        type: 'FFTrace',
+                        color: 'pink',
+                        scaling: {
+                            x: 1,
+                            y: 1,
+                        },
+                        markers: [
+                            {
+                                id: 'SNRfirst',
+                                type: 'vertical',
+                                x: 0,
+                                dashed: true,
+                                color: 'purple',
+                                active: true,
+                            },
+                            {
+                                id: 'SNRsecond',
+                                type: 'vertical',
+                                x: 0,
+                                dashed: true,
+                                color: 'purple',
+                                active: true,
+                            },
+                        ]
+                    }
                 ],
             }
         }]

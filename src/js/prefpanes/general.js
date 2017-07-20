@@ -16,19 +16,19 @@ export const generalPrefPane = {
                     m('.col-12', m('.btn-group.btn-group-block', [
                         m('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.normal();
+                                s.source.ctrl.normal(0);
                                 s.mode = 'normal';
                             }
                         }, 'Normal'),
                         m('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.single();
+                                s.source.ctrl.single(0);
                                 s.mode = 'auto';
                             }
                         }, 'Auto'),
                         m('button.btn' + (s.mode == 'single' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.single();
+                                s.source.ctrl.single(0);
                                 s.mode = 'single';
                             }
                         }, 'Single')
@@ -38,7 +38,7 @@ export const generalPrefPane = {
                 m('.form-group', [
                     m('button.btn.col-6', {
                         onclick: function(){
-                            s.source.ctrl.single();
+                            s.source.ctrl.single(0);
                             s.mode = 'single';
                         }
                     }, 'Single Shot'),
