@@ -16101,6 +16101,7 @@ const WebsocketSource = function(state) {
             me.state.frameSize * (1 - me.state.triggerPosition)
         );
         me.triggerOn(me.state.trigger);
+        me.receivingChannel = 0;
         if(me.state.mode == 'single'){
             // We don't have to do anything, we already did our job
         }
@@ -16130,7 +16131,15 @@ const WebsocketSource = function(state) {
                     // 16 bit uint to float
                     data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp;
                 }
-                me.channels[0] = data;
+                me.channels[me.receivingChannel++] = data;
+                console.log(me.receivingChannel, me.state.numberOfChannels);
+                // If we didn't receive all channels yet, receive the next one
+                if(me.receivingChannel != me.state.numberOfChannels){
+                    me.readFrame(me.receivingChannel);
+                    return;
+                } else {
+                    me.receivingChannel = 0;
+                }
                 // Start a new frame if mode is appropriate otherwise just exit
                 if(me.state.mode == 'single'){
                     // We don't have to do anything, we already did our job
@@ -16172,7 +16181,7 @@ WebsocketSource.prototype.sendJSON = function(obj) {
 /*
  * Requests a new frame from the webserver. Includes all necessary config.
  */
-WebsocketSource.prototype.requestFrame = function() {
+WebsocketSource.prototype.requestFrame = function(channel) {
     this.sendJSON({
         // Always set the current frameSize and triggerPosition
         frameConfiguration: {
@@ -16185,12 +16194,22 @@ WebsocketSource.prototype.requestFrame = function() {
         triggerOn: {
             type: this.state.trigger.type,
             channel: this.state.trigger.channel,
-            // TODO: Fix trigger level sent (+ trace offset)
             level: Math.round(this.state.trigger.level * Math.pow(2, (this.state.bits - 1)) + Math.pow(2, (this.state.bits - 1))),
             hysteresis: this.state.trigger.hystresis,
             slope: this.state.trigger.slope
         },
-        requestFrame: true
+        requestFrame: true,
+        channel: channel,
+    });
+};
+
+/*
+ * Requests a new frame from the webserver. Includes all necessary config.
+ */
+WebsocketSource.prototype.readFrame = function(channel) {
+    this.sendJSON({
+        readFrame: true,
+        channel: channel,
     });
 };
 
@@ -16249,26 +16268,26 @@ WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hystere
 /*
  * Issue a single frame from the server.
 */
-WebsocketSource.prototype.single = function() {
+WebsocketSource.prototype.single = function(channel) {
     this.state.mode = 'single';
-    this.requestFrame();
+    this.requestFrame(channel);
 };
 
 /*
  * Start normal mode.
 */
-WebsocketSource.prototype.normal = function() {
+WebsocketSource.prototype.normal = function(channel) {
     var me = this;
     this.state.mode = 'normal';
     // Wait 5ms until requesting a new frame because otherwise we deadlock
-    setTimeout(function(){ me.requestFrame(); }, 5);
+    setTimeout(function(){ me.requestFrame(channel); }, 5);
 };
 
 /*
  * Start auto mode.
  * <timeout> : uint : Milliseconds to wait until forcing triggering
  */
-WebsocketSource.prototype.auto = function(timeout) {
+WebsocketSource.prototype.auto = function(channel, timeout) {
     var me = this;
     this.state.mode = 'auto';
     // Wait 5ms until requesting a new frame because otherwise we deadlock
@@ -16317,7 +16336,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state.source.ctrl.channels[0].length * this.state.scaling.x; // pixel/sample
+    var ratio = scope.width / this.state.source.ctrl.channels[this.state.channelID].length * this.state.scaling.x; // pixel/sample
     if(ratio > 1){
         mul = ratio;
     } else {
@@ -16419,7 +16438,7 @@ TimeTrace.prototype.draw = function (canvas) {
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    var data = this.state.source.ctrl.channels[0];
+    var data = this.state.source.ctrl.channels[this.state.channelID];
     context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x * data.length] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
@@ -16650,9 +16669,9 @@ FFTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     var currentWindow = windowFunctions[this.state.windowFunction];
     // Duplicate data because the fft will store the results in the input vectors
-    var real = this.state.source.ctrl.channels[0].slice(0);
+    var real = this.state.source.ctrl.channels[this.state.channelID].slice(0);
     // Create a complex vector with zeroes sice we only have real input
-    var compl = new Float32Array(this.state.source.ctrl.channels[0].length);
+    var compl = new Float32Array(this.state.source.ctrl.channels[this.state.channelID].length);
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
     // if(this.state.windowFunction && currentWindow){

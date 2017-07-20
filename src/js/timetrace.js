@@ -37,7 +37,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state.source.ctrl.channels[0].length * this.state.scaling.x; // pixel/sample
+    var ratio = scope.width / this.state.source.ctrl.channels[this.state.channelID].length * this.state.scaling.x; // pixel/sample
     if(ratio > 1){
         mul = ratio;
     } else {
@@ -139,7 +139,7 @@ TimeTrace.prototype.draw = function (canvas) {
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    var data = this.state.source.ctrl.channels[0];
+    var data = this.state.source.ctrl.channels[this.state.channelID];
     context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x * data.length] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));

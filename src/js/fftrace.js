@@ -35,9 +35,9 @@ FFTrace.prototype.draw = function (canvas) {
     var context = canvas.getContext('2d');
     var currentWindow = windowFunctions[this.state.windowFunction];
     // Duplicate data because the fft will store the results in the input vectors
-    var real = this.state.source.ctrl.channels[0].slice(0);
+    var real = this.state.source.ctrl.channels[this.state.channelID].slice(0);
     // Create a complex vector with zeroes sice we only have real input
-    var compl = new Float32Array(this.state.source.ctrl.channels[0].length);
+    var compl = new Float32Array(this.state.source.ctrl.channels[this.state.channelID].length);
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
     // if(this.state.windowFunction && currentWindow){

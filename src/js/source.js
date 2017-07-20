@@ -25,6 +25,7 @@ export const WebsocketSource = function(state) {
             me.state.frameSize * (1 - me.state.triggerPosition)
         );
         me.triggerOn(me.state.trigger);
+        me.receivingChannel = 0;
         if(me.state.mode == 'single'){
             // We don't have to do anything, we already did our job
         }
@@ -54,7 +55,15 @@ export const WebsocketSource = function(state) {
                     // 16 bit uint to float
                     data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp;
                 }
-                me.channels[0] = data;
+                me.channels[me.receivingChannel++] = data;
+                console.log(me.receivingChannel, me.state.numberOfChannels)
+                // If we didn't receive all channels yet, receive the next one
+                if(me.receivingChannel != me.state.numberOfChannels){
+                    me.readFrame(me.receivingChannel);
+                    return;
+                } else {
+                    me.receivingChannel = 0;
+                }
                 // Start a new frame if mode is appropriate otherwise just exit
                 if(me.state.mode == 'single'){
                     // We don't have to do anything, we already did our job
@@ -96,7 +105,7 @@ WebsocketSource.prototype.sendJSON = function(obj) {
 /*
  * Requests a new frame from the webserver. Includes all necessary config.
  */
-WebsocketSource.prototype.requestFrame = function() {
+WebsocketSource.prototype.requestFrame = function(channel) {
     this.sendJSON({
         // Always set the current frameSize and triggerPosition
         frameConfiguration: {
@@ -109,12 +118,22 @@ WebsocketSource.prototype.requestFrame = function() {
         triggerOn: {
             type: this.state.trigger.type,
             channel: this.state.trigger.channel,
-            // TODO: Fix trigger level sent (+ trace offset)
             level: Math.round(this.state.trigger.level * Math.pow(2, (this.state.bits - 1)) + Math.pow(2, (this.state.bits - 1))),
             hysteresis: this.state.trigger.hystresis,
             slope: this.state.trigger.slope
         },
-        requestFrame: true
+        requestFrame: true,
+        channel: channel,
+    });
+};
+
+/*
+ * Requests a new frame from the webserver. Includes all necessary config.
+ */
+WebsocketSource.prototype.readFrame = function(channel) {
+    this.sendJSON({
+        readFrame: true,
+        channel: channel,
     });
 };
 
@@ -173,26 +192,26 @@ WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hystere
 /*
  * Issue a single frame from the server.
 */
-WebsocketSource.prototype.single = function() {
+WebsocketSource.prototype.single = function(channel) {
     this.state.mode = 'single';
-    this.requestFrame();
+    this.requestFrame(channel);
 };
 
 /*
  * Start normal mode.
 */
-WebsocketSource.prototype.normal = function() {
+WebsocketSource.prototype.normal = function(channel) {
     var me = this;
     this.state.mode = 'normal';
     // Wait 5ms until requesting a new frame because otherwise we deadlock
-    setTimeout(function(){ me.requestFrame(); }, 5);
+    setTimeout(function(){ me.requestFrame(channel); }, 5);
 };
 
 /*
  * Start auto mode.
  * <timeout> : uint : Milliseconds to wait until forcing triggering
  */
-WebsocketSource.prototype.auto = function(timeout) {
+WebsocketSource.prototype.auto = function(channel, timeout) {
     var me = this;
     this.state.mode = 'auto';
     // Wait 5ms until requesting a new frame because otherwise we deadlock
