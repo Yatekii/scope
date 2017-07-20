@@ -15354,7 +15354,7 @@ const windowFunctions = {
  */
 
 /*
- * Displays seconds as a properly formatted ans caed string with physical units.
+ * Displays seconds as a properly formatted and scaled string with physical units.
  */
 const secondsToString = function(s){
     if(s < 1e-9){
@@ -15378,7 +15378,79 @@ const secondsToString = function(s){
 };
 
 /*
- * Displays hertz as a properly formatted ans caed string with physical units.
+ * Displays volts as a properly formatted and scaled string with physical units.
+ */
+const voltsToString = function(v){
+    if(v < 1e-9){
+        return (v * 1e12).toFixed(2) + 'pV';
+    }
+    if(v < 1e-6){
+        return (v * 1e9).toFixed(2) + 'nV';
+    }
+    if(v < 1e-3){
+        return (v * 1e6).toFixed(2) + 'uV';
+    }
+    if(v < 1){
+        return (v * 1e3).toFixed(2) + 'mV';
+    }
+    if(v < 1e3){
+        return (v).toFixed(2) + 'V';
+    }
+    if(v < 1e6){
+        return (s * 1e-3).toFixed(2) + 'MV';
+    }
+};
+
+/*
+ * Displays watts as a properly formatted and scaled string with physical units.
+ */
+const wattsToString = function(w){
+    if(w < 1e-9){
+        return (w * 1e12).toFixed(2) + 'pW';
+    }
+    if(w < 1e-6){
+        return (w * 1e9).toFixed(2) + 'nW';
+    }
+    if(w < 1e-3){
+        return (w * 1e6).toFixed(2) + 'uW';
+    }
+    if(w < 1){
+        return (w * 1e3).toFixed(2) + 'mW';
+    }
+    if(w < 1e3){
+        return (w).toFixed(2) + 'W';
+    }
+    if(w < 1e6){
+        return (s * 1e-3).toFixed(2) + 'MW';
+    }
+};
+
+/*
+ * Displays watts/hertz as a properly formatted and scaled string with physical units.
+ */
+const wattsPerHertzToString = function(w){
+    if(w < 1e-9){
+        return (w * 1e12).toFixed(2) + 'pW/Hz';
+    }
+    if(w < 1e-6){
+        return (w * 1e9).toFixed(2) + 'nW/Hz';
+    }
+    if(w < 1e-3){
+        return (w * 1e6).toFixed(2) + 'uW/Hz';
+    }
+    if(w < 1){
+        return (w * 1e3).toFixed(2) + 'mW/Hz';
+    }
+    if(w < 1e3){
+        return (w).toFixed(2) + 'W/Hz';
+    }
+    if(w < 1e6){
+        return (s * 1e-3).toFixed(2) + 'MW/Hz';
+    }
+};
+
+/*
+ * Displays hertz as a properly formatted and scaled string with physical units.
  */
 const hertzToString = function(f){
     if(f < 1e3){
@@ -15391,11 +15463,6 @@ const hertzToString = function(f){
         return (f * 1e-6).toFixed(2) + 'MHz';
     }
 };
-
-/*
- * Displays volts as a properly formatted ans caed string with physical units.
- */
-
 
 /*
  * Converts a sample number to the corresponding frequency.
@@ -15429,15 +15496,19 @@ const FFTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
         var s = vnode.attrs.scopeConf;
+        // TODO: uncomment
+        // if(!s.source.ready){
+        //     return m('.form-horizontal', 'Source is not ready.');
+        // }
         return [
             mithril('.form-horizontal', [
                 // GUI: Change color and name
                 mithril('.form-group',[
-                    mithril('.col-3.text-center', mithril('input[type=color]', {
+                    mithril('.col-2.text-center', mithril('input[type=color]', {
                         value: t.color,
                         onchange: mithril.withAttr('value', function(v){ t.color = v; })
                     })),
-                    mithril('h4.col-9', !vnode.state.editName ?
+                    mithril('h4.col-5', !vnode.state.editName ?
                         mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         mithril('input.form-input[type=text]', {
                             value: t.name,
@@ -15447,21 +15518,8 @@ const FFTracePrefPane = {
                                 vnode.state.editName = false;
                             })
                         })
-                    )
-                ]),
-                // GUI: Display Δf
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Δf')),
-                    mithril('.col-9', mithril('label.form-label', hertzToString(t.info.deltaf)))
-                ]),
-                // GUI: Display ΔA
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'ΔA')),
-                    mithril('.col-9', mithril('label.form-label', t.info.deltaA))
-                ]),
-                // GUI: Display Export Button
-                mithril('.form-group', [
-                    mithril('button.btn.col-12', {
+                    ),
+                    mithril('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
                             vnode.state.exportData = '[' + t.ctrl.state.data.join(', ') + ']';
@@ -15487,15 +15545,16 @@ const FFTracePrefPane = {
                         )
                     ])
                 ]),
-                // GUI: Display RMS Signal Power
+                // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
                 mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', ['P', mithril('sub', 'rms')])),
-                    mithril('.col-9', mithril('label.form-label', t.info.RMSPower + ' W'))
-                ]),
-                // GUI: Display Signal Power Density
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', ['dP/df', ])),
-                    mithril('.col-9', mithril('label.form-label', t.info.powerDensity + ' W/Hz'))
+                    mithril('.col-1', mithril('label.form-label', 'Δf:')),
+                    mithril('.col-2', mithril('label.form-label', hertzToString(t.info.deltaf))),
+                    mithril('.col-1', mithril('label.form-label', 'ΔA:')),
+                    mithril('.col-2', mithril('label.form-label', voltsToString(t.info.deltaA))),
+                    mithril('.col-1', mithril('label.form-label', ['P:', mithril('sub', 'rms')])),
+                    mithril('.col-2', mithril('label.form-label', wattsToString(t.info.RMSPower))),
+                    mithril('.col-1', mithril('label.form-label', '\u2202P/\u2202f:')),
+                    mithril('.col-2', mithril('label.form-label', wattsPerHertzToString(t.info.powerDensity)))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -15513,79 +15572,90 @@ const FFTracePrefPane = {
                 ]),
                 // GUI: Display SNR
                 mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label [for=SNR', 'SNR')),
-                    mithril('.col-9', mithril('label.form-label', { id: 'SNR' }, t.info.SNR))
+                    mithril('.col-6', mithril('label.form-switch', [
+                        mithril('input[type="checkbox"]', {
+                            onchange: function(){
+                                vnode.state.calculateSNR = !vnode.state.calculateSNR;
+                            },
+                            value: vnode.state.calculateSNR
+                        }),
+                        mithril('i.form-icon'),
+                        'Calculate SNR:'
+                    ])),
+                    mithril('.col-6', mithril('label.form-label', { id: 'SNR' }, t.info.SNR))
                 ]),
                 // GUI: Select display mode
-                mithril('.form-group', [
-                    mithril('.col-12', mithril('.btn-group.btn-group-block', [
-                        mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
-                            onclick: function(){
-                                t.SNRmode = 'manual';
-                            }
-                        }, 'Manual'),
-                        mithril('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
-                            onclick: function(){
-                                t.SNRmode = 'auto';
-                            }
-                        }, 'Auto')
-                    ]))
-                ]),
-                // GUI: Settings for the SNR markers
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
-                    mithril('.col-8', mithril('input.form-input', {
-                        disabled: t.SNRmode == 'auto',
-                        type: 'number',
-                        value: Math.floor(sampleToFrequency(
-                            percentageToSample(
-                                t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
-                                s.source.frameSize
-                            ),
-                            s.source.samplingRate / 2,
-                            s.source.frameSize
-                        )),
-                        onchange: mithril.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
-                            marker.x = sampleToPercentage(
-                                frequencyToSample(
-                                    parseInt(value),
-                                    s.source.samplingRate / 2,
+                (vnode.state.calculateSNR ? [
+                    mithril('.form-group', [
+                        mithril('.col-12', mithril('.btn-group.btn-group-block', [
+                            mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
+                                onclick: function(){
+                                    t.SNRmode = 'manual';
+                                }
+                            }, 'Manual'),
+                            mithril('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
+                                onclick: function(){
+                                    t.SNRmode = 'auto';
+                                }
+                            }, 'Auto')
+                        ]))
+                    ]),
+                    // GUI: Settings for the SNR markers
+                    mithril('.form-group', [
+                        mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
+                        mithril('.col-8', mithril('input.form-input', {
+                            disabled: t.SNRmode == 'auto',
+                            type: 'number',
+                            value: Math.floor(sampleToFrequency(
+                                percentageToSample(
+                                    t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
                                     s.source.frameSize
                                 ),
+                                s.source.samplingRate / 2,
                                 s.source.frameSize
-                            );
-                        }),
-                    })),
-                    mithril('.col-1', mithril('label.form-label', 'Hz'))
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
-                    mithril('.col-8', mithril('input.form-input', {
-                        disabled: t.SNRmode == 'auto',
-                        type: 'number',
-                        value: Math.floor(sampleToFrequency(
-                            percentageToSample(
-                                t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
-                                s.source.frameSize
-                            ),
-                            s.source.samplingRate / 2,
-                            s.source.frameSize
-                        )),
-                        onchange: mithril.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
-                            marker.x = sampleToPercentage(
-                                frequencyToSample(
-                                    parseInt(value),
-                                    s.source.samplingRate / 2,
+                            )),
+                            onchange: mithril.withAttr('value', function(value) {
+                                var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
+                                marker.x = sampleToPercentage(
+                                    frequencyToSample(
+                                        parseInt(value),
+                                        s.source.samplingRate / 2,
+                                        s.source.frameSize
+                                    ),
+                                    s.source.frameSize
+                                );
+                            }),
+                        })),
+                        mithril('.col-1', mithril('label.form-label', 'Hz'))
+                    ]),
+                    mithril('.form-group', [
+                        mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
+                        mithril('.col-8', mithril('input.form-input', {
+                            disabled: t.SNRmode == 'auto',
+                            type: 'number',
+                            value: Math.floor(sampleToFrequency(
+                                percentageToSample(
+                                    t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
                                     s.source.frameSize
                                 ),
+                                s.source.samplingRate / 2,
                                 s.source.frameSize
-                            );
-                        }),
-                    })),
-                    mithril('.col-1', mithril('label.form-label', 'Hz'))
-                ])
+                            )),
+                            onchange: mithril.withAttr('value', function(value) {
+                                var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
+                                marker.x = sampleToPercentage(
+                                    frequencyToSample(
+                                        parseInt(value),
+                                        s.source.samplingRate / 2,
+                                        s.source.frameSize
+                                    ),
+                                    s.source.frameSize
+                                );
+                            }),
+                        })),
+                        mithril('.col-1', mithril('label.form-label', 'Hz'))
+                    ])
+                ] : '')
             ])
         ];
     }
@@ -15598,16 +15668,21 @@ const FFTracePrefPane = {
 const TimeTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
+        var s = vnode.attrs.scopeConf;
+        // TODO: uncomment
+        // if(!s.source.ready){
+        //     return m('.form-horizontal', 'Source is not ready.');
+        // }
         return [
             mithril('header.columns', ''),
             mithril('.form-horizontal', [
                 // GUI: Change color and name
                 mithril('.form-group',[
-                    mithril('.col-3.text-center', mithril('input[type=color]', {
+                    mithril('.col-2.text-center', mithril('input[type=color]', {
                         value: t.color,
                         onchange: mithril.withAttr('value', function(v){ t.color = v; })
                     })),
-                    mithril('h4.col-9', !vnode.state.editName ?
+                    mithril('h4.col-5', !vnode.state.editName ?
                         mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         mithril('input.form-input[type=text]', {
                             value: t.name,
@@ -15617,21 +15692,8 @@ const TimeTracePrefPane = {
                                 vnode.state.editName = false;
                             })
                         })
-                    )
-                ]),
-                // GUI: Display Δt
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Δt')),
-                    mithril('.col-9', mithril('label.form-label', secondsToString(t.info.deltat)))
-                ]),
-                // GUI: Display ΔA
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'ΔA')),
-                    mithril('.col-9', mithril('label.form-label', t.info.deltaA))
-                ]),
-                // GUI: Display Export Button
-                mithril('.form-group', [
-                    mithril('button.btn.col-12', {
+                    ),
+                    mithril('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
                             vnode.state.exportData = '[' + t.ctrl.state.source.ctrl.channels[0].join(', ') + ']';
@@ -15656,6 +15718,13 @@ const TimeTracePrefPane = {
                             ))
                         )
                     ])
+                ]),
+                // GUI: Display Δt, ΔA
+                mithril('.form-group', [
+                    mithril('.col-1', mithril('label.form-label', 'Δt:')),
+                    mithril('.col-5', mithril('label.form-label', secondsToString(t.info.deltat))),
+                    mithril('.col-1', mithril('label.form-label', 'ΔA:')),
+                    mithril('.col-5', mithril('label.form-label', voltsToString(t.info.deltaA)))
                 ])
             ])
         ];
@@ -16132,7 +16201,6 @@ const WebsocketSource = function(state) {
                     data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp;
                 }
                 me.channels[me.receivingChannel++] = data;
-                console.log(me.receivingChannel, me.state.numberOfChannels);
                 // If we didn't receive all channels yet, receive the next one
                 if(me.receivingChannel != me.state.numberOfChannels){
                     me.readFrame(me.receivingChannel);
@@ -16175,8 +16243,6 @@ const WebsocketSource = function(state) {
  * <obj> : Object : Object to be sent over the network as a JSON string
  */
 WebsocketSource.prototype.sendJSON = function(obj) {
-    console.log(obj);
-    console.log(JSON.stringify(obj));
     this.socket.send(JSON.stringify(obj));
 };
 
@@ -16364,7 +16430,7 @@ TimeTrace.prototype.draw = function (canvas) {
         }
 
         // Store grid width
-        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate).toFixed(15);
+        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate);
 
         // Draw horizontal grid
         for(i = 0; i < 11; i++){
@@ -16393,7 +16459,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
         // Calculate the current vertical grid height dA according to screen size
         // Start at 1mV grid
-        const baseGrid = 1e-3;
+        const baseGrid = 1e-9;
         n = 1;
         var dA = baseGrid * halfHeight / (scope.source.vpp / 2) * this.state.scaling.y;
         for(a = 0; a < 20; a++){
@@ -16410,7 +16476,7 @@ TimeTrace.prototype.draw = function (canvas) {
         // da = v * scaling * canvas / dec
         // da / canvas / scaling = v / dec
         // v / dec = n / canvas
-        this.state.info.deltaA = (baseGrid * n).toFixed(15);
+        this.state.info.deltaA = (baseGrid * n);
 
         // Draw vertical grid
         for(i = -11; i < 11; i++){
@@ -16794,6 +16860,7 @@ FFTrace.prototype.draw = function (canvas) {
 
     } else {
         this.state.info.RMSPower = '\u26A0 No signal';
+        this.state.info.powerDensity  = '\u26A0 No signal';
         this.state.info.SNR = '\u26A0 No signal';
     }
 
@@ -16826,7 +16893,7 @@ FFTrace.prototype.draw = function (canvas) {
         }
         // Store vertical grid size
         // Mulitply by 100 because we scale the signal constant by that factor.
-        this.state.info.deltaA = (baseGrid * n * 100).toFixed(2);
+        this.state.info.deltaA = (baseGrid * n * 100);
 
         // Draw vertical grid
         for(i = -11; i < 11; i++){
@@ -17089,7 +17156,6 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
-//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -17137,7 +17203,7 @@ var appState = {
                 triggerPosition: 1 / 8,
                 numberOfChannels: 2,
                 mode: 'normal',
-                activeTrace: 1,
+                activeTrace: 0,
                 traces: [
                     {
                         id: 3,
@@ -17193,7 +17259,7 @@ var appState = {
                         name: 'Trace ' + 9001,
                         channelID: 0,
                         type: 'TimeTrace',
-                        color: 'red',
+                        color: '#FF0000',
                         scaling: {
                             x: 1,
                             y: 1,
@@ -17209,7 +17275,7 @@ var appState = {
                         name: 'Trace ' + 3000,
                         channelID: 0,
                         type: 'FFTrace',
-                        color: 'pink',
+                        color: '#BFA688',
                         scaling: {
                             x: 1,
                             y: 1,

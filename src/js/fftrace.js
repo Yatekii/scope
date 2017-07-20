@@ -158,6 +158,7 @@ FFTrace.prototype.draw = function (canvas) {
 
     } else {
         this.state.info.RMSPower = '\u26A0 No signal';
+        this.state.info.powerDensity  = '\u26A0 No signal';
         this.state.info.SNR = '\u26A0 No signal';
     }
 
@@ -190,7 +191,7 @@ FFTrace.prototype.draw = function (canvas) {
         }
         // Store vertical grid size
         // Mulitply by 100 because we scale the signal constant by that factor.
-        this.state.info.deltaA = (baseGrid * n * 100).toFixed(2);
+        this.state.info.deltaA = (baseGrid * n * 100);
 
         // Draw vertical grid
         for(i = -11; i < 11; i++){

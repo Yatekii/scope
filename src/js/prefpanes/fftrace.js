@@ -3,6 +3,9 @@ import { windowFunctions } from '../math/windowing.js';
 import { withKey, capitalizeFirstLetter } from '../helpers.js';
 import {
     hertzToString,
+    voltsToString,
+    wattsToString,
+    wattsPerHertzToString,
     percentageToSample,
     sampleToFrequency,
     sampleToPercentage,
@@ -13,15 +16,19 @@ export const FFTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
         var s = vnode.attrs.scopeConf;
+        // TODO: uncomment
+        // if(!s.source.ready){
+        //     return m('.form-horizontal', 'Source is not ready.');
+        // }
         return [
             m('.form-horizontal', [
                 // GUI: Change color and name
                 m('.form-group',[
-                    m('.col-3.text-center', m('input[type=color]', {
+                    m('.col-2.text-center', m('input[type=color]', {
                         value: t.color,
                         onchange: m.withAttr('value', function(v){ t.color = v; })
                     })),
-                    m('h4.col-9', !vnode.state.editName ?
+                    m('h4.col-5', !vnode.state.editName ?
                         m('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         m('input.form-input[type=text]', {
                             value: t.name,
@@ -31,21 +38,8 @@ export const FFTracePrefPane = {
                                 vnode.state.editName = false;
                             })
                         })
-                    )
-                ]),
-                // GUI: Display Δf
-                m('.form-group', [
-                    m('.col-3', m('label.form-label', 'Δf')),
-                    m('.col-9', m('label.form-label', hertzToString(t.info.deltaf)))
-                ]),
-                // GUI: Display ΔA
-                m('.form-group', [
-                    m('.col-3', m('label.form-label', 'ΔA')),
-                    m('.col-9', m('label.form-label', t.info.deltaA))
-                ]),
-                // GUI: Display Export Button
-                m('.form-group', [
-                    m('button.btn.col-12', {
+                    ),
+                    m('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
                             vnode.state.exportData = '[' + t.ctrl.state.data.join(', ') + ']';
@@ -71,15 +65,16 @@ export const FFTracePrefPane = {
                         )
                     ])
                 ]),
-                // GUI: Display RMS Signal Power
+                // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
                 m('.form-group', [
-                    m('.col-3', m('label.form-label', ['P', m('sub', 'rms')])),
-                    m('.col-9', m('label.form-label', t.info.RMSPower + ' W'))
-                ]),
-                // GUI: Display Signal Power Density
-                m('.form-group', [
-                    m('.col-3', m('label.form-label', ['dP/df', ])),
-                    m('.col-9', m('label.form-label', t.info.powerDensity + ' W/Hz'))
+                    m('.col-1', m('label.form-label', 'Δf:')),
+                    m('.col-2', m('label.form-label', hertzToString(t.info.deltaf))),
+                    m('.col-1', m('label.form-label', 'ΔA:')),
+                    m('.col-2', m('label.form-label', voltsToString(t.info.deltaA))),
+                    m('.col-1', m('label.form-label', ['P:', m('sub', 'rms')])),
+                    m('.col-2', m('label.form-label', wattsToString(t.info.RMSPower))),
+                    m('.col-1', m('label.form-label', '\u2202P/\u2202f:')),
+                    m('.col-2', m('label.form-label', wattsPerHertzToString(t.info.powerDensity)))
                 ]),
                 // GUI: Select windowing
                 m('.form-group', [
@@ -97,79 +92,90 @@ export const FFTracePrefPane = {
                 ]),
                 // GUI: Display SNR
                 m('.form-group', [
-                    m('.col-3', m('label.form-label [for=SNR', 'SNR')),
-                    m('.col-9', m('label.form-label', { id: 'SNR' }, t.info.SNR))
+                    m('.col-6', m('label.form-switch', [
+                        m('input[type="checkbox"]', {
+                            onchange: function(){
+                                vnode.state.calculateSNR = !vnode.state.calculateSNR;
+                            },
+                            value: vnode.state.calculateSNR
+                        }),
+                        m('i.form-icon'),
+                        'Calculate SNR:'
+                    ])),
+                    m('.col-6', m('label.form-label', { id: 'SNR' }, t.info.SNR))
                 ]),
                 // GUI: Select display mode
-                m('.form-group', [
-                    m('.col-12', m('.btn-group.btn-group-block', [
-                        m('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
-                            onclick: function(){
-                                t.SNRmode = 'manual';
-                            }
-                        }, 'Manual'),
-                        m('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
-                            onclick: function(){
-                                t.SNRmode = 'auto';
-                            }
-                        }, 'Auto')
-                    ]))
-                ]),
-                // GUI: Settings for the SNR markers
-                m('.form-group', [
-                    m('.col-3', m('label.form-label', 'Lower Marker')),
-                    m('.col-8', m('input.form-input', {
-                        disabled: t.SNRmode == 'auto',
-                        type: 'number',
-                        value: Math.floor(sampleToFrequency(
-                            percentageToSample(
-                                t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
-                                s.source.frameSize
-                            ),
-                            s.source.samplingRate / 2,
-                            s.source.frameSize
-                        )),
-                        onchange: m.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
-                            marker.x = sampleToPercentage(
-                                frequencyToSample(
-                                    parseInt(value),
-                                    s.source.samplingRate / 2,
+                (vnode.state.calculateSNR ? [
+                    m('.form-group', [
+                        m('.col-12', m('.btn-group.btn-group-block', [
+                            m('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
+                                onclick: function(){
+                                    t.SNRmode = 'manual';
+                                }
+                            }, 'Manual'),
+                            m('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
+                                onclick: function(){
+                                    t.SNRmode = 'auto';
+                                }
+                            }, 'Auto')
+                        ]))
+                    ]),
+                    // GUI: Settings for the SNR markers
+                    m('.form-group', [
+                        m('.col-3', m('label.form-label', 'Lower Marker')),
+                        m('.col-8', m('input.form-input', {
+                            disabled: t.SNRmode == 'auto',
+                            type: 'number',
+                            value: Math.floor(sampleToFrequency(
+                                percentageToSample(
+                                    t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
                                     s.source.frameSize
                                 ),
+                                s.source.samplingRate / 2,
                                 s.source.frameSize
-                            );
-                        }),
-                    })),
-                    m('.col-1', m('label.form-label', 'Hz'))
-                ]),
-                m('.form-group', [
-                    m('.col-3', m('label.form-label', 'Upper Marker')),
-                    m('.col-8', m('input.form-input', {
-                        disabled: t.SNRmode == 'auto',
-                        type: 'number',
-                        value: Math.floor(sampleToFrequency(
-                            percentageToSample(
-                                t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
-                                s.source.frameSize
-                            ),
-                            s.source.samplingRate / 2,
-                            s.source.frameSize
-                        )),
-                        onchange: m.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
-                            marker.x = sampleToPercentage(
-                                frequencyToSample(
-                                    parseInt(value),
-                                    s.source.samplingRate / 2,
+                            )),
+                            onchange: m.withAttr('value', function(value) {
+                                var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
+                                marker.x = sampleToPercentage(
+                                    frequencyToSample(
+                                        parseInt(value),
+                                        s.source.samplingRate / 2,
+                                        s.source.frameSize
+                                    ),
+                                    s.source.frameSize
+                                );
+                            }),
+                        })),
+                        m('.col-1', m('label.form-label', 'Hz'))
+                    ]),
+                    m('.form-group', [
+                        m('.col-3', m('label.form-label', 'Upper Marker')),
+                        m('.col-8', m('input.form-input', {
+                            disabled: t.SNRmode == 'auto',
+                            type: 'number',
+                            value: Math.floor(sampleToFrequency(
+                                percentageToSample(
+                                    t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
                                     s.source.frameSize
                                 ),
+                                s.source.samplingRate / 2,
                                 s.source.frameSize
-                            );
-                        }),
-                    })),
-                    m('.col-1', m('label.form-label', 'Hz'))
-                ])
+                            )),
+                            onchange: m.withAttr('value', function(value) {
+                                var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
+                                marker.x = sampleToPercentage(
+                                    frequencyToSample(
+                                        parseInt(value),
+                                        s.source.samplingRate / 2,
+                                        s.source.frameSize
+                                    ),
+                                    s.source.frameSize
+                                );
+                            }),
+                        })),
+                        m('.col-1', m('label.form-label', 'Hz'))
+                    ])
+                ] : '')
             ])
         ];
     }

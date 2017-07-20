@@ -58,7 +58,7 @@ var appState = {
                 triggerPosition: 1 / 8,
                 numberOfChannels: 2,
                 mode: 'normal',
-                activeTrace: 1,
+                activeTrace: 0,
                 traces: [
                     {
                         id: 3,
@@ -114,7 +114,7 @@ var appState = {
                         name: 'Trace ' + 9001,
                         channelID: 0,
                         type: 'TimeTrace',
-                        color: 'red',
+                        color: '#FF0000',
                         scaling: {
                             x: 1,
                             y: 1,
@@ -130,7 +130,7 @@ var appState = {
                         name: 'Trace ' + 3000,
                         channelID: 0,
                         type: 'FFTrace',
-                        color: 'pink',
+                        color: '#BFA688',
                         scaling: {
                             x: 1,
                             y: 1,

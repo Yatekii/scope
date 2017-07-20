@@ -56,7 +56,6 @@ export const WebsocketSource = function(state) {
                     data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp;
                 }
                 me.channels[me.receivingChannel++] = data;
-                console.log(me.receivingChannel, me.state.numberOfChannels)
                 // If we didn't receive all channels yet, receive the next one
                 if(me.receivingChannel != me.state.numberOfChannels){
                     me.readFrame(me.receivingChannel);
@@ -99,8 +98,6 @@ export const WebsocketSource = function(state) {
  * <obj> : Object : Object to be sent over the network as a JSON string
  */
 WebsocketSource.prototype.sendJSON = function(obj) {
-    console.log(obj);
-    console.log(JSON.stringify(obj));
     this.socket.send(JSON.stringify(obj));
 };
 

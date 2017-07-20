@@ -63,7 +63,7 @@ TimeTrace.prototype.draw = function (canvas) {
         }
 
         // Store grid width
-        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate).toFixed(15);
+        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate);
 
         // Draw horizontal grid
         for(i = 0; i < 11; i++){
@@ -92,7 +92,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
         // Calculate the current vertical grid height dA according to screen size
         // Start at 1mV grid
-        const baseGrid = 1e-3;
+        const baseGrid = 1e-9;
         n = 1;
         var dA = baseGrid * halfHeight / (scope.source.vpp / 2) * this.state.scaling.y;
         for(a = 0; a < 20; a++){
@@ -109,7 +109,7 @@ TimeTrace.prototype.draw = function (canvas) {
         // da = v * scaling * canvas / dec
         // da / canvas / scaling = v / dec
         // v / dec = n / canvas
-        this.state.info.deltaA = (baseGrid * n).toFixed(15);
+        this.state.info.deltaA = (baseGrid * n);
 
         // Draw vertical grid
         for(i = -11; i < 11; i++){

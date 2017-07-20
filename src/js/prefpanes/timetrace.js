@@ -4,21 +4,26 @@
 
 import m from 'mithril';
 import { withKey } from '../helpers.js';
-import { secondsToString } from '../math/converting.js';
+import { secondsToString, voltsToString } from '../math/converting.js';
 
 export const TimeTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
+        var s = vnode.attrs.scopeConf;
+        // TODO: uncomment
+        // if(!s.source.ready){
+        //     return m('.form-horizontal', 'Source is not ready.');
+        // }
         return [
             m('header.columns', ''),
             m('.form-horizontal', [
                 // GUI: Change color and name
                 m('.form-group',[
-                    m('.col-3.text-center', m('input[type=color]', {
+                    m('.col-2.text-center', m('input[type=color]', {
                         value: t.color,
                         onchange: m.withAttr('value', function(v){ t.color = v; })
                     })),
-                    m('h4.col-9', !vnode.state.editName ?
+                    m('h4.col-5', !vnode.state.editName ?
                         m('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         m('input.form-input[type=text]', {
                             value: t.name,
@@ -28,21 +33,8 @@ export const TimeTracePrefPane = {
                                 vnode.state.editName = false;
                             })
                         })
-                    )
-                ]),
-                // GUI: Display Δt
-                m('.form-group', [
-                    m('.col-3', m('label.form-label', 'Δt')),
-                    m('.col-9', m('label.form-label', secondsToString(t.info.deltat)))
-                ]),
-                // GUI: Display ΔA
-                m('.form-group', [
-                    m('.col-3', m('label.form-label', 'ΔA')),
-                    m('.col-9', m('label.form-label', t.info.deltaA))
-                ]),
-                // GUI: Display Export Button
-                m('.form-group', [
-                    m('button.btn.col-12', {
+                    ),
+                    m('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
                             vnode.state.exportData = '[' + t.ctrl.state.source.ctrl.channels[0].join(', ') + ']';
@@ -67,6 +59,13 @@ export const TimeTracePrefPane = {
                             ))
                         )
                     ])
+                ]),
+                // GUI: Display Δt, ΔA
+                m('.form-group', [
+                    m('.col-1', m('label.form-label', 'Δt:')),
+                    m('.col-5', m('label.form-label', secondsToString(t.info.deltat))),
+                    m('.col-1', m('label.form-label', 'ΔA:')),
+                    m('.col-5', m('label.form-label', voltsToString(t.info.deltaA)))
                 ])
             ])
         ];
