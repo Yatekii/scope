@@ -16070,7 +16070,7 @@ Oscilloscope.prototype.uiHandlers = {
 };
 
 Oscilloscope.prototype.addMarker = function(trace, id, type, xy){
-    this.state.source.traces[trace].ctrl.addMarker(id, type, xy);
+    this.state.source.traces[trace].ctrl.addMarker(id, type, xy, true);
 };
 
 /* This file contains the source class which is responsible for
@@ -16547,7 +16547,7 @@ const power = function(arr, half, N){
     return sum(arr) / (half * N * N);
 };
 
-const draw$1 = function (context, scopeState, markerState, d, length) {
+const draw$1 = function (context, scopeState, markerState, traceState, d, length) {
     // Store old state
     context.save();
 
@@ -16560,12 +16560,60 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
 
     // Draw marker
     if(markerState.type == 'vertical'){
-        // TODO: draw a label to better find a marker
         context.beginPath();
         context.moveTo(markerState.x * d * length, 0);
-        context.lineTo(markerState.x * d * length, scopeState.height);
-        context.stroke();
+        if(!markerState.active){
+            // If the marker is not active, just draw it
+            context.lineTo(markerState.x * d * length, scopeState.height);
+            context.stroke();
+        } else {
+            // If the marker is active, draw additional info
+            context.font = '14px Arial';
+            console.log(traceState.source);
+            // Calculate frequency at marker and convert it to string
+            const text = Math.round(sampleToFrequency(
+                percentageToSample(markerState.x, length),
+                scopeState.source.samplingRate / (traceState.halfSpectrum ? 2 : 1),
+                length
+            )).toString();
+            const width = context.measureText(text).width;
+            const height = 14;
+            // Draw the line for the marker with a gap
+            context.lineTo(markerState.x * d * length, scopeState.height - (height + 10 + 6 * 2));
+            context.moveTo(markerState.x * d * length, scopeState.height - 10);
+            context.lineTo(markerState.x * d * length, scopeState.height);
+            context.save();
+            context.fillStyle = '#FFFFFF';
+            // Calculate size of the rectangle around the text left and right from the marker
+            // (if it is at the border of the screen it's not half/half)
+            const leftFree = Math.min(markerState.x * d * length, (width / 2 + 6));
+            const rightFree = Math.min(markerState.x * d * length, scopeState.width - (width / 2 + 6));
+            // Fill the rectangle background with white so text will be readable
+            context.fillRect(
+                rightFree - leftFree,
+                scopeState.height - (height + 10 + 6 * 2),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            // Draw the border of the rectangle
+            context.rect(
+                rightFree - leftFree,
+                scopeState.height - (height + 10 + 6 * 2),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            context.restore();
+            // Draw the text
+            context.fillText(
+                text,
+                rightFree - (leftFree - 6),
+                scopeState.height - (10 + 6)
+            );
+        }
     } else if(markerState.type == 'horizontal'){
+        // This case is never really used thus far and can be extended later on when needed
         context.beginPath();
         var halfHeight = scopeState.height / 2;
         context.moveTo(0, halfHeight - markerState.y * d * length);
@@ -16577,14 +16625,6 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
-/*
- * Trace constructor
- * Constructs a new FFTrace
- * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
- * A window can be applied and several measurements such as SNR and Signal RMS can be done.
- * <id> : uint : Unique trace id, which is assigned when loading a trace
- * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
- */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16734,11 +16774,6 @@ FFTrace.prototype.draw = function (canvas) {
         this.state.info.SNR = '\u26A0 No signal';
     }
 
-    // Draw the markers
-    this.state.markers.forEach(function(m) {
-        draw$1(context, me.state.source.scope, m, ratio, ab.length);
-    });
-
     // Convert spectral density to a logarithmic scale to be able to better plot it.
     // Scale it down by 200 for a nicer plot
     for(i = 0; i < ab.length; i++){
@@ -16840,6 +16875,13 @@ FFTrace.prototype.draw = function (canvas) {
     // Fix drawing on canvas
     context.stroke();
 
+    // Draw the markers
+    context.save();
+    this.state.markers.forEach(function(m) {
+        draw$1(context, me.state.source.scope, m, me.state, ratio, ab.length);
+    });
+    context.restore();
+
     // Draw mover to move the trace
     context.fillStyle = this.state.color;
     var offsetY = this.state.offset.y;
@@ -16870,8 +16912,14 @@ FFTrace.prototype.getMarkerById = function(id){
     return result;
 };
 
-// TODO: description
-FFTrace.prototype.addMarker = function(id, type, xy){
+/*
+ * Adds a new marker to the trace
+ * <id> : <string> : The name of the marker
+ * <type> : <string>['vertical', 'horizontal'] : The orientation of the marker
+ * <xy> : <uint>[0..1] : The position of the marker
+ * <active> : boolean : Tells wheter addidional data should be displayed
+ */
+FFTrace.prototype.addMarker = function(id, type, xy, active){
     var px = 0;
     var py = 0;
     if(type == 'horizontal'){
@@ -16880,7 +16928,7 @@ FFTrace.prototype.addMarker = function(id, type, xy){
         px = xy;
     }
     this.state.markers.push({
-        id: id, type: type, x: px, y: py
+        id: id, type: type, x: px, y: py, active: active
     });
 };
 
@@ -17017,7 +17065,6 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
-//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {

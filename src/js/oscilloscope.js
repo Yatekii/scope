@@ -301,5 +301,5 @@ Oscilloscope.prototype.uiHandlers = {
 };
 
 Oscilloscope.prototype.addMarker = function(trace, id, type, xy){
-    this.state.source.traces[trace].ctrl.addMarker(id, type, xy);
+    this.state.source.traces[trace].ctrl.addMarker(id, type, xy, true);
 };

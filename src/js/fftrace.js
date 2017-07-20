@@ -161,11 +161,6 @@ FFTrace.prototype.draw = function (canvas) {
         this.state.info.SNR = '\u26A0 No signal';
     }
 
-    // Draw the markers
-    this.state.markers.forEach(function(m) {
-        marker.draw(context, me.state.source.scope, m, ratio, ab.length);
-    });
-
     // Convert spectral density to a logarithmic scale to be able to better plot it.
     // Scale it down by 200 for a nicer plot
     for(i = 0; i < ab.length; i++){
@@ -267,6 +262,13 @@ FFTrace.prototype.draw = function (canvas) {
     // Fix drawing on canvas
     context.stroke();
 
+    // Draw the markers
+    context.save();
+    this.state.markers.forEach(function(m) {
+        marker.draw(context, me.state.source.scope, m, me.state, ratio, ab.length);
+    });
+    context.restore();
+
     // Draw mover to move the trace
     context.fillStyle = this.state.color;
     var offsetY = this.state.offset.y;
@@ -297,8 +299,14 @@ FFTrace.prototype.getMarkerById = function(id){
     return result;
 };
 
-// TODO: description
-FFTrace.prototype.addMarker = function(id, type, xy){
+/*
+ * Adds a new marker to the trace
+ * <id> : <string> : The name of the marker
+ * <type> : <string>['vertical', 'horizontal'] : The orientation of the marker
+ * <xy> : <uint>[0..1] : The position of the marker
+ * <active> : boolean : Tells wheter addidional data should be displayed
+ */
+FFTrace.prototype.addMarker = function(id, type, xy, active){
     var px = 0;
     var py = 0;
     if(type == 'horizontal'){
@@ -307,7 +315,7 @@ FFTrace.prototype.addMarker = function(id, type, xy){
         px = xy;
     }
     this.state.markers.push({
-        id: id, type: type, x: px, y: py
+        id: id, type: type, x: px, y: py, active: active
     });
 };
 
