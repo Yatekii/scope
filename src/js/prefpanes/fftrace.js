@@ -15,6 +15,9 @@ import {
 export const FFTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
+        if(!t._info){
+            t._info = {};
+        }
         var s = vnode.attrs.scopeConf;
         // TODO: uncomment
         // if(!s.source.ready){
@@ -42,7 +45,7 @@ export const FFTracePrefPane = {
                     m('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t.ctrl.state.data.join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl.state._data.join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),
@@ -68,13 +71,13 @@ export const FFTracePrefPane = {
                 // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
                 m('.form-group', [
                     m('.col-1', m('label.form-label', 'Δf:')),
-                    m('.col-2', m('label.form-label', hertzToString(t.info.deltaf))),
+                    m('.col-2', m('label.form-label', hertzToString(t._info.deltaf))),
                     m('.col-1', m('label.form-label', 'ΔA:')),
-                    m('.col-2', m('label.form-label', voltsToString(t.info.deltaA))),
+                    m('.col-2', m('label.form-label', voltsToString(t._info.deltaA))),
                     m('.col-1', m('label.form-label', ['P:', m('sub', 'rms')])),
-                    m('.col-2', m('label.form-label', wattsToString(t.info.RMSPower))),
+                    m('.col-2', m('label.form-label', wattsToString(t._info.RMSPower))),
                     m('.col-1', m('label.form-label', '\u2202P/\u2202f:')),
-                    m('.col-2', m('label.form-label', wattsPerHertzToString(t.info.powerDensity)))
+                    m('.col-2', m('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
                 ]),
                 // GUI: Select windowing
                 m('.form-group', [
@@ -102,7 +105,7 @@ export const FFTracePrefPane = {
                         m('i.form-icon'),
                         'Calculate SNR:'
                     ])),
-                    m('.col-6', m('label.form-label', { id: 'SNR' }, t.info.SNR))
+                    m('.col-6', m('label.form-label', { id: 'SNR' }, t._info.SNR))
                 ]),
                 // GUI: Select display mode
                 (vnode.state.calculateSNR ? [

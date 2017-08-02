@@ -30,14 +30,14 @@ export const FFTrace = function(id, state) {
 FFTrace.prototype.draw = function (canvas) {
     var me = this;
     var i, j;
-    var scope = this.state.source.scope;
+    var scope = this.state._source._scope;
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
     var currentWindow = windowFunctions[this.state.windowFunction];
     // Duplicate data because the fft will store the results in the input vectors
-    var real = this.state.source.ctrl.channels[this.state.channelID].slice(0);
+    var real = this.state._source._ctrl.channels[this.state.channelID].slice(0);
     // Create a complex vector with zeroes sice we only have real input
-    var compl = new Float32Array(this.state.source.ctrl.channels[this.state.channelID].length);
+    var compl = new Float32Array(this.state._source._ctrl.channels[this.state.channelID].length);
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
     // if(this.state.windowFunction && currentWindow){
@@ -65,7 +65,7 @@ FFTrace.prototype.draw = function (canvas) {
     for(i = 0; i < ab.length; i++){
         ab[i] = real[i] * real[i] + compl[i] * compl[i];
     }
-    this.state.data = ab.slice(0);
+    this.state._data = ab.slice(0);
     // Calculate x-Axis scaling
     // mul tells how many pixels have to be skipped after each sample
     // If the signal has more points than the canvas, this will always be 1
@@ -82,9 +82,9 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = power(ab, true, ab.length - 1);
+        this.state._info.RMSPower = power(ab, true, ab.length - 1);
         // Set P/f
-        this.state.info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
+        this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
@@ -98,7 +98,7 @@ FFTrace.prototype.draw = function (canvas) {
                    + power(ab.slice(second + 1), true, ab.length);
             // Sum both sets and calculate their ratio which is the SNR
             var SNR = Math.log10(Ps / Pn) * 10;
-            this.state.info.SNR = SNR;
+            this.state._info.SNR = SNR;
         }
         if(this.state.SNRmode == 'auto'){
             // Find max in all values
@@ -119,7 +119,7 @@ FFTrace.prototype.draw = function (canvas) {
                    + power(ab.slice(maxi + l + 1), true, ab.length);
             // Sum both sets and calculate their ratio which is the SNR
             SNR = Math.log10(Ps / Pn) * 10;
-            this.state.info.SNR = SNR;
+            this.state._info.SNR = SNR;
 
             // Posiion SNR markers
             this.setSNRMarkers(
@@ -157,9 +157,9 @@ FFTrace.prototype.draw = function (canvas) {
         }
 
     } else {
-        this.state.info.RMSPower = '\u26A0 No signal';
-        this.state.info.powerDensity  = '\u26A0 No signal';
-        this.state.info.SNR = '\u26A0 No signal';
+        this.state._info.RMSPower = '\u26A0 No signal';
+        this.state._info.powerDensity  = '\u26A0 No signal';
+        this.state._info.SNR = '\u26A0 No signal';
     }
 
     // Convert spectral density to a logarithmic scale to be able to better plot it.
@@ -170,7 +170,7 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Store brush
     context.save();
-    if(this.id == this.state.source.activeTrace){
+    if(this.id == this.state._source.activeTrace){
         // Vertical grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
@@ -191,7 +191,7 @@ FFTrace.prototype.draw = function (canvas) {
         }
         // Store vertical grid size
         // Mulitply by 100 because we scale the signal constant by that factor.
-        this.state.info.deltaA = (baseGrid * n * 100);
+        this.state._info.deltaA = (baseGrid * n * 100);
 
         // Draw vertical grid
         for(i = -11; i < 11; i++){
@@ -220,17 +220,17 @@ FFTrace.prototype.draw = function (canvas) {
 
         // Calculate the current vertical grid width dF according to screen size
         n = 1;
-        var df = ratio * this.state.source.samplingRate / 2 * n;
+        var df = ratio * this.state._source.samplingRate / 2 * n;
         for(var a = 0; a < 20; a++){
             if(scope.width / df > 1 && scope.width / df < 11){
                 break;
             }
             n *= 1e-1;
-            df = ratio * this.state.source.samplingRate / 2 * n;
+            df = ratio * this.state._source.samplingRate / 2 * n;
         }
 
         // Store grid width
-        this.state.info.deltaf = 1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize;
+        this.state._info.deltaf = 1 / ratio * df * this.state._source.samplingRate / this.state._source.frameSize;
 
         // Draw vertical grid
         for(i = 0; i < 11; i++){
@@ -266,7 +266,7 @@ FFTrace.prototype.draw = function (canvas) {
     // Draw the markers
     context.save();
     this.state.markers.forEach(function(m) {
-        marker.draw(context, me.state.source.scope, m, me.state, ratio, ab.length);
+        marker.draw(context, me.state._source._scope, m, me.state, ratio, ab.length);
     });
     context.restore();
 

@@ -18,7 +18,7 @@ export const scopeView = {
                 oncreate: function(vnode){
                     // Make sure the on scroll event is listened to
                     vnode.dom.addEventListener('mousewheel', function(event){
-                        onode.attrs.scope.ctrl.onScroll(event, onode.attrs.scope.ctrl);
+                        onode.attrs.scope._ctrl.onScroll(event, onode.attrs.scope._ctrl);
                         m.redraw();
                     });
                 }
@@ -28,10 +28,10 @@ export const scopeView = {
                     width: vnode.attrs.width,
                     height: vnode.attrs.height
                 },
-                onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
-                onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
+                onmousedown: function(event) { vnode.attrs.scope._ctrl.onMouseDown(event); },
+                onmouseup: function(event) { vnode.attrs.scope._ctrl.onMouseUp(event); },
                 onmousemove: function(event) {
-                    event.preventDefault(); vnode.attrs.scope.ctrl.onMouseMove(event);
+                    event.preventDefault(); vnode.attrs.scope._ctrl.onMouseMove(event);
                 },
             })),
             // Render a settings panel if it is toggled otherwise render none
@@ -59,32 +59,32 @@ export const scopeView = {
                 style: {
                     right: vnode.attrs.scope.ui.prefPane.open ? '' + (vnode.attrs.scope.ui.prefPane.width + 20) + 'px' : '' + 20 + 'px',
                 },
-                onclick: function(){ vnode.attrs.scope.ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope.ctrl); }
+                onclick: function(){ vnode.attrs.scope._ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope._ctrl); }
             }, m('i.icon.icon-menu', ''))
         ];
     },
     oncreate: function(vnode){
         // Create a new scope controller and add its reference to the scope state object
-        vnode.attrs.scope.ctrl = new oscilloscope.Oscilloscope(vnode.attrs.scope);
+        vnode.attrs.scope._ctrl = new oscilloscope.Oscilloscope(vnode.attrs.scope);
 
         // Initialize controllers for the source
-        vnode.attrs.scope.source.ctrl = new WebsocketSource(vnode.attrs.scope.source);
+        vnode.attrs.scope.source._ctrl = new WebsocketSource(vnode.attrs.scope.source);
 
         // Initialize controllers for the traces
         vnode.attrs.scope.source.traces.forEach(function(trace, i){
             switch(trace.type){
             default:
             case 'TimeTrace':
-                trace.ctrl = new TimeTrace(i, trace);
+                trace._ctrl = new TimeTrace(i, trace);
                 break;
 
             case 'FFTrace':
-                trace.ctrl = new FFTrace(i, trace);
+                trace._ctrl = new FFTrace(i, trace);
                 break;
             }
         });
 
         // First draw to invoke all subsequnt draws on each rendered frame
-        draw(vnode.attrs.scope.ctrl);
+        draw(vnode.attrs.scope._ctrl);
     },
 };

@@ -11,24 +11,54 @@ export const generalPrefPane = {
         return [
             m('header.text-center', m('h4', s)),
             m('.form-horizontal', [
+                m('button.btn.col-12', {
+                    onclick: function(){
+                        var doneInserting 
+                        function replacer(key, value) {
+                            if(key.startsWith('_')) return undefined;
+                            return value;
+                        }
+                        vnode.state.exportActive = !vnode.state.exportActive;
+                        vnode.state.exportData = JSON.stringify(s, replacer, 4);
+                    }
+                }, 'Export Data'),
+                // GUI: Display Export State Tree
+                m('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                    m('.modal-overlay'),
+                    m('.modal-container', [
+                        m('.modal-header', [
+                            m('button.btn.btn-clear.float-right', {
+                                onclick: function(){
+                                    vnode.state.exportActive = !vnode.state.exportActive;
+                                }
+                            }),
+                            m('.modal-title', 'Time Data')
+                        ]),
+                        m('.modal-body', 
+                            m('.content', m('textarea[style=height:200px;width:100%]', 
+                                vnode.state.exportData
+                            ))
+                        )
+                    ])
+                ]),
                 // GUI: Select mode
                 m('.form-group', [
                     m('.col-12', m('.btn-group.btn-group-block', [
                         m('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.normal(0);
+                                s.source._ctrl.normal(0);
                                 s.mode = 'normal';
                             }
                         }, 'Normal'),
                         m('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.single(0);
+                                s.source._ctrl.single(0);
                                 s.mode = 'auto';
                             }
                         }, 'Auto'),
                         m('button.btn' + (s.mode == 'single' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.single(0);
+                                s.source._ctrl.single(0);
                                 s.mode = 'single';
                             }
                         }, 'Single')
@@ -38,13 +68,13 @@ export const generalPrefPane = {
                 m('.form-group', [
                     m('button.btn.col-6', {
                         onclick: function(){
-                            s.source.ctrl.single(0);
+                            s.source._ctrl.single(0);
                             s.mode = 'single';
                         }
                     }, 'Single Shot'),
                     m('button.btn.col-6', {
                         onclick: function(){
-                            s.source.ctrl.forceTrigger();
+                            s.source._ctrl.forceTrigger();
                         }
                     }, 'Force Trigger')
                 ]),
@@ -65,10 +95,10 @@ export const generalPrefPane = {
                 m('.form-group', [
                     m('.col-12', m('.btn-group.btn-group-block',
                         s.source.traces.map(function(trace){
-                            return m('button.btn' + (trace.ctrl && s.source.activeTrace == trace.ctrl.id ? '.active' : ''), {
+                            return m('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
                                 style: { backgroundColor: trace.color },
                                 onclick: function(){
-                                    s.source.activeTrace = trace.ctrl.id;
+                                    s.source.activeTrace = trace._ctrl.id;
                                 }
                             }, trace.name);
                         })
@@ -88,10 +118,10 @@ export const generalPrefPane = {
                             activeTrace.scaling.y = 1;
                         }
                     }, m('i.icon.icon-resize-vert')),
-                    m('button.btn.col-2' + (s.ctrl && s.ctrl.addingMarker ? '.btn-primary' : ''), {
+                    m('button.btn.col-2' + (s._ctrl && s._ctrl.addingMarker ? '.btn-primary' : ''), {
                         onclick: function(){
                             // TODO: Add Marker
-                            s.ctrl.addingMarker = !s.ctrl.addingMarker;
+                            s._ctrl.addingMarker = !s._ctrl.addingMarker;
                         }
                     }, m('i.icon.icon-plus')),
                     m('button.btn.col-2', {

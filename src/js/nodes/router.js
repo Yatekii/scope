@@ -17,9 +17,9 @@ export const router = {
         // Add parents to all traces and sources
         vnode.attrs.scopes.forEach(function(scope) {
             scope.source.traces.forEach(function(trace) {
-                trace.source = scope.source;
+                trace._source = scope.source;
             }, this);
-            scope.source.scope = scope;
+            scope.source._scope = scope;
         });
     }
 };

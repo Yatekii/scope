@@ -52,9 +52,9 @@ Oscilloscope.prototype.draw = function() {
     context.stroke();
 
     // Draw all traces if the source is ready
-    if(this.state.source.ctrl.ready){
+    if(this.state.source._ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
-            trace.ctrl.draw(me.canvas);
+            trace._ctrl.draw(me.canvas);
         });
     }
 };
@@ -302,5 +302,5 @@ Oscilloscope.prototype.uiHandlers = {
 };
 
 Oscilloscope.prototype.addMarker = function(trace, id, type, xy){
-    return this.state.source.traces[trace].ctrl.addMarker(id, type, xy, true);
+    return this.state.source.traces[trace]._ctrl.addMarker(id, type, xy, true);
 };

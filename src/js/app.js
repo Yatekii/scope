@@ -62,7 +62,7 @@ var appState = {
                 {
                     id: 3,
                     offset: { x: 0, y: 0 },
-                    info: {},
+                    _info: {},
                     name: 'Trace ' + 1,
                     channelID: 1,
                     type: 'TimeTrace',
@@ -78,7 +78,7 @@ var appState = {
                     windowFunction: 'hann',
                     halfSpectrum: true,
                     SNRmode: 'auto',
-                    info: {},
+                    _info: {},
                     name: 'Trace ' + 2,
                     channelID: 1,
                     type: 'FFTrace',
@@ -109,7 +109,7 @@ var appState = {
                 {
                     id: 5,
                     offset: { x: 0, y: 0.25 },
-                    info: {},
+                    _info: {},
                     name: 'Trace ' + 9001,
                     channelID: 0,
                     type: 'TimeTrace',
@@ -125,7 +125,7 @@ var appState = {
                     windowFunction: 'hann',
                     halfSpectrum: true,
                     SNRmode: 'auto',
-                    info: {},
+                    _info: {},
                     name: 'Trace ' + 3000,
                     channelID: 0,
                     type: 'FFTrace',
@@ -173,6 +173,7 @@ window.addEventListener('load', function() {
                 // Open scope 1 by default
                 var popup = window.open(window.location.pathname + '#!/scope?id=1');
                 popup.scopeState = appState.scopes[0];
+                console.log(popup.scopeState);
             }
         },
         '/scope': {
@@ -181,6 +182,26 @@ window.addEventListener('load', function() {
                 return m(scopeView, {
                     scope: window.scopeState
                 });
+            },
+        },
+        '/load': {
+            view: function(vnode) {
+                return [
+                    m('textarea', {
+                        oninput: m.withAttr('value', function(v){ vnode.state.text = v; })
+                    }),
+                    m('button', {
+                        onclick: function(){
+                            var popup = window.open(window.location.pathname + '#!/scope');
+                            var scope = JSON.parse(vnode.state.text);
+                            scope.source.traces.forEach(function(trace) {
+                                trace._source = scope.source;
+                            }, this);
+                            scope.source._scope = scope;
+                            popup.scopeState = scope;
+                        }
+                    })
+                ]
             },
         }
     });

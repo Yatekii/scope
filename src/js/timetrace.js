@@ -8,6 +8,7 @@
 export const  TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
+    console.log(state)
     this.id = id;
 
     // Init class variables
@@ -25,7 +26,7 @@ TimeTrace.prototype.draw = function (canvas) {
     // Store context state so other painters are presented with their known context state
     context.save();
 
-    var scope = this.state.source.scope;
+    var scope = this.state._source._scope;
 
     // Half height of canvas
     var halfHeight = scope.height / 2;
@@ -37,14 +38,14 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state.source.ctrl.channels[this.state.channelID].length * this.state.scaling.x; // pixel/sample
+    var ratio = scope.width / this.state._source._ctrl.channels[this.state.channelID].length * this.state.scaling.x; // pixel/sample
     if(ratio > 1){
         mul = ratio;
     } else {
         skip = 1 / ratio;
     }
 
-    if(this.id == this.state.source.activeTrace){
+    if(this.id == this.state._source.activeTrace){
         // Horizontal grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
@@ -53,17 +54,17 @@ TimeTrace.prototype.draw = function (canvas) {
 
         // Calculate the current horizontal grid width dt according to screen size
         var n = 1e18;
-        var dt = ratio / this.state.source.samplingRate * n;
+        var dt = ratio / this.state._source.samplingRate * n;
         for(a = 0; a < 20; a++){
             if(scope.width / dt > 1 && scope.width / dt < 11){
                 break;
             }
             n *= 1e-1;
-            dt = ratio / this.state.source.samplingRate * n;
+            dt = ratio / this.state._source.samplingRate * n;
         }
 
         // Store grid width
-        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate);
+        this.state._info.deltat = (1 / ratio * dt * 1 / this.state._source.samplingRate);
 
         // Draw horizontal grid
         for(i = 0; i < 11; i++){
@@ -109,7 +110,7 @@ TimeTrace.prototype.draw = function (canvas) {
         // da = v * scaling * canvas / dec
         // da / canvas / scaling = v / dec
         // v / dec = n / canvas
-        this.state.info.deltaA = (baseGrid * n);
+        this.state._info.deltaA = (baseGrid * n);
 
         // Draw vertical grid
         for(i = -11; i < 11; i++){
@@ -139,7 +140,7 @@ TimeTrace.prototype.draw = function (canvas) {
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    var data = this.state.source.ctrl.channels[this.state.channelID];
+    var data = this.state._source._ctrl.channels[this.state.channelID];
     context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x * data.length] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));

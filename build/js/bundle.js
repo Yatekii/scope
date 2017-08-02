@@ -15217,9 +15217,9 @@ const router = {
         // Add parents to all traces and sources
         vnode.attrs.scopes.forEach(function(scope) {
             scope.source.traces.forEach(function(trace) {
-                trace.source = scope.source;
+                trace._source = scope.source;
             }, this);
-            scope.source.scope = scope;
+            scope.source._scope = scope;
         });
     }
 };
@@ -15495,6 +15495,9 @@ const percentageToSample = function(percentage, frameSize){
 const FFTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
+        if(!t._info){
+            t._info = {};
+        }
         var s = vnode.attrs.scopeConf;
         // TODO: uncomment
         // if(!s.source.ready){
@@ -15522,7 +15525,7 @@ const FFTracePrefPane = {
                     mithril('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t.ctrl.state.data.join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl.state._data.join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),
@@ -15548,13 +15551,13 @@ const FFTracePrefPane = {
                 // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
                 mithril('.form-group', [
                     mithril('.col-1', mithril('label.form-label', 'Δf:')),
-                    mithril('.col-2', mithril('label.form-label', hertzToString(t.info.deltaf))),
+                    mithril('.col-2', mithril('label.form-label', hertzToString(t._info.deltaf))),
                     mithril('.col-1', mithril('label.form-label', 'ΔA:')),
-                    mithril('.col-2', mithril('label.form-label', voltsToString(t.info.deltaA))),
+                    mithril('.col-2', mithril('label.form-label', voltsToString(t._info.deltaA))),
                     mithril('.col-1', mithril('label.form-label', ['P:', mithril('sub', 'rms')])),
-                    mithril('.col-2', mithril('label.form-label', wattsToString(t.info.RMSPower))),
+                    mithril('.col-2', mithril('label.form-label', wattsToString(t._info.RMSPower))),
                     mithril('.col-1', mithril('label.form-label', '\u2202P/\u2202f:')),
-                    mithril('.col-2', mithril('label.form-label', wattsPerHertzToString(t.info.powerDensity)))
+                    mithril('.col-2', mithril('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -15582,7 +15585,7 @@ const FFTracePrefPane = {
                         mithril('i.form-icon'),
                         'Calculate SNR:'
                     ])),
-                    mithril('.col-6', mithril('label.form-label', { id: 'SNR' }, t.info.SNR))
+                    mithril('.col-6', mithril('label.form-label', { id: 'SNR' }, t._info.SNR))
                 ]),
                 // GUI: Select display mode
                 (vnode.state.calculateSNR ? [
@@ -15668,6 +15671,9 @@ const FFTracePrefPane = {
 const TimeTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
+        if(!t._info){
+            t._info = {};
+        }
         var s = vnode.attrs.scopeConf;
         // TODO: uncomment
         // if(!s.source.ready){
@@ -15696,7 +15702,7 @@ const TimeTracePrefPane = {
                     mithril('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t.ctrl.state.source.ctrl.channels[0].join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl.state.source._ctrl.channels[0].join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),
@@ -15722,9 +15728,9 @@ const TimeTracePrefPane = {
                 // GUI: Display Δt, ΔA
                 mithril('.form-group', [
                     mithril('.col-1', mithril('label.form-label', 'Δt:')),
-                    mithril('.col-5', mithril('label.form-label', secondsToString(t.info.deltat))),
+                    mithril('.col-5', mithril('label.form-label', secondsToString(t._info.deltat))),
                     mithril('.col-1', mithril('label.form-label', 'ΔA:')),
-                    mithril('.col-5', mithril('label.form-label', voltsToString(t.info.deltaA)))
+                    mithril('.col-5', mithril('label.form-label', voltsToString(t._info.deltaA)))
                 ])
             ])
         ];
@@ -15742,24 +15748,54 @@ const generalPrefPane = {
         return [
             mithril('header.text-center', mithril('h4', s)),
             mithril('.form-horizontal', [
+                mithril('button.btn.col-12', {
+                    onclick: function(){
+                        var doneInserting; 
+                        function replacer(key, value) {
+                            if(key.startsWith('_')) return undefined;
+                            return value;
+                        }
+                        vnode.state.exportActive = !vnode.state.exportActive;
+                        vnode.state.exportData = JSON.stringify(s, replacer, 4);
+                    }
+                }, 'Export Data'),
+                // GUI: Display Export State Tree
+                mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                    mithril('.modal-overlay'),
+                    mithril('.modal-container', [
+                        mithril('.modal-header', [
+                            mithril('button.btn.btn-clear.float-right', {
+                                onclick: function(){
+                                    vnode.state.exportActive = !vnode.state.exportActive;
+                                }
+                            }),
+                            mithril('.modal-title', 'Time Data')
+                        ]),
+                        mithril('.modal-body', 
+                            mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
+                                vnode.state.exportData
+                            ))
+                        )
+                    ])
+                ]),
                 // GUI: Select mode
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block', [
                         mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.normal(0);
+                                s.source._ctrl.normal(0);
                                 s.mode = 'normal';
                             }
                         }, 'Normal'),
                         mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.single(0);
+                                s.source._ctrl.single(0);
                                 s.mode = 'auto';
                             }
                         }, 'Auto'),
                         mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
                             onclick: function(){
-                                s.source.ctrl.single(0);
+                                s.source._ctrl.single(0);
                                 s.mode = 'single';
                             }
                         }, 'Single')
@@ -15769,13 +15805,13 @@ const generalPrefPane = {
                 mithril('.form-group', [
                     mithril('button.btn.col-6', {
                         onclick: function(){
-                            s.source.ctrl.single(0);
+                            s.source._ctrl.single(0);
                             s.mode = 'single';
                         }
                     }, 'Single Shot'),
                     mithril('button.btn.col-6', {
                         onclick: function(){
-                            s.source.ctrl.forceTrigger();
+                            s.source._ctrl.forceTrigger();
                         }
                     }, 'Force Trigger')
                 ]),
@@ -15796,10 +15832,10 @@ const generalPrefPane = {
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block',
                         s.source.traces.map(function(trace){
-                            return mithril('button.btn' + (trace.ctrl && s.source.activeTrace == trace.ctrl.id ? '.active' : ''), {
+                            return mithril('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
                                 style: { backgroundColor: trace.color },
                                 onclick: function(){
-                                    s.source.activeTrace = trace.ctrl.id;
+                                    s.source.activeTrace = trace._ctrl.id;
                                 }
                             }, trace.name);
                         })
@@ -15819,10 +15855,10 @@ const generalPrefPane = {
                             activeTrace.scaling.y = 1;
                         }
                     }, mithril('i.icon.icon-resize-vert')),
-                    mithril('button.btn.col-2' + (s.ctrl && s.ctrl.addingMarker ? '.btn-primary' : ''), {
+                    mithril('button.btn.col-2' + (s._ctrl && s._ctrl.addingMarker ? '.btn-primary' : ''), {
                         onclick: function(){
                             // TODO: Add Marker
-                            s.ctrl.addingMarker = !s.ctrl.addingMarker;
+                            s._ctrl.addingMarker = !s._ctrl.addingMarker;
                         }
                     }, mithril('i.icon.icon-plus')),
                     mithril('button.btn.col-2', {
@@ -15890,9 +15926,9 @@ Oscilloscope.prototype.draw = function() {
     context.stroke();
 
     // Draw all traces if the source is ready
-    if(this.state.source.ctrl.ready){
+    if(this.state.source._ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
-            trace.ctrl.draw(me.canvas);
+            trace._ctrl.draw(me.canvas);
         });
     }
 };
@@ -16140,7 +16176,7 @@ Oscilloscope.prototype.uiHandlers = {
 };
 
 Oscilloscope.prototype.addMarker = function(trace, id, type, xy){
-    return this.state.source.traces[trace].ctrl.addMarker(id, type, xy, true);
+    return this.state.source.traces[trace]._ctrl.addMarker(id, type, xy, true);
 };
 
 /* This file contains the source class which is responsible for
@@ -16243,7 +16279,6 @@ const WebsocketSource = function(state) {
  * <obj> : Object : Object to be sent over the network as a JSON string
  */
 WebsocketSource.prototype.sendJSON = function(obj) {
-    console.log(JSON.stringify(obj));
     this.socket.send(JSON.stringify(obj));
 };
 
@@ -16376,6 +16411,7 @@ WebsocketSource.prototype.auto = function(channel, timeout) {
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
+    console.log(state);
     this.id = id;
 
     // Init class variables
@@ -16393,7 +16429,7 @@ TimeTrace.prototype.draw = function (canvas) {
     // Store context state so other painters are presented with their known context state
     context.save();
 
-    var scope = this.state.source.scope;
+    var scope = this.state._source._scope;
 
     // Half height of canvas
     var halfHeight = scope.height / 2;
@@ -16405,14 +16441,14 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state.source.ctrl.channels[this.state.channelID].length * this.state.scaling.x; // pixel/sample
+    var ratio = scope.width / this.state._source._ctrl.channels[this.state.channelID].length * this.state.scaling.x; // pixel/sample
     if(ratio > 1){
         mul = ratio;
     } else {
         skip = 1 / ratio;
     }
 
-    if(this.id == this.state.source.activeTrace){
+    if(this.id == this.state._source.activeTrace){
         // Horizontal grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
@@ -16421,17 +16457,17 @@ TimeTrace.prototype.draw = function (canvas) {
 
         // Calculate the current horizontal grid width dt according to screen size
         var n = 1e18;
-        var dt = ratio / this.state.source.samplingRate * n;
+        var dt = ratio / this.state._source.samplingRate * n;
         for(a = 0; a < 20; a++){
             if(scope.width / dt > 1 && scope.width / dt < 11){
                 break;
             }
             n *= 1e-1;
-            dt = ratio / this.state.source.samplingRate * n;
+            dt = ratio / this.state._source.samplingRate * n;
         }
 
         // Store grid width
-        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate);
+        this.state._info.deltat = (1 / ratio * dt * 1 / this.state._source.samplingRate);
 
         // Draw horizontal grid
         for(i = 0; i < 11; i++){
@@ -16477,7 +16513,7 @@ TimeTrace.prototype.draw = function (canvas) {
         // da = v * scaling * canvas / dec
         // da / canvas / scaling = v / dec
         // v / dec = n / canvas
-        this.state.info.deltaA = (baseGrid * n);
+        this.state._info.deltaA = (baseGrid * n);
 
         // Draw vertical grid
         for(i = -11; i < 11; i++){
@@ -16507,7 +16543,7 @@ TimeTrace.prototype.draw = function (canvas) {
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    var data = this.state.source.ctrl.channels[this.state.channelID];
+    var data = this.state._source._ctrl.channels[this.state.channelID];
     context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x * data.length] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
@@ -16733,14 +16769,14 @@ const FFTrace = function(id, state) {
 FFTrace.prototype.draw = function (canvas) {
     var me = this;
     var i, j;
-    var scope = this.state.source.scope;
+    var scope = this.state._source._scope;
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
     var currentWindow = windowFunctions[this.state.windowFunction];
     // Duplicate data because the fft will store the results in the input vectors
-    var real = this.state.source.ctrl.channels[this.state.channelID].slice(0);
+    var real = this.state._source._ctrl.channels[this.state.channelID].slice(0);
     // Create a complex vector with zeroes sice we only have real input
-    var compl = new Float32Array(this.state.source.ctrl.channels[this.state.channelID].length);
+    var compl = new Float32Array(this.state._source._ctrl.channels[this.state.channelID].length);
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
     // if(this.state.windowFunction && currentWindow){
@@ -16768,7 +16804,7 @@ FFTrace.prototype.draw = function (canvas) {
     for(i = 0; i < ab.length; i++){
         ab[i] = real[i] * real[i] + compl[i] * compl[i];
     }
-    this.state.data = ab.slice(0);
+    this.state._data = ab.slice(0);
     // Calculate x-Axis scaling
     // mul tells how many pixels have to be skipped after each sample
     // If the signal has more points than the canvas, this will always be 1
@@ -16785,9 +16821,9 @@ FFTrace.prototype.draw = function (canvas) {
 
     if(ab.length > 0){
         // Set RMS
-        this.state.info.RMSPower = power(ab, true, ab.length - 1);
+        this.state._info.RMSPower = power(ab, true, ab.length - 1);
         // Set P/f
-        this.state.info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
+        this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
 
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
@@ -16801,7 +16837,7 @@ FFTrace.prototype.draw = function (canvas) {
                    + power(ab.slice(second + 1), true, ab.length);
             // Sum both sets and calculate their ratio which is the SNR
             var SNR = Math.log10(Ps / Pn) * 10;
-            this.state.info.SNR = SNR;
+            this.state._info.SNR = SNR;
         }
         if(this.state.SNRmode == 'auto'){
             // Find max in all values
@@ -16822,7 +16858,7 @@ FFTrace.prototype.draw = function (canvas) {
                    + power(ab.slice(maxi + l + 1), true, ab.length);
             // Sum both sets and calculate their ratio which is the SNR
             SNR = Math.log10(Ps / Pn) * 10;
-            this.state.info.SNR = SNR;
+            this.state._info.SNR = SNR;
 
             // Posiion SNR markers
             this.setSNRMarkers(
@@ -16860,9 +16896,9 @@ FFTrace.prototype.draw = function (canvas) {
         }
 
     } else {
-        this.state.info.RMSPower = '\u26A0 No signal';
-        this.state.info.powerDensity  = '\u26A0 No signal';
-        this.state.info.SNR = '\u26A0 No signal';
+        this.state._info.RMSPower = '\u26A0 No signal';
+        this.state._info.powerDensity  = '\u26A0 No signal';
+        this.state._info.SNR = '\u26A0 No signal';
     }
 
     // Convert spectral density to a logarithmic scale to be able to better plot it.
@@ -16873,7 +16909,7 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Store brush
     context.save();
-    if(this.id == this.state.source.activeTrace){
+    if(this.id == this.state._source.activeTrace){
         // Vertical grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
@@ -16894,7 +16930,7 @@ FFTrace.prototype.draw = function (canvas) {
         }
         // Store vertical grid size
         // Mulitply by 100 because we scale the signal constant by that factor.
-        this.state.info.deltaA = (baseGrid * n * 100);
+        this.state._info.deltaA = (baseGrid * n * 100);
 
         // Draw vertical grid
         for(i = -11; i < 11; i++){
@@ -16923,17 +16959,17 @@ FFTrace.prototype.draw = function (canvas) {
 
         // Calculate the current vertical grid width dF according to screen size
         n = 1;
-        var df = ratio * this.state.source.samplingRate / 2 * n;
+        var df = ratio * this.state._source.samplingRate / 2 * n;
         for(var a = 0; a < 20; a++){
             if(scope.width / df > 1 && scope.width / df < 11){
                 break;
             }
             n *= 1e-1;
-            df = ratio * this.state.source.samplingRate / 2 * n;
+            df = ratio * this.state._source.samplingRate / 2 * n;
         }
 
         // Store grid width
-        this.state.info.deltaf = 1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize;
+        this.state._info.deltaf = 1 / ratio * df * this.state._source.samplingRate / this.state._source.frameSize;
 
         // Draw vertical grid
         for(i = 0; i < 11; i++){
@@ -16969,7 +17005,7 @@ FFTrace.prototype.draw = function (canvas) {
     // Draw the markers
     context.save();
     this.state.markers.forEach(function(m) {
-        draw$1(context, me.state.source.scope, m, me.state, ratio, ab.length);
+        draw$1(context, me.state._source._scope, m, me.state, ratio, ab.length);
     });
     context.restore();
 
@@ -17079,7 +17115,7 @@ const scopeView = {
                 oncreate: function(vnode){
                     // Make sure the on scroll event is listened to
                     vnode.dom.addEventListener('mousewheel', function(event){
-                        onode.attrs.scope.ctrl.onScroll(event, onode.attrs.scope.ctrl);
+                        onode.attrs.scope._ctrl.onScroll(event, onode.attrs.scope._ctrl);
                         mithril.redraw();
                     });
                 }
@@ -17089,10 +17125,10 @@ const scopeView = {
                     width: vnode.attrs.width,
                     height: vnode.attrs.height
                 },
-                onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
-                onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
+                onmousedown: function(event) { vnode.attrs.scope._ctrl.onMouseDown(event); },
+                onmouseup: function(event) { vnode.attrs.scope._ctrl.onMouseUp(event); },
                 onmousemove: function(event) {
-                    event.preventDefault(); vnode.attrs.scope.ctrl.onMouseMove(event);
+                    event.preventDefault(); vnode.attrs.scope._ctrl.onMouseMove(event);
                 },
             })),
             // Render a settings panel if it is toggled otherwise render none
@@ -17120,33 +17156,33 @@ const scopeView = {
                 style: {
                     right: vnode.attrs.scope.ui.prefPane.open ? '' + (vnode.attrs.scope.ui.prefPane.width + 20) + 'px' : '' + 20 + 'px',
                 },
-                onclick: function(){ vnode.attrs.scope.ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope.ctrl); }
+                onclick: function(){ vnode.attrs.scope._ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope._ctrl); }
             }, mithril('i.icon.icon-menu', ''))
         ];
     },
     oncreate: function(vnode){
         // Create a new scope controller and add its reference to the scope state object
-        vnode.attrs.scope.ctrl = new Oscilloscope(vnode.attrs.scope);
+        vnode.attrs.scope._ctrl = new Oscilloscope(vnode.attrs.scope);
 
         // Initialize controllers for the source
-        vnode.attrs.scope.source.ctrl = new WebsocketSource(vnode.attrs.scope.source);
+        vnode.attrs.scope.source._ctrl = new WebsocketSource(vnode.attrs.scope.source);
 
         // Initialize controllers for the traces
         vnode.attrs.scope.source.traces.forEach(function(trace, i){
             switch(trace.type){
             default:
             case 'TimeTrace':
-                trace.ctrl = new TimeTrace(i, trace);
+                trace._ctrl = new TimeTrace(i, trace);
                 break;
 
             case 'FFTrace':
-                trace.ctrl = new FFTrace(i, trace);
+                trace._ctrl = new FFTrace(i, trace);
                 break;
             }
         });
 
         // First draw to invoke all subsequnt draws on each rendered frame
-        draw(vnode.attrs.scope.ctrl);
+        draw(vnode.attrs.scope._ctrl);
     },
 };
 
@@ -17208,7 +17244,7 @@ var appState = {
                 {
                     id: 3,
                     offset: { x: 0, y: 0 },
-                    info: {},
+                    _info: {},
                     name: 'Trace ' + 1,
                     channelID: 1,
                     type: 'TimeTrace',
@@ -17224,7 +17260,7 @@ var appState = {
                     windowFunction: 'hann',
                     halfSpectrum: true,
                     SNRmode: 'auto',
-                    info: {},
+                    _info: {},
                     name: 'Trace ' + 2,
                     channelID: 1,
                     type: 'FFTrace',
@@ -17255,7 +17291,7 @@ var appState = {
                 {
                     id: 5,
                     offset: { x: 0, y: 0.25 },
-                    info: {},
+                    _info: {},
                     name: 'Trace ' + 9001,
                     channelID: 0,
                     type: 'TimeTrace',
@@ -17271,7 +17307,7 @@ var appState = {
                     windowFunction: 'hann',
                     halfSpectrum: true,
                     SNRmode: 'auto',
-                    info: {},
+                    _info: {},
                     name: 'Trace ' + 3000,
                     channelID: 0,
                     type: 'FFTrace',
@@ -17319,6 +17355,7 @@ window.addEventListener('load', function() {
                 // Open scope 1 by default
                 var popup = window.open(window.location.pathname + '#!/scope?id=1');
                 popup.scopeState = appState.scopes[0];
+                console.log(popup.scopeState);
             }
         },
         '/scope': {
@@ -17327,6 +17364,26 @@ window.addEventListener('load', function() {
                 return mithril(scopeView, {
                     scope: window.scopeState
                 });
+            },
+        },
+        '/load': {
+            view: function(vnode) {
+                return [
+                    mithril('textarea', {
+                        oninput: mithril.withAttr('value', function(v){ vnode.state.text = v; })
+                    }),
+                    mithril('button', {
+                        onclick: function(){
+                            var popup = window.open(window.location.pathname + '#!/scope');
+                            var scope = JSON.parse(vnode.state.text);
+                            scope.source.traces.forEach(function(trace) {
+                                trace._source = scope.source;
+                            }, this);
+                            scope.source._scope = scope;
+                            popup.scopeState = scope;
+                        }
+                    })
+                ]
             },
         }
     });

@@ -9,6 +9,9 @@ import { secondsToString, voltsToString } from '../math/converting.js';
 export const TimeTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
+        if(!t._info){
+            t._info = {};
+        }
         var s = vnode.attrs.scopeConf;
         // TODO: uncomment
         // if(!s.source.ready){
@@ -37,7 +40,7 @@ export const TimeTracePrefPane = {
                     m('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t.ctrl.state.source.ctrl.channels[0].join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl.state.source._ctrl.channels[0].join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),
@@ -63,9 +66,9 @@ export const TimeTracePrefPane = {
                 // GUI: Display Δt, ΔA
                 m('.form-group', [
                     m('.col-1', m('label.form-label', 'Δt:')),
-                    m('.col-5', m('label.form-label', secondsToString(t.info.deltat))),
+                    m('.col-5', m('label.form-label', secondsToString(t._info.deltat))),
                     m('.col-1', m('label.form-label', 'ΔA:')),
-                    m('.col-5', m('label.form-label', voltsToString(t.info.deltaA)))
+                    m('.col-5', m('label.form-label', voltsToString(t._info.deltaA)))
                 ])
             ])
         ];

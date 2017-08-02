@@ -1157,7 +1157,7 @@ var _20 = function($window, redrawService0) {
 	route.link = function(vnode1) {
 		vnode1.dom.setAttribute("href", routeService.prefix + vnode1.attrs.href);
 		vnode1.dom.onclick = function(e) {
-			if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2) return
+			if (e._ctrlKey || e.metaKey || e.shiftKey || e.which === 2) return
 			e.preventDefault();
 			e.redraw = false;
 			var href = this.getAttribute("href");
@@ -15557,19 +15557,19 @@ const generalPrefPane = {
                     mithril('.col-12', mithril('.btn-group.btn-group-block', [
                         mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
                             onclick: function(e){
-                                s.source.ctrl.normal();
+                                s.source._ctrl.normal();
                                 s.mode = 'normal';
                             }
                         }, 'Normal'),
                         mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
                             onclick: function(e){
-                                s.source.ctrl.single();
+                                s.source._ctrl.single();
                                 s.mode = 'auto';
                             }
                         }, 'Auto'),
                         mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
                             onclick: function(e){
-                                s.source.ctrl.single();
+                                s.source._ctrl.single();
                                 s.mode = 'single';
                             }
                         }, 'Single')
@@ -15578,23 +15578,23 @@ const generalPrefPane = {
                 mithril('.form-group', [
                     mithril('button.btn.col-6', {
                         onclick: function(e){
-                                s.source.ctrl.single();
+                                s.source._ctrl.single();
                                 s.mode = 'single';
                             }
                     }, 'Single Shot'),
                     mithril('button.btn.col-6', {
                         onclick: function(e){
-                            s.source.ctrl.forceTrigger();
+                            s.source._ctrl.forceTrigger();
                         }
                     }, 'Force Trigger')
                 ]),
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block',
                         s.source.traces.map(function(trace){
-                            return mithril('button.btn' + (trace.ctrl && s.source.activeTrace == trace.ctrl.id ? '.active' : ''), {
+                            return mithril('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
                                 style: { backgroundColor: trace.color },
                                 onclick: function(e){
-                                    s.source.activeTrace = trace.ctrl.id;
+                                    s.source.activeTrace = trace._ctrl.id;
                                 }
                             }, trace.name);
                         })
@@ -15646,9 +15646,9 @@ Oscilloscope.prototype.draw = function() {
     context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * activeTrace.scaling.y);
     context.stroke();
 
-    if(this.state.source.ctrl.ready){
+    if(this.state.source._ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
-                trace.ctrl.draw(me.canvas);
+                trace._ctrl.draw(me.canvas);
         });
     }
 };
@@ -16181,7 +16181,7 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state.source.ctrl.channels[0].length * this.state.scaling.x; // pixel/sample
+    var ratio = scope.width / this.state.source._ctrl.channels[0].length * this.state.scaling.x; // pixel/sample
     if(ratio > 1){
         mul = ratio;
     } else {
@@ -16274,7 +16274,7 @@ TimeTrace.prototype.draw = function (canvas) {
     // Actually draw the trace, starting at pixel 0 and data point at 0
     // triggerLocation is only relevant when using WebAudio
     // using an external source the source handles triggering
-    var data = this.state.source.ctrl.channels[0];
+    var data = this.state.source._ctrl.channels[0];
     context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (var i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (data[Math.floor(i) + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
@@ -16327,13 +16327,13 @@ FFTrace.prototype.draw = function (canvas) {
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
     // Duplicate data
-    var real = this.state.source.ctrl.channels[0].slice(0);
+    var real = this.state.source._ctrl.channels[0].slice(0);
     var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits);
     for(i = 0; i < real.length; i++){
         real[i] = real[i] / vmax;
     }
     // Create a complex vector with zeroes sice we only have real input
-    var compl = new Float32Array(this.state.source.ctrl.channels[0]);
+    var compl = new Float32Array(this.state.source._ctrl.channels[0]);
     // Window data if a valid window was selected
     if(this.state.windowFunction && windowFunctions[this.state.windowFunction]){
         real = applyWindow(real, windowFunctions[this.state.windowFunction]);
@@ -16567,7 +16567,7 @@ const scopeView = {
     oninit: function(vnode) {
         // Make sure the on scroll event is listened to
         window.addEventListener('mousewheel', function(event){
-            vnode.attrs.scope.ctrl.onScroll(event, vnode.attrs.scope.ctrl);
+            vnode.attrs.scope._ctrl.onScroll(event, vnode.attrs.scope._ctrl);
             mithril.redraw();
         }, {passive: true});
     },
@@ -16580,9 +16580,9 @@ const scopeView = {
                     width: vnode.attrs.width,
                     height: vnode.attrs.height
                 },
-                onmousedown: function(event) { vnode.attrs.scope.ctrl.onMouseDown(event); },
-                onmouseup: function(event) { vnode.attrs.scope.ctrl.onMouseUp(event); },
-                onmousemove: function(event) { event.preventDefault(); vnode.attrs.scope.ctrl.onMouseMove(event); },
+                onmousedown: function(event) { vnode.attrs.scope._ctrl.onMouseDown(event); },
+                onmouseup: function(event) { vnode.attrs.scope._ctrl.onMouseUp(event); },
+                onmousemove: function(event) { event.preventDefault(); vnode.attrs.scope._ctrl.onMouseMove(event); },
             }),
             // Render a settings panel if it is toggled otherwise render none
             mithril('.panel', {
@@ -16609,33 +16609,33 @@ const scopeView = {
                 style: {
                     right: vnode.attrs.scope.ui.prefPane.open ? '' + (vnode.attrs.scope.ui.prefPane.width + 20) + 'px' : '' + 20 + 'px',
                 },
-                onclick: function(){ vnode.attrs.scope.ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope.ctrl); }
+                onclick: function(){ vnode.attrs.scope._ctrl.uiHandlers.togglePrefPane(vnode.attrs.scope._ctrl); }
             }, mithril('i.icon.icon-menu', ''))
         ];
     },
     oncreate: function(vnode){
         // Create a new scope controller and add its reference to the scope state object
-        vnode.attrs.scope.ctrl = new Oscilloscope(vnode.attrs.scope);
+        vnode.attrs.scope._ctrl = new Oscilloscope(vnode.attrs.scope);
 
         // Initialize controllers for the source
-        vnode.attrs.scope.source.ctrl = new WebsocketSource(vnode.attrs.scope.source);
+        vnode.attrs.scope.source._ctrl = new WebsocketSource(vnode.attrs.scope.source);
 
         // Initialize controllers for the traces
         vnode.attrs.scope.source.traces.forEach(function(trace, i){
             switch(trace.type){
             default:
             case 'TimeTrace':
-                trace.ctrl = new TimeTrace(i, trace);
+                trace._ctrl = new TimeTrace(i, trace);
                 break;
 
             case 'FFTrace':
-                trace.ctrl = new FFTrace(i, trace);
+                trace._ctrl = new FFTrace(i, trace);
                 break;
             }
         });
 
         // First draw to invoke all subsequnt draws on each rendered frame
-        draw(vnode.attrs.scope.ctrl);
+        draw(vnode.attrs.scope._ctrl);
     },
 };
 
