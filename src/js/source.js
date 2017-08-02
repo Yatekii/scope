@@ -98,6 +98,7 @@ export const WebsocketSource = function(state) {
  * <obj> : Object : Object to be sent over the network as a JSON string
  */
 WebsocketSource.prototype.sendJSON = function(obj) {
+    console.log(JSON.stringify(obj))
     this.socket.send(JSON.stringify(obj));
 };
 
