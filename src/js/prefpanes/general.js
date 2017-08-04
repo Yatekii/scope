@@ -8,37 +8,60 @@ export const generalPrefPane = {
     view: function(vnode){
         var s = vnode.attrs.scopeConf;
         var activeTrace = s.source.traces[s.source.activeTrace];
+        var samplingRates = [
+            25000000,
+             5000000,
+             1000000,
+              200000,
+              100000,
+               50000
+        ];
         return [
             m('header.text-center', m('h4', s)),
             m('.form-horizontal', [
-                m('button.btn.col-12', {
-                    onclick: function(){
-                        var doneInserting 
-                        function replacer(key, value) {
-                            if(key.startsWith('_')) return undefined;
-                            return value;
+                // GUI: Select sampling rate
+                m('.form-group', [
+                    m('.col-3', m('label.form-label', 'Sampling Rate')),
+                    m('select.form-select.col-9', {
+                        value: s.source.samplingRate,
+                        onchange: m.withAttr('value', function(v){
+                            s.source.samplingRate = parseInt(v);
+                            s.source._ctrl.samplingRate(s.source.samplingRate);
+                        })
+                    }, samplingRates.map(function(t){
+                        return m('option', { value: t }, t);
+                    }))
+                ]),
+                m('.form-group', [
+                    m('button.btn.col-12', {
+                        onclick: function(){
+                            var doneInserting 
+                            function replacer(key, value) {
+                                if(key.startsWith('_')) return undefined;
+                                return value;
+                            }
+                            vnode.state.exportActive = !vnode.state.exportActive;
+                            vnode.state.exportData = JSON.stringify(s, replacer, 4);
                         }
-                        vnode.state.exportActive = !vnode.state.exportActive;
-                        vnode.state.exportData = JSON.stringify(s, replacer, 4);
-                    }
-                }, 'Export Data'),
-                // GUI: Display Export State Tree
-                m('.modal' + (vnode.state.exportActive ? 'active' : ''), [
-                    m('.modal-overlay'),
-                    m('.modal-container', [
-                        m('.modal-header', [
-                            m('button.btn.btn-clear.float-right', {
-                                onclick: function(){
-                                    vnode.state.exportActive = !vnode.state.exportActive;
-                                }
-                            }),
-                            m('.modal-title', 'Time Data')
-                        ]),
-                        m('.modal-body', 
-                            m('.content', m('textarea[style=height:200px;width:100%]', 
-                                vnode.state.exportData
-                            ))
-                        )
+                    }, 'Export Socpe Configuration'),
+                    // GUI: Display Export State Tree
+                    m('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                        m('.modal-overlay'),
+                        m('.modal-container', [
+                            m('.modal-header', [
+                                m('button.btn.btn-clear.float-right', {
+                                    onclick: function(){
+                                        vnode.state.exportActive = !vnode.state.exportActive;
+                                    }
+                                }),
+                                m('.modal-title', 'Time Data')
+                            ]),
+                            m('.modal-body', 
+                                m('.content', m('textarea[style=height:200px;width:100%]', 
+                                    vnode.state.exportData
+                                ))
+                            )
+                        ])
                     ])
                 ]),
                 // GUI: Select mode

@@ -144,6 +144,13 @@ WebsocketSource.prototype.forceTrigger = function() {
 };
 
 /*
+ * Sends a force trigger command to the server to issue an immediate frame.
+ */
+WebsocketSource.prototype.samplingRate = function(s) {
+    this.sendJSON({ samplingRate: s });
+};
+
+/*
  * Configures the frame the server will send.
  * <frameSize> : uint : The number of samples returned by the server
  * <pre> : uint : The number of samples that have to be recorded before a trigger can be fired

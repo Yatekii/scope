@@ -15745,37 +15745,60 @@ const generalPrefPane = {
     view: function(vnode){
         var s = vnode.attrs.scopeConf;
         var activeTrace = s.source.traces[s.source.activeTrace];
+        var samplingRates = [
+            25000000,
+             5000000,
+             1000000,
+              200000,
+              100000,
+               50000
+        ];
         return [
             mithril('header.text-center', mithril('h4', s)),
             mithril('.form-horizontal', [
-                mithril('button.btn.col-12', {
-                    onclick: function(){
-                        var doneInserting; 
-                        function replacer(key, value) {
-                            if(key.startsWith('_')) return undefined;
-                            return value;
+                // GUI: Select sampling rate
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'Sampling Rate')),
+                    mithril('select.form-select.col-9', {
+                        value: s.source.samplingRate,
+                        onchange: mithril.withAttr('value', function(v){
+                            s.source.samplingRate = parseInt(v);
+                            s.source._ctrl.samplingRate(s.source.samplingRate);
+                        })
+                    }, samplingRates.map(function(t){
+                        return mithril('option', { value: t }, t);
+                    }))
+                ]),
+                mithril('.form-group', [
+                    mithril('button.btn.col-12', {
+                        onclick: function(){
+                            var doneInserting; 
+                            function replacer(key, value) {
+                                if(key.startsWith('_')) return undefined;
+                                return value;
+                            }
+                            vnode.state.exportActive = !vnode.state.exportActive;
+                            vnode.state.exportData = JSON.stringify(s, replacer, 4);
                         }
-                        vnode.state.exportActive = !vnode.state.exportActive;
-                        vnode.state.exportData = JSON.stringify(s, replacer, 4);
-                    }
-                }, 'Export Data'),
-                // GUI: Display Export State Tree
-                mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
-                    mithril('.modal-overlay'),
-                    mithril('.modal-container', [
-                        mithril('.modal-header', [
-                            mithril('button.btn.btn-clear.float-right', {
-                                onclick: function(){
-                                    vnode.state.exportActive = !vnode.state.exportActive;
-                                }
-                            }),
-                            mithril('.modal-title', 'Time Data')
-                        ]),
-                        mithril('.modal-body', 
-                            mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
-                                vnode.state.exportData
-                            ))
-                        )
+                    }, 'Export Socpe Configuration'),
+                    // GUI: Display Export State Tree
+                    mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                        mithril('.modal-overlay'),
+                        mithril('.modal-container', [
+                            mithril('.modal-header', [
+                                mithril('button.btn.btn-clear.float-right', {
+                                    onclick: function(){
+                                        vnode.state.exportActive = !vnode.state.exportActive;
+                                    }
+                                }),
+                                mithril('.modal-title', 'Time Data')
+                            ]),
+                            mithril('.modal-body', 
+                                mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
+                                    vnode.state.exportData
+                                ))
+                            )
+                        ])
                     ])
                 ]),
                 // GUI: Select mode
@@ -16322,6 +16345,13 @@ WebsocketSource.prototype.readFrame = function(channel) {
  */
 WebsocketSource.prototype.forceTrigger = function() {
     this.sendJSON({ forceTrigger: true });
+};
+
+/*
+ * Sends a force trigger command to the server to issue an immediate frame.
+ */
+WebsocketSource.prototype.samplingRate = function(s) {
+    this.sendJSON({ samplingRate: s });
 };
 
 /*
