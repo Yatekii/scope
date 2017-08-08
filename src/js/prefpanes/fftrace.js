@@ -19,10 +19,9 @@ export const FFTracePrefPane = {
             t._info = {};
         }
         var s = vnode.attrs.scopeConf;
-        // TODO: uncomment
-        // if(!s.source.ready){
-        //     return m('.form-horizontal', 'Source is not ready.');
-        // }
+        if(s.source._ctrl && !s.source._ctrl.ready){
+            return m('.form-horizontal', 'Source is not ready.');
+        }
         return [
             m('.form-horizontal', [
                 // GUI: Change color and name

@@ -201,7 +201,7 @@ window.addEventListener('load', function() {
                             popup.scopeState = scope;
                         }
                     })
-                ]
+                ];
             },
         }
     });

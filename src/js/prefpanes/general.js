@@ -10,11 +10,11 @@ export const generalPrefPane = {
         var activeTrace = s.source.traces[s.source.activeTrace];
         var samplingRates = [
             25000000,
-             5000000,
-             1000000,
-              200000,
-              100000,
-               50000
+            5000000,
+            1000000,
+            200000,
+            100000,
+            50000
         ];
         return [
             m('header.text-center', m('h4', s)),
@@ -35,7 +35,8 @@ export const generalPrefPane = {
                 m('.form-group', [
                     m('button.btn.col-12', {
                         onclick: function(){
-                            var doneInserting 
+                            // A replacer function which makes the JSON.stringify ignore
+                            // variables that start with _ 
                             function replacer(key, value) {
                                 if(key.startsWith('_')) return undefined;
                                 return value;

@@ -47,7 +47,7 @@ export const voltsToString = function(v){
         return (v).toFixed(2) + 'V';
     }
     if(v < 1e6){
-        return (s * 1e-3).toFixed(2) + 'MV';
+        return (v * 1e-3).toFixed(2) + 'MV';
     }
 };
 
@@ -71,7 +71,7 @@ export const wattsToString = function(w){
         return (w).toFixed(2) + 'W';
     }
     if(w < 1e6){
-        return (s * 1e-3).toFixed(2) + 'MW';
+        return (w * 1e-3).toFixed(2) + 'MW';
     }
 };
 
@@ -95,7 +95,7 @@ export const wattsPerHertzToString = function(w){
         return (w).toFixed(2) + 'W/Hz';
     }
     if(w < 1e6){
-        return (s * 1e-3).toFixed(2) + 'MW/Hz';
+        return (w * 1e-3).toFixed(2) + 'MW/Hz';
     }
 };
 

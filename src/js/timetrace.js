@@ -8,11 +8,11 @@
 export const  TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
-    console.log(state)
     this.id = id;
 
     // Init class variables
     this.on = true;
+    this.data = [];
 };
 
 /*
@@ -27,6 +27,7 @@ TimeTrace.prototype.draw = function (canvas) {
     context.save();
 
     var scope = this.state._source._scope;
+    var data = this.data;
 
     // Half height of canvas
     var halfHeight = scope.height / 2;
@@ -38,12 +39,18 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state._source._ctrl.channels[this.state.channelID].length * this.state.scaling.x; // pixel/sample
+    var ratio = scope.width / data.length * this.state.scaling.x; // pixel/sample
     if(ratio > 1){
         mul = ratio;
     } else {
         skip = 1 / ratio;
     }
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   G R I D
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
 
     if(this.id == this.state._source.activeTrace){
         // Horizontal grid
@@ -132,15 +139,17 @@ TimeTrace.prototype.draw = function (canvas) {
         context.restore();
     }
 
-    // Draw trace
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   T R A C E
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+
     context.strokeWidth = 1;
     context.strokeStyle = this.state.color;
     context.beginPath();
 
     // Actually draw the trace, starting at pixel 0 and data point at 0
-    // triggerLocation is only relevant when using WebAudio
-    // using an external source the source handles triggering
-    var data = this.state._source._ctrl.channels[this.state.channelID];
     context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x * data.length] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
@@ -173,4 +182,8 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Restore canvas context for next painter
     context.restore();
+};
+
+TimeTrace.prototype.calc = function(){
+    this.data = this.state._source._ctrl.channels[this.state.channelID].slice(0);
 };

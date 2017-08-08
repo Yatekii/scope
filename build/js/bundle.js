@@ -15397,7 +15397,7 @@ const voltsToString = function(v){
         return (v).toFixed(2) + 'V';
     }
     if(v < 1e6){
-        return (s * 1e-3).toFixed(2) + 'MV';
+        return (v * 1e-3).toFixed(2) + 'MV';
     }
 };
 
@@ -15421,7 +15421,7 @@ const wattsToString = function(w){
         return (w).toFixed(2) + 'W';
     }
     if(w < 1e6){
-        return (s * 1e-3).toFixed(2) + 'MW';
+        return (w * 1e-3).toFixed(2) + 'MW';
     }
 };
 
@@ -15445,7 +15445,7 @@ const wattsPerHertzToString = function(w){
         return (w).toFixed(2) + 'W/Hz';
     }
     if(w < 1e6){
-        return (s * 1e-3).toFixed(2) + 'MW/Hz';
+        return (w * 1e-3).toFixed(2) + 'MW/Hz';
     }
 };
 
@@ -15499,10 +15499,9 @@ const FFTracePrefPane = {
             t._info = {};
         }
         var s = vnode.attrs.scopeConf;
-        // TODO: uncomment
-        // if(!s.source.ready){
-        //     return m('.form-horizontal', 'Source is not ready.');
-        // }
+        if(s.source._ctrl && !s.source._ctrl.ready){
+            return mithril('.form-horizontal', 'Source is not ready.');
+        }
         return [
             mithril('.form-horizontal', [
                 // GUI: Change color and name
@@ -15675,10 +15674,9 @@ const TimeTracePrefPane = {
             t._info = {};
         }
         var s = vnode.attrs.scopeConf;
-        // TODO: uncomment
-        // if(!s.source.ready){
-        //     return m('.form-horizontal', 'Source is not ready.');
-        // }
+        if(s.source._ctrl && !s.source._ctrl.ready){
+            return mithril('.form-horizontal', 'Source is not ready.');
+        }
         return [
             mithril('header.columns', ''),
             mithril('.form-horizontal', [
@@ -15747,11 +15745,11 @@ const generalPrefPane = {
         var activeTrace = s.source.traces[s.source.activeTrace];
         var samplingRates = [
             25000000,
-             5000000,
-             1000000,
-              200000,
-              100000,
-               50000
+            5000000,
+            1000000,
+            200000,
+            100000,
+            50000
         ];
         return [
             mithril('header.text-center', mithril('h4', s)),
@@ -15772,7 +15770,8 @@ const generalPrefPane = {
                 mithril('.form-group', [
                     mithril('button.btn.col-12', {
                         onclick: function(){
-                            var doneInserting; 
+                            // A replacer function which makes the JSON.stringify ignore
+                            // variables that start with _ 
                             function replacer(key, value) {
                                 if(key.startsWith('_')) return undefined;
                                 return value;
@@ -16283,6 +16282,7 @@ const WebsocketSource = function(state) {
                     if(trace.type == 'TimeTrace'){
                         trace.offset.x = 0;
                     }
+                    trace._ctrl.calc && trace._ctrl.calc();
                 });
             }
         }
@@ -16441,11 +16441,11 @@ WebsocketSource.prototype.auto = function(channel, timeout) {
 const TimeTrace = function (id, state) {
     // Remember trace state
     this.state = state;
-    console.log(state);
     this.id = id;
 
     // Init class variables
     this.on = true;
+    this.data = [];
 };
 
 /*
@@ -16460,6 +16460,7 @@ TimeTrace.prototype.draw = function (canvas) {
     context.save();
 
     var scope = this.state._source._scope;
+    var data = this.data;
 
     // Half height of canvas
     var halfHeight = scope.height / 2;
@@ -16471,12 +16472,18 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Calculate ratio of number of samples to number of pixels and factor in x-scaling
     // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state._source._ctrl.channels[this.state.channelID].length * this.state.scaling.x; // pixel/sample
+    var ratio = scope.width / data.length * this.state.scaling.x; // pixel/sample
     if(ratio > 1){
         mul = ratio;
     } else {
         skip = 1 / ratio;
     }
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   G R I D
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
 
     if(this.id == this.state._source.activeTrace){
         // Horizontal grid
@@ -16565,15 +16572,17 @@ TimeTrace.prototype.draw = function (canvas) {
         context.restore();
     }
 
-    // Draw trace
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   T R A C E
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+
     context.strokeWidth = 1;
     context.strokeStyle = this.state.color;
     context.beginPath();
 
     // Actually draw the trace, starting at pixel 0 and data point at 0
-    // triggerLocation is only relevant when using WebAudio
-    // using an external source the source handles triggering
-    var data = this.state._source._ctrl.channels[this.state.channelID];
     context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x * data.length] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
@@ -16606,6 +16615,10 @@ TimeTrace.prototype.draw = function (canvas) {
 
     // Restore canvas context for next painter
     context.restore();
+};
+
+TimeTrace.prototype.calc = function(){
+    this.data = this.state._source._ctrl.channels[this.state.channelID].slice(0);
 };
 
 /*
@@ -16788,6 +16801,7 @@ const FFTrace = function(id, state) {
 
     // Init class variables
     this.on = true;
+    this._data = [];
 };
 
 /*
@@ -16802,39 +16816,8 @@ FFTrace.prototype.draw = function (canvas) {
     var scope = this.state._source._scope;
     var halfHeight = scope.height / 2;
     var context = canvas.getContext('2d');
-    var currentWindow = windowFunctions[this.state.windowFunction];
-    // Duplicate data because the fft will store the results in the input vectors
-    var real = this.state._source._ctrl.channels[this.state.channelID].slice(0);
-    // Create a complex vector with zeroes sice we only have real input
-    var compl = new Float32Array(this.state._source._ctrl.channels[this.state.channelID].length);
-    // Window data if a valid window was selected
-    // TODO: Uncomment again after debug
-    // if(this.state.windowFunction && currentWindow){
-    //     real = applyWindow(real, currentWindow.fn);
-    // }
-    // Do an FFT of the signal
-    // The results are now stored in the input vectors
-    miniFFT(real, compl);
-
-    // Only use half of the FFT since we only need the upper half if settings say so
-    if(this.state.halfSpectrum){
-        // Double the halfband spectrum, but don't double the DC
-        real = real.slice(0, real.length / 2 + 1);
-        compl = compl.slice(0, compl.length / 2 + 1);
-        for(i = 1; i < real.length; i++){
-            real[i] *= 2;
-            compl[i] *= 2;
-        }
-    }
-
-    // Calculate the the total power of the signal
-    // P = V^2
-    var ab = new Float32Array(real.length);
-
-    for(i = 0; i < ab.length; i++){
-        ab[i] = real[i] * real[i] + compl[i] * compl[i];
-    }
-    this.state._data = ab.slice(0);
+    var data = this._data.slice(0);
+    
     // Calculate x-Axis scaling
     // mul tells how many pixels have to be skipped after each sample
     // If the signal has more points than the canvas, this will always be 1
@@ -16842,99 +16825,43 @@ FFTrace.prototype.draw = function (canvas) {
     // If the signal has less points than the canvas, this will always be 1
     var skip = 1;
     var mul = 1;
-    var ratio = scope.width / ab.length * this.state.scaling.x; // pixel / sample
+    var ratio = scope.width / data.length * this.state.scaling.x; // pixel / sample
     if(ratio > 1){
         mul = ratio;
     } else {
         skip = 1 / ratio;
     }
 
-    if(ab.length > 0){
-        // Set RMS
-        this.state._info.RMSPower = power(ab, true, ab.length - 1);
-        // Set P/f
-        this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
-
-        // Calculate SNR
-        if(this.state.SNRmode == 'manual'){
-            var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
-            var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
-
-            // Sum all values in the bundle around max
-            var Ps = power(ab.slice(first, second + 1), true, ab.length);
-            // Sum all the other values except DC
-            var Pn = power(ab.slice((second - first) / 2, first), true, ab.length)
-                   + power(ab.slice(second + 1), true, ab.length);
-            // Sum both sets and calculate their ratio which is the SNR
-            var SNR = Math.log10(Ps / Pn) * 10;
-            this.state._info.SNR = SNR;
-        }
-        if(this.state.SNRmode == 'auto'){
-            // Find max in all values
-            var max = -3000000;
-            var maxi = 0;
-            for(i = 1; i < ab.length; i++){
-                if(ab[i] > max){
-                    max = ab[i];
-                    maxi = i;
-                }
-            }
-
-            var l = Math.floor(currentWindow.lines / 2);
-            // Sum all values in the bundle around max
-            Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
-            // Sum all the other values except DC
-            Pn = power(ab.slice(l, maxi - l), true, ab.length)
-                   + power(ab.slice(maxi + l + 1), true, ab.length);
-            // Sum both sets and calculate their ratio which is the SNR
-            SNR = Math.log10(Ps / Pn) * 10;
-            this.state._info.SNR = SNR;
-
-            // Posiion SNR markers
-            this.setSNRMarkers(
-                (maxi - l) / ab.length,
-                (maxi + l) / ab.length
-            );
-        }
-
-        // THD
-
-        var f = 1000;
-        var n = 10;
-        
-        // Draw the <n> next harmonic locations
-        for(i = 1; i <= n; i++){
-            context.fillStyle = 'blue';
-            var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, ab.length);
-            var harmonicX = (
-                (sampleToPercentage(
-                    sample,
-                    ab.length
-                ) - this.state.offset.x
-                ) * scope.width * ratio
-            ) * this.state.scaling.x;
-            var harmonicY = (
-                halfHeight - (
-                    Math.log10(ab[Math.floor(sample + this.state.offset.x * ab.length)])*10/100 + this.state.offset.y
-                ) * halfHeight * this.state.scaling.y
-            );
-            context.beginPath();
-            context.moveTo(harmonicX, harmonicY);
-            context.lineTo(harmonicX + 15, harmonicY - 15);
-            context.lineTo(harmonicX - 15, harmonicY - 15);
-            context.fill();
-        }
-
-    } else {
-        this.state._info.RMSPower = '\u26A0 No signal';
-        this.state._info.powerDensity  = '\u26A0 No signal';
-        this.state._info.SNR = '\u26A0 No signal';
+    // Scale data by 100
+    for(i = 0; i < data.length; i++){
+        data[i] = data[i] / 100;
     }
 
-    // Convert spectral density to a logarithmic scale to be able to better plot it.
-    // Scale it down by 200 for a nicer plot
-    for(i = 0; i < ab.length; i++){
-        ab[i] = Math.log10(ab[i])*10/100;
+    // Draw THD markers
+    var f = 1000;
+    var n = 10;
+    
+    // Draw the <n> next harmonic locations
+    for(i = 1; i <= n; i++){
+        context.fillStyle = 'blue';
+        var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, data.length);
+        var harmonicX = (
+            (sampleToPercentage(
+                sample,
+                data.length
+            ) - this.state.offset.x
+            ) * scope.width * ratio
+        ) * this.state.scaling.x;
+        var harmonicY = (
+            halfHeight - (
+                data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y
+            ) * halfHeight * this.state.scaling.y
+        );
+        context.beginPath();
+        context.moveTo(harmonicX, harmonicY);
+        context.lineTo(harmonicX + 15, harmonicY - 15);
+        context.lineTo(harmonicX - 15, harmonicY - 15);
+        context.fill();
     }
 
     // Store brush
@@ -17025,9 +16952,9 @@ FFTrace.prototype.draw = function (canvas) {
     // Draw trace
     context.strokeStyle = this.state.color;
     context.beginPath();
-    context.moveTo(0, (halfHeight - (ab[Math.floor(0 + this.state.offset.x * ab.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
-    for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (ab[Math.floor(i + this.state.offset.x * ab.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    context.moveTo(0, (halfHeight - (data[Math.floor(0 + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    for (i=0, j=0; (j < scope.width) && (i < data.length - 1); i+=skip, j+=mul){
+        context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     // Fix drawing on canvas
     context.stroke();
@@ -17035,7 +16962,7 @@ FFTrace.prototype.draw = function (canvas) {
     // Draw the markers
     context.save();
     this.state.markers.forEach(function(m) {
-        draw$1(context, me.state._source._scope, m, me.state, ratio, ab.length);
+        draw$1(context, me.state._source._scope, m, me.state, ratio, data.length);
     });
     context.restore();
 
@@ -17056,6 +16983,114 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Restore brush
     context.restore();
+};
+
+FFTrace.prototype.calc = function() {
+    var i, j;
+    var scope = this.state._source._scope;
+    var currentWindow = windowFunctions[this.state.windowFunction];
+    // Duplicate data because the fft will store the results in the input vectors
+    var real = this.state._source._ctrl.channels[this.state.channelID].slice(0);
+    // Create a complex vector with zeroes sice we only have real input
+    var compl = new Float32Array(this.state._source._ctrl.channels[this.state.channelID].length);
+    // Window data if a valid window was selected
+    // TODO: Uncomment again after debug
+    // if(this.state.windowFunction && currentWindow){
+    //     real = applyWindow(real, currentWindow.fn);
+    // }
+    // Do an FFT of the signal
+    // The results are now stored in the input vectors
+    miniFFT(real, compl);
+
+    // Only use half of the FFT since we only need the upper half if settings say so
+    if(this.state.halfSpectrum){
+        // Double the halfband spectrum, but don't double the DC
+        real = real.slice(0, real.length / 2 + 1);
+        compl = compl.slice(0, compl.length / 2 + 1);
+        for(i = 1; i < real.length; i++){
+            real[i] *= 2;
+            compl[i] *= 2;
+        }
+    }
+
+    // Calculate the the total power of the signal
+    // P = V^2
+    var ab = new Float32Array(real.length);
+
+    for(i = 0; i < ab.length; i++){
+        ab[i] = real[i] * real[i] + compl[i] * compl[i];
+    }
+
+    if(ab.length > 0){
+        // Set RMS
+        this.state._info.RMSPower = power(ab, true, ab.length - 1);
+        // Set P/f
+        this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
+
+        // Calculate SNR
+        if(this.state.SNRmode == 'manual'){
+            var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
+            var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
+
+            // Sum all values in the bundle around max
+            var Ps = power(ab.slice(first, second + 1), true, ab.length);
+            // Sum all the other values except DC
+            var Pn = power(ab.slice((second - first) / 2, first), true, ab.length)
+                   + power(ab.slice(second + 1), true, ab.length);
+            // Sum both sets and calculate their ratio which is the SNR
+            var SNR = Math.log10(Ps / Pn) * 10;
+            this.state._info.SNR = SNR;
+        }
+        if(this.state.SNRmode == 'auto'){
+            // Find max in all values
+            var max = -3000000;
+            var maxi = 0;
+            for(i = 1; i < ab.length; i++){
+                if(ab[i] > max){
+                    max = ab[i];
+                    maxi = i;
+                }
+            }
+
+            var l = Math.floor(currentWindow.lines / 2);
+            // Sum all values in the bundle around max
+            Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
+            // Sum all the other values except DC
+            Pn = power(ab.slice(l, maxi - l), true, ab.length)
+                   + power(ab.slice(maxi + l + 1), true, ab.length);
+            // Sum both sets and calculate their ratio which is the SNR
+            SNR = Math.log10(Ps / Pn) * 10;
+            this.state._info.SNR = SNR;
+
+            // Posiion SNR markers
+            this.setSNRMarkers(
+                (maxi - l) / ab.length,
+                (maxi + l) / ab.length
+            );
+        }
+
+        // THD
+        // TODO: calculate actual stuff
+
+        var f = 1000;
+        var n = 10;
+        
+        for(i = 1; i <= n; i++){
+            var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, ab.length);
+        }
+
+    } else {
+        this.state._info.RMSPower = '\u26A0 No signal';
+        this.state._info.powerDensity  = '\u26A0 No signal';
+        this.state._info.SNR = '\u26A0 No signal';
+    }
+
+    // Convert spectral density to decibels.
+    for(i = 0; i < ab.length; i++){
+        ab[i] = Math.log10(ab[i])*10;
+    }
+
+    this._data = ab.slice(0);
 };
 
 /*
@@ -17413,7 +17448,7 @@ window.addEventListener('load', function() {
                             popup.scopeState = scope;
                         }
                     })
-                ]
+                ];
             },
         }
     });

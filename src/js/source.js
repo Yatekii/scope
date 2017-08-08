@@ -79,6 +79,7 @@ export const WebsocketSource = function(state) {
                     if(trace.type == 'TimeTrace'){
                         trace.offset.x = 0;
                     }
+                    trace._ctrl.calc && trace._ctrl.calc();
                 });
             }
         }

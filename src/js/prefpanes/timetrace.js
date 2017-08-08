@@ -13,10 +13,9 @@ export const TimeTracePrefPane = {
             t._info = {};
         }
         var s = vnode.attrs.scopeConf;
-        // TODO: uncomment
-        // if(!s.source.ready){
-        //     return m('.form-horizontal', 'Source is not ready.');
-        // }
+        if(s.source._ctrl && !s.source._ctrl.ready){
+            return m('.form-horizontal', 'Source is not ready.');
+        }
         return [
             m('header.columns', ''),
             m('.form-horizontal', [
