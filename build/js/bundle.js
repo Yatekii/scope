@@ -16794,6 +16794,14 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
     context.restore();
 };
 
+/*
+ * Trace constructor
+ * Constructs a new FFTrace
+ * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
+ * A window can be applied and several measurements such as SNR and Signal RMS can be done.
+ * <id> : uint : Unique trace id, which is assigned when loading a trace
+ * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
+ */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16832,6 +16840,12 @@ FFTrace.prototype.draw = function (canvas) {
         skip = 1 / ratio;
     }
 
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   G R I D
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+
     // Scale data by 100
     for(i = 0; i < data.length; i++){
         data[i] = data[i] / 100;
@@ -16845,18 +16859,9 @@ FFTrace.prototype.draw = function (canvas) {
     for(i = 1; i <= n; i++){
         context.fillStyle = 'blue';
         var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, data.length);
-        var harmonicX = (
-            (sampleToPercentage(
-                sample,
-                data.length
-            ) - this.state.offset.x
-            ) * scope.width * ratio
-        ) * this.state.scaling.x;
-        var harmonicY = (
-            halfHeight - (
-                data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y
-            ) * halfHeight * this.state.scaling.y
-        );
+        console.log((sampleToPercentage(sample, data.length) - this.state.offset.x));
+        var harmonicX = (sampleToPercentage(sample, data.length) - this.state.offset.x) * data.length * ratio; // / scope.width * ratio;
+        var harmonicY = halfHeight - (data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight / this.state.scaling.y;
         context.beginPath();
         context.moveTo(harmonicX, harmonicY);
         context.lineTo(harmonicX + 15, harmonicY - 15);
@@ -16947,9 +16952,14 @@ FFTrace.prototype.draw = function (canvas) {
         }
         context.restore();
     }
-    context.strokeWidth = 1;
 
-    // Draw trace
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   T R A C E
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+    
+    context.strokeWidth = 1;
     context.strokeStyle = this.state.color;
     context.beginPath();
     context.moveTo(0, (halfHeight - (data[Math.floor(0 + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
@@ -17353,53 +17363,53 @@ var appState = {
                         },
                     ]
                 },
-                {
-                    id: 5,
-                    offset: { x: 0, y: 0.25 },
-                    _info: {},
-                    name: 'Trace ' + 9001,
-                    channelID: 0,
-                    type: 'TimeTrace',
-                    color: '#FF0000',
-                    scaling: {
-                        x: 1,
-                        y: 1,
-                    },
-                },
-                {
-                    id: 6,
-                    offset: { x: 0, y: 0.5 },
-                    windowFunction: 'hann',
-                    halfSpectrum: true,
-                    SNRmode: 'auto',
-                    _info: {},
-                    name: 'Trace ' + 3000,
-                    channelID: 0,
-                    type: 'FFTrace',
-                    color: '#BFA688',
-                    scaling: {
-                        x: 1,
-                        y: 1,
-                    },
-                    markers: [
-                        {
-                            id: 'SNRfirst',
-                            type: 'vertical',
-                            x: 0,
-                            dashed: true,
-                            color: 'purple',
-                            active: true,
-                        },
-                        {
-                            id: 'SNRsecond',
-                            type: 'vertical',
-                            x: 0,
-                            dashed: true,
-                            color: 'purple',
-                            active: true,
-                        },
-                    ]
-                }
+                // {
+                //     id: 5,
+                //     offset: { x: 0, y: 0.25 },
+                //     _info: {},
+                //     name: 'Trace ' + 9001,
+                //     channelID: 0,
+                //     type: 'TimeTrace',
+                //     color: '#FF0000',
+                //     scaling: {
+                //         x: 1,
+                //         y: 1,
+                //     },
+                // },
+                // {
+                //     id: 6,
+                //     offset: { x: 0, y: 0.5 },
+                //     windowFunction: 'hann',
+                //     halfSpectrum: true,
+                //     SNRmode: 'auto',
+                //     _info: {},
+                //     name: 'Trace ' + 3000,
+                //     channelID: 0,
+                //     type: 'FFTrace',
+                //     color: '#BFA688',
+                //     scaling: {
+                //         x: 1,
+                //         y: 1,
+                //     },
+                //     markers: [
+                //         {
+                //             id: 'SNRfirst',
+                //             type: 'vertical',
+                //             x: 0,
+                //             dashed: true,
+                //             color: 'purple',
+                //             active: true,
+                //         },
+                //         {
+                //             id: 'SNRsecond',
+                //             type: 'vertical',
+                //             x: 0,
+                //             dashed: true,
+                //             color: 'purple',
+                //             active: true,
+                //         },
+                //     ]
+                // }
             ],
         }
     }]

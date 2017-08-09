@@ -50,6 +50,12 @@ FFTrace.prototype.draw = function (canvas) {
         skip = 1 / ratio;
     }
 
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   G R I D
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+
     // Scale data by 100
     for(i = 0; i < data.length; i++){
         data[i] = data[i] / 100;
@@ -63,18 +69,9 @@ FFTrace.prototype.draw = function (canvas) {
     for(i = 1; i <= n; i++){
         context.fillStyle = 'blue';
         var sample = converting.frequencyToSample(f * i, scope.source.samplingRate / 2, data.length);
-        var harmonicX = (
-            (converting.sampleToPercentage(
-                sample,
-                data.length
-            ) - this.state.offset.x
-            ) * scope.width * ratio
-        ) * this.state.scaling.x;
-        var harmonicY = (
-            halfHeight - (
-                data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y
-            ) * halfHeight * this.state.scaling.y
-        );
+        console.log((converting.sampleToPercentage(sample, data.length) - this.state.offset.x))
+        var harmonicX = (converting.sampleToPercentage(sample, data.length) - this.state.offset.x) * data.length * ratio; // / scope.width * ratio;
+        var harmonicY = halfHeight - (data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight / this.state.scaling.y;
         context.beginPath();
         context.moveTo(harmonicX, harmonicY);
         context.lineTo(harmonicX + 15, harmonicY - 15);
@@ -165,9 +162,14 @@ FFTrace.prototype.draw = function (canvas) {
         }
         context.restore();
     }
-    context.strokeWidth = 1;
 
-    // Draw trace
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   T R A C E
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+    
+    context.strokeWidth = 1;
     context.strokeStyle = this.state.color;
     context.beginPath();
     context.moveTo(0, (halfHeight - (data[Math.floor(0 + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
