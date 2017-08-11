@@ -69,7 +69,6 @@ FFTrace.prototype.draw = function (canvas) {
     for(i = 1; i <= n; i++){
         context.fillStyle = 'blue';
         var sample = converting.frequencyToSample(f * i, scope.source.samplingRate / 2, data.length);
-        console.log((converting.sampleToPercentage(sample, data.length) - this.state.offset.x))
         var harmonicX = (converting.sampleToPercentage(sample, data.length) - this.state.offset.x) * data.length * ratio; // / scope.width * ratio;
         var harmonicY = halfHeight - (data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight / this.state.scaling.y;
         context.beginPath();
@@ -215,9 +214,9 @@ FFTrace.prototype.calc = function() {
     var compl = new Float32Array(this.state._source._ctrl.channels[this.state.channelID].length);
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
-    // if(this.state.windowFunction && currentWindow){
-    //     real = applyWindow(real, currentWindow.fn);
-    // }
+    if(this.state.windowFunction && currentWindow){
+        real = applyWindow(real, currentWindow.fn);
+    }
     // Do an FFT of the signal
     // The results are now stored in the input vectors
     miniFFT(real, compl);

@@ -1,3 +1,4 @@
+document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>');
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
@@ -15346,6 +15347,17 @@ const windowFunctions = {
  * Applies a Windowing Function to an array.
  * <dataArray>
  */
+const applyWindow = function(dataArray, windowing_function, alpha) {
+    var datapoints = dataArray.length;
+
+    /* For each item in the array */
+    for (var n=0; n<datapoints; ++n) {
+        /* Apply the windowing function */
+        dataArray[n] *= windowing_function(n, datapoints, alpha);
+    }
+
+    return dataArray;
+};
 
 /*
  * This file holds helper functions to convert different unitspaces into one another.
@@ -16859,7 +16871,6 @@ FFTrace.prototype.draw = function (canvas) {
     for(i = 1; i <= n; i++){
         context.fillStyle = 'blue';
         var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, data.length);
-        console.log((sampleToPercentage(sample, data.length) - this.state.offset.x));
         var harmonicX = (sampleToPercentage(sample, data.length) - this.state.offset.x) * data.length * ratio; // / scope.width * ratio;
         var harmonicY = halfHeight - (data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight / this.state.scaling.y;
         context.beginPath();
@@ -17005,9 +17016,9 @@ FFTrace.prototype.calc = function() {
     var compl = new Float32Array(this.state._source._ctrl.channels[this.state.channelID].length);
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
-    // if(this.state.windowFunction && currentWindow){
-    //     real = applyWindow(real, currentWindow.fn);
-    // }
+    if(this.state.windowFunction && currentWindow){
+        real = applyWindow(real, currentWindow.fn);
+    }
     // Do an FFT of the signal
     // The results are now stored in the input vectors
     miniFFT(real, compl);
@@ -17268,7 +17279,6 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
-//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {
