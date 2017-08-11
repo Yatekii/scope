@@ -1,4 +1,9 @@
 /*
+ * Copyright (c) 2015 Kevin Kwok (antimatter15@gmail.com)
+ * https://gist.github.com/antimatter15/0349ca7d479236fdcdbb
+ */
+
+/*
  * Calculates an FFT over a set of samples.
  * <re> : float[] : An array containing the real parts of the samples
  * <im> : float[] : An array containing the imaginary parts of the samples

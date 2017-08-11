@@ -1157,7 +1157,7 @@ var _20 = function($window, redrawService0) {
 	route.link = function(vnode1) {
 		vnode1.dom.setAttribute("href", routeService.prefix + vnode1.attrs.href);
 		vnode1.dom.onclick = function(e) {
-			if (e._ctrlKey || e.metaKey || e.shiftKey || e.which === 2) return
+			if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2) return
 			e.preventDefault();
 			e.redraw = false;
 			var href = this.getAttribute("href");
@@ -15093,8 +15093,10 @@ var jsplumb = createCommonjsModule(function (module, exports) {
 
 var jsplumb_6 = jsplumb.jsPlumb;
 
+/*
+ * This file contains various helper functions
+*/
 window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame;
-
 
 const draw = function(scope) {  
     if(scope) {
@@ -15105,12 +15107,6 @@ const draw = function(scope) {
     });
 };
 
-
-
-
-
-
-
 const withKey = function(key, callback) {
     return function(e) {
         if (e.keyCode == key) {
@@ -15119,11 +15115,20 @@ const withKey = function(key, callback) {
     };
 };
 
-
-
+/*
+ * Capitalizes the first letter of a string
+ * EXAMPLE: capitalizeFirstLetter('top kek') == 'Top kek'.
+ * <string> : string : The string to captalize
+ */
 const capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };
+
+/*
+ * This file contains all the relevant DOM stuff to initialize the router and it's controllers.
+ * From here on scopes will be launched.
+ * In here all the flow-chart operations for the flow of data is done.
+ */
 
 const scopeNode = {
     oninit: function(vnode) {
@@ -15137,7 +15142,8 @@ const scopeNode = {
                 left: vnode.attrs.left + 'px'
             },
             ondblclick: function() {
-                // TODO: Crosswindow stuff
+                // Open a new window
+                // Attach some data to it
                 var popup = window.open(window.location.pathname + '#!/scope?id=' + vnode.attrs.id);
                 popup.scopeState = vnode.attrs;
             }
@@ -15161,12 +15167,10 @@ const scopeNode = {
                             vnode.attrs.editingName = true;
                         }
                     }, vnode.attrs.name))
-                    // TODO: Colorlabel here
-                ]),
-                mithril('.card-meta', [])
+                ])
             ]),
             mithril('.card-body',
-                mithril(body, vnode.attrs)
+                [] // Here could be some content for the GUI of the node to change params
             )
         ]);
     },
@@ -15190,137 +15194,161 @@ const scopeNode = {
     }
 };
 
-const body = {
-    view: function(vnode){
-        return [
-            mithril('.form-group', [
-                mithril('label.form-label [for=wss-samplingrate-' + vnode.attrs.id + ']', 'Sampling Rate'),
-                mithril('input.form-input', {
-                    type: 'number',
-                    id: 'wss-samplingrate-' + vnode.attrs.id, 
-                    value: vnode.attrs.samplingRate,
-                    onchange: mithril.withAttr('value', function(value) {
-                        vnode.attrs.samplingRate = parseInt(value);
-                        // TODO: send sampling rate
-                    }),
-                })
-            ])
-        ];
-    }
-};
+/*
+ * This is the main router component that gets instantiated by mithril when the root page is called
+ * From here on all the components for the Flow Graph are added and routed.
+ */
 
 const router = {
-    oninit: function(vnode) {
-    },
     view: function(vnode) {
         // Display all nodes. For now this is only scopes
         return [
-            vnode.attrs.nodes.scopes.map(node => mithril(scopeNode, node))
+            vnode.attrs.scopes.map(node => mithril(scopeNode, node))
         ];
     },
     oncreate: function(vnode){
         // Add parents to all traces and sources
-        vnode.attrs.nodes.scopes.forEach(function(scope) {
+        vnode.attrs.scopes.forEach(function(scope) {
             scope.source.traces.forEach(function(trace) {
-                    trace.source = scope.source;
+                trace._source = scope.source;
             }, this);
-            scope.source.scope = scope;
+            scope.source._scope = scope;
         });
     }
 };
 
-/* Richard Meadows 2013 */
-
-/**
- * Extend Math
+/*
+ * This file holds all the windowing functions to make the visibility of the signal better.
+ * Initial file by Richard Meadows (2013).
  */
-Math.sinc = function(n) { return Math.sin(Math.PI*n)/(Math.PI*n); };
-Math.bessi0 = function(x) { /* Evaluate modified Bessel function In(x) and n=0. */
-	var ax = Math.abs(x);
 
-	if (ax < 3.75) {
-		y = x / 3.75; y = y * y;
-		return 1.0 + y*(3.5156229+y*(3.0899424+y*(1.2067492+y*(0.2659732+y*(0.360768e-1+y*0.45813e-2)))));
-   } else {
-		y = 3.75 / ax;
-		return (Math.exp(ax) / Math.sqrt(ax)) *
-			(0.39894228+y*(0.1328592e-1+y*(0.225319e-2+y*(-0.157565e-2+y*(0.916281e-2+y*
-			(-0.2057706e-1+y*(0.2635537e-1+y*(-0.1647633e-1+y*0.392377e-2))))))));
-   }
+/*
+ * Extend Math.
+ */
+
+/*
+ * Sinc function:
+ *     sin(x)
+ * y = ------
+ *       x
+ */
+Math.sinc = function(n) {
+    return Math.sin(Math.PI * n) / (Math.PI * n);
 };
 
-/**
+/* Bessel function:
+ *
+ * y = I(n)(x)| 
+ *          |n=0
+ */
+Math.bessi0 = function(x) {
+    var y;
+    var ax = Math.abs(x);
+    if (ax < 3.75) {
+        y = x / 3.75;
+        y = y * y;
+        return 1.0 + y * (3.5156229 + y * (3.0899424 + y * (
+            1.2067492 + y * (0.2659732 + y * (0.360768e-1 + y * 0.45813e-2))
+        )));
+    } else {
+        y = 3.75 / ax;
+        return (Math.exp(ax) / Math.sqrt(ax)) * (
+            0.39894228 + y * (0.1328592e-1 + y * (0.225319e-2 + y * (-0.157565e-2 + y * (
+                0.916281e-2 + y * (-0.2057706e-1 + y * (0.2635537e-1 + y * (-0.1647633e-1 + y * 0.392377e-2)))
+            ))))
+        );
+    }
+};
+
+/*
  * Windowing functions.
  */
 const windowFunctions = {
-	hann:		function (n, points) { return 0.5 - 0.5*Math.cos(2*Math.PI*n/(points-1)); },
-	hamming:	function (n, points) { return 0.54 - 0.46*Math.cos(2*Math.PI*n/(points-1)); },
-	cosine:		function (n, points) { return Math.sin(Math.PI*n/(points-1)); },
-	lanczos:	function (n, points) { return Math.sinc((2*n/(points-1))-1); },
-	gaussian:	function (n, points, alpha) {
-				if (!alpha) { alpha = 0.4; }
-				return Math.pow(Math.E, -0.5*Math.pow((n-(points-1)/2)/(alpha*(points-1)/2), 2));
-			},
-	tukey:		function (n, points, alpha) {
-				if (!alpha) { alpha = 0.5; }
+    hann: {
+        fn: function (n, points) { return 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (points - 1)); },
+        lines: 3
+    },
+    hamming: {
+        fn: function (n, points) { return 0.54 - 0.46 * Math.cos(2 * Math.PI * n/ (points - 1)); },
+        lines: 3
+    },
+    // cosine: {
+    //     fn: function (n, points) { return Math.sin(Math.PI * n / (points - 1)); },
+    //     lines: 1
+    // },
+    // lanczos: {
+    //     fn: function (n, points) { return Math.sinc((2 * n / (points - 1)) - 1); },
+    //     lines: 1
+    // },
+    // gaussian:    function (n, points, alpha) {
+    //             if (!alpha) { alpha = 0.4; }
+    //             return Math.pow(Math.E, -0.5*Math.pow((n-(points-1)/2)/(alpha*(points-1)/2), 2));
+    //         },
+    // tukey:        function (n, points, alpha) {
+    //             if (!alpha) { alpha = 0.5; }
 
-				if (n < 0.5*alpha*(points-1)) {
-					return 0.5*(1+(Math.cos(Math.PI*((2*n/(alpha*(points-1)))-1))));
-				} else if (n < (1-(0.5*alpha))*(points-1)) {
-					return 1;
-				} else {
-					return 0.5*(1+(Math.cos(Math.PI*((2*n/(alpha*(points-1)))+1-(2/alpha)))));
-				}
-			},
-	blackman:	function (n, points, alpha) {
-				if (!alpha) { alpha = 0.16; }
-				return 0.42 - 0.5*Math.cos(2*Math.PI*n/(points-1)) + 0.08*Math.cos(4*Math.PI*n/(points-1));
-			},
-	exact_blackman:	function (n, points) {
-				return 0.4243801 - 0.4973406*Math.cos(2*Math.PI*n/(points-1)) + 0.0782793*Math.cos(4*Math.PI*n/(points-1));
-			},
-	kaiser:		function (n, points, alpha) {
-				if (!alpha) { alpha = 3; }
-				return Math.bessi0(Math.PI*alpha*Math.sqrt(1-Math.pow((2*n/(points-1))-1, 2))) / Math.bessi0(Math.PI*alpha);
-			},
-	nuttall:	function (n, points) {
-				return 0.355768 - 0.487396*Math.cos(2*Math.PI*n/(points-1))
-					+ 0.144232*Math.cos(4*Math.PI*n/(points-1))
-					- 0.012604*Math.cos(6*Math.PI*n/(points-1));
-			},
-	blackman_harris:function (n, points) {
-				return 0.35875 - 0.48829*Math.cos(2*Math.PI*n/(points-1))
-					+ 0.14128*Math.cos(4*Math.PI*n/(points-1))
-					- 0.01168*Math.cos(6*Math.PI*n/(points-1));
-			},
-	blackman_nuttall:function (n, points) {
-				return 0.3635819 - 0.3635819*Math.cos(2*Math.PI*n/(points-1))
-					+ 0.1365995*Math.cos(4*Math.PI*n/(points-1))
-					- 0.0106411*Math.cos(6*Math.PI*n/(points-1));
-			},
-	flat_top:	function (n, points) {
-				return 1 - 1.93*Math.cos(2*Math.PI*n/(points-1))
-					+ 1.29*Math.cos(4*Math.PI*n/(points-1))
-					- 0.388*Math.cos(6*Math.PI*n/(points-1))
-					+ 0.032*Math.cos(8*Math.PI*n/(points-1));
-			},
+    //             if (n < 0.5*alpha*(points-1)) {
+    //                 return 0.5*(1+(Math.cos(Math.PI*((2*n/(alpha*(points-1)))-1))));
+    //             } else if (n < (1-(0.5*alpha))*(points-1)) {
+    //                 return 1;
+    //             } else {
+    //                 return 0.5*(1+(Math.cos(Math.PI*((2*n/(alpha*(points-1)))+1-(2/alpha)))));
+    //             }
+    //         },
+    // blackman:    function (n, points, alpha) {
+    //             if (!alpha) { alpha = 0.16; }
+    //             return 0.42 - 0.5*Math.cos(2*Math.PI*n/(points-1)) + 0.08*Math.cos(4*Math.PI*n/(points-1));
+    //         },
+    exact_blackman: {
+        fn: function (n, points) {
+            return 0.4243801 - 0.4973406 * Math.cos( 2 * Math.PI * n / (points - 1))
+                + 0.0782793 * Math.cos(4 * Math.PI * n / (points - 1));
+        },
+        lines: 5
+    },
+    // kaiser:        function (n, points, alpha) {
+    //             if (!alpha) { alpha = 3; }
+    //             return Math.bessi0(Math.PI*alpha*Math.sqrt(1-Math.pow((2*n/(points-1))-1, 2))) / Math.bessi0(Math.PI*alpha);
+    //         },
+    // nuttall:    function (n, points) {
+    //     return 0.355768 - 0.487396 * Math.cos(2 * Math.PI * n / (points - 1))
+    //         + 0.144232 * Math.cos(4 * Math.PI * n / (points - 1))
+    //         - 0.012604 * Math.cos(6 * Math.PI * n / (points - 1));
+    // },
+    // blackman_harris:function (n, points) {
+    //     return 0.35875 - 0.48829 * Math.cos(2 * Math.PI * n / (points - 1))
+    //         + 0.14128 * Math.cos(4 * Math.PI * n / (points - 1))
+    //         - 0.01168 * Math.cos(6 * Math.PI * n / (points - 1));
+    // },
+    // blackman_nuttall:function (n, points) {
+    //     return 0.3635819 - 0.3635819 * Math.cos(2 * Math.PI * n / (points - 1))
+    //         + 0.1365995 * Math.cos(4 * Math.PI * n / (points - 1))
+    //         - 0.0106411 * Math.cos(6 * Math.PI * n / (points - 1));
+    // },
+    flat_top: {
+        fn: function (n, points) {
+            return 1 - 1.93 * Math.cos(2 * Math.PI * n / (points - 1))
+                + 1.29 * Math.cos(4 * Math.PI * n / (points - 1))
+                - 0.388 * Math.cos(6 * Math.PI * n / (points - 1))
+                + 0.032 * Math.cos(8 * Math.PI * n / (points - 1));
+        },
+        lines: 9
+    },
 };
 
 /**
  * Applies a Windowing Function to an array.
+ * <dataArray>
  */
-const applyWindow = function(data_array, windowing_function, alpha) {
-	var datapoints = data_array.length;
 
-	/* For each item in the array */
-	for (var n=0; n<datapoints; ++n) {
-		/* Apply the windowing function */
-		data_array[n] *= windowing_function(n, datapoints, alpha);
-	}
+/*
+ * This file holds helper functions to convert different unitspaces into one another.
+ * It also conatins helpers to display numbers with proper physical units as a string.
+ */
 
-	return data_array;
-};
-
+/*
+ * Displays seconds as a properly formatted and scaled string with physical units.
+ */
 const secondsToString = function(s){
     if(s < 1e-9){
         return (s * 1e12).toFixed(2) + 'ps';
@@ -15342,6 +15370,81 @@ const secondsToString = function(s){
     }
 };
 
+/*
+ * Displays volts as a properly formatted and scaled string with physical units.
+ */
+const voltsToString = function(v){
+    if(v < 1e-9){
+        return (v * 1e12).toFixed(2) + 'pV';
+    }
+    if(v < 1e-6){
+        return (v * 1e9).toFixed(2) + 'nV';
+    }
+    if(v < 1e-3){
+        return (v * 1e6).toFixed(2) + 'uV';
+    }
+    if(v < 1){
+        return (v * 1e3).toFixed(2) + 'mV';
+    }
+    if(v < 1e3){
+        return (v).toFixed(2) + 'V';
+    }
+    if(v < 1e6){
+        return (v * 1e-3).toFixed(2) + 'MV';
+    }
+};
+
+/*
+ * Displays watts as a properly formatted and scaled string with physical units.
+ */
+const wattsToString = function(w){
+    if(w < 1e-9){
+        return (w * 1e12).toFixed(2) + 'pW';
+    }
+    if(w < 1e-6){
+        return (w * 1e9).toFixed(2) + 'nW';
+    }
+    if(w < 1e-3){
+        return (w * 1e6).toFixed(2) + 'uW';
+    }
+    if(w < 1){
+        return (w * 1e3).toFixed(2) + 'mW';
+    }
+    if(w < 1e3){
+        return (w).toFixed(2) + 'W';
+    }
+    if(w < 1e6){
+        return (w * 1e-3).toFixed(2) + 'MW';
+    }
+};
+
+/*
+ * Displays watts/hertz as a properly formatted and scaled string with physical units.
+ */
+const wattsPerHertzToString = function(w){
+    if(w < 1e-9){
+        return (w * 1e12).toFixed(2) + 'pW/Hz';
+    }
+    if(w < 1e-6){
+        return (w * 1e9).toFixed(2) + 'nW/Hz';
+    }
+    if(w < 1e-3){
+        return (w * 1e6).toFixed(2) + 'uW/Hz';
+    }
+    if(w < 1){
+        return (w * 1e3).toFixed(2) + 'mW/Hz';
+    }
+    if(w < 1e3){
+        return (w).toFixed(2) + 'W/Hz';
+    }
+    if(w < 1e6){
+        return (w * 1e-3).toFixed(2) + 'MW/Hz';
+    }
+};
+
+/*
+ * Displays hertz as a properly formatted and scaled string with physical units.
+ */
 const hertzToString = function(f){
     if(f < 1e3){
         return (f).toFixed(2) + 'Hz';
@@ -15354,20 +15457,30 @@ const hertzToString = function(f){
     }
 };
 
-
-
+/*
+ * Converts a sample number to the corresponding frequency.
+ */
 const sampleToFrequency = function(sample, samplingRate, frameSize){
     return sample * samplingRate / frameSize;
 };
 
+/*
+ * Converts a frequency number to the corresponding sample number.
+ */
 const frequencyToSample = function(frequency, samplingRate, frameSize){
     return frequency * frameSize / samplingRate;
 };
 
+/*
+ * Converts a sample number to the corresponding percentage of the entire frame.
+ */
 const sampleToPercentage = function(sample, frameSize){
     return sample / frameSize;
 };
 
+/*
+ * Converts a percentage of the entire frame to the corresponding sample number.
+ */
 const percentageToSample = function(percentage, frameSize){
     return percentage * frameSize;
 };
@@ -15375,42 +15488,68 @@ const percentageToSample = function(percentage, frameSize){
 const FFTracePrefPane = {
     view: function(vnode){
         var t = vnode.attrs.traceConf;
+        if(!t._info){
+            t._info = {};
+        }
         var s = vnode.attrs.scopeConf;
+        if(s.source._ctrl && !s.source._ctrl.ready){
+            return mithril('.form-horizontal', 'Source is not ready.');
+        }
         return [
-            mithril('header.columns', ''),
             mithril('.form-horizontal', [
                 // GUI: Change color and name
                 mithril('.form-group',[
-                    mithril('.col-3.text-center', mithril('input[type=color]', {
+                    mithril('.col-2.text-center', mithril('input[type=color]', {
                         value: t.color,
                         onchange: mithril.withAttr('value', function(v){ t.color = v; })
                     })),
-                    mithril('h4.col-9', !vnode.state.editName ?
+                    mithril('h4.col-5', !vnode.state.editName ?
                         mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         mithril('input.form-input[type=text]', {
                             value: t.name,
                             onchange: mithril.withAttr('value', function(v){ t.name = v; }),
                             onblur: function(){ vnode.state.editName = false; },
-                            onkeypress: withKey(13, function(target){
+                            onkeypress: withKey(13, function(){
                                 vnode.state.editName = false;
                             })
                         })
-                    )
+                    ),
+                    mithril('button.btn.col-5', {
+                        onclick: function(){
+                            vnode.state.exportActive = !vnode.state.exportActive;
+                            vnode.state.exportData = '[' + t._ctrl.state._data.join(', ') + ']';
+                        }
+                    }, 'Export Data')
                 ]),
-                // GUI: Display Δf
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Δf')),
-                    mithril('.col-9', mithril('label.form-label', hertzToString(t.info.deltaf)))
+                // GUI: Display Export Data
+                mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                    mithril('.modal-overlay'),
+                    mithril('.modal-container', [
+                        mithril('.modal-header', [
+                            mithril('button.btn.btn-clear.float-right', {
+                                onclick: function(){
+                                    vnode.state.exportActive = !vnode.state.exportActive;
+                                }
+                            }),
+                            mithril('.modal-title', 'Time Data')
+                        ]),
+                        mithril('.modal-body', 
+                            mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
+                                vnode.state.exportData
+                            ))
+                        )
+                    ])
                 ]),
-                // GUI: Display ΔA
+                // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
                 mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'ΔA')),
-                    mithril('.col-9', mithril('label.form-label', t.info.deltaA))
-                ]),
-                // GUI: Display RMS Signal Power
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', ['P', mithril('sub', 'rms')])),
-                    mithril('.col-9', mithril('label.form-label', t.info.RMSPower + ' V/\u221AHz'))
+                    mithril('.col-1', mithril('label.form-label', 'Δf:')),
+                    mithril('.col-2', mithril('label.form-label', hertzToString(t._info.deltaf))),
+                    mithril('.col-1', mithril('label.form-label', 'ΔA:')),
+                    mithril('.col-2', mithril('label.form-label', voltsToString(t._info.deltaA))),
+                    mithril('.col-1', mithril('label.form-label', ['P:', mithril('sub', 'rms')])),
+                    mithril('.col-2', mithril('label.form-label', wattsToString(t._info.RMSPower))),
+                    mithril('.col-1', mithril('label.form-label', '\u2202P/\u2202f:')),
+                    mithril('.col-2', mithril('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -15428,189 +15567,335 @@ const FFTracePrefPane = {
                 ]),
                 // GUI: Display SNR
                 mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label [for=SNR', 'SNR')),
-                    mithril('.col-9', mithril('label.form-label', { id: 'SNR' }, t.info.SNR))
+                    mithril('.col-6', mithril('label.form-switch', [
+                        mithril('input[type="checkbox"]', {
+                            onchange: function(){
+                                vnode.state.calculateSNR = !vnode.state.calculateSNR;
+                            },
+                            value: vnode.state.calculateSNR
+                        }),
+                        mithril('i.form-icon'),
+                        'Calculate SNR:'
+                    ])),
+                    mithril('.col-6', mithril('label.form-label', { id: 'SNR' }, t._info.SNR))
                 ]),
                 // GUI: Select display mode
-                mithril('.form-group', [
-                    mithril('.col-12', mithril('.btn-group.btn-group-block', [
-                        mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
-                            onclick: function(e){
-                                t.SNRmode = 'manual';
-                            }
-                        }, 'Manual'),
-                        mithril('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
-                            onclick: function(e){
-                                t.SNRmode = 'auto';
-                            }
-                        }, 'Auto')
-                    ]))
-                ]),
-                // GUI: Settings for the SNR markers
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
-                    mithril('.col-8', mithril('input.form-input', {
-                        disabled: t.SNRmode == 'auto',
-                        type: 'number',
-                        value: Math.floor(sampleToFrequency(
-                            percentageToSample(
-                                t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
-                                s.source.frameSize
-                            ),
-                            s.source.samplingRate / 2,
-                            s.source.frameSize
-                        )),
-                        onchange: mithril.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
-                            marker.x = sampleToPercentage(
-                                frequencyToSample(
-                                    parseInt(value),
-                                    s.source.samplingRate / 2,
+                (vnode.state.calculateSNR ? [
+                    mithril('.form-group', [
+                        mithril('.col-12', mithril('.btn-group.btn-group-block', [
+                            mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
+                                onclick: function(){
+                                    t.SNRmode = 'manual';
+                                }
+                            }, 'Manual'),
+                            mithril('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
+                                onclick: function(){
+                                    t.SNRmode = 'auto';
+                                }
+                            }, 'Auto')
+                        ]))
+                    ]),
+                    // GUI: Settings for the SNR markers
+                    mithril('.form-group', [
+                        mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
+                        mithril('.col-8', mithril('input.form-input', {
+                            disabled: t.SNRmode == 'auto',
+                            type: 'number',
+                            value: Math.floor(sampleToFrequency(
+                                percentageToSample(
+                                    t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
                                     s.source.frameSize
                                 ),
+                                s.source.samplingRate / 2,
                                 s.source.frameSize
-                            );
-                        }),
-                    })),
-                    mithril('.col-1', mithril('label.form-label', 'Hz'))
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
-                    mithril('.col-8', mithril('input.form-input', {
-                        disabled: t.SNRmode == 'auto',
-                        type: 'number',
-                        value: Math.floor(sampleToFrequency(
-                            percentageToSample(
-                                t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
-                                s.source.frameSize
-                            ),
-                            s.source.samplingRate / 2,
-                            s.source.frameSize
-                        )),
-                        onchange: mithril.withAttr('value', function(value) {
-                            var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
-                            marker.x = sampleToPercentage(
-                                frequencyToSample(
-                                    parseInt(value),
-                                    s.source.samplingRate / 2,
+                            )),
+                            onchange: mithril.withAttr('value', function(value) {
+                                var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
+                                marker.x = sampleToPercentage(
+                                    frequencyToSample(
+                                        parseInt(value),
+                                        s.source.samplingRate / 2,
+                                        s.source.frameSize
+                                    ),
+                                    s.source.frameSize
+                                );
+                            }),
+                        })),
+                        mithril('.col-1', mithril('label.form-label', 'Hz'))
+                    ]),
+                    mithril('.form-group', [
+                        mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
+                        mithril('.col-8', mithril('input.form-input', {
+                            disabled: t.SNRmode == 'auto',
+                            type: 'number',
+                            value: Math.floor(sampleToFrequency(
+                                percentageToSample(
+                                    t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
                                     s.source.frameSize
                                 ),
+                                s.source.samplingRate / 2,
                                 s.source.frameSize
-                            );
-                        }),
+                            )),
+                            onchange: mithril.withAttr('value', function(value) {
+                                var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
+                                marker.x = sampleToPercentage(
+                                    frequencyToSample(
+                                        parseInt(value),
+                                        s.source.samplingRate / 2,
+                                        s.source.frameSize
+                                    ),
+                                    s.source.frameSize
+                                );
+                            }),
+                        })),
+                        mithril('.col-1', mithril('label.form-label', 'Hz'))
+                    ])
+                ] : '')
+            ])
+        ];
+    }
+};
+
+/* 
+ * File to hold the preferences GUI for timetraces.
+ */
+
+const TimeTracePrefPane = {
+    view: function(vnode){
+        var t = vnode.attrs.traceConf;
+        if(!t._info){
+            t._info = {};
+        }
+        var s = vnode.attrs.scopeConf;
+        if(s.source._ctrl && !s.source._ctrl.ready){
+            return mithril('.form-horizontal', 'Source is not ready.');
+        }
+        return [
+            mithril('header.columns', ''),
+            mithril('.form-horizontal', [
+                // GUI: Change color and name
+                mithril('.form-group',[
+                    mithril('.col-2.text-center', mithril('input[type=color]', {
+                        value: t.color,
+                        onchange: mithril.withAttr('value', function(v){ t.color = v; })
                     })),
-                    mithril('.col-1', mithril('label.form-label', 'Hz'))
+                    mithril('h4.col-5', !vnode.state.editName ?
+                        mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
+                        mithril('input.form-input[type=text]', {
+                            value: t.name,
+                            onchange: mithril.withAttr('value', function(v){ t.name = v; }),
+                            onblur: function(){ vnode.state.editName = false; },
+                            onkeypress: withKey(13, function(){
+                                vnode.state.editName = false;
+                            })
+                        })
+                    ),
+                    mithril('button.btn.col-5', {
+                        onclick: function(){
+                            vnode.state.exportActive = !vnode.state.exportActive;
+                            vnode.state.exportData = '[' + t._ctrl.state.source._ctrl.channels[0].join(', ') + ']';
+                        }
+                    }, 'Export Data')
+                ]),
+                // GUI: Display Export Data
+                mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                    mithril('.modal-overlay'),
+                    mithril('.modal-container', [
+                        mithril('.modal-header', [
+                            mithril('button.btn.btn-clear.float-right', {
+                                onclick: function(){
+                                    vnode.state.exportActive = !vnode.state.exportActive;
+                                }
+                            }),
+                            mithril('.modal-title', 'Time Data')
+                        ]),
+                        mithril('.modal-body', 
+                            mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
+                                vnode.state.exportData
+                            ))
+                        )
+                    ])
+                ]),
+                // GUI: Display Δt, ΔA
+                mithril('.form-group', [
+                    mithril('.col-1', mithril('label.form-label', 'Δt:')),
+                    mithril('.col-5', mithril('label.form-label', secondsToString(t._info.deltat))),
+                    mithril('.col-1', mithril('label.form-label', 'ΔA:')),
+                    mithril('.col-5', mithril('label.form-label', voltsToString(t._info.deltaA)))
                 ])
             ])
         ];
     }
 };
 
-const TimeTracePrefPane = {
-    view: function(vnode){
-        var t = vnode.attrs.traceConf;
-        var s = vnode.attrs.scopeConf;
-        return [
-            mithril('header.columns', ''),
-            mithril('.form-horizontal', [
-                // GUI: Change color and name
-                mithril('.form-group',[
-                    mithril('.col-3.text-center', mithril('input[type=color]', {
-                        value: t.color,
-                        onchange: mithril.withAttr('value', function(v){ t.color = v; })
-                    })),
-                    mithril('h4.col-9', !vnode.state.editName ?
-                        mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
-                        mithril('input.form-input[type=text]', {
-                            value: t.name,
-                            onchange: mithril.withAttr('value', function(v){ t.name = v; }),
-                            onblur: function(){ vnode.state.editName = false; },
-                            onkeypress: withKey(13, function(target){
-                                vnode.state.editName = false;
-                            })
-                        })
-                    )
-                ]),
-                // GUI: Display Δt
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'Δt')),
-                    mithril('.col-9', mithril('label.form-label', secondsToString(t.info.deltat)))
-                ]),
-                // GUI: Display ΔA
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label', 'ΔA')),
-                    mithril('.col-9', mithril('label.form-label', t.info.deltaA))
-                ]),
-            ])
-        ];
-    }
-};
+/*
+ * This file holds the general settings GUI.
+ */
 
 const generalPrefPane = {
     view: function(vnode){
         var s = vnode.attrs.scopeConf;
+        var activeTrace = s.source.traces[s.source.activeTrace];
+        var samplingRates = [
+            25000000,
+            5000000,
+            1000000,
+            200000,
+            100000,
+            50000
+        ];
         return [
-            // TODO: update code to new tree
             mithril('header.text-center', mithril('h4', s)),
             mithril('.form-horizontal', [
+                // GUI: Select sampling rate
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'Sampling Rate')),
+                    mithril('select.form-select.col-9', {
+                        value: s.source.samplingRate,
+                        onchange: mithril.withAttr('value', function(v){
+                            s.source.samplingRate = parseInt(v);
+                            s.source._ctrl.samplingRate(s.source.samplingRate);
+                        })
+                    }, samplingRates.map(function(t){
+                        return mithril('option', { value: t }, t);
+                    }))
+                ]),
+                mithril('.form-group', [
+                    mithril('button.btn.col-12', {
+                        onclick: function(){
+                            // A replacer function which makes the JSON.stringify ignore
+                            // variables that start with _ 
+                            function replacer(key, value) {
+                                if(key.startsWith('_')) return undefined;
+                                return value;
+                            }
+                            vnode.state.exportActive = !vnode.state.exportActive;
+                            vnode.state.exportData = JSON.stringify(s, replacer, 4);
+                        }
+                    }, 'Export Socpe Configuration'),
+                    // GUI: Display Export State Tree
+                    mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                        mithril('.modal-overlay'),
+                        mithril('.modal-container', [
+                            mithril('.modal-header', [
+                                mithril('button.btn.btn-clear.float-right', {
+                                    onclick: function(){
+                                        vnode.state.exportActive = !vnode.state.exportActive;
+                                    }
+                                }),
+                                mithril('.modal-title', 'Time Data')
+                            ]),
+                            mithril('.modal-body', 
+                                mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
+                                    vnode.state.exportData
+                                ))
+                            )
+                        ])
+                    ])
+                ]),
+                // GUI: Select mode
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block', [
-                        mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
-                            onclick: function(e){
-                                s.source._ctrl.normal();
-                                s.mode = 'normal';
+                        mithril('button.btn' + (s.source.mode == 'normal' ? '.active' : ''), {
+                            onclick: function(){
+                                s.source._ctrl.normal(0);
                             }
                         }, 'Normal'),
-                        mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
-                            onclick: function(e){
-                                s.source._ctrl.single();
-                                s.mode = 'auto';
+                        mithril('button.btn' + (s.source.mode == 'auto' ? '.active' : ''), {
+                            onclick: function(){
+                                s.source._ctrl.single(0);
                             }
                         }, 'Auto'),
-                        mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
-                            onclick: function(e){
-                                s.source._ctrl.single();
-                                s.mode = 'single';
+                        mithril('button.btn' + (s.source.mode == 'single' ? '.active' : ''), {
+                            onclick: function(){
+                                s.source._ctrl.single(0);
                             }
                         }, 'Single')
                     ]))
                 ]),
+                // GUI: Single Shot and Force Trigger
                 mithril('.form-group', [
                     mithril('button.btn.col-6', {
-                        onclick: function(e){
-                                s.source._ctrl.single();
-                                s.mode = 'single';
-                            }
+                        onclick: function(){
+                            s.source._ctrl.single(0);
+                        }
                     }, 'Single Shot'),
                     mithril('button.btn.col-6', {
-                        onclick: function(e){
+                        onclick: function(){
                             s.source._ctrl.forceTrigger();
                         }
                     }, 'Force Trigger')
                 ]),
+                // GUI: Trigger Trace
+                mithril('.form-group', [
+                    mithril('.col-3', mithril('label.form-label', 'Trigger Trace')),
+                    mithril('select.form-select.col-9', {
+                        value: s.source.triggerTrace,
+                        onchange: mithril.withAttr('value', function(v){
+                            s.source.triggerTrace = v;
+                            s.source.trigger.channel = s.source.traces[s.source.triggerTrace].channelID;
+                        })
+                    }, s.source.traces.filter(function(t){ return t.type == 'TimeTrace'; }).map(function(t, i){
+                        return mithril('option', { value: i }, t.name);
+                    }))
+                ]),
+                // GUI: Display and select all traces
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block',
                         s.source.traces.map(function(trace){
                             return mithril('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
                                 style: { backgroundColor: trace.color },
-                                onclick: function(e){
+                                onclick: function(){
                                     s.source.activeTrace = trace._ctrl.id;
                                 }
                             }, trace.name);
                         })
                     ))
                 ]),
+                // GUI: Single Shot and Force Trigger
+                mithril('.form-group', [
+                    mithril('button.btn.col-2[title="Pan Horizontal"]', {
+                        onclick: function(){
+                            // Pan horizontal
+                            activeTrace.scaling.x = 1;
+                        }
+                    }, mithril('i.icon.icon-resize-horiz')),
+                    mithril('button.btn.col-2[title="Pan Vertical"]', {
+                        onclick: function(){
+                            // an vertical
+                            activeTrace.scaling.y = 1;
+                        }
+                    }, mithril('i.icon.icon-resize-vert')),
+                    mithril('button.btn.col-2' + (s._ctrl && s._ctrl.addingMarker ? '.btn-primary' : ''), {
+                        onclick: function(){
+                            // TODO: Add Marker
+                            s._ctrl.addingMarker = !s._ctrl.addingMarker;
+                        }
+                    }, mithril('i.icon.icon-plus')),
+                    mithril('button.btn.col-2', {
+                        onclick: function(){
+                            // TODO: Zoom -
+                        }
+                    }, mithril('i.icon.icon-minus'))
+                ]),
             ])
         ];
     }
 };
 
+/*
+ * This file holds the main control logic for drawing and interfacing a scope.
+ * It calls onto various sub objects like traces and markers.
+ */
+
 const Oscilloscope = function(state) {
     // Remember scope state
     this.state = state;
 
+    // remember our canvas
     this.canvas = document.getElementById('scope');
 
+    // Initialize moving elements to not move
     this.markerMoving = false;
     this.triggerMoving = false;
     this.traceMovingY = false;
@@ -15620,15 +15905,18 @@ const Oscilloscope = function(state) {
 Oscilloscope.prototype.draw = function() {
     var me = this;
 
+    // If no canvas was yet created or found, we have no business here, return.
     if(this.canvas == null){
         return;
     }
 
+    // Remember important sizes
     var width = document.body.clientWidth - (me.state.ui.prefPane.open ? me.state.ui.prefPane.width : 0);
     var height = document.body.clientHeight;
     var halfHeight = this.state.height / 2;
     var context = this.canvas.getContext('2d');
     var activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const triggerTrace = this.state.source.traces[this.state.source.triggerTrace];
 
     // Assign new scope properties
     this.canvas.height = this.state.height = height;
@@ -15640,36 +15928,40 @@ Oscilloscope.prototype.draw = function() {
     context.fillRect(0, 0, width, height);
 
     // Draw trigger level
+    const triggerHeight = halfHeight + (- this.state.source.trigger.level - triggerTrace.offset.y)
+                        * halfHeight * activeTrace.scaling.y;
     context.strokeStyle = '#278BFF';
     context.beginPath();
-    context.moveTo(0, halfHeight - this.state.source.trigger.level * halfHeight * activeTrace.scaling.y);
-    context.lineTo(width, halfHeight - this.state.source.trigger.level * halfHeight * activeTrace.scaling.y);
+    context.moveTo(0, triggerHeight);
+    context.lineTo(width, triggerHeight);
     context.stroke();
 
+    // Draw all traces if the source is ready
     if(this.state.source._ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
-                trace._ctrl.draw(me.canvas);
+            trace._ctrl.draw(me.canvas);
         });
     }
 };
 
 Oscilloscope.prototype.onMouseDown = function(event){
-    // Start moving triggerlevel
-    // TODO: adjust trigger level setup to be dependant on active trace
     var me = this;
-    var activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const triggerTrace = this.state.source.traces[this.state.source.triggerTrace];
     var halfHeight = this.canvas.height / 2;
-    var triggerLevel = this.state.source.trigger.level * halfHeight * activeTrace.scaling.y;
+
+    // Start moving triggerlevel
+    var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * triggerTrace.scaling.y;
     if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        this.triggerMoving = true;
+        this.triggerMoving = activeTrace;
         return;
     }
 
     // Start moving markers
     this.state.source.traces.forEach(function(trace){
-        trace.markers && trace.markers.forEach(function(marker){
+        trace == activeTrace && trace.markers && trace.markers.forEach(function(marker){
             if(marker.type == 'vertical'){
-                var x = marker.x * me.canvas.width;
+                var x = (marker.x - activeTrace.offset.x) * me.canvas.width * activeTrace.scaling.x;
                 if(event.offsetX < x + 3 && event.offsetX > x - 3){
                     me.markerMoving = marker;
                     return;
@@ -15684,55 +15976,69 @@ Oscilloscope.prototype.onMouseDown = function(event){
         });
     });
 
-    // Start moving traces
-    var me = this;
+    if(me.markerMoving) return;
+
+    // If we are in marker adding mode, add new marker
+    if(this.addingMarker){
+        this.markerMoving = this.addMarker(this.state.source.activeTrace, '', 'vertical', event.offsetX / (me.canvas.width * activeTrace.scaling.x));
+        return;
+    }
+
+    // Start moving traces in Y direction
     var halfMoverWidth = me.state.ui.mover.width / 2;
     var halfMoverHeight = me.state.ui.mover.height / 2;
     this.state.source.traces.forEach(function(trace) {
         var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
         if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
             var y = trace.offset.y * halfHeight * activeTrace.scaling.y;
-            if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
+            if(halfHeight - event.offsetY < y + halfMoverHeight
+            && halfHeight - event.offsetY > y - halfMoverHeight){
                 me.traceMovingY = trace;
                 return;
             }
         }
     });
 
+    if(me.traceMovingY) return;
     // If we didnd't start moving a trace already, we start moving in X direction
     me.traceMovingX = activeTrace;
 };
 
-Oscilloscope.prototype.onMouseUp = function(event){
-    var me = this;
+Oscilloscope.prototype.onMouseUp = function(){
     // End moving triggerlevel
     if(this.triggerMoving){
         this.triggerMoving = false;
+        return;
     }
 
     // End moving markers
     if(this.markerMoving !== false){
         this.markerMoving = false;
+        return;
     }
 
     // End moving traces Y
     if(this.traceMovingY !== false){
         this.traceMovingY = false;
+        return;
     }
 
     // End moving traces X
     if(this.traceMovingX !== false){
         this.traceMovingX = false;
+        return;
     }
 };
 
 Oscilloscope.prototype.onMouseMove = function(event){
     var me = this;
-    var activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const activeTrace = this.state.source.traces[this.state.source.activeTrace];
+    const triggerTrace = this.state.source.traces[this.state.source.triggerTrace];
     var halfHeight = this.canvas.height / 2;
     var halfMoverWidth = this.state.ui.mover.width / 2;
     var halfMoverHeight = this.state.ui.mover.height / 2;
-    var triggerLevel = this.state.source.trigger.level * halfHeight * activeTrace.scaling.y;
+    // Trigger level on the screen
+    var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * activeTrace.scaling.y;
     var cursorSet = false;
 
     // Change cursor if trigger set is active
@@ -15740,12 +16046,14 @@ Oscilloscope.prototype.onMouseMove = function(event){
         document.body.style.cursor = 'row-resize';
         cursorSet = true;
     }
+    
     // Change cursor if marker set is active
     if(!cursorSet){
         this.state.source.traces.forEach(function(trace){
-            trace.markers && trace.markers.forEach(function(marker){
+            trace == activeTrace && trace.markers && trace.markers.forEach(function(marker){
                 if(marker.type == 'vertical'){
-                    var x = marker.x * me.canvas.width;
+                    // (event.offsetX / this.canvas.width + activeTrace.offset.x) * activeTrace.scaling.x
+                    var x = (marker.x - activeTrace.offset.x) * me.canvas.width * activeTrace.scaling.x;
                     if(event.offsetX < x + 3 && event.offsetX > x - 3){
                         document.body.style.cursor = 'col-resize';
                         cursorSet = true;
@@ -15762,14 +16070,15 @@ Oscilloscope.prototype.onMouseMove = function(event){
             });
         });
     }
+    
     // Change cursor if trace set is active
     if(!cursorSet){
-        var me = this;
         this.state.source.traces.forEach(function(trace) {
             var x = me.canvas.width - me.state.ui.mover.horizontalPosition - halfMoverWidth;
             if(event.offsetX < x + halfMoverWidth && event.offsetX > x - halfMoverWidth){
                 var y = trace.offset.y * halfHeight * activeTrace.scaling.y;
-                if(halfHeight - event.offsetY < y + halfMoverHeight && halfHeight - event.offsetY > y - halfMoverHeight){
+                if(halfHeight - event.offsetY < y + halfMoverHeight
+                && halfHeight - event.offsetY > y - halfMoverHeight){
                     document.body.style.cursor = 'move';
                     cursorSet = true;
                     return;
@@ -15777,15 +16086,15 @@ Oscilloscope.prototype.onMouseMove = function(event){
             }
         });
     }
+
     // Change cursor if nothing set is active
     if(!cursorSet){
         document.body.style.cursor = 'initial';
     }
 
-
     // Move triggerlevel is active
-    if(this.triggerMoving){
-        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * activeTrace.scaling.y);
+    if(this.triggerMoving !== false){
+        triggerLevel = (halfHeight - event.offsetY) / (halfHeight * activeTrace.scaling.y) - triggerTrace.offset.y;
         if(triggerLevel > 1){
             triggerLevel = 1;
         }
@@ -15800,7 +16109,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
     if(this.markerMoving !== false){
         var markerLevel = 0;
         if(this.markerMoving.type == 'vertical'){
-            markerLevel = event.offsetX / this.canvas.width;
+            markerLevel = (event.offsetX / this.canvas.width + activeTrace.offset.x) / activeTrace.scaling.x;
             if(markerLevel > 1){
                 markerLevel = 1;
             }
@@ -15822,7 +16131,7 @@ Oscilloscope.prototype.onMouseMove = function(event){
         }
     }
 
-    // Move traces if move traces is active
+    // Move traces Y if move traces Y is active
     if(this.traceMovingY !== false){
         var traceOffset = (halfHeight - event.offsetY) / (halfHeight * activeTrace.scaling.y);
         if(traceOffset > 1){
@@ -15835,10 +16144,23 @@ Oscilloscope.prototype.onMouseMove = function(event){
         return;
     }
 
+    // Move traces X if move traces X is active
     if(this.traceMovingX !== false){
-        this.traceMovingX.offset.x -= event.movementX;
-        this.state.source.triggerPosition += event.movementX / this.state.source.frameSize;
-        console.log(this.state.source.triggerPosition);
+        const ratio = 1 / this.canvas.width;
+        var offsetX = ratio * event.movementX / this.traceMovingX.scaling.x;
+        this.traceMovingX.offset.x -= offsetX;
+        if(this.traceMovingX.offset.x < 0){
+            this.traceMovingX.offset.x = 0;
+        }
+        if(this.traceMovingX.offset.x > 1){
+            this.traceMovingX.offset.x = 1;
+        }
+        if(this.traceMovingX == triggerTrace){
+            this.state.source.triggerPosition += offsetX;
+        }
+        if(this.state.source.triggerPosition < 0){
+            this.state.source.triggerPosition = 0;
+        }
         return;
     }
 };
@@ -15855,23 +16177,17 @@ Oscilloscope.prototype.onScroll = function(event){
     }
 };
 
-Oscilloscope.prototype.addMarker = function(id, type, xy){
-    var px = 0;
-    var py = 0;
-    if(type == 'horizontal'){
-        py = xy;
-    } else {
-        px = xy;
-    }
-    this.state.markers.push({
-        id: id, type: type, x: px, y: py
-    });
-};
-
+/*
+ * UI handler controls for buttons etc
+ */
 Oscilloscope.prototype.uiHandlers = {
     togglePrefPane: function(scope){
         scope.state.ui.prefPane.open = !scope.state.ui.prefPane.open;
     }
+};
+
+Oscilloscope.prototype.addMarker = function(trace, id, type, xy){
+    return this.state.source.traces[trace]._ctrl.addMarker(id, type, xy, true);
 };
 
 /* This file contains the source class which is responsible for
@@ -15901,16 +16217,17 @@ const WebsocketSource = function(state) {
             me.state.frameSize * (1 - me.state.triggerPosition)
         );
         me.triggerOn(me.state.trigger);
+        me.receivingChannel = 0;
         if(me.state.mode == 'single'){
             // We don't have to do anything, we already did our job
         }
         if(me.state.mode == 'normal'){
             // Immediately request a new frame
-            me.normal();
+            me.normal(0);
         }
         if(me.state.mode == 'auto'){
             // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-            me.auto();
+            me.auto(0);
         }
         me.channels;
         me.ready = true;
@@ -15927,26 +16244,34 @@ const WebsocketSource = function(state) {
                 var arr = new Uint16Array(e.data);
                 var data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
-                    // 14 bit uint to float
-                    data[i] = (arr[i] - Math.pow(2, (me.state.bits - 1))) / Math.pow(2, (me.state.bits - 1 - 2));
+                    // 16 bit uint to float
+                    data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp;
                 }
-                me.channels[0] = data;
+                me.channels[me.receivingChannel++] = data;
+                // If we didn't receive all channels yet, receive the next one
+                if(me.receivingChannel != me.state.numberOfChannels){
+                    me.readFrame(me.receivingChannel);
+                    return;
+                } else {
+                    me.receivingChannel = 0;
+                }
                 // Start a new frame if mode is appropriate otherwise just exit
                 if(me.state.mode == 'single'){
                     // We don't have to do anything, we already did our job
                 }
                 if(me.state.mode == 'normal'){
                     // Immediately request a new frame
-                    me.normal();
+                    me.normal(0);
                 }
                 if(me.state.mode == 'auto'){
                     // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-                    me.auto();
+                    me.auto(0);
                 }
                 me.state.traces.forEach(function(trace){
                     if(trace.type == 'TimeTrace'){
                         trace.offset.x = 0;
                     }
+                    trace._ctrl.calc && trace._ctrl.calc();
                 });
             }
         }
@@ -15972,24 +16297,35 @@ WebsocketSource.prototype.sendJSON = function(obj) {
 /*
  * Requests a new frame from the webserver. Includes all necessary config.
  */
-WebsocketSource.prototype.requestFrame = function() {
+WebsocketSource.prototype.requestFrame = function(channel) {
     this.sendJSON({
         // Always set the current frameSize and triggerPosition
         frameConfiguration: {
             frameSize: this.state.frameSize,
-            pre: this.state.frameSize * this.state.triggerPosition,
-            suf: this.state.frameSize * (1 - this.state.triggerPosition)
+            pre: Math.round(this.state.frameSize * this.state.triggerPosition),
+            suf: Math.round(this.state.frameSize * (1 - this.state.triggerPosition))
         },
         // Always set the current trigger
+        // TODO: Zero out triggers for other channels
         triggerOn: {
             type: this.state.trigger.type,
             channel: this.state.trigger.channel,
-            // TODO: Fix trigger level sent (+ trace offset)
             level: Math.round(this.state.trigger.level * Math.pow(2, (this.state.bits - 1)) + Math.pow(2, (this.state.bits - 1))),
             hysteresis: this.state.trigger.hystresis,
             slope: this.state.trigger.slope
         },
-        requestFrame: true
+        requestFrame: true,
+        channel: channel,
+    });
+};
+
+/*
+ * Requests a new frame from the webserver. Includes all necessary config.
+ */
+WebsocketSource.prototype.readFrame = function(channel) {
+    this.sendJSON({
+        readFrame: true,
+        channel: channel,
     });
 };
 
@@ -15998,6 +16334,13 @@ WebsocketSource.prototype.requestFrame = function() {
  */
 WebsocketSource.prototype.forceTrigger = function() {
     this.sendJSON({ forceTrigger: true });
+};
+
+/*
+ * Sends a force trigger command to the server to issue an immediate frame.
+ */
+WebsocketSource.prototype.samplingRate = function(s) {
+    this.sendJSON({ samplingRate: s });
 };
 
 /*
@@ -16048,26 +16391,26 @@ WebsocketSource.prototype.triggerOnRisingEdge = function(channel, level, hystere
 /*
  * Issue a single frame from the server.
 */
-WebsocketSource.prototype.single = function() {
+WebsocketSource.prototype.single = function(channel) {
     this.state.mode = 'single';
-    this.requestFrame();
+    this.requestFrame(channel);
 };
 
 /*
  * Start normal mode.
 */
-WebsocketSource.prototype.normal = function() {
+WebsocketSource.prototype.normal = function(channel) {
     var me = this;
     this.state.mode = 'normal';
     // Wait 5ms until requesting a new frame because otherwise we deadlock
-    setTimeout(function(){ me.requestFrame(); }, 5);
+    setTimeout(function(){ me.requestFrame(channel); }, 5);
 };
 
 /*
  * Start auto mode.
  * <timeout> : uint : Milliseconds to wait until forcing triggering
  */
-WebsocketSource.prototype.auto = function(timeout) {
+WebsocketSource.prototype.auto = function(channel, timeout) {
     var me = this;
     this.state.mode = 'auto';
     // Wait 5ms until requesting a new frame because otherwise we deadlock
@@ -16077,6 +16420,207 @@ WebsocketSource.prototype.auto = function(timeout) {
     }, timeout);
 };
 
+/*
+ * Trace constructor
+ * Constructs a new TimeTrace
+ * A TimeTrace is a simple lineplot of all the recorded time samples.
+ * <id> : uint : Unique trace id, which is assigned when loading a trace
+ * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
+ */
+const TimeTrace = function (id, state) {
+    // Remember trace state
+    this.state = state;
+    this.id = id;
+
+    // Init class variables
+    this.on = true;
+    this.data = [];
+};
+
+/*
+ * Draw handler
+ * The draw handler gets called once every frame and displays the current set of samples.
+ * <canvas> : Canvas : the canvas to draw the samples on
+ */
+TimeTrace.prototype.draw = function (canvas) {
+    var i, j, a;
+    var context = canvas.getContext('2d');
+    // Store context state so other painters are presented with their known context state
+    context.save();
+
+    var scope = this.state._source._scope;
+    var data = this.data;
+
+    // Half height of canvas
+    var halfHeight = scope.height / 2;
+
+    // Draw every <skip> sample in data
+    var skip = 1;
+    // Apply sample to every <mul> pixel on canvas
+    var mul = 1;
+
+    // Calculate ratio of number of samples to number of pixels and factor in x-scaling
+    // To calculate steps in the for loop to draw the trace
+    var ratio = scope.width / data.length * this.state.scaling.x; // pixel/sample
+    if(ratio > 1){
+        mul = ratio;
+    } else {
+        skip = 1 / ratio;
+    }
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   G R I D
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+
+    if(this.id == this.state._source.activeTrace){
+        // Horizontal grid
+        context.strokeWidth = 1;
+        context.strokeStyle = '#ABABAB';
+        context.font = '30px Arial';
+        context.fillStyle = 'blue';
+
+        // Calculate the current horizontal grid width dt according to screen size
+        var n = 1e18;
+        var dt = ratio / this.state._source.samplingRate * n;
+        for(a = 0; a < 20; a++){
+            if(scope.width / dt > 1 && scope.width / dt < 11){
+                break;
+            }
+            n *= 1e-1;
+            dt = ratio / this.state._source.samplingRate * n;
+        }
+
+        // Store grid width
+        this.state._info.deltat = (1 / ratio * dt * 1 / this.state._source.samplingRate);
+
+        // Draw horizontal grid
+        for(i = 0; i < 11; i++){
+            context.save();
+            context.setLineDash([5]);
+            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / dt)) + ')';
+            for(j = 1; j < 10; j++){
+                context.beginPath();
+                context.moveTo(dt * i + dt / 10 * j, 0);
+                context.lineTo(dt * i + dt / 10 * j, scope.height);
+                context.stroke();
+            }
+            context.restore();
+            context.beginPath();
+            context.moveTo(dt * i, 0);
+            context.lineTo(dt * i, scope.height);
+            context.stroke();
+        }
+        context.restore();
+
+        // Vertical grid
+        context.strokeWidth = 1;
+        context.strokeStyle = '#ABABAB';
+        context.font = '30px Arial';
+        context.fillStyle = 'blue';
+
+        // Calculate the current vertical grid height dA according to screen size
+        // Start at 1mV grid
+        const baseGrid = 1e-9;
+        n = 1;
+        var dA = baseGrid * halfHeight / (scope.source.vpp / 2) * this.state.scaling.y;
+        for(a = 0; a < 20; a++){
+            if(scope.height * 0.5 / dA > 1 && scope.height * 0.5 / dA < 11){
+                break;
+            }
+            n *= 10;
+            dA = baseGrid * halfHeight / (scope.source.vpp / 2) * this.state.scaling.y * n;
+        }
+        // Store vertical grid size
+        // vpp / canvas = v * scaling / px
+        // px = v * scaling * canvas
+        // da = px / dec
+        // da = v * scaling * canvas / dec
+        // da / canvas / scaling = v / dec
+        // v / dec = n / canvas
+        this.state._info.deltaA = (baseGrid * n);
+
+        // Draw vertical grid
+        for(i = -11; i < 11; i++){
+            context.save();
+            context.setLineDash([5]);
+            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.height / dA)) + ')';
+            for(j = 1; j < 10; j++){
+                context.beginPath();
+                context.moveTo(0, 0.5 * scope.height + dA * i + dA / 10 * j);
+                context.lineTo(scope.width, 0.5 * scope.height + dA * i + dA / 10 * j);
+                context.stroke();
+            }
+            context.restore();
+            context.beginPath();
+            context.moveTo(0, 0.5 * scope.height + dA * i);
+            context.lineTo(scope.width, 0.5 * scope.height + dA * i);
+            context.stroke();
+        }
+        context.restore();
+    }
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   T R A C E
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+
+    context.strokeWidth = 1;
+    context.strokeStyle = this.state.color;
+    context.beginPath();
+
+    // Actually draw the trace, starting at pixel 0 and data point at 0
+    context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x * data.length] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    for (i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
+        context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    }
+    context.stroke();
+
+    // Draw mover (grab and draw to move the trace)
+    context.fillStyle = this.state.color;
+    var offsetY = this.state.offset.y;
+    if(offsetY > 1){
+        offsetY = 1;
+    } else if(offsetY < -1){
+        offsetY = -1;
+    }
+    context.fillRect(
+        scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
+        halfHeight - offsetY * halfHeight * this.state.scaling.y - scope.ui.mover.height / 2,
+        scope.ui.mover.width,
+        scope.ui.mover.height
+    );
+
+    // Draw trigger location
+    context.fillStyle = 'white';
+    var trgLoc = (scope.width * (scope.source.triggerPosition - this.state.offset.x * ratio)) * this.state.scaling.x;
+    context.beginPath();
+    context.moveTo(trgLoc, scope.height - 15);
+    context.lineTo(trgLoc + 15, scope.height);
+    context.lineTo(trgLoc - 15, scope.height);
+    context.fill();
+
+    // Restore canvas context for next painter
+    context.restore();
+};
+
+TimeTrace.prototype.calc = function(){
+    this.data = this.state._source._ctrl.channels[this.state.channelID].slice(0);
+};
+
+/*
+ * Copyright (c) 2015 Kevin Kwok (antimatter15@gmail.com)
+ * https://gist.github.com/antimatter15/0349ca7d479236fdcdbb
+ */
+
+/*
+ * Calculates an FFT over a set of samples.
+ * <re> : float[] : An array containing the real parts of the samples
+ * <im> : float[] : An array containing the imaginary parts of the samples
+ * NOTE: The calculated FFT will be contained within the input vectors.
+ */
 const miniFFT = function(re, im) {
     var N = re.length;
     var i, j, h, k;
@@ -16103,6 +16647,14 @@ const miniFFT = function(re, im) {
     }
 };
 
+/*
+ * This file contains various mathematical helper functions.
+ */
+
+/*
+ * Calculate the sum of all elements in an array.
+ * <arr> : int[] : An array-like containing all values to sum up
+ */
 const sum = function(arr){
     var k = 0;
     for(var i = 0; i < arr.length; i++){
@@ -16111,41 +16663,124 @@ const sum = function(arr){
     return k;
 };
 
-const ssum = function(arr){
-    var k = 0;
-    for(var i = 0; i < arr.length; i++){
-        k += arr[i]*arr[i];
+/*
+ * Calculate the quadratic sum of all elements in an array.
+ * <arr> : int[] : An array-like containing all values to sum up
+ */
+
+
+/*
+ * Calculate the RMS of all elements in an array.
+ * <arr> : int[] : An array-like containing all values to sum up
+ */
+
+
+/*
+ * Calculate the Power Density of a signal.
+ * <arr> : int[] : An array-like containing all values to sum up
+ * <fs> : uint : The sample frequency
+ * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
+ */
+const powerDensity = function(arr, fs, half, N){
+    // const deltaf = fs / arr.length;
+    // If it is the one-sided spectrum, we need a factor of two
+    if(half){
+        half = 2;
+    } else {
+        half = 1;
     }
-    return k;
+    N = N ? N * half : (arr.length * half);
+    return sum(arr) / (half * N * N * fs);
 };
 
-const rms = function(arr){
-    return Math.sqrt(sum(arr) / arr.length);
+/*
+ * Calculate the Power Density of a signal.
+ * <arr> : int[] : An array-like containing all values to sum up
+ * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
+ */
+const power = function(arr, half, N){
+    // If it is the one-sided spectrum, we need a factor of two
+    if(half){
+        half = 2;
+    } else {
+        half = 1;
+    }
+    N = N ? N * half : (arr.length * half);
+    return sum(arr) / (half * N * N);
 };
 
-const draw$1 = function (context, scopeState, markerState, d, length) {
+const draw$1 = function (context, scopeState, markerState, traceState, d, length) {
     // Store old state
     context.save();
 
     // Setup brush
     context.strokeWidth = 1;
-    context.strokeStyle = '#006644';
-    if (context.setLineDash) {
+    context.strokeStyle = markerState.color;
+    if (markerState.dashed && context.setLineDash) {
         context.setLineDash([5]);
     }
 
     // Draw marker
     if(markerState.type == 'vertical'){
+        const x = Math.ceil((markerState.x - traceState.offset.x) * length * d);
         context.beginPath();
-        context.moveTo(markerState.x * d * length, 0);
-        context.lineTo(markerState.x * d * length, scopeState.height);
-        // console.log(markerState.x, d, length, scopeState.height, scopeState.height, markerState.x * d * length);
-        context.stroke();
+        context.moveTo(x, 0);
+        if(!markerState.active){
+            // If the marker is not active, just draw it
+            context.lineTo(x, scopeState.height);
+            context.stroke();
+        } else {
+            // If the marker is active, draw additional info
+            context.font = '14px Arial';
+            // Calculate frequency at marker and convert it to string
+            const text = Math.floor(sampleToFrequency(
+                percentageToSample(markerState.x, length),
+                scopeState.source.samplingRate / (traceState.halfSpectrum ? 2 : 1),
+                length
+            )).toString();
+            const width = context.measureText(text).width;
+            const height = 14;
+            // Draw the line for the marker with a gap
+            context.lineTo(x, scopeState.height - (height + 10 + 6 * 2));
+            context.moveTo(x, scopeState.height - 10);
+            context.lineTo(x, scopeState.height);
+            context.save();
+            context.fillStyle = '#FFFFFF';
+            // Calculate size of the rectangle around the text left and right from the marker
+            // (if it is at the border of the screen it's not half/half)
+            const leftFree = Math.min(x, (width / 2 + 6));
+            const rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
+            // Fill the rectangle background with white so text will be readable
+            context.fillRect(
+                rightFree - leftFree,
+                scopeState.height - (height + 10 + 6 * 2),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            // Draw the border of the rectangle
+            context.rect(
+                rightFree - leftFree,
+                scopeState.height - (height + 10 + 6 * 2),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            context.restore();
+            // Draw the text
+            context.fillStyle = markerState.color;
+            context.fillText(
+                text,
+                rightFree - (leftFree - 6),
+                scopeState.height - (10 + 6)
+            );
+        }
     } else if(markerState.type == 'horizontal'){
+        // This case is never really used thus far and can be extended later on when needed
         context.beginPath();
         var halfHeight = scopeState.height / 2;
         context.moveTo(0, halfHeight - markerState.y * d * length);
-        context.lineTo(scopeState.width, halfHeight - markerState.y * d)* length;
+        context.lineTo(scopeState.width, halfHeight - markerState.y * d * length);
         context.stroke();
     }
 
@@ -16153,105 +16788,112 @@ const draw$1 = function (context, scopeState, markerState, d, length) {
     context.restore();
 };
 
-// Creates a new trace
-const TimeTrace = function (id, state) {
+/*
+ * Trace constructor
+ * Constructs a new FFTrace
+ * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
+ * A window can be applied and several measurements such as SNR and Signal RMS can be done.
+ * <id> : uint : Unique trace id, which is assigned when loading a trace
+ * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
+ */
+const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
     this.id = id;
 
     // Init class variables
     this.on = true;
+    this._data = [];
 };
 
-// Draws trace on the new frame
-TimeTrace.prototype.draw = function (canvas) {
-    var context = canvas.getContext('2d');
-    // Store context state so other painters are presented with their known context state
-    context.save();
-
-    var scope = this.state.source.scope;
-
-    // Half height of canvas
+/*
+ * Draw handler
+ * The draw handler gets called once every frame and displays the current set of samples.
+ * It also does all the transformations and calculations.
+ * <canvas> : Canvas : the canvas to draw the samples on
+ */
+FFTrace.prototype.draw = function (canvas) {
+    var me = this;
+    var i, j;
+    var scope = this.state._source._scope;
     var halfHeight = scope.height / 2;
-
-    // Draw every <skip> sample in data
+    var context = canvas.getContext('2d');
+    var data = this._data.slice(0);
+    
+    // Calculate x-Axis scaling
+    // mul tells how many pixels have to be skipped after each sample
+    // If the signal has more points than the canvas, this will always be 1
+    // skip tells how many samples have to be skipped after each pixel
+    // If the signal has less points than the canvas, this will always be 1
     var skip = 1;
-    // Apply sample to every <mul> pixel on canvas
     var mul = 1;
-
-    // Calculate ratio of number of samples to number of pixels and factor in x-scaling
-    // To calculate steps in the for loop to draw the trace
-    var ratio = scope.width / this.state.source._ctrl.channels[0].length * this.state.scaling.x; // pixel/sample
+    var ratio = scope.width / data.length * this.state.scaling.x; // pixel / sample
     if(ratio > 1){
         mul = ratio;
     } else {
         skip = 1 / ratio;
     }
 
-    // Draw scales
-    if(this.id == this.state.source.activeTrace){
-        // Draw horizontal scales
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   G R I D
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+
+    // Scale data by 100
+    for(i = 0; i < data.length; i++){
+        data[i] = data[i] / 100;
+    }
+
+    // Draw THD markers
+    var f = 1000;
+    var n = 10;
+    
+    // Draw the <n> next harmonic locations
+    for(i = 1; i <= n; i++){
+        context.fillStyle = 'blue';
+        var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, data.length);
+        console.log((sampleToPercentage(sample, data.length) - this.state.offset.x));
+        var harmonicX = (sampleToPercentage(sample, data.length) - this.state.offset.x) * data.length * ratio; // / scope.width * ratio;
+        var harmonicY = halfHeight - (data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight / this.state.scaling.y;
+        context.beginPath();
+        context.moveTo(harmonicX, harmonicY);
+        context.lineTo(harmonicX + 15, harmonicY - 15);
+        context.lineTo(harmonicX - 15, harmonicY - 15);
+        context.fill();
+    }
+
+    // Store brush
+    context.save();
+    if(this.id == this.state._source.activeTrace){
+        // Vertical grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
-        context.font = "30px Arial";
+        context.font = '30px Arial';
         context.fillStyle = 'blue';
 
-        var nStart = 1e18;
-        var n = 1e18;
-        var dt = ratio / this.state.source.samplingRate * n;
-        for(var a = 0; a < 20; a++){
-            if(scope.width / dt > 1 && scope.width / dt < 11){
-                break;
-            }
-            n *= 1e-1;
-            dt = ratio / this.state.source.samplingRate * n;
-        }
-
-        this.state.info.deltat = (1 / ratio * dt * 1 / this.state.source.samplingRate).toFixed(15);
-
-        var i;
-        for(i = 0; i < 11; i++){
-            context.save();
-            context.setLineDash([5]);
-            context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / dt)) + ')';
-            for(var j = 1; j < 10; j++){
-                context.beginPath();
-                context.moveTo(dt * i + dt / 10 * j, 0);
-                context.lineTo(dt * i + dt / 10 * j, scope.height);
-                context.stroke();
-            }
-            context.restore();
-            context.beginPath();
-            context.moveTo(dt * i, 0);
-            context.lineTo(dt * i, scope.height);
-            context.stroke();
-        }
-        context.restore();
-
-        // Draw vertical scales
-        context.strokeWidth = 1;
-        context.strokeStyle = '#ABABAB';
-        context.font = "30px Arial";
-        context.fillStyle = 'blue';
-
+        // Calculate the current vertical grid height dA according to screen size
+        // Start at 1mdB grid
+        const baseGrid = 1e-3;
         n = 1;
-        var dA = this.state.scaling.y;
+        var dA = baseGrid * halfHeight / (1) * this.state.scaling.y;
         for(a = 0; a < 20; a++){
-            if(scope.height * 0.5 / dA > 1 && scope.height * 0.5 / dA < 6){
+            if(scope.height * 0.5 / dA > 1 && scope.height * 0.5 / dA < 11){
                 break;
             }
-            n *= 5;
-            dA = this.state.scaling.y * n;
+            n *= 10;
+            dA = baseGrid * halfHeight / (1) * this.state.scaling.y * n;
         }
-        // dA
-        this.state.info.deltaA = (n * (this.state.source.bits - 1) * this.state.source.vpb).toFixed(15);
+        // Store vertical grid size
+        // Mulitply by 100 because we scale the signal constant by that factor.
+        this.state._info.deltaA = (baseGrid * n * 100);
 
-        var i;
-        for(i = -6; i < 6; i++){
+        // Draw vertical grid
+        for(i = -11; i < 11; i++){
             context.save();
             context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.height / dA)) + ')';
-            for(var j = 1; j < 10; j++){
+            for(j = 1; j < 10; j++){
                 context.beginPath();
                 context.moveTo(0, 0.5 * scope.height + dA * i + dA / 10 * j);
                 context.lineTo(scope.width, 0.5 * scope.height + dA * i + dA / 10 * j);
@@ -16264,218 +16906,33 @@ TimeTrace.prototype.draw = function (canvas) {
             context.stroke();
         }
         context.restore();
-    }
 
-    // Draw trace
-    context.strokeWidth = 1;
-    context.strokeStyle = this.state.color;
-    context.beginPath();
-
-    // Actually draw the trace, starting at pixel 0 and data point at 0
-    // triggerLocation is only relevant when using WebAudio
-    // using an external source the source handles triggering
-    var data = this.state.source._ctrl.channels[0];
-    context.moveTo(0, (halfHeight - (data[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
-    for (var i=0, j=0; (j < scope.width) && (i < data.length); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (data[Math.floor(i) + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
-    }
-    context.stroke();
-
-    // Draw mover (grab and draw to move the trace)
-    context.fillStyle = this.state.color;
-    var offsetY = this.state.offset.y;
-    if(offsetY > 1){
-        offsetY = 1;
-    } else if(offsetY < -1){
-        offsetY = -1;
-    }
-    context.fillRect(
-        scope.width - scope.ui.mover.width - scope.ui.mover.horizontalPosition,
-        halfHeight - offsetY * halfHeight * this.state.scaling.y - scope.ui.mover.height / 2,
-        scope.ui.mover.width,
-        scope.ui.mover.height
-    );
-
-    // Draw trigger location
-    context.fillStyle = 'white';
-    var trgMiddle = scope.width * scope.source.triggerPosition - this.state.offset.x * ratio;
-    context.beginPath();
-    context.moveTo(trgMiddle, scope.height - 15);
-    context.lineTo(trgMiddle + 15, scope.height);
-    context.lineTo(trgMiddle - 15, scope.height);
-    context.fill();
-
-    // Restore canvas context for next painter
-    context.restore();
-};
-
-// Creates a new source
-const FFTrace = function(id, state) {
-    // Remember trace state
-    this.state = state;
-    this.id = id;
-
-    // Init class variables
-    this.on = true;
-};
-
-// Draws trace on the new frame
-FFTrace.prototype.draw = function (canvas) {
-    var me = this;
-    var i, j;
-    var scope = this.state.source.scope;
-    var halfHeight = scope.height / 2;
-    var context = canvas.getContext('2d');
-    // Duplicate data
-    var real = this.state.source._ctrl.channels[0].slice(0);
-    var vmax = this.state.source.vpb * Math.pow(2, this.state.source.bits);
-    for(i = 0; i < real.length; i++){
-        real[i] = real[i] / vmax;
-    }
-    // Create a complex vector with zeroes sice we only have real input
-    var compl = new Float32Array(this.state.source._ctrl.channels[0]);
-    // Window data if a valid window was selected
-    if(this.state.windowFunction && windowFunctions[this.state.windowFunction]){
-        real = applyWindow(real, windowFunctions[this.state.windowFunction]);
-    }
-    // Do an FFT of the signal
-    miniFFT(real, compl);
-
-    // Only use half of the FFT since we only need the upper half if settings say so
-    if(this.state.halfSpectrum){
-        real = real.slice(0, real.length / 2);
-        compl = compl.slice(0, compl.length / 2);
-    }
-
-    // Calculate the the total power of the signal
-    // P = V^2
-    var ab = new Float32Array(real.length);
-    for(i = 0; i < ab.length; i++){
-        ab[i] = real[i]*real[i] + compl[i]*compl[i];
-    }
-
-    // Calculate x-Axis scaling
-    // mul tells how many pixels have to be skipped after each sample
-    // If the signal has more points than the canvas, this will always be 1
-    // skip tells how many samples have to be skipped after each pixel
-    // If the signal has less points than the canvas, this will always be 1
-    var skip = 1;
-    var mul = 1;
-    var ratio = scope.width / ab.length * this.state.scaling.x; // pixel / sample
-    if(ratio > 1){
-        mul = ratio;
-    } else {
-        skip = 1 / ratio;
-    }
-
-    if(ab.length > 0){
-        // Set RMS
-        this.state.info.RMSPower = rms(ab);
-
-        // Calculate SNR
-        if(this.state.SNRmode == 'manual'){
-            var ss = 0;
-            var sn = 0;
-            var first = this.getMarkerById('SNRfirst')[0].x / ab.length;
-            var second = this.getMarkerById('SNRsecond')[0].x / ab.length;
-            for(i = 1; i < ab.length; i++){
-                if(i < first || i > second){
-                    sn += ab[i] * ab[i];
-                } else {
-                    ss += ab[i] * ab[i];
-                }
-            }
-            var SNR = Math.log10(ss / sn) * 10;
-            this.state.info.SNR = SNR;
-        }
-        if(this.state.SNRmode == 'auto'){
-            // Find max
-            var max = -3000000;
-            var maxi = 0;
-            for(i = 1; i < ab.length; i++){
-                if(ab[i] > max){
-                    max = ab[i];
-                    maxi = i;
-                }
-            }
-            var m = (sum(ab.slice(0, maxi - 1)) + sum(ab.slice(maxi + 1))) / ab.length;
-            var n = [];
-            var s = [];
-            var secondSNRMarker = 0;
-            var firstSNRMarker = 0;
-            // Add all values under the average and those above each to a list
-            for(i = 1; i < ab.length; i++){
-                if(ab[i] < m){
-                    n.push(ab[i]);
-                }
-                else {
-                    if(secondSNRMarker == 0){
-                        firstSNRMarker = i - 1;
-                        if(firstSNRMarker < 1){
-                            firstSNRMarker = 1;
-                        }
-                    }
-                    s.push(ab[i]);
-                    secondSNRMarker = i + 1;
-                    if(secondSNRMarker > ab.length){
-                        secondSNRMarker = ab.length;
-                    }
-                }
-            }
-            // Sum both sets and calculate their ratio which is the SNR
-            var ss = ssum(s);
-            var sn = ssum(n);
-            var SNR = Math.log10(ss / sn) * 10;
-            this.state.info.SNR = SNR;
-
-            // Posiion SNR markers
-            this.setSNRMarkers(firstSNRMarker / ab.length, secondSNRMarker / ab.length);
-        }
-    } else {
-        this.state.info.RMSPower = '\u26A0 No signal';
-        this.state.info.SNR = '\u26A0 No signal';
-    }
-
-    this.state.markers.forEach(function(m) {
-        draw$1(context, me.state.source.scope, m, ratio, ab.length);
-    });
-
-    // Convert spectral density to a logarithmic scale to be able to better plot it.
-    // Scale it down by 200 for a nicer plot
-    for(i = 0; i < ab.length; i++){
-        ab[i] = Math.log10(ab[i])*20/200;
-    }
-
-    // Store brush
-    context.save();
-    if(this.id == this.state.source.activeTrace){
-        // Draw horizontal scales
+        // Vertical grid
         context.strokeWidth = 1;
         context.strokeStyle = '#ABABAB';
-        context.font = "30px Arial";
+        context.font = '30px Arial';
         context.fillStyle = 'blue';
 
-        var unit = 1e9;
-        var nStart = 1;
-        var n = 1;
-        var df = ratio * this.state.source.samplingRate / 2 * n;
+        // Calculate the current vertical grid width dF according to screen size
+        n = 1;
+        var df = ratio * this.state._source.samplingRate / 2 * n;
         for(var a = 0; a < 20; a++){
             if(scope.width / df > 1 && scope.width / df < 11){
                 break;
             }
             n *= 1e-1;
-            df = ratio * this.state.source.samplingRate / 2 * n;
+            df = ratio * this.state._source.samplingRate / 2 * n;
         }
 
-        // df
-        this.state.info.deltaf = (1 / ratio * df * this.state.source.samplingRate / this.state.source.frameSize).toFixed(15);
+        // Store grid width
+        this.state._info.deltaf = 1 / ratio * df * this.state._source.samplingRate / this.state._source.frameSize;
 
-        var i;
+        // Draw vertical grid
         for(i = 0; i < 11; i++){
             context.save();
             context.setLineDash([5]);
             context.strokeStyle = 'rgba(171,171,171,' + (1 / (scope.width / df)) + ')';
-            for(var j = 1; j < 10; j++){
+            for(j = 1; j < 10; j++){
                 context.beginPath();
                 context.moveTo(df * i + df / 10 * j, 0);
                 context.lineTo(df * i + df / 10 * j, scope.height);
@@ -16489,16 +16946,29 @@ FFTrace.prototype.draw = function (canvas) {
         }
         context.restore();
     }
+
+    /* * * * * * * * * * * * * * * * * * * * * * * * *
+     *
+     *              D R A W   T R A C E
+     * 
+     * * * * * * * * * * * * * * * * * * * * * * * * */
+    
     context.strokeWidth = 1;
-    // Draw trace
     context.strokeStyle = this.state.color;
     context.beginPath();
-    context.moveTo(0, (halfHeight - (ab[0 + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
-    for (i=0, j=0; (j < scope.width) && (i < ab.length - 1); i+=skip, j+=mul){
-        context.lineTo(j, (halfHeight - (ab[Math.floor(i) + this.state.offset.x] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    context.moveTo(0, (halfHeight - (data[Math.floor(0 + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+    for (i=0, j=0; (j < scope.width) && (i < data.length - 1); i+=skip, j+=mul){
+        context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     // Fix drawing on canvas
     context.stroke();
+
+    // Draw the markers
+    context.save();
+    this.state.markers.forEach(function(m) {
+        draw$1(context, me.state._source._scope, m, me.state, ratio, data.length);
+    });
+    context.restore();
 
     // Draw mover to move the trace
     context.fillStyle = this.state.color;
@@ -16517,12 +16987,120 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Restore brush
     context.restore();
-
-    // TODO: Draw triangle at trig loc
-    var trigLoc = ratio * me.state.source.scope.triggerLoc * ab.length;
-
 };
 
+FFTrace.prototype.calc = function() {
+    var i, j;
+    var scope = this.state._source._scope;
+    var currentWindow = windowFunctions[this.state.windowFunction];
+    // Duplicate data because the fft will store the results in the input vectors
+    var real = this.state._source._ctrl.channels[this.state.channelID].slice(0);
+    // Create a complex vector with zeroes sice we only have real input
+    var compl = new Float32Array(this.state._source._ctrl.channels[this.state.channelID].length);
+    // Window data if a valid window was selected
+    // TODO: Uncomment again after debug
+    // if(this.state.windowFunction && currentWindow){
+    //     real = applyWindow(real, currentWindow.fn);
+    // }
+    // Do an FFT of the signal
+    // The results are now stored in the input vectors
+    miniFFT(real, compl);
+
+    // Only use half of the FFT since we only need the upper half if settings say so
+    if(this.state.halfSpectrum){
+        // Double the halfband spectrum, but don't double the DC
+        real = real.slice(0, real.length / 2 + 1);
+        compl = compl.slice(0, compl.length / 2 + 1);
+        for(i = 1; i < real.length; i++){
+            real[i] *= 2;
+            compl[i] *= 2;
+        }
+    }
+
+    // Calculate the the total power of the signal
+    // P = V^2
+    var ab = new Float32Array(real.length);
+
+    for(i = 0; i < ab.length; i++){
+        ab[i] = real[i] * real[i] + compl[i] * compl[i];
+    }
+
+    if(ab.length > 0){
+        // Set RMS
+        this.state._info.RMSPower = power(ab, true, ab.length - 1);
+        // Set P/f
+        this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
+
+        // Calculate SNR
+        if(this.state.SNRmode == 'manual'){
+            var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
+            var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
+
+            // Sum all values in the bundle around max
+            var Ps = power(ab.slice(first, second + 1), true, ab.length);
+            // Sum all the other values except DC
+            var Pn = power(ab.slice((second - first) / 2, first), true, ab.length)
+                   + power(ab.slice(second + 1), true, ab.length);
+            // Sum both sets and calculate their ratio which is the SNR
+            var SNR = Math.log10(Ps / Pn) * 10;
+            this.state._info.SNR = SNR;
+        }
+        if(this.state.SNRmode == 'auto'){
+            // Find max in all values
+            var max = -3000000;
+            var maxi = 0;
+            for(i = 1; i < ab.length; i++){
+                if(ab[i] > max){
+                    max = ab[i];
+                    maxi = i;
+                }
+            }
+
+            var l = Math.floor(currentWindow.lines / 2);
+            // Sum all values in the bundle around max
+            Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
+            // Sum all the other values except DC
+            Pn = power(ab.slice(l, maxi - l), true, ab.length)
+                   + power(ab.slice(maxi + l + 1), true, ab.length);
+            // Sum both sets and calculate their ratio which is the SNR
+            SNR = Math.log10(Ps / Pn) * 10;
+            this.state._info.SNR = SNR;
+
+            // Posiion SNR markers
+            this.setSNRMarkers(
+                (maxi - l) / ab.length,
+                (maxi + l) / ab.length
+            );
+        }
+
+        // THD
+        // TODO: calculate actual stuff
+
+        var f = 1000;
+        var n = 10;
+        
+        for(i = 1; i <= n; i++){
+            var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, ab.length);
+        }
+
+    } else {
+        this.state._info.RMSPower = '\u26A0 No signal';
+        this.state._info.powerDensity  = '\u26A0 No signal';
+        this.state._info.SNR = '\u26A0 No signal';
+    }
+
+    // Convert spectral density to decibels.
+    for(i = 0; i < ab.length; i++){
+        ab[i] = Math.log10(ab[i])*10;
+    }
+
+    this._data = ab.slice(0);
+};
+
+/*
+ * Returns a marker corresponding to <id>
+ * <id> : <string> : The name of the marker
+ */
 FFTrace.prototype.getMarkerById = function(id){
     var result = this.state.markers.filter(function( obj ) {
         return obj.id == id;
@@ -16530,6 +17108,32 @@ FFTrace.prototype.getMarkerById = function(id){
     return result;
 };
 
+/*
+ * Adds a new marker to the trace
+ * <id> : <string> : The name of the marker
+ * <type> : <string>['vertical', 'horizontal'] : The orientation of the marker
+ * <xy> : <uint>[0..1] : The position of the marker
+ * <active> : boolean : Tells wheter addidional data should be displayed
+ */
+FFTrace.prototype.addMarker = function(id, type, xy, active){
+    var px = 0;
+    var py = 0;
+    if(type == 'horizontal'){
+        py = xy;
+    } else {
+        px = xy;
+    }
+    this.state.markers.push({
+        id: id, type: type, x: px, y: py, active: active
+    });
+    return this.state.markers[this.state.markers.length - 1];
+};
+
+/*
+ * Sets the location of both SNR measurement markers
+ * <firstX> : uint : Position of the first marker in samples
+ * <secondX> : uint : Position of the second marker in samples
+ */
 FFTrace.prototype.setSNRMarkers = function(firstX, secondX){
     var first = this.getMarkerById('SNRfirst');
     var second = this.getMarkerById('SNRsecond');
@@ -16545,6 +17149,10 @@ FFTrace.prototype.setSNRMarkers = function(firstX, secondX){
     }
 };
 
+/*
+ * Sets the location of the first SNR measurement marker
+ * <firstX> : uint : Position of the first marker in samples
+ */
 FFTrace.prototype.setFirstSNRMarker = function(firstX){
     var first = this.getMarkerById('SNRfirst');
     if(first.length < 1){
@@ -16554,6 +17162,10 @@ FFTrace.prototype.setFirstSNRMarker = function(firstX){
     first[0].x = firstX;
 };
 
+/*
+ * Sets the location of the second SNR measurement marker
+ * <secondX> : uint : Position of the second marker in samples
+ */
 FFTrace.prototype.setSecondSNRMarker = function(secondX){
     var second = this.getMarkerById('SNRsecond');
     if(second.length < 1){
@@ -16564,17 +17176,19 @@ FFTrace.prototype.setSecondSNRMarker = function(secondX){
 };
 
 const scopeView = {
-    oninit: function(vnode) {
-        // Make sure the on scroll event is listened to
-        window.addEventListener('mousewheel', function(event){
-            vnode.attrs.scope._ctrl.onScroll(event, vnode.attrs.scope._ctrl);
-            mithril.redraw();
-        }, {passive: true});
-    },
     view: function(vnode) {
+        const onode = vnode;
         return [
             // Render a canvas and register all necessary events to it
-            mithril('canvas', {
+            mithril('', { 
+                oncreate: function(vnode){
+                    // Make sure the on scroll event is listened to
+                    vnode.dom.addEventListener('mousewheel', function(event){
+                        onode.attrs.scope._ctrl.onScroll(event, onode.attrs.scope._ctrl);
+                        mithril.redraw();
+                    });
+                }
+            }, mithril('canvas', {
                 id: 'scope',
                 style: {
                     width: vnode.attrs.width,
@@ -16582,8 +17196,10 @@ const scopeView = {
                 },
                 onmousedown: function(event) { vnode.attrs.scope._ctrl.onMouseDown(event); },
                 onmouseup: function(event) { vnode.attrs.scope._ctrl.onMouseUp(event); },
-                onmousemove: function(event) { event.preventDefault(); vnode.attrs.scope._ctrl.onMouseMove(event); },
-            }),
+                onmousemove: function(event) {
+                    event.preventDefault(); vnode.attrs.scope._ctrl.onMouseMove(event);
+                },
+            })),
             // Render a settings panel if it is toggled otherwise render none
             mithril('.panel', {
                 id: 'prefpane',
@@ -16639,7 +17255,7 @@ const scopeView = {
     },
 };
 
-__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n    float: left;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n#prefpane {\n    width: 400px;\n    height: 100%;\n    float: right;\n    /*position:fixed;\n    right: 0;\n    top: 0;*/\n    background-color: #ABABAB;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n    \n}\n\n#toggle-prefpane {\n    position:fixed;\n    bottom: 20px;\n}\n\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
+__$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\nbody {\n    margin: 0;\n    padding: 0;\n    background-color: #E85D55;\n    height: 100%;\n    overflow: hidden;\n}\n\n#output {\n    width: 512px;\n    height: 256px;\n}\n#scope {\n    background: teal;\n    float: left;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n}\n#prefpane {\n    width: 400px;\n    height: 100%;\n    float: right;\n    /*position:fixed;\n    right: 0;\n    top: 0;*/\n    background-color: #ABABAB;\n    -webkit-transition: -webkit-transform 1s;\n    transition: -webkit-transform 1s;\n    transition: transform 1s;\n    transition: transform 1s, -webkit-transform 1s;\n    overflow: scroll;\n}\n\n#toggle-prefpane {\n    position:fixed;\n    bottom: 20px;\n}\n\n#freqbars {\n    background: black;\n    display: block;\n    margin-top: 1cm;        \n}\n\n.source {\n    margin-right: 0.5em !important;\n}\n\n#active-sources {\n    margin-bottom: 0.5em !important;\n}\n\n#available-sources {\n    margin-bottom: 0.5em !important;\n}\n\n.jscolor {\n    height: 0 !important;\n    width: 0 !important;\n    padding: 0 !important;\n    margin: 0 !important;\n    visibility: hidden;\n    position: absolute;\n}\n\n#scope-container {\n    padding: 0;\n}\n\n#trace-list {\n\n}\n\n.trace-card {\n    min-height: 0 !important;\n    padding: 0.2em;\n    margin: 0.2em;\n    position: absolute;\n    width: 200px;\n}\n\n.node {\n    width: 14em;\n    position: absolute;\n}\n\n#node-tree-canvas {\n    width:100%;\n    height:600px;\n    /*padding:50px;*/\n}\n\n.unselectable {\n    -webkit-touch-callout: none;\n    -webkit-user-select: none;\n    -moz-user-select: none;\n    -ms-user-select: none;\n    user-select: none;\n}",undefined);
 
 /*
 * This file is the main app file.
@@ -16650,89 +17266,147 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 mithril.route.mode = 'search';
 
 var appState = {
-    nodes: {
-        scopes: [{
-            id: 1,
-            name: 'Scope ' + 1,
-            top: 250,
-            left: 350,
-            mode: 'normal',
-            ui: {
-                mover: {
-                    width: 50,
-                    height: 20,
-                    horizontalPosition: 0,
-                },
-                prefPane: {
-                    open: true,
-                    width: 400,
-                }
+    scopes: [{
+        id: 1,
+        name: 'Scope ' + 1,
+        top: 250,
+        left: 350,
+        ui: {
+            mover: {
+                width: 50,
+                height: 20,
+                horizontalPosition: 0,
             },
-            source: {
-                id: 2,
-                name: 'Source ' + 1,
-                top: 300,
-                left: 50,
-                location: 'ws://10.84.130.54:50090',
-                // location: 'ws://localhost:50090',
-                frameSize: 4096,
-                samplingRate: 1000000,
-                bits: 16,
-                vpb: 2.2 / Math.pow(2,14), // Volts per bit
-                buffer: {
-                    upperSize: 4,
-                    lowerSize: 1,
-                },
-                trigger: {
-                    type: 'risingEdge',
-                    level: 0,
-                    channel: 1,
-                    hysteresis: 30,
-                    slope: 0
-                },
-                triggerTrace: 0,
-                triggerPosition: 1 / 8,
-                numberOfChannels: 2,
-                mode: 'normal',
-                activeTrace: 0,
-                traces: [
-                    {
-                        id: 3,
-                        offset: { x: 0, y: 0 },
-                        info: {},
-                        name: 'Trace ' + 1,
-                        channelID: 1,
-                        type: 'TimeTrace',
-                        color: '#E85D55',
-                        scaling: {
-                            x: 1,
-                            y: 1,
-                        },
-                    },
-                    {
-                        id: 4,
-                        offset: { x: 0, y: 0 },
-                        windowFunction: 'hann',
-                        halfSpectrum: true,
-                        SNRmode: 'auto',
-                        info: {},
-                        name: 'Trace ' + 2,
-                        channelID: 1,
-                        type: 'FFTrace',
-                        color: '#E8830C',
-                        scaling: {
-                            x: 1,
-                            y: 1,
-                        },
-                        markers: [
-                            { id: 'SNRfirst', type: 'vertical', x: 0 },
-                            { id: 'SNRsecond', type: 'vertical', x: 0 },
-                        ]
-                    },
-                ],
+            prefPane: {
+                open: true,
+                width: 400,
             }
-        }]
-    }
+        },
+        source: {
+            id: 2,
+            name: 'Source ' + 1,
+            top: 300,
+            left: 50,
+            location: 'ws://10.84.130.54:50090',
+            // location: 'ws://localhost:50090',
+            frameSize: 4096,
+            samplingRate: 5000000,
+            bits: 16,
+            vpp: 2.1, // Volts per bit
+            buffer: {
+                upperSize: 4,
+                lowerSize: 1,
+            },
+            trigger: {
+                type: 'risingEdge',
+                level: 0,
+                channel: 1,
+                hysteresis: 30,
+                slope: 0
+            },
+            triggerTrace: 0,
+            triggerPosition: 1 / 8,
+            numberOfChannels: 2,
+            mode: 'normal',
+            activeTrace: 0,
+            traces: [
+                {
+                    id: 3,
+                    offset: { x: 0, y: 0 },
+                    _info: {},
+                    name: 'Trace ' + 1,
+                    channelID: 1,
+                    type: 'TimeTrace',
+                    color: '#E85D55',
+                    scaling: {
+                        x: 1,
+                        y: 1,
+                    },
+                },
+                {
+                    id: 4,
+                    offset: { x: 0, y: 0 },
+                    windowFunction: 'hann',
+                    halfSpectrum: true,
+                    SNRmode: 'auto',
+                    _info: {},
+                    name: 'Trace ' + 2,
+                    channelID: 1,
+                    type: 'FFTrace',
+                    color: '#E8830C',
+                    scaling: {
+                        x: 1,
+                        y: 1,
+                    },
+                    markers: [
+                        {
+                            id: 'SNRfirst',
+                            type: 'vertical',
+                            x: 0,
+                            dashed: true,
+                            color: 'purple',
+                            active: true,
+                        },
+                        {
+                            id: 'SNRsecond',
+                            type: 'vertical',
+                            x: 0,
+                            dashed: true,
+                            color: 'purple',
+                            active: true,
+                        },
+                    ]
+                },
+                // {
+                //     id: 5,
+                //     offset: { x: 0, y: 0.25 },
+                //     _info: {},
+                //     name: 'Trace ' + 9001,
+                //     channelID: 0,
+                //     type: 'TimeTrace',
+                //     color: '#FF0000',
+                //     scaling: {
+                //         x: 1,
+                //         y: 1,
+                //     },
+                // },
+                // {
+                //     id: 6,
+                //     offset: { x: 0, y: 0.5 },
+                //     windowFunction: 'hann',
+                //     halfSpectrum: true,
+                //     SNRmode: 'auto',
+                //     _info: {},
+                //     name: 'Trace ' + 3000,
+                //     channelID: 0,
+                //     type: 'FFTrace',
+                //     color: '#BFA688',
+                //     scaling: {
+                //         x: 1,
+                //         y: 1,
+                //     },
+                //     markers: [
+                //         {
+                //             id: 'SNRfirst',
+                //             type: 'vertical',
+                //             x: 0,
+                //             dashed: true,
+                //             color: 'purple',
+                //             active: true,
+                //         },
+                //         {
+                //             id: 'SNRsecond',
+                //             type: 'vertical',
+                //             x: 0,
+                //             dashed: true,
+                //             color: 'purple',
+                //             active: true,
+                //         },
+                //     ]
+                // }
+            ],
+        }
+    }]
 };
 
 // Store the app state for later uses to the window
@@ -16749,7 +17423,8 @@ window.addEventListener('load', function() {
             oncreate: function(){
                 // Open scope 1 by default
                 var popup = window.open(window.location.pathname + '#!/scope?id=1');
-                popup.scopeState = appState.nodes.scopes[0];
+                popup.scopeState = appState.scopes[0];
+                console.log(popup.scopeState);
             }
         },
         '/scope': {
@@ -16758,6 +17433,26 @@ window.addEventListener('load', function() {
                 return mithril(scopeView, {
                     scope: window.scopeState
                 });
+            },
+        },
+        '/load': {
+            view: function(vnode) {
+                return [
+                    mithril('textarea', {
+                        oninput: mithril.withAttr('value', function(v){ vnode.state.text = v; })
+                    }),
+                    mithril('button', {
+                        onclick: function(){
+                            var popup = window.open(window.location.pathname + '#!/scope');
+                            var scope = JSON.parse(vnode.state.text);
+                            scope.source.traces.forEach(function(trace) {
+                                trace._source = scope.source;
+                            }, this);
+                            scope.source._scope = scope;
+                            popup.scopeState = scope;
+                        }
+                    })
+                ];
             },
         }
     });

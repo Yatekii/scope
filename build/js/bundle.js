@@ -1,4 +1,3 @@
-document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>');
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
@@ -15803,22 +15802,19 @@ const generalPrefPane = {
                 // GUI: Select mode
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block', [
-                        mithril('button.btn' + (s.mode == 'normal' ? '.active' : ''), {
+                        mithril('button.btn' + (s.source.mode == 'normal' ? '.active' : ''), {
                             onclick: function(){
                                 s.source._ctrl.normal(0);
-                                s.mode = 'normal';
                             }
                         }, 'Normal'),
-                        mithril('button.btn' + (s.mode == 'auto' ? '.active' : ''), {
+                        mithril('button.btn' + (s.source.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
                                 s.source._ctrl.single(0);
-                                s.mode = 'auto';
                             }
                         }, 'Auto'),
-                        mithril('button.btn' + (s.mode == 'single' ? '.active' : ''), {
+                        mithril('button.btn' + (s.source.mode == 'single' ? '.active' : ''), {
                             onclick: function(){
                                 s.source._ctrl.single(0);
-                                s.mode = 'single';
                             }
                         }, 'Single')
                     ]))
@@ -15828,7 +15824,6 @@ const generalPrefPane = {
                     mithril('button.btn.col-6', {
                         onclick: function(){
                             s.source._ctrl.single(0);
-                            s.mode = 'single';
                         }
                     }, 'Single Shot'),
                     mithril('button.btn.col-6', {
@@ -16622,6 +16617,11 @@ TimeTrace.prototype.calc = function(){
 };
 
 /*
+ * Copyright (c) 2015 Kevin Kwok (antimatter15@gmail.com)
+ * https://gist.github.com/antimatter15/0349ca7d479236fdcdbb
+ */
+
+/*
  * Calculates an FFT over a set of samples.
  * <re> : float[] : An array containing the real parts of the samples
  * <im> : float[] : An array containing the imaginary parts of the samples
@@ -17268,6 +17268,7 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
+//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -17276,7 +17277,6 @@ var appState = {
         name: 'Scope ' + 1,
         top: 250,
         left: 350,
-        mode: 'normal',
         ui: {
             mover: {
                 width: 50,

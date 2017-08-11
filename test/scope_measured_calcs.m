@@ -39,4 +39,25 @@ Pnoisehann = sum(Xpdh(1:10))/(2*N^2) + sum(Xpdh(30:end))/(2*N^2);
 Psignalhann = sum(Xpdh(10:30))/(2*N^2);
 SNRhann = 10 * log10(Psignalhann/Pnoisehann)
 
-snrml = snr(xjs)
+figure;
+snrml = snr(xjs, 1)
+snr(xjs, 1, 2)
+
+figure;
+plot(abs(fft(xcorr(xjs, xjs))));
+
+w = ((0:(length(Xjs)-1)) / (length(Xjs)-1) * 2 * pi);
+
+plotFile = 'jsvsmlfft.csv';
+fh = fopen(plotFile,'w');
+if fh ~= -1
+    fprintf(fh, '%s,%s,%s\n', 'abs(js)', 'abs(ml)', 'w');
+    fclose(fh);
+end
+dlmwrite(...
+    plotFile,...
+    [Xjs' (Xone.^2)' w'],...
+    '-append',...
+    'delimiter', ',',...
+    'newline', 'unix'...
+);

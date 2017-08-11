@@ -19,7 +19,6 @@ var appState = {
         name: 'Scope ' + 1,
         top: 250,
         left: 350,
-        mode: 'normal',
         ui: {
             mover: {
                 width: 50,
