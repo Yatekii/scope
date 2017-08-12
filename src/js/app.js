@@ -77,6 +77,7 @@ var appState = {
                     windowFunction: 'hann',
                     halfSpectrum: true,
                     SNRmode: 'auto',
+                    calculateSNR: true,
                     _info: {},
                     name: 'Trace ' + 2,
                     channelID: 1,

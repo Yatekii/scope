@@ -95,11 +95,10 @@ export const FFTracePrefPane = {
                 // GUI: Display SNR
                 m('.form-group', [
                     m('.col-6', m('label.form-switch', [
-                        m('input[type="checkbox"]', {
+                        m('input[type="checkbox"][' + (t.calculateSNR ? 'checked' : '') + ']', {
                             onchange: function(){
-                                vnode.state.calculateSNR = !vnode.state.calculateSNR;
-                            },
-                            value: vnode.state.calculateSNR
+                                t.calculateSNR = !t.calculateSNR;
+                            }
                         }),
                         m('i.form-icon'),
                         'Calculate SNR:'
@@ -107,7 +106,7 @@ export const FFTracePrefPane = {
                     m('.col-6', m('label.form-label', { id: 'SNR' }, t._info.SNR))
                 ]),
                 // GUI: Select display mode
-                (vnode.state.calculateSNR ? [
+                (t.calculateSNR ? [
                     m('.form-group', [
                         m('.col-12', m('.btn-group.btn-group-block', [
                             m('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {

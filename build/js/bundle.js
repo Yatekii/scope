@@ -15586,11 +15586,10 @@ const FFTracePrefPane = {
                 // GUI: Display SNR
                 mithril('.form-group', [
                     mithril('.col-6', mithril('label.form-switch', [
-                        mithril('input[type="checkbox"]', {
+                        mithril('input[type="checkbox"][' + (t.calculateSNR ? 'checked' : '') + ']', {
                             onchange: function(){
-                                vnode.state.calculateSNR = !vnode.state.calculateSNR;
-                            },
-                            value: vnode.state.calculateSNR
+                                t.calculateSNR = !t.calculateSNR;
+                            }
                         }),
                         mithril('i.form-icon'),
                         'Calculate SNR:'
@@ -15598,7 +15597,7 @@ const FFTracePrefPane = {
                     mithril('.col-6', mithril('label.form-label', { id: 'SNR' }, t._info.SNR))
                 ]),
                 // GUI: Select display mode
-                (vnode.state.calculateSNR ? [
+                (t.calculateSNR ? [
                     mithril('.form-group', [
                         mithril('.col-12', mithril('.btn-group.btn-group-block', [
                             mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
@@ -16255,7 +16254,7 @@ const WebsocketSource = function(state) {
     this.socket.onmessage = function(e) {
         if(me.ready){
             if (typeof e.data == 'string') {
-                console.log('Text message received: ' + e.data);
+                //console.log('Text message received: ' + e.data);
             } else {
                 // TODO: distinguish between channels
                 // New data from stream
@@ -16971,14 +16970,38 @@ FFTrace.prototype.draw = function (canvas) {
      * * * * * * * * * * * * * * * * * * * * * * * * */
     
     context.strokeWidth = 1;
-    context.strokeStyle = this.state.color;
     context.beginPath();
+    context.strokeStyle = this.state.color;
     context.moveTo(0, (halfHeight - (data[Math.floor(0 + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length - 1); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     // Fix drawing on canvas
     context.stroke();
+
+    // Draw main lobe of SNR detection
+    if(this.state.calculateSNR && this._snrMain){
+        context.beginPath();
+        context.strokeStyle = '#FF0000';
+        context.moveTo(ratio * this._snrMain[0], (halfHeight - (data[Math.floor(this._snrMain[0] + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+        for (i=this._snrMain[0], j=ratio * this._snrMain[0]; (j < scope.width) && (i < this._snrMain[1]); i+=skip, j+=mul){
+            context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+        }
+        context.stroke();
+    }
+
+    // Draw side lobes of SNR detection
+    if(this.state.calculateSNR && this._snrHarmonics){
+        for(n = 0; n < this._snrHarmonics.length - 2; n++){
+            context.beginPath();
+            context.strokeStyle = '#FFFFFF';
+            context.moveTo(ratio * this._snrHarmonics[n][0], (halfHeight - (data[Math.floor(this._snrHarmonics[n][0] + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+            for (i=this._snrHarmonics[n][0], j=ratio * this._snrHarmonics[n][0]; (j < scope.width) && (i < this._snrHarmonics[n][1]); i+=skip, j+=mul){
+                context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+            }
+            context.stroke();
+        }
+    }
 
     // Draw the markers
     context.save();
@@ -17007,7 +17030,7 @@ FFTrace.prototype.draw = function (canvas) {
 };
 
 FFTrace.prototype.calc = function() {
-    var i, j;
+    var i;
     var scope = this.state._source._scope;
     var currentWindow = windowFunctions[this.state.windowFunction];
     // Duplicate data because the fft will store the results in the input vectors
@@ -17047,7 +17070,6 @@ FFTrace.prototype.calc = function() {
         this.state._info.RMSPower = power(ab, true, ab.length - 1);
         // Set P/f
         this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
-
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
@@ -17072,22 +17094,61 @@ FFTrace.prototype.calc = function() {
                     maxi = i;
                 }
             }
-
             var l = Math.floor(currentWindow.lines / 2);
-            // Sum all values in the bundle around max
-            Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
-            // Sum all the other values except DC
-            Pn = power(ab.slice(l, maxi - l), true, ab.length)
-                   + power(ab.slice(maxi + l + 1), true, ab.length);
-            // Sum both sets and calculate their ratio which is the SNR
-            SNR = Math.log10(Ps / Pn) * 10;
-            this.state._info.SNR = SNR;
+            var lastSNR = 0;
+            var lastPn;
+            var lastPs;
+            var nextSNR = 100;
+            while(Math.abs(lastSNR - nextSNR) > 0.05){
+                lastSNR = nextSNR;
+                lastPn = Pn;
+                lastPs = Ps;
+                // Store main lobe
+                this._snrMain = [maxi - l, maxi + l + 1];
+                // Position SNR markers
+                this.setSNRMarkers(
+                    (maxi - l) / ab.length,
+                    (maxi + l) / ab.length
+                );
+                // Sum all values in the bundle around max
+                Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
+                // Sum all the other values except DC
+                Pn = power(ab.slice(l, maxi - l), true, ab.length)
+                    + power(ab.slice(maxi + l + 1), true, ab.length);
+                // Sum both sets and calculate their ratio which is the SNR
+                nextSNR = Math.log10(Ps / Pn) * 10;
+                l++;
+            }
+            SNR = lastSNR;
 
-            // Posiion SNR markers
-            this.setSNRMarkers(
-                (maxi - l) / ab.length,
-                (maxi + l) / ab.length
-            );
+            // Cancel harmonics
+            var N = 10 + 2;
+            this._snrHarmonics = [];
+            for(n = 2; n < N; n++){
+                this._snrHarmonics.push(0);
+                var m = maxi * n;
+                l = 1;
+                lastSNR = 0;
+                nextSNR = SNR;
+                var lastPl;
+                while(Math.abs(lastSNR - nextSNR) > 0.01){
+                    lastSNR = nextSNR;
+                    lastPl = Pl;
+                    // Store main lobe
+                    this._snrHarmonics[n - 2] = [m - l, m + l + 1];
+                    // Sum all values in the bundle around max
+                    var Pl = power(ab.slice(m - l, m + l + 1), true, ab.length);
+                    // Sum both sets and calculate their ratio which is the SNR
+                    nextSNR = Math.log10(lastPs / (lastPn - Pl)) * 10;
+                    l++;
+                }
+                console.log(SNR, lastSNR);
+                lastPn = lastPn - lastPl;
+                SNR = lastSNR;
+            }
+
+
+            this.state._info.SNR = SNR;
         }
 
         // THD
@@ -17345,6 +17406,7 @@ var appState = {
                     windowFunction: 'hann',
                     halfSpectrum: true,
                     SNRmode: 'auto',
+                    calculateSNR: true,
                     _info: {},
                     name: 'Trace ' + 2,
                     channelID: 1,
