@@ -342,7 +342,6 @@ FFTrace.prototype.calc = function() {
                     nextSNR = Math.log10(lastPs / (lastPn - Pl)) * 10;
                     l++;
                 }
-                console.log(SNR, lastSNR);
                 lastPn = lastPn - lastPl;
                 SNR = lastSNR;
             }
@@ -350,6 +349,7 @@ FFTrace.prototype.calc = function() {
 
             this.state._info.SNR = SNR;
         }
+        console.log(this._snrMain, this._snrHarmonics);
 
         // THD
         // TODO: calculate actual stuff

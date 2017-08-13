@@ -75,7 +75,8 @@ export const generalPrefPane = {
                         }, 'Normal'),
                         m('button.btn' + (s.source.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
-                                s.source._ctrl.single(0);
+                                s.source._ctrl.getStatus();
+                                //s.source._ctrl.single(0);
                             }
                         }, 'Auto'),
                         m('button.btn' + (s.source.mode == 'single' ? '.active' : ''), {

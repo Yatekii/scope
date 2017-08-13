@@ -45,7 +45,7 @@ export const WebsocketSource = function(state) {
     this.socket.onmessage = function(e) {
         if(me.ready){
             if (typeof e.data == 'string') {
-                //console.log('Text message received: ' + e.data);
+                console.log('Text message received: ' + e.data);
             } else {
                 // TODO: distinguish between channels
                 // New data from stream
@@ -184,6 +184,10 @@ WebsocketSource.prototype.triggerOn = function(trigger) {
 */
 WebsocketSource.prototype.setNumberOfChannels = function(n) {
     this.sendJSON({ setNumberOfChannels: n });
+};
+
+WebsocketSource.prototype.getStatus = function(n) {
+    this.sendJSON({ status: true });
 };
 
 /* Configures a rising edge trigger

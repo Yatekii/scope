@@ -44,7 +44,7 @@ export const FFTracePrefPane = {
                     m('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t._ctrl.state._data.join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl._data.join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),
@@ -58,7 +58,7 @@ export const FFTracePrefPane = {
                                     vnode.state.exportActive = !vnode.state.exportActive;
                                 }
                             }),
-                            m('.modal-title', 'Time Data')
+                            m('.modal-title', 'Frequency Data')
                         ]),
                         m('.modal-body', 
                             m('.content', m('textarea[style=height:200px;width:100%]', 

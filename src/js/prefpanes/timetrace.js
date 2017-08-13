@@ -39,7 +39,7 @@ export const TimeTracePrefPane = {
                     m('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t._ctrl.state.source._ctrl.channels[0].join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl._data.join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),

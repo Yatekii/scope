@@ -15535,7 +15535,7 @@ const FFTracePrefPane = {
                     mithril('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t._ctrl.state._data.join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl._data.join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),
@@ -15549,7 +15549,7 @@ const FFTracePrefPane = {
                                     vnode.state.exportActive = !vnode.state.exportActive;
                                 }
                             }),
-                            mithril('.modal-title', 'Time Data')
+                            mithril('.modal-title', 'Frequency Data')
                         ]),
                         mithril('.modal-body', 
                             mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
@@ -15710,7 +15710,7 @@ const TimeTracePrefPane = {
                     mithril('button.btn.col-5', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t._ctrl.state.source._ctrl.channels[0].join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl._data.join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),
@@ -15820,7 +15820,8 @@ const generalPrefPane = {
                         }, 'Normal'),
                         mithril('button.btn' + (s.source.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
-                                s.source._ctrl.single(0);
+                                s.source._ctrl.getStatus();
+                                //s.source._ctrl.single(0);
                             }
                         }, 'Auto'),
                         mithril('button.btn' + (s.source.mode == 'single' ? '.active' : ''), {
@@ -16254,7 +16255,7 @@ const WebsocketSource = function(state) {
     this.socket.onmessage = function(e) {
         if(me.ready){
             if (typeof e.data == 'string') {
-                //console.log('Text message received: ' + e.data);
+                console.log('Text message received: ' + e.data);
             } else {
                 // TODO: distinguish between channels
                 // New data from stream
@@ -16393,6 +16394,10 @@ WebsocketSource.prototype.triggerOn = function(trigger) {
 */
 WebsocketSource.prototype.setNumberOfChannels = function(n) {
     this.sendJSON({ setNumberOfChannels: n });
+};
+
+WebsocketSource.prototype.getStatus = function(n) {
+    this.sendJSON({ status: true });
 };
 
 /* Configures a rising edge trigger
@@ -16805,14 +16810,6 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
     context.restore();
 };
 
-/*
- * Trace constructor
- * Constructs a new FFTrace
- * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
- * A window can be applied and several measurements such as SNR and Signal RMS can be done.
- * <id> : uint : Unique trace id, which is assigned when loading a trace
- * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
- */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -17142,7 +17139,6 @@ FFTrace.prototype.calc = function() {
                     nextSNR = Math.log10(lastPs / (lastPn - Pl)) * 10;
                     l++;
                 }
-                console.log(SNR, lastSNR);
                 lastPn = lastPn - lastPl;
                 SNR = lastSNR;
             }
@@ -17150,6 +17146,7 @@ FFTrace.prototype.calc = function() {
 
             this.state._info.SNR = SNR;
         }
+        console.log(this._snrMain, this._snrHarmonics);
 
         // THD
         // TODO: calculate actual stuff
