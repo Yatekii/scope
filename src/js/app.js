@@ -56,10 +56,11 @@ var appState = {
             triggerPosition: 1 / 8,
             numberOfChannels: 2,
             mode: 'normal',
-            activeTrace: 0,
+            activeTrace: 1,
             traces: [
                 {
                     id: 3,
+                    active: false,
                     offset: { x: 0, y: 0 },
                     _info: {},
                     name: 'Trace ' + 1,
@@ -73,6 +74,7 @@ var appState = {
                 },
                 {
                     id: 4,
+                    active: true,
                     offset: { x: 0, y: 0 },
                     windowFunction: 'hann',
                     halfSpectrum: true,
@@ -102,6 +104,22 @@ var appState = {
                             x: 0,
                             dashed: true,
                             color: 'purple',
+                            active: true,
+                        },
+                        {
+                            id: 'PWRfirst',
+                            type: 'vertical',
+                            x: 0.2,
+                            dashed: true,
+                            color: 'red',
+                            active: true,
+                        },
+                        {
+                            id: 'PWRsecond',
+                            type: 'vertical',
+                            x: 0.3,
+                            dashed: true,
+                            color: 'red',
                             active: true,
                         },
                     ]

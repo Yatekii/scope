@@ -54,7 +54,9 @@ Oscilloscope.prototype.draw = function() {
     // Draw all traces if the source is ready
     if(this.state.source._ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
-            trace._ctrl.draw(me.canvas);
+            if(trace.active){
+                trace._ctrl.draw(me.canvas);
+            }
         });
     }
 };

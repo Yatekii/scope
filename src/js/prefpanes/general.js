@@ -116,12 +116,16 @@ export const generalPrefPane = {
                 m('.form-group', [
                     m('.col-12', m('.btn-group.btn-group-block',
                         s.source.traces.map(function(trace){
-                            return m('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
-                                style: { backgroundColor: trace.color },
-                                onclick: function(){
-                                    s.source.activeTrace = trace._ctrl.id;
-                                }
-                            }, trace.name);
+                            if(trace.active){
+                                return m('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
+                                    style: { backgroundColor: trace.color },
+                                    onclick: function(){
+                                        s.source.activeTrace = trace._ctrl.id;
+                                    }
+                                }, trace.name);
+                            } else {
+                                return '';
+                            }
                         })
                     ))
                 ]),

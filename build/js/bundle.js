@@ -15521,7 +15521,7 @@ const FFTracePrefPane = {
                         value: t.color,
                         onchange: mithril.withAttr('value', function(v){ t.color = v; })
                     })),
-                    mithril('h4.col-5', !vnode.state.editName ?
+                    mithril('h4.col-4', !vnode.state.editName ?
                         mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         mithril('input.form-input[type=text]', {
                             value: t.name,
@@ -15532,7 +15532,15 @@ const FFTracePrefPane = {
                             })
                         })
                     ),
-                    mithril('button.btn.col-5', {
+                    mithril('.col-2', mithril('label.form-switch', [
+                        mithril('input[type="checkbox"][' + (t.active ? 'checked' : '') + ']', {
+                            onchange: function(){
+                                t.active = !t.active;
+                            }
+                        }),
+                        mithril('i.form-icon'),
+                    ])),
+                    mithril('button.btn.col-4', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
                             vnode.state.exportData = '[' + t._ctrl._data.join(', ') + ']';
@@ -15696,7 +15704,7 @@ const TimeTracePrefPane = {
                         value: t.color,
                         onchange: mithril.withAttr('value', function(v){ t.color = v; })
                     })),
-                    mithril('h4.col-5', !vnode.state.editName ?
+                    mithril('h4.col-4', !vnode.state.editName ?
                         mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         mithril('input.form-input[type=text]', {
                             value: t.name,
@@ -15707,7 +15715,15 @@ const TimeTracePrefPane = {
                             })
                         })
                     ),
-                    mithril('button.btn.col-5', {
+                    mithril('.col-2', mithril('label.form-switch', [
+                        mithril('input[type="checkbox"][' + (t.active ? 'checked' : '') + ']', {
+                            onchange: function(){
+                                t.active = !t.active;
+                            }
+                        }),
+                        mithril('i.form-icon'),
+                    ])),
+                    mithril('button.btn.col-4', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
                             vnode.state.exportData = '[' + t._ctrl._data.join(', ') + ']';
@@ -15861,12 +15877,16 @@ const generalPrefPane = {
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block',
                         s.source.traces.map(function(trace){
-                            return mithril('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
-                                style: { backgroundColor: trace.color },
-                                onclick: function(){
-                                    s.source.activeTrace = trace._ctrl.id;
-                                }
-                            }, trace.name);
+                            if(trace.active){
+                                return mithril('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
+                                    style: { backgroundColor: trace.color },
+                                    onclick: function(){
+                                        s.source.activeTrace = trace._ctrl.id;
+                                    }
+                                }, trace.name);
+                            } else {
+                                return '';
+                            }
                         })
                     ))
                 ]),
@@ -15957,7 +15977,9 @@ Oscilloscope.prototype.draw = function() {
     // Draw all traces if the source is ready
     if(this.state.source._ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
-            trace._ctrl.draw(me.canvas);
+            if(trace.active){
+                trace._ctrl.draw(me.canvas);
+            }
         });
     }
 };
@@ -17382,10 +17404,11 @@ var appState = {
             triggerPosition: 1 / 8,
             numberOfChannels: 2,
             mode: 'normal',
-            activeTrace: 0,
+            activeTrace: 1,
             traces: [
                 {
                     id: 3,
+                    active: false,
                     offset: { x: 0, y: 0 },
                     _info: {},
                     name: 'Trace ' + 1,
@@ -17399,6 +17422,7 @@ var appState = {
                 },
                 {
                     id: 4,
+                    active: true,
                     offset: { x: 0, y: 0 },
                     windowFunction: 'hann',
                     halfSpectrum: true,
@@ -17428,6 +17452,22 @@ var appState = {
                             x: 0,
                             dashed: true,
                             color: 'purple',
+                            active: true,
+                        },
+                        {
+                            id: 'PWRfirst',
+                            type: 'vertical',
+                            x: 0.2,
+                            dashed: true,
+                            color: 'red',
+                            active: true,
+                        },
+                        {
+                            id: 'PWRsecond',
+                            type: 'vertical',
+                            x: 0.3,
+                            dashed: true,
+                            color: 'red',
                             active: true,
                         },
                     ]

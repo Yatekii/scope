@@ -30,7 +30,7 @@ export const FFTracePrefPane = {
                         value: t.color,
                         onchange: m.withAttr('value', function(v){ t.color = v; })
                     })),
-                    m('h4.col-5', !vnode.state.editName ?
+                    m('h4.col-4', !vnode.state.editName ?
                         m('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         m('input.form-input[type=text]', {
                             value: t.name,
@@ -41,7 +41,15 @@ export const FFTracePrefPane = {
                             })
                         })
                     ),
-                    m('button.btn.col-5', {
+                    m('.col-2', m('label.form-switch', [
+                        m('input[type="checkbox"][' + (t.active ? 'checked' : '') + ']', {
+                            onchange: function(){
+                                t.active = !t.active;
+                            }
+                        }),
+                        m('i.form-icon'),
+                    ])),
+                    m('button.btn.col-4', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
                             vnode.state.exportData = '[' + t._ctrl._data.join(', ') + ']';
