@@ -2,6 +2,8 @@
  * communicating to the server and parse it's data.
  */
 
+import m from 'mithril';
+
 // Creates a new source
 export const WebsocketSource = function(state) {
     var me = this;
@@ -81,6 +83,7 @@ export const WebsocketSource = function(state) {
                     }
                     trace._ctrl.calc && trace._ctrl.calc();
                 });
+                m.redraw();
             }
         }
     };

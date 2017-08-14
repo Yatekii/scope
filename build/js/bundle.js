@@ -15547,6 +15547,7 @@ const FFTracePrefPane = {
                         }
                     }, 'Export Data')
                 ]),
+            t.active ? [
                 // GUI: Display Export Data
                 mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
                     mithril('.modal-overlay'),
@@ -15568,14 +15569,20 @@ const FFTracePrefPane = {
                 ]),
                 // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
                 mithril('.form-group', [
-                    mithril('.col-1', mithril('label.form-label', 'Δf:')),
-                    mithril('.col-2', mithril('label.form-label', hertzToString(t._info.deltaf))),
-                    mithril('.col-1', mithril('label.form-label', 'ΔA:')),
-                    mithril('.col-2', mithril('label.form-label', voltsToString(t._info.deltaA))),
-                    mithril('.col-1', mithril('label.form-label', ['P:', mithril('sub', 'rms')])),
-                    mithril('.col-2', mithril('label.form-label', wattsToString(t._info.RMSPower))),
-                    mithril('.col-1', mithril('label.form-label', '\u2202P/\u2202f:')),
-                    mithril('.col-2', mithril('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
+                    mithril('.col-2', mithril('label.form-label', 'Δf:')),
+                    mithril('.col-4', mithril('label.form-label', hertzToString(t._info.deltaf))),
+                    mithril('.col-2', mithril('label.form-label', 'ΔA:')),
+                    mithril('.col-4', mithril('label.form-label', voltsToString(t._info.deltaA)))
+                ]),
+                mithril('.form-group', [
+                    mithril('.col-2', mithril('label.form-label', ['P:', mithril('sub', 'rms')])),
+                    mithril('.col-4', mithril('label.form-label', wattsToString(t._info.RMSPower))),
+                    mithril('.col-2', mithril('label.form-label', '\u2202P/\u2202f:')),
+                    mithril('.col-4', mithril('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
+                ]),
+                mithril('.form-group', [
+                    mithril('.col-2', mithril('label.form-label', ['ΔP:', mithril('sub', 'rms')])),
+                    mithril('.col-4', mithril('label.form-label', wattsToString(t._info.DeltaRMSPower)))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -15676,6 +15683,7 @@ const FFTracePrefPane = {
                         mithril('.col-1', mithril('label.form-label', 'Hz'))
                     ])
                 ] : '')
+            ] : []
             ])
         ];
     }
@@ -15730,6 +15738,7 @@ const TimeTracePrefPane = {
                         }
                     }, 'Export Data')
                 ]),
+            t.active ? [
                 // GUI: Display Export Data
                 mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
                     mithril('.modal-overlay'),
@@ -15756,6 +15765,7 @@ const TimeTracePrefPane = {
                     mithril('.col-1', mithril('label.form-label', 'ΔA:')),
                     mithril('.col-5', mithril('label.form-label', voltsToString(t._info.deltaA)))
                 ])
+            ] : []
             ])
         ];
     }
@@ -15966,13 +15976,15 @@ Oscilloscope.prototype.draw = function() {
     context.fillRect(0, 0, width, height);
 
     // Draw trigger level
-    const triggerHeight = halfHeight + (- this.state.source.trigger.level - triggerTrace.offset.y)
-                        * halfHeight * activeTrace.scaling.y;
-    context.strokeStyle = '#278BFF';
-    context.beginPath();
-    context.moveTo(0, triggerHeight);
-    context.lineTo(width, triggerHeight);
-    context.stroke();
+    if(triggerTrace.active){
+        const triggerHeight = halfHeight + (- this.state.source.trigger.level - triggerTrace.offset.y)
+                            * halfHeight * activeTrace.scaling.y;
+        context.strokeStyle = '#278BFF';
+        context.beginPath();
+        context.moveTo(0, triggerHeight);
+        context.lineTo(width, triggerHeight);
+        context.stroke();
+    }
 
     // Draw all traces if the source is ready
     if(this.state.source._ctrl.ready){
@@ -16234,7 +16246,6 @@ Oscilloscope.prototype.addMarker = function(trace, id, type, xy){
  * communicating to the server and parse it's data.
  */
 
-// Creates a new source
 const WebsocketSource = function(state) {
     var me = this;
     // Remember source state
@@ -16313,6 +16324,7 @@ const WebsocketSource = function(state) {
                     }
                     trace._ctrl.calc && trace._ctrl.calc();
                 });
+                mithril.redraw();
             }
         }
     };
@@ -16832,6 +16844,14 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
     context.restore();
 };
 
+/*
+ * Trace constructor
+ * Constructs a new FFTrace
+ * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
+ * A window can be applied and several measurements such as SNR and Signal RMS can be done.
+ * <id> : uint : Unique trace id, which is assigned when loading a trace
+ * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
+ */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -17089,6 +17109,15 @@ FFTrace.prototype.calc = function() {
         this.state._info.RMSPower = power(ab, true, ab.length - 1);
         // Set P/f
         this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
+        
+        var first = this.getMarkerById('PWRfirst')[0].x * ab.length;
+        var second = this.getMarkerById('PWRsecond')[0].x * ab.length;
+
+        // Sum all values in the bundle around max
+        var P = power(ab.slice(first, second + 1), true, ab.length);
+        this.state._info.DeltaRMSPower = P;
+
+        var n;
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
@@ -17167,17 +17196,6 @@ FFTrace.prototype.calc = function() {
 
 
             this.state._info.SNR = SNR;
-        }
-        console.log(this._snrMain, this._snrHarmonics);
-
-        // THD
-        // TODO: calculate actual stuff
-
-        var f = 1000;
-        var n = 10;
-        
-        for(i = 1; i <= n; i++){
-            var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, ab.length);
         }
 
     } else {

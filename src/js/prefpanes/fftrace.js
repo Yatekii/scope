@@ -56,6 +56,7 @@ export const FFTracePrefPane = {
                         }
                     }, 'Export Data')
                 ]),
+            t.active ? [
                 // GUI: Display Export Data
                 m('.modal' + (vnode.state.exportActive ? 'active' : ''), [
                     m('.modal-overlay'),
@@ -77,14 +78,20 @@ export const FFTracePrefPane = {
                 ]),
                 // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
                 m('.form-group', [
-                    m('.col-1', m('label.form-label', 'Δf:')),
-                    m('.col-2', m('label.form-label', hertzToString(t._info.deltaf))),
-                    m('.col-1', m('label.form-label', 'ΔA:')),
-                    m('.col-2', m('label.form-label', voltsToString(t._info.deltaA))),
-                    m('.col-1', m('label.form-label', ['P:', m('sub', 'rms')])),
-                    m('.col-2', m('label.form-label', wattsToString(t._info.RMSPower))),
-                    m('.col-1', m('label.form-label', '\u2202P/\u2202f:')),
-                    m('.col-2', m('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
+                    m('.col-2', m('label.form-label', 'Δf:')),
+                    m('.col-4', m('label.form-label', hertzToString(t._info.deltaf))),
+                    m('.col-2', m('label.form-label', 'ΔA:')),
+                    m('.col-4', m('label.form-label', voltsToString(t._info.deltaA)))
+                ]),
+                m('.form-group', [
+                    m('.col-2', m('label.form-label', ['P:', m('sub', 'rms')])),
+                    m('.col-4', m('label.form-label', wattsToString(t._info.RMSPower))),
+                    m('.col-2', m('label.form-label', '\u2202P/\u2202f:')),
+                    m('.col-4', m('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
+                ]),
+                m('.form-group', [
+                    m('.col-2', m('label.form-label', ['ΔP:', m('sub', 'rms')])),
+                    m('.col-4', m('label.form-label', wattsToString(t._info.DeltaRMSPower)))
                 ]),
                 // GUI: Select windowing
                 m('.form-group', [
@@ -185,6 +192,7 @@ export const FFTracePrefPane = {
                         m('.col-1', m('label.form-label', 'Hz'))
                     ])
                 ] : '')
+            ] : []
             ])
         ];
     }

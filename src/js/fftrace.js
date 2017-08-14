@@ -270,6 +270,15 @@ FFTrace.prototype.calc = function() {
         this.state._info.RMSPower = power(ab, true, ab.length - 1);
         // Set P/f
         this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
+        
+        var first = this.getMarkerById('PWRfirst')[0].x * ab.length;
+        var second = this.getMarkerById('PWRsecond')[0].x * ab.length;
+
+        // Sum all values in the bundle around max
+        var P = power(ab.slice(first, second + 1), true, ab.length);
+        this.state._info.DeltaRMSPower = P;
+
+        var n;
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
@@ -348,17 +357,6 @@ FFTrace.prototype.calc = function() {
 
 
             this.state._info.SNR = SNR;
-        }
-        console.log(this._snrMain, this._snrHarmonics);
-
-        // THD
-        // TODO: calculate actual stuff
-
-        var f = 1000;
-        var n = 10;
-        
-        for(i = 1; i <= n; i++){
-            var sample = converting.frequencyToSample(f * i, scope.source.samplingRate / 2, ab.length);
         }
 
     } else {

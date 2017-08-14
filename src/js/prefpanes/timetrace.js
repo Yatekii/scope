@@ -51,6 +51,7 @@ export const TimeTracePrefPane = {
                         }
                     }, 'Export Data')
                 ]),
+            t.active ? [
                 // GUI: Display Export Data
                 m('.modal' + (vnode.state.exportActive ? 'active' : ''), [
                     m('.modal-overlay'),
@@ -77,6 +78,7 @@ export const TimeTracePrefPane = {
                     m('.col-1', m('label.form-label', 'ΔA:')),
                     m('.col-5', m('label.form-label', voltsToString(t._info.deltaA)))
                 ])
+            ] : []
             ])
         ];
     }
