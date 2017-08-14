@@ -90,8 +90,8 @@ export const FFTracePrefPane = {
                     m('.col-4', m('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
                 ]),
                 m('.form-group', [
-                    m('.col-2', m('label.form-label', ['ΔP:', m('sub', 'rms')])),
-                    m('.col-4', m('label.form-label', wattsToString(t._info.DeltaRMSPower)))
+                    m('.col-2', m('label.form-label', ['ΔV:', m('sub', 'rms')])),
+                    m('.col-4', m('label.form-label', voltsToString(t._info.DeltaRMS)))
                 ]),
                 // GUI: Select windowing
                 m('.form-group', [
@@ -150,7 +150,7 @@ export const FFTracePrefPane = {
                                 s.source.samplingRate / 2,
                                 s.source.frameSize
                             )),
-                            onchange: m.withAttr('value', function(value) {
+                            oninput: m.withAttr('value', function(value) {
                                 var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
                                 marker.x = sampleToPercentage(
                                     frequencyToSample(
@@ -177,7 +177,7 @@ export const FFTracePrefPane = {
                                 s.source.samplingRate / 2,
                                 s.source.frameSize
                             )),
-                            onchange: m.withAttr('value', function(value) {
+                            oninput: m.withAttr('value', function(value) {
                                 var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
                                 marker.x = sampleToPercentage(
                                     frequencyToSample(

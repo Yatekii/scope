@@ -15340,6 +15340,17 @@ const windowFunctions = {
  * Applies a Windowing Function to an array.
  * <dataArray>
  */
+const applyWindow = function(dataArray, windowing_function, alpha) {
+    var datapoints = dataArray.length;
+
+    /* For each item in the array */
+    for (var n=0; n<datapoints; ++n) {
+        /* Apply the windowing function */
+        dataArray[n] *= windowing_function(n, datapoints, alpha);
+    }
+
+    return dataArray;
+};
 
 /*
  * This file holds helper functions to convert different unitspaces into one another.
@@ -15503,7 +15514,7 @@ const FFTracePrefPane = {
                         value: t.color,
                         onchange: mithril.withAttr('value', function(v){ t.color = v; })
                     })),
-                    mithril('h4.col-5', !vnode.state.editName ?
+                    mithril('h4.col-4', !vnode.state.editName ?
                         mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         mithril('input.form-input[type=text]', {
                             value: t.name,
@@ -15514,13 +15525,22 @@ const FFTracePrefPane = {
                             })
                         })
                     ),
-                    mithril('button.btn.col-5', {
+                    mithril('.col-2', mithril('label.form-switch', [
+                        mithril('input[type="checkbox"][' + (t.active ? 'checked' : '') + ']', {
+                            onchange: function(){
+                                t.active = !t.active;
+                            }
+                        }),
+                        mithril('i.form-icon'),
+                    ])),
+                    mithril('button.btn.col-4', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t._ctrl.state._data.join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl._data.join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),
+            t.active ? [
                 // GUI: Display Export Data
                 mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
                     mithril('.modal-overlay'),
@@ -15531,7 +15551,7 @@ const FFTracePrefPane = {
                                     vnode.state.exportActive = !vnode.state.exportActive;
                                 }
                             }),
-                            mithril('.modal-title', 'Time Data')
+                            mithril('.modal-title', 'Frequency Data')
                         ]),
                         mithril('.modal-body', 
                             mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
@@ -15542,14 +15562,20 @@ const FFTracePrefPane = {
                 ]),
                 // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
                 mithril('.form-group', [
-                    mithril('.col-1', mithril('label.form-label', 'Δf:')),
-                    mithril('.col-2', mithril('label.form-label', hertzToString(t._info.deltaf))),
-                    mithril('.col-1', mithril('label.form-label', 'ΔA:')),
-                    mithril('.col-2', mithril('label.form-label', voltsToString(t._info.deltaA))),
-                    mithril('.col-1', mithril('label.form-label', ['P:', mithril('sub', 'rms')])),
-                    mithril('.col-2', mithril('label.form-label', wattsToString(t._info.RMSPower))),
-                    mithril('.col-1', mithril('label.form-label', '\u2202P/\u2202f:')),
-                    mithril('.col-2', mithril('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
+                    mithril('.col-2', mithril('label.form-label', 'Δf:')),
+                    mithril('.col-4', mithril('label.form-label', hertzToString(t._info.deltaf))),
+                    mithril('.col-2', mithril('label.form-label', 'ΔA:')),
+                    mithril('.col-4', mithril('label.form-label', voltsToString(t._info.deltaA)))
+                ]),
+                mithril('.form-group', [
+                    mithril('.col-2', mithril('label.form-label', ['P:', mithril('sub', 'rms')])),
+                    mithril('.col-4', mithril('label.form-label', wattsToString(t._info.RMSPower))),
+                    mithril('.col-2', mithril('label.form-label', '\u2202P/\u2202f:')),
+                    mithril('.col-4', mithril('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
+                ]),
+                mithril('.form-group', [
+                    mithril('.col-2', mithril('label.form-label', ['ΔV:', mithril('sub', 'rms')])),
+                    mithril('.col-4', mithril('label.form-label', voltsToString(t._info.DeltaRMS)))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -15568,11 +15594,10 @@ const FFTracePrefPane = {
                 // GUI: Display SNR
                 mithril('.form-group', [
                     mithril('.col-6', mithril('label.form-switch', [
-                        mithril('input[type="checkbox"]', {
+                        mithril('input[type="checkbox"][' + (t.calculateSNR ? 'checked' : '') + ']', {
                             onchange: function(){
-                                vnode.state.calculateSNR = !vnode.state.calculateSNR;
-                            },
-                            value: vnode.state.calculateSNR
+                                t.calculateSNR = !t.calculateSNR;
+                            }
                         }),
                         mithril('i.form-icon'),
                         'Calculate SNR:'
@@ -15580,7 +15605,7 @@ const FFTracePrefPane = {
                     mithril('.col-6', mithril('label.form-label', { id: 'SNR' }, t._info.SNR))
                 ]),
                 // GUI: Select display mode
-                (vnode.state.calculateSNR ? [
+                (t.calculateSNR ? [
                     mithril('.form-group', [
                         mithril('.col-12', mithril('.btn-group.btn-group-block', [
                             mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
@@ -15609,7 +15634,7 @@ const FFTracePrefPane = {
                                 s.source.samplingRate / 2,
                                 s.source.frameSize
                             )),
-                            onchange: mithril.withAttr('value', function(value) {
+                            oninput: mithril.withAttr('value', function(value) {
                                 var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
                                 marker.x = sampleToPercentage(
                                     frequencyToSample(
@@ -15636,7 +15661,7 @@ const FFTracePrefPane = {
                                 s.source.samplingRate / 2,
                                 s.source.frameSize
                             )),
-                            onchange: mithril.withAttr('value', function(value) {
+                            oninput: mithril.withAttr('value', function(value) {
                                 var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
                                 marker.x = sampleToPercentage(
                                     frequencyToSample(
@@ -15651,6 +15676,7 @@ const FFTracePrefPane = {
                         mithril('.col-1', mithril('label.form-label', 'Hz'))
                     ])
                 ] : '')
+            ] : []
             ])
         ];
     }
@@ -15679,7 +15705,7 @@ const TimeTracePrefPane = {
                         value: t.color,
                         onchange: mithril.withAttr('value', function(v){ t.color = v; })
                     })),
-                    mithril('h4.col-5', !vnode.state.editName ?
+                    mithril('h4.col-4', !vnode.state.editName ?
                         mithril('', { onclick: function(){ vnode.state.editName = true; } }, t.name) :
                         mithril('input.form-input[type=text]', {
                             value: t.name,
@@ -15690,13 +15716,22 @@ const TimeTracePrefPane = {
                             })
                         })
                     ),
-                    mithril('button.btn.col-5', {
+                    mithril('.col-2', mithril('label.form-switch', [
+                        mithril('input[type="checkbox"][' + (t.active ? 'checked' : '') + ']', {
+                            onchange: function(){
+                                t.active = !t.active;
+                            }
+                        }),
+                        mithril('i.form-icon'),
+                    ])),
+                    mithril('button.btn.col-4', {
                         onclick: function(){
                             vnode.state.exportActive = !vnode.state.exportActive;
-                            vnode.state.exportData = '[' + t._ctrl.state.source._ctrl.channels[0].join(', ') + ']';
+                            vnode.state.exportData = '[' + t._ctrl._data.join(', ') + ']';
                         }
                     }, 'Export Data')
                 ]),
+            t.active ? [
                 // GUI: Display Export Data
                 mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
                     mithril('.modal-overlay'),
@@ -15723,6 +15758,7 @@ const TimeTracePrefPane = {
                     mithril('.col-1', mithril('label.form-label', 'ΔA:')),
                     mithril('.col-5', mithril('label.form-label', voltsToString(t._info.deltaA)))
                 ])
+            ] : []
             ])
         ];
     }
@@ -15757,7 +15793,7 @@ const generalPrefPane = {
                             s.source._ctrl.samplingRate(s.source.samplingRate);
                         })
                     }, samplingRates.map(function(t){
-                        return mithril('option', { value: t }, t);
+                        return mithril('option', { value: t }, hertzToString(t));
                     }))
                 ]),
                 mithril('.form-group', [
@@ -15803,7 +15839,8 @@ const generalPrefPane = {
                         }, 'Normal'),
                         mithril('button.btn' + (s.source.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
-                                s.source._ctrl.single(0);
+                                s.source._ctrl.getStatus();
+                                //s.source._ctrl.single(0);
                             }
                         }, 'Auto'),
                         mithril('button.btn' + (s.source.mode == 'single' ? '.active' : ''), {
@@ -15843,12 +15880,16 @@ const generalPrefPane = {
                 mithril('.form-group', [
                     mithril('.col-12', mithril('.btn-group.btn-group-block',
                         s.source.traces.map(function(trace){
-                            return mithril('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
-                                style: { backgroundColor: trace.color },
-                                onclick: function(){
-                                    s.source.activeTrace = trace._ctrl.id;
-                                }
-                            }, trace.name);
+                            if(trace.active){
+                                return mithril('button.btn' + (trace._ctrl && s.source.activeTrace == trace._ctrl.id ? '.active' : ''), {
+                                    style: { backgroundColor: trace.color },
+                                    onclick: function(){
+                                        s.source.activeTrace = trace._ctrl.id;
+                                    }
+                                }, trace.name);
+                            } else {
+                                return '';
+                            }
                         })
                     ))
                 ]),
@@ -15928,18 +15969,22 @@ Oscilloscope.prototype.draw = function() {
     context.fillRect(0, 0, width, height);
 
     // Draw trigger level
-    const triggerHeight = halfHeight + (- this.state.source.trigger.level - triggerTrace.offset.y)
-                        * halfHeight * activeTrace.scaling.y;
-    context.strokeStyle = '#278BFF';
-    context.beginPath();
-    context.moveTo(0, triggerHeight);
-    context.lineTo(width, triggerHeight);
-    context.stroke();
+    if(triggerTrace.active){
+        const triggerHeight = halfHeight + (- this.state.source.trigger.level - triggerTrace.offset.y)
+                            * halfHeight * activeTrace.scaling.y;
+        context.strokeStyle = '#278BFF';
+        context.beginPath();
+        context.moveTo(0, triggerHeight);
+        context.lineTo(width, triggerHeight);
+        context.stroke();
+    }
 
     // Draw all traces if the source is ready
     if(this.state.source._ctrl.ready){
         this.state.source.traces.forEach(function(trace) {
-            trace._ctrl.draw(me.canvas);
+            if(trace.active){
+                trace._ctrl.draw(me.canvas);
+            }
         });
     }
 };
@@ -15951,10 +15996,12 @@ Oscilloscope.prototype.onMouseDown = function(event){
     var halfHeight = this.canvas.height / 2;
 
     // Start moving triggerlevel
-    var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * triggerTrace.scaling.y;
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        this.triggerMoving = activeTrace;
-        return;
+    if(triggerTrace.active){
+        var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * triggerTrace.scaling.y;
+        if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+            this.triggerMoving = activeTrace;
+            return;
+        }
     }
 
     // Start moving markers
@@ -16042,9 +16089,11 @@ Oscilloscope.prototype.onMouseMove = function(event){
     var cursorSet = false;
 
     // Change cursor if trigger set is active
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        document.body.style.cursor = 'row-resize';
-        cursorSet = true;
+    if(triggerTrace.active){
+        if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+            document.body.style.cursor = 'row-resize';
+            cursorSet = true;
+        }
     }
     
     // Change cursor if marker set is active
@@ -16230,6 +16279,7 @@ const WebsocketSource = function(state) {
             me.auto(0);
         }
         me.channels;
+        me.getStatus();
         me.ready = true;
     };
 
@@ -16237,7 +16287,13 @@ const WebsocketSource = function(state) {
     this.socket.onmessage = function(e) {
         if(me.ready){
             if (typeof e.data == 'string') {
-                console.log('Text message received: ' + e.data);
+                var json = JSON.parse(e.data);
+                if(json.response && json.response.request == 'status' && json.response.status == 'ok'){
+                    if(json.response.data && json.response.data.decimationRate){
+                        me.state.samplingRate = 125e6 / json.response.data.decimationRate;
+                    }
+                }
+                // console.log('Text message received: ' + e.data);
             } else {
                 // TODO: distinguish between channels
                 // New data from stream
@@ -16273,6 +16329,7 @@ const WebsocketSource = function(state) {
                     }
                     trace._ctrl.calc && trace._ctrl.calc();
                 });
+                mithril.redraw();
             }
         }
     };
@@ -16376,6 +16433,10 @@ WebsocketSource.prototype.triggerOn = function(trigger) {
 */
 WebsocketSource.prototype.setNumberOfChannels = function(n) {
     this.sendJSON({ setNumberOfChannels: n });
+};
+
+WebsocketSource.prototype.getStatus = function(n) {
+    this.sendJSON({ status: true });
 };
 
 /* Configures a rising edge trigger
@@ -16733,14 +16794,16 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
             // If the marker is active, draw additional info
             context.font = '14px Arial';
             // Calculate frequency at marker and convert it to string
-            const text = Math.floor(sampleToFrequency(
+            const text = hertzToString(Math.floor(sampleToFrequency(
                 percentageToSample(markerState.x, length),
                 scopeState.source.samplingRate / (traceState.halfSpectrum ? 2 : 1),
                 length
-            )).toString();
-            const width = context.measureText(text).width;
+            )));
+            var width = context.measureText(text).width;
             const height = 14;
             // Draw the line for the marker with a gap
+            context.lineTo(x, height + 10 + 6);
+            context.moveTo(x, + height + 10 + 6 + height + 2 * 6);
             context.lineTo(x, scopeState.height - (height + 10 + 6 * 2));
             context.moveTo(x, scopeState.height - 10);
             context.lineTo(x, scopeState.height);
@@ -16748,8 +16811,8 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
             context.fillStyle = '#FFFFFF';
             // Calculate size of the rectangle around the text left and right from the marker
             // (if it is at the border of the screen it's not half/half)
-            const leftFree = Math.min(x, (width / 2 + 6));
-            const rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
+            var leftFree = Math.min(x, (width / 2 + 6));
+            var rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
             // Fill the rectangle background with white so text will be readable
             context.fillRect(
                 rightFree - leftFree,
@@ -16773,6 +16836,39 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
                 text,
                 rightFree - (leftFree - 6),
                 scopeState.height - (10 + 6)
+            );
+
+            context.font = '14px Arial';
+            width = context.measureText(markerState.id).width;
+            context.fillStyle = '#FFFFFF';
+            // Calculate size of the rectangle around the text left and right from the marker
+            // (if it is at the border of the screen it's not half/half)
+            var leftFree = Math.min(x, (width / 2 + 6));
+            var rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
+            // Fill the rectangle background with white so text will be readable
+            context.fillRect(
+                rightFree - leftFree,
+                (height + 10 + 6),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            // Draw the border of the rectangle
+            context.rect(
+                rightFree - leftFree,
+                (height + 10 + 6),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            context.restore();
+            // Draw the text
+            context.fillStyle = markerState.color;
+            context.font = '14px Arial';
+            context.fillText(
+                markerState.id,
+                rightFree - (leftFree - 6),
+                height  + (10 + 6) * 2
             );
         }
     } else if(markerState.type == 'horizontal'){
@@ -16845,23 +16941,7 @@ FFTrace.prototype.draw = function (canvas) {
         data[i] = data[i] / 100;
     }
 
-    // Draw THD markers
-    var f = 1000;
-    var n = 10;
-    
-    // Draw the <n> next harmonic locations
-    for(i = 1; i <= n; i++){
-        context.fillStyle = 'blue';
-        var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, data.length);
-        console.log((sampleToPercentage(sample, data.length) - this.state.offset.x));
-        var harmonicX = (sampleToPercentage(sample, data.length) - this.state.offset.x) * data.length * ratio; // / scope.width * ratio;
-        var harmonicY = halfHeight - (data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight / this.state.scaling.y;
-        context.beginPath();
-        context.moveTo(harmonicX, harmonicY);
-        context.lineTo(harmonicX + 15, harmonicY - 15);
-        context.lineTo(harmonicX - 15, harmonicY - 15);
-        context.fill();
-    }
+    var n;
 
     // Store brush
     context.save();
@@ -16954,14 +17034,38 @@ FFTrace.prototype.draw = function (canvas) {
      * * * * * * * * * * * * * * * * * * * * * * * * */
     
     context.strokeWidth = 1;
-    context.strokeStyle = this.state.color;
     context.beginPath();
+    context.strokeStyle = this.state.color;
     context.moveTo(0, (halfHeight - (data[Math.floor(0 + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     for (i=0, j=0; (j < scope.width) && (i < data.length - 1); i+=skip, j+=mul){
         context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
     }
     // Fix drawing on canvas
     context.stroke();
+
+    // Draw main lobe of SNR detection
+    if(this.state.calculateSNR && this._snrMain){
+        context.beginPath();
+        context.strokeStyle = '#FF0000';
+        context.moveTo(ratio * this._snrMain[0], (halfHeight - (data[Math.floor(this._snrMain[0] + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+        for (i=this._snrMain[0], j=ratio * this._snrMain[0]; (j < scope.width) && (i < this._snrMain[1]); i+=skip, j+=mul){
+            context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+        }
+        context.stroke();
+    }
+
+    // Draw side lobes of SNR detection
+    if(this.state.calculateSNR && this._snrHarmonics){
+        for(n = 0; n < this._snrHarmonics.length - 2; n++){
+            context.beginPath();
+            context.strokeStyle = '#FFFFFF';
+            context.moveTo(ratio * this._snrHarmonics[n][0], (halfHeight - (data[Math.floor(this._snrHarmonics[n][0] + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+            for (i=this._snrHarmonics[n][0], j=ratio * this._snrHarmonics[n][0]; (j < scope.width) && (i < this._snrHarmonics[n][1]); i+=skip, j+=mul){
+                context.lineTo(j, (halfHeight - (data[Math.floor(i + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight * this.state.scaling.y));
+            }
+            context.stroke();
+        }
+    }
 
     // Draw the markers
     context.save();
@@ -16990,7 +17094,7 @@ FFTrace.prototype.draw = function (canvas) {
 };
 
 FFTrace.prototype.calc = function() {
-    var i, j;
+    var i;
     var scope = this.state._source._scope;
     var currentWindow = windowFunctions[this.state.windowFunction];
     // Duplicate data because the fft will store the results in the input vectors
@@ -16999,9 +17103,9 @@ FFTrace.prototype.calc = function() {
     var compl = new Float32Array(this.state._source._ctrl.channels[this.state.channelID].length);
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
-    // if(this.state.windowFunction && currentWindow){
-    //     real = applyWindow(real, currentWindow.fn);
-    // }
+    if(this.state.windowFunction && currentWindow){
+        real = applyWindow(real, currentWindow.fn);
+    }
     // Do an FFT of the signal
     // The results are now stored in the input vectors
     miniFFT(real, compl);
@@ -17030,7 +17134,15 @@ FFTrace.prototype.calc = function() {
         this.state._info.RMSPower = power(ab, true, ab.length - 1);
         // Set P/f
         this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
+        
+        var first = this.getMarkerById('PWRfirst')[0].x * ab.length;
+        var second = this.getMarkerById('PWRsecond')[0].x * ab.length;
 
+        // Sum all values in the bundle around max
+        var P = power(ab.slice(first, second + 1), true, ab.length);
+        this.state._info.DeltaRMS = Math.sqrt(P);
+
+        var n;
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
             var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
@@ -17055,32 +17167,60 @@ FFTrace.prototype.calc = function() {
                     maxi = i;
                 }
             }
-
             var l = Math.floor(currentWindow.lines / 2);
-            // Sum all values in the bundle around max
-            Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
-            // Sum all the other values except DC
-            Pn = power(ab.slice(l, maxi - l), true, ab.length)
-                   + power(ab.slice(maxi + l + 1), true, ab.length);
-            // Sum both sets and calculate their ratio which is the SNR
-            SNR = Math.log10(Ps / Pn) * 10;
+            var lastSNR = 0;
+            var lastPn;
+            var lastPs;
+            var nextSNR = 100;
+            while(Math.abs(lastSNR - nextSNR) > 0.05){
+                lastSNR = nextSNR;
+                lastPn = Pn;
+                lastPs = Ps;
+                // Store main lobe
+                this._snrMain = [maxi - l, maxi + l + 1];
+                // Position SNR markers
+                this.setSNRMarkers(
+                    (maxi - l) / ab.length,
+                    (maxi + l) / ab.length
+                );
+                // Sum all values in the bundle around max
+                Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
+                // Sum all the other values except DC
+                Pn = power(ab.slice(l, maxi - l), true, ab.length)
+                    + power(ab.slice(maxi + l + 1), true, ab.length);
+                // Sum both sets and calculate their ratio which is the SNR
+                nextSNR = Math.log10(Ps / Pn) * 10;
+                l++;
+            }
+            SNR = lastSNR;
+
+            // Cancel harmonics
+            var N = 10 + 2;
+            this._snrHarmonics = [];
+            for(n = 2; n < N; n++){
+                this._snrHarmonics.push(0);
+                var m = maxi * n;
+                l = 1;
+                lastSNR = 0;
+                nextSNR = SNR;
+                var lastPl;
+                while(Math.abs(lastSNR - nextSNR) > 0.01){
+                    lastSNR = nextSNR;
+                    lastPl = Pl;
+                    // Store main lobe
+                    this._snrHarmonics[n - 2] = [m - l, m + l + 1];
+                    // Sum all values in the bundle around max
+                    var Pl = power(ab.slice(m - l, m + l + 1), true, ab.length);
+                    // Sum both sets and calculate their ratio which is the SNR
+                    nextSNR = Math.log10(lastPs / (lastPn - Pl)) * 10;
+                    l++;
+                }
+                lastPn = lastPn - lastPl;
+                SNR = lastSNR;
+            }
+
+
             this.state._info.SNR = SNR;
-
-            // Posiion SNR markers
-            this.setSNRMarkers(
-                (maxi - l) / ab.length,
-                (maxi + l) / ab.length
-            );
-        }
-
-        // THD
-        // TODO: calculate actual stuff
-
-        var f = 1000;
-        var n = 10;
-        
-        for(i = 1; i <= n; i++){
-            var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, ab.length);
         }
 
     } else {
@@ -17308,13 +17448,14 @@ var appState = {
             triggerPosition: 1 / 8,
             numberOfChannels: 2,
             mode: 'normal',
-            activeTrace: 0,
+            activeTrace: 1,
             traces: [
                 {
                     id: 3,
+                    active: false,
                     offset: { x: 0, y: 0 },
                     _info: {},
-                    name: 'Trace ' + 1,
+                    name: 'Ch ' + 1 + '[time]',
                     channelID: 1,
                     type: 'TimeTrace',
                     color: '#E85D55',
@@ -17325,12 +17466,14 @@ var appState = {
                 },
                 {
                     id: 4,
+                    active: true,
                     offset: { x: 0, y: 0 },
                     windowFunction: 'hann',
                     halfSpectrum: true,
                     SNRmode: 'auto',
+                    calculateSNR: true,
                     _info: {},
-                    name: 'Trace ' + 2,
+                    name: 'Ch ' + 1 + '[freq]',
                     channelID: 1,
                     type: 'FFTrace',
                     color: '#E8830C',
@@ -17353,6 +17496,22 @@ var appState = {
                             x: 0,
                             dashed: true,
                             color: 'purple',
+                            active: true,
+                        },
+                        {
+                            id: 'PWRfirst',
+                            type: 'vertical',
+                            x: 0.2,
+                            dashed: true,
+                            color: 'red',
+                            active: true,
+                        },
+                        {
+                            id: 'PWRsecond',
+                            type: 'vertical',
+                            x: 0.3,
+                            dashed: true,
+                            color: 'red',
                             active: true,
                         },
                     ]

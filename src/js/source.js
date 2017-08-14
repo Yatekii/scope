@@ -40,6 +40,7 @@ export const WebsocketSource = function(state) {
             me.auto(0);
         }
         me.channels;
+        me.getStatus();
         me.ready = true;
     };
 
@@ -47,7 +48,13 @@ export const WebsocketSource = function(state) {
     this.socket.onmessage = function(e) {
         if(me.ready){
             if (typeof e.data == 'string') {
-                console.log('Text message received: ' + e.data);
+                var json = JSON.parse(e.data);
+                if(json.response && json.response.request == 'status' && json.response.status == 'ok'){
+                    if(json.response.data && json.response.data.decimationRate){
+                        me.state.samplingRate = 125e6 / json.response.data.decimationRate;
+                    }
+                }
+                // console.log('Text message received: ' + e.data);
             } else {
                 // TODO: distinguish between channels
                 // New data from stream

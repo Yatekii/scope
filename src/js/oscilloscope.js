@@ -70,10 +70,12 @@ Oscilloscope.prototype.onMouseDown = function(event){
     var halfHeight = this.canvas.height / 2;
 
     // Start moving triggerlevel
-    var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * triggerTrace.scaling.y;
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        this.triggerMoving = activeTrace;
-        return;
+    if(triggerTrace.active){
+        var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * triggerTrace.scaling.y;
+        if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+            this.triggerMoving = activeTrace;
+            return;
+        }
     }
 
     // Start moving markers
@@ -161,9 +163,11 @@ Oscilloscope.prototype.onMouseMove = function(event){
     var cursorSet = false;
 
     // Change cursor if trigger set is active
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        document.body.style.cursor = 'row-resize';
-        cursorSet = true;
+    if(triggerTrace.active){
+        if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+            document.body.style.cursor = 'row-resize';
+            cursorSet = true;
+        }
     }
     
     // Change cursor if marker set is active

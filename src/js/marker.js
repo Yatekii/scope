@@ -24,14 +24,16 @@ export const draw = function (context, scopeState, markerState, traceState, d, l
             // If the marker is active, draw additional info
             context.font = '14px Arial';
             // Calculate frequency at marker and convert it to string
-            const text = Math.floor(converting.sampleToFrequency(
+            const text = converting.hertzToString(Math.floor(converting.sampleToFrequency(
                 converting.percentageToSample(markerState.x, length),
                 scopeState.source.samplingRate / (traceState.halfSpectrum ? 2 : 1),
                 length
-            )).toString();
-            const width = context.measureText(text).width;
+            )));
+            var width = context.measureText(text).width;
             const height = 14;
             // Draw the line for the marker with a gap
+            context.lineTo(x, height + 10 + 6);
+            context.moveTo(x, + height + 10 + 6 + height + 2 * 6);
             context.lineTo(x, scopeState.height - (height + 10 + 6 * 2));
             context.moveTo(x, scopeState.height - 10);
             context.lineTo(x, scopeState.height);
@@ -39,8 +41,8 @@ export const draw = function (context, scopeState, markerState, traceState, d, l
             context.fillStyle = '#FFFFFF';
             // Calculate size of the rectangle around the text left and right from the marker
             // (if it is at the border of the screen it's not half/half)
-            const leftFree = Math.min(x, (width / 2 + 6));
-            const rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
+            var leftFree = Math.min(x, (width / 2 + 6));
+            var rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
             // Fill the rectangle background with white so text will be readable
             context.fillRect(
                 rightFree - leftFree,
@@ -64,6 +66,39 @@ export const draw = function (context, scopeState, markerState, traceState, d, l
                 text,
                 rightFree - (leftFree - 6),
                 scopeState.height - (10 + 6)
+            );
+
+            context.font = '14px Arial';
+            width = context.measureText(markerState.id).width;
+            context.fillStyle = '#FFFFFF';
+            // Calculate size of the rectangle around the text left and right from the marker
+            // (if it is at the border of the screen it's not half/half)
+            var leftFree = Math.min(x, (width / 2 + 6));
+            var rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
+            // Fill the rectangle background with white so text will be readable
+            context.fillRect(
+                rightFree - leftFree,
+                (height + 10 + 6),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            // Draw the border of the rectangle
+            context.rect(
+                rightFree - leftFree,
+                (height + 10 + 6),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            context.restore();
+            // Draw the text
+            context.fillStyle = markerState.color;
+            context.font = '14px Arial';
+            context.fillText(
+                markerState.id,
+                rightFree - (leftFree - 6),
+                height  + (10 + 6) * 2
             );
         }
     } else if(markerState.type == 'horizontal'){

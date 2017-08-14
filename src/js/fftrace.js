@@ -62,22 +62,7 @@ FFTrace.prototype.draw = function (canvas) {
         data[i] = data[i] / 100;
     }
 
-    // Draw THD markers
-    var f = 1000;
-    var n = 10;
-    
-    // Draw the <n> next harmonic locations
-    for(i = 1; i <= n; i++){
-        context.fillStyle = 'blue';
-        var sample = converting.frequencyToSample(f * i, scope.source.samplingRate / 2, data.length);
-        var harmonicX = (converting.sampleToPercentage(sample, data.length) - this.state.offset.x) * data.length * ratio; // / scope.width * ratio;
-        var harmonicY = halfHeight - (data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight / this.state.scaling.y;
-        context.beginPath();
-        context.moveTo(harmonicX, harmonicY);
-        context.lineTo(harmonicX + 15, harmonicY - 15);
-        context.lineTo(harmonicX - 15, harmonicY - 15);
-        context.fill();
-    }
+    var n;
 
     // Store brush
     context.save();
@@ -276,7 +261,7 @@ FFTrace.prototype.calc = function() {
 
         // Sum all values in the bundle around max
         var P = power(ab.slice(first, second + 1), true, ab.length);
-        this.state._info.DeltaRMSPower = P;
+        this.state._info.DeltaRMS = Math.sqrt(P);
 
         var n;
         // Calculate SNR

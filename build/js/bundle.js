@@ -1,4 +1,3 @@
-document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>');
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
@@ -15581,8 +15580,8 @@ const FFTracePrefPane = {
                     mithril('.col-4', mithril('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
                 ]),
                 mithril('.form-group', [
-                    mithril('.col-2', mithril('label.form-label', ['ΔP:', mithril('sub', 'rms')])),
-                    mithril('.col-4', mithril('label.form-label', wattsToString(t._info.DeltaRMSPower)))
+                    mithril('.col-2', mithril('label.form-label', ['ΔV:', mithril('sub', 'rms')])),
+                    mithril('.col-4', mithril('label.form-label', voltsToString(t._info.DeltaRMS)))
                 ]),
                 // GUI: Select windowing
                 mithril('.form-group', [
@@ -15641,7 +15640,7 @@ const FFTracePrefPane = {
                                 s.source.samplingRate / 2,
                                 s.source.frameSize
                             )),
-                            onchange: mithril.withAttr('value', function(value) {
+                            oninput: mithril.withAttr('value', function(value) {
                                 var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
                                 marker.x = sampleToPercentage(
                                     frequencyToSample(
@@ -15668,7 +15667,7 @@ const FFTracePrefPane = {
                                 s.source.samplingRate / 2,
                                 s.source.frameSize
                             )),
-                            onchange: mithril.withAttr('value', function(value) {
+                            oninput: mithril.withAttr('value', function(value) {
                                 var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
                                 marker.x = sampleToPercentage(
                                     frequencyToSample(
@@ -15800,7 +15799,7 @@ const generalPrefPane = {
                             s.source._ctrl.samplingRate(s.source.samplingRate);
                         })
                     }, samplingRates.map(function(t){
-                        return mithril('option', { value: t }, t);
+                        return mithril('option', { value: t }, hertzToString(t));
                     }))
                 ]),
                 mithril('.form-group', [
@@ -16003,10 +16002,12 @@ Oscilloscope.prototype.onMouseDown = function(event){
     var halfHeight = this.canvas.height / 2;
 
     // Start moving triggerlevel
-    var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * triggerTrace.scaling.y;
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        this.triggerMoving = activeTrace;
-        return;
+    if(triggerTrace.active){
+        var triggerLevel = (this.state.source.trigger.level + triggerTrace.offset.y) * halfHeight * triggerTrace.scaling.y;
+        if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+            this.triggerMoving = activeTrace;
+            return;
+        }
     }
 
     // Start moving markers
@@ -16094,9 +16095,11 @@ Oscilloscope.prototype.onMouseMove = function(event){
     var cursorSet = false;
 
     // Change cursor if trigger set is active
-    if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
-        document.body.style.cursor = 'row-resize';
-        cursorSet = true;
+    if(triggerTrace.active){
+        if(halfHeight - event.offsetY < triggerLevel + 3 && halfHeight - event.offsetY > triggerLevel - 3){
+            document.body.style.cursor = 'row-resize';
+            cursorSet = true;
+        }
     }
     
     // Change cursor if marker set is active
@@ -16246,6 +16249,7 @@ Oscilloscope.prototype.addMarker = function(trace, id, type, xy){
  * communicating to the server and parse it's data.
  */
 
+// Creates a new source
 const WebsocketSource = function(state) {
     var me = this;
     // Remember source state
@@ -16281,6 +16285,7 @@ const WebsocketSource = function(state) {
             me.auto(0);
         }
         me.channels;
+        me.getStatus();
         me.ready = true;
     };
 
@@ -16288,7 +16293,13 @@ const WebsocketSource = function(state) {
     this.socket.onmessage = function(e) {
         if(me.ready){
             if (typeof e.data == 'string') {
-                console.log('Text message received: ' + e.data);
+                var json = JSON.parse(e.data);
+                if(json.response && json.response.request == 'status' && json.response.status == 'ok'){
+                    if(json.response.data && json.response.data.decimationRate){
+                        me.state.samplingRate = 125e6 / json.response.data.decimationRate;
+                    }
+                }
+                // console.log('Text message received: ' + e.data);
             } else {
                 // TODO: distinguish between channels
                 // New data from stream
@@ -16789,14 +16800,16 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
             // If the marker is active, draw additional info
             context.font = '14px Arial';
             // Calculate frequency at marker and convert it to string
-            const text = Math.floor(sampleToFrequency(
+            const text = hertzToString(Math.floor(sampleToFrequency(
                 percentageToSample(markerState.x, length),
                 scopeState.source.samplingRate / (traceState.halfSpectrum ? 2 : 1),
                 length
-            )).toString();
-            const width = context.measureText(text).width;
+            )));
+            var width = context.measureText(text).width;
             const height = 14;
             // Draw the line for the marker with a gap
+            context.lineTo(x, height + 10 + 6);
+            context.moveTo(x, + height + 10 + 6 + height + 2 * 6);
             context.lineTo(x, scopeState.height - (height + 10 + 6 * 2));
             context.moveTo(x, scopeState.height - 10);
             context.lineTo(x, scopeState.height);
@@ -16804,8 +16817,8 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
             context.fillStyle = '#FFFFFF';
             // Calculate size of the rectangle around the text left and right from the marker
             // (if it is at the border of the screen it's not half/half)
-            const leftFree = Math.min(x, (width / 2 + 6));
-            const rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
+            var leftFree = Math.min(x, (width / 2 + 6));
+            var rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
             // Fill the rectangle background with white so text will be readable
             context.fillRect(
                 rightFree - leftFree,
@@ -16829,6 +16842,39 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
                 text,
                 rightFree - (leftFree - 6),
                 scopeState.height - (10 + 6)
+            );
+
+            context.font = '14px Arial';
+            width = context.measureText(markerState.id).width;
+            context.fillStyle = '#FFFFFF';
+            // Calculate size of the rectangle around the text left and right from the marker
+            // (if it is at the border of the screen it's not half/half)
+            var leftFree = Math.min(x, (width / 2 + 6));
+            var rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
+            // Fill the rectangle background with white so text will be readable
+            context.fillRect(
+                rightFree - leftFree,
+                (height + 10 + 6),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            // Draw the border of the rectangle
+            context.rect(
+                rightFree - leftFree,
+                (height + 10 + 6),
+                width + 2 * 6,
+                height + 2 * 6
+            );
+            context.stroke();
+            context.restore();
+            // Draw the text
+            context.fillStyle = markerState.color;
+            context.font = '14px Arial';
+            context.fillText(
+                markerState.id,
+                rightFree - (leftFree - 6),
+                height  + (10 + 6) * 2
             );
         }
     } else if(markerState.type == 'horizontal'){
@@ -16901,22 +16947,7 @@ FFTrace.prototype.draw = function (canvas) {
         data[i] = data[i] / 100;
     }
 
-    // Draw THD markers
-    var f = 1000;
-    var n = 10;
-    
-    // Draw the <n> next harmonic locations
-    for(i = 1; i <= n; i++){
-        context.fillStyle = 'blue';
-        var sample = frequencyToSample(f * i, scope.source.samplingRate / 2, data.length);
-        var harmonicX = (sampleToPercentage(sample, data.length) - this.state.offset.x) * data.length * ratio; // / scope.width * ratio;
-        var harmonicY = halfHeight - (data[Math.floor(sample + this.state.offset.x * data.length)] + this.state.offset.y) * halfHeight / this.state.scaling.y;
-        context.beginPath();
-        context.moveTo(harmonicX, harmonicY);
-        context.lineTo(harmonicX + 15, harmonicY - 15);
-        context.lineTo(harmonicX - 15, harmonicY - 15);
-        context.fill();
-    }
+    var n;
 
     // Store brush
     context.save();
@@ -17115,7 +17146,7 @@ FFTrace.prototype.calc = function() {
 
         // Sum all values in the bundle around max
         var P = power(ab.slice(first, second + 1), true, ab.length);
-        this.state._info.DeltaRMSPower = P;
+        this.state._info.DeltaRMS = Math.sqrt(P);
 
         var n;
         // Calculate SNR
@@ -17377,6 +17408,7 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
+//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -17429,7 +17461,7 @@ var appState = {
                     active: false,
                     offset: { x: 0, y: 0 },
                     _info: {},
-                    name: 'Trace ' + 1,
+                    name: 'Ch ' + 1 + '[time]',
                     channelID: 1,
                     type: 'TimeTrace',
                     color: '#E85D55',
@@ -17447,7 +17479,7 @@ var appState = {
                     SNRmode: 'auto',
                     calculateSNR: true,
                     _info: {},
-                    name: 'Trace ' + 2,
+                    name: 'Ch ' + 1 + '[freq]',
                     channelID: 1,
                     type: 'FFTrace',
                     color: '#E8830C',

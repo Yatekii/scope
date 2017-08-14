@@ -3,6 +3,7 @@
  */
 
 import m from 'mithril';
+import * as converting from '../math/converting.js';
 
 export const generalPrefPane = {
     view: function(vnode){
@@ -29,7 +30,7 @@ export const generalPrefPane = {
                             s.source._ctrl.samplingRate(s.source.samplingRate);
                         })
                     }, samplingRates.map(function(t){
-                        return m('option', { value: t }, t);
+                        return m('option', { value: t }, converting.hertzToString(t));
                     }))
                 ]),
                 m('.form-group', [
