@@ -20,6 +20,25 @@ export const generalPrefPane = {
         return [
             m('header.text-center', m('h4', s)),
             m('.form-horizontal', [
+                // GUI: Select line width
+                m('.form-group', [
+                    m('.col-10', m('label.form-label', 'Select line width (for elder people only!)')),
+                    m('input.form-input.col-2[type=number][step=0.1]', {
+                        value: s.lineWidth,
+                        oninput: m.withAttr('value', function(value){
+                            value = parseFloat(value);
+                            if(value > 4){
+                                s.lineWidth = 4;
+                                return;
+                            }
+                            if(value > 0){
+                                s.lineWidth = value;
+                                return;
+                            }
+                            s.lineWidth = 1;
+                        })
+                    })
+                ]),
                 // GUI: Select sampling rate
                 m('.form-group', [
                     m('.col-3', m('label.form-label', 'Sampling Rate')),
@@ -76,8 +95,8 @@ export const generalPrefPane = {
                         }, 'Normal'),
                         m('button.btn' + (s.source.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
-                                s.source._ctrl.getStatus();
-                                //s.source._ctrl.single(0);
+                                console.log(s.source.frameSize / s.source.samplingRate * 1000 + 5);
+                                s.source._ctrl.auto(0, s.source.frameSize / s.source.samplingRate * 1000 + 5);
                             }
                         }, 'Auto'),
                         m('button.btn' + (s.source.mode == 'single' ? '.active' : ''), {

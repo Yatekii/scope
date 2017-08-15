@@ -115,6 +115,21 @@ export const hertzToString = function(f){
 };
 
 /*
+ * Displays hertz as a properly formatted and scaled string with physical units.
+ */
+export const decibelsToString = function(f){
+    if(f < 1){
+        return (f * 1e3).toFixed(2) + 'mdB';
+    }
+    if(f < 1e3){
+        return (f).toFixed(2) + 'dB';
+    }
+    if(f < 1e6){
+        return (f * 1e-3).toFixed(2) + 'kdB';
+    }
+};
+
+/*
  * Converts a sample number to the corresponding frequency.
  */
 export const sampleToFrequency = function(sample, samplingRate, frameSize){

@@ -73,8 +73,8 @@ export const draw = function (context, scopeState, markerState, traceState, d, l
             context.fillStyle = '#FFFFFF';
             // Calculate size of the rectangle around the text left and right from the marker
             // (if it is at the border of the screen it's not half/half)
-            var leftFree = Math.min(x, (width / 2 + 6));
-            var rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
+            leftFree = Math.min(x, (width / 2 + 6));
+            rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
             // Fill the rectangle background with white so text will be readable
             context.fillRect(
                 rightFree - leftFree,

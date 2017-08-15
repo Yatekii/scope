@@ -1,9 +1,7 @@
 import { miniFFT} from './math/fft.js';
 import { power, powerDensity } from './math/math.js';
 import { applyWindow, windowFunctions } from './math/windowing.js';
-import * as converting from './math/converting.js';
 import * as marker from './marker.js';
-import * as helpers from './helpers.js';
 
 /*
  * Trace constructor
@@ -266,8 +264,8 @@ FFTrace.prototype.calc = function() {
         var n;
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
-            var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
-            var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
+            first = this.getMarkerById('SNRfirst')[0].x * ab.length;
+            second = this.getMarkerById('SNRsecond')[0].x * ab.length;
 
             // Sum all values in the bundle around max
             var Ps = power(ab.slice(first, second + 1), true, ab.length);

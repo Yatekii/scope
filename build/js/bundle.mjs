@@ -15120,9 +15120,6 @@ const withKey = function(key, callback) {
  * EXAMPLE: capitalizeFirstLetter('top kek') == 'Top kek'.
  * <string> : string : The string to captalize
  */
-const capitalizeFirstLetter = function(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-};
 
 /*
  * This file contains all the relevant DOM stuff to initialize the router and it's controllers.
@@ -15266,11 +15263,13 @@ Math.bessi0 = function(x) {
 const windowFunctions = {
     hann: {
         fn: function (n, points) { return 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (points - 1)); },
-        lines: 3
+        lines: 3,
+        name: 'Hanning'
     },
     hamming: {
         fn: function (n, points) { return 0.54 - 0.46 * Math.cos(2 * Math.PI * n/ (points - 1)); },
-        lines: 3
+        lines: 3,
+        name: 'Hamming'
     },
     // cosine: {
     //     fn: function (n, points) { return Math.sin(Math.PI * n / (points - 1)); },
@@ -15304,7 +15303,8 @@ const windowFunctions = {
             return 0.4243801 - 0.4973406 * Math.cos( 2 * Math.PI * n / (points - 1))
                 + 0.0782793 * Math.cos(4 * Math.PI * n / (points - 1));
         },
-        lines: 5
+        lines: 5,
+        name: 'Blackman'
     },
     // kaiser:        function (n, points, alpha) {
     //             if (!alpha) { alpha = 3; }
@@ -15332,7 +15332,8 @@ const windowFunctions = {
                 - 0.388 * Math.cos(6 * Math.PI * n / (points - 1))
                 + 0.032 * Math.cos(8 * Math.PI * n / (points - 1));
         },
-        lines: 9
+        lines: 9,
+        name: 'Flat-Top'
     },
 };
 
@@ -15469,6 +15470,21 @@ const hertzToString = function(f){
 };
 
 /*
+ * Displays hertz as a properly formatted and scaled string with physical units.
+ */
+const decibelsToString = function(f){
+    if(f < 1){
+        return (f * 1e3).toFixed(2) + 'mdB';
+    }
+    if(f < 1e3){
+        return (f).toFixed(2) + 'dB';
+    }
+    if(f < 1e6){
+        return (f * 1e-3).toFixed(2) + 'kdB';
+    }
+};
+
+/*
  * Converts a sample number to the corresponding frequency.
  */
 const sampleToFrequency = function(sample, samplingRate, frameSize){
@@ -15508,7 +15524,7 @@ const FFTracePrefPane = {
         }
         return [
             mithril('.form-horizontal', [
-                // GUI: Change color and name
+                // GUI: Change color and name and active/export toggle
                 mithril('.form-group',[
                     mithril('.col-2.text-center', mithril('input[type=color]', {
                         value: t.color,
@@ -15529,6 +15545,14 @@ const FFTracePrefPane = {
                         mithril('input[type="checkbox"][' + (t.active ? 'checked' : '') + ']', {
                             onchange: function(){
                                 t.active = !t.active;
+                                if(!t.active && s.source.activeTrace == t._ctrl.id){
+                                    console.log(s.source.traces.filter(function(obj) {
+                                        return obj.active;
+                                    }));
+                                    s.source.activeTrace = s.source.traces.filter(function(obj) {
+                                        return obj.active;
+                                    })[0]._ctrl.id;
+                                }
                             }
                         }),
                         mithril('i.form-icon'),
@@ -15540,143 +15564,143 @@ const FFTracePrefPane = {
                         }
                     }, 'Export Data')
                 ]),
-            t.active ? [
-                // GUI: Display Export Data
-                mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
-                    mithril('.modal-overlay'),
-                    mithril('.modal-container', [
-                        mithril('.modal-header', [
-                            mithril('button.btn.btn-clear.float-right', {
-                                onclick: function(){
-                                    vnode.state.exportActive = !vnode.state.exportActive;
-                                }
+                t.active ? [
+                    // GUI: Display Export Data
+                    mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                        mithril('.modal-overlay'),
+                        mithril('.modal-container', [
+                            mithril('.modal-header', [
+                                mithril('button.btn.btn-clear.float-right', {
+                                    onclick: function(){
+                                        vnode.state.exportActive = !vnode.state.exportActive;
+                                    }
+                                }),
+                                mithril('.modal-title', 'Frequency Data')
+                            ]),
+                            mithril('.modal-body', 
+                                mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
+                                    vnode.state.exportData
+                                ))
+                            )
+                        ])
+                    ]),
+                    // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
+                    mithril('.form-group', [
+                        mithril('.col-2', mithril('label.form-label', 'Δf:')),
+                        mithril('.col-4', mithril('label.form-label', hertzToString(t._info.deltaf))),
+                        mithril('.col-2', mithril('label.form-label', 'ΔA:')),
+                        mithril('.col-4', mithril('label.form-label', decibelsToString(t._info.deltaA)))
+                    ]),
+                    mithril('.form-group', [
+                        mithril('.col-2', mithril('label.form-label', ['P:', mithril('sub', 'rms')])),
+                        mithril('.col-4', mithril('label.form-label', wattsToString(t._info.RMSPower))),
+                        mithril('.col-2', mithril('label.form-label', '\u2202P/\u2202f:')),
+                        mithril('.col-4', mithril('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
+                    ]),
+                    mithril('.form-group', [
+                        mithril('.col-2', mithril('label.form-label', ['ΔV:', mithril('sub', 'rms')])),
+                        mithril('.col-4', mithril('label.form-label', voltsToString(t._info.DeltaRMS)))
+                    ]),
+                    // GUI: Select windowing
+                    mithril('.form-group', [
+                        mithril('.col-3', mithril('label.form-label [for=window', 'Window')),
+                        mithril('.col-9', mithril('select.form-input', {
+                            id: 'window',
+                            value: t.windowFunction,
+                            onchange: mithril.withAttr('value', function(value) {
+                                t.windowFunction = value;
                             }),
-                            mithril('.modal-title', 'Frequency Data')
-                        ]),
-                        mithril('.modal-body', 
-                            mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
-                                vnode.state.exportData
-                            ))
+                        }, Object.keys(windowFunctions).map(function(value){
+                            return mithril('option', { value: value }, windowFunctions[value].name);
+                        }))
                         )
-                    ])
-                ]),
-                // GUI: Display Δf, ΔA, RMS Signal Power, Signal Power Density
-                mithril('.form-group', [
-                    mithril('.col-2', mithril('label.form-label', 'Δf:')),
-                    mithril('.col-4', mithril('label.form-label', hertzToString(t._info.deltaf))),
-                    mithril('.col-2', mithril('label.form-label', 'ΔA:')),
-                    mithril('.col-4', mithril('label.form-label', voltsToString(t._info.deltaA)))
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-2', mithril('label.form-label', ['P:', mithril('sub', 'rms')])),
-                    mithril('.col-4', mithril('label.form-label', wattsToString(t._info.RMSPower))),
-                    mithril('.col-2', mithril('label.form-label', '\u2202P/\u2202f:')),
-                    mithril('.col-4', mithril('label.form-label', wattsPerHertzToString(t._info.powerDensity)))
-                ]),
-                mithril('.form-group', [
-                    mithril('.col-2', mithril('label.form-label', ['ΔV:', mithril('sub', 'rms')])),
-                    mithril('.col-4', mithril('label.form-label', voltsToString(t._info.DeltaRMS)))
-                ]),
-                // GUI: Select windowing
-                mithril('.form-group', [
-                    mithril('.col-3', mithril('label.form-label [for=window', 'Window')),
-                    mithril('.col-9', mithril('select.form-input', {
-                        id: 'window',
-                        value: t.windowFunction,
-                        onchange: mithril.withAttr('value', function(value) {
-                            t.windowFunction = value;
-                        }),
-                    }, Object.keys(windowFunctions).map(function(value){
-                        return mithril('option', { value: value }, capitalizeFirstLetter(value));
-                    }))
-                    )
-                ]),
-                // GUI: Display SNR
-                mithril('.form-group', [
-                    mithril('.col-6', mithril('label.form-switch', [
-                        mithril('input[type="checkbox"][' + (t.calculateSNR ? 'checked' : '') + ']', {
-                            onchange: function(){
-                                t.calculateSNR = !t.calculateSNR;
-                            }
-                        }),
-                        mithril('i.form-icon'),
-                        'Calculate SNR:'
-                    ])),
-                    mithril('.col-6', mithril('label.form-label', { id: 'SNR' }, t._info.SNR))
-                ]),
-                // GUI: Select display mode
-                (t.calculateSNR ? [
-                    mithril('.form-group', [
-                        mithril('.col-12', mithril('.btn-group.btn-group-block', [
-                            mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
-                                onclick: function(){
-                                    t.SNRmode = 'manual';
-                                }
-                            }, 'Manual'),
-                            mithril('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
-                                onclick: function(){
-                                    t.SNRmode = 'auto';
-                                }
-                            }, 'Auto')
-                        ]))
                     ]),
-                    // GUI: Settings for the SNR markers
+                    // GUI: Display SNR
                     mithril('.form-group', [
-                        mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
-                        mithril('.col-8', mithril('input.form-input', {
-                            disabled: t.SNRmode == 'auto',
-                            type: 'number',
-                            value: Math.floor(sampleToFrequency(
-                                percentageToSample(
-                                    t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
-                                    s.source.frameSize
-                                ),
-                                s.source.samplingRate / 2,
-                                s.source.frameSize
-                            )),
-                            oninput: mithril.withAttr('value', function(value) {
-                                var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
-                                marker.x = sampleToPercentage(
-                                    frequencyToSample(
-                                        parseInt(value),
-                                        s.source.samplingRate / 2,
+                        mithril('.col-6', mithril('label.form-switch', [
+                            mithril('input[type="checkbox"][' + (t.calculateSNR ? 'checked' : '') + ']', {
+                                onchange: function(){
+                                    t.calculateSNR = !t.calculateSNR;
+                                }
+                            }),
+                            mithril('i.form-icon'),
+                            'Calculate SNR:'
+                        ])),
+                        mithril('.col-6', mithril('label.form-label', { id: 'SNR' }, t._info.SNR))
+                    ]),
+                    // GUI: Select display mode
+                    (t.calculateSNR ? [
+                        mithril('.form-group', [
+                            mithril('.col-12', mithril('.btn-group.btn-group-block', [
+                                mithril('button.btn' + (t.SNRmode == 'manual' ? '.active' : ''), {
+                                    onclick: function(){
+                                        t.SNRmode = 'manual';
+                                    }
+                                }, 'Manual'),
+                                mithril('button.btn' + (t.SNRmode == 'auto' ? '.active' : ''), {
+                                    onclick: function(){
+                                        t.SNRmode = 'auto';
+                                    }
+                                }, 'Auto')
+                            ]))
+                        ]),
+                        // GUI: Settings for the SNR markers
+                        mithril('.form-group', [
+                            mithril('.col-3', mithril('label.form-label', 'Lower Marker')),
+                            mithril('.col-8', mithril('input.form-input', {
+                                disabled: t.SNRmode == 'auto',
+                                type: 'number',
+                                value: Math.floor(sampleToFrequency(
+                                    percentageToSample(
+                                        t.markers.find(function(m){ return m.id == 'SNRfirst'; }).x,
                                         s.source.frameSize
                                     ),
+                                    s.source.samplingRate / 2,
                                     s.source.frameSize
-                                );
-                            }),
-                        })),
-                        mithril('.col-1', mithril('label.form-label', 'Hz'))
-                    ]),
-                    mithril('.form-group', [
-                        mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
-                        mithril('.col-8', mithril('input.form-input', {
-                            disabled: t.SNRmode == 'auto',
-                            type: 'number',
-                            value: Math.floor(sampleToFrequency(
-                                percentageToSample(
-                                    t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
-                                    s.source.frameSize
-                                ),
-                                s.source.samplingRate / 2,
-                                s.source.frameSize
-                            )),
-                            oninput: mithril.withAttr('value', function(value) {
-                                var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
-                                marker.x = sampleToPercentage(
-                                    frequencyToSample(
-                                        parseInt(value),
-                                        s.source.samplingRate / 2,
+                                )),
+                                oninput: mithril.withAttr('value', function(value) {
+                                    var marker = t.markers.find(function(m){ return m.id == 'SNRfirst'; });
+                                    marker.x = sampleToPercentage(
+                                        frequencyToSample(
+                                            parseInt(value),
+                                            s.source.samplingRate / 2,
+                                            s.source.frameSize
+                                        ),
+                                        s.source.frameSize
+                                    );
+                                }),
+                            })),
+                            mithril('.col-1', mithril('label.form-label', 'Hz'))
+                        ]),
+                        mithril('.form-group', [
+                            mithril('.col-3', mithril('label.form-label', 'Upper Marker')),
+                            mithril('.col-8', mithril('input.form-input', {
+                                disabled: t.SNRmode == 'auto',
+                                type: 'number',
+                                value: Math.floor(sampleToFrequency(
+                                    percentageToSample(
+                                        t.markers.find(function(m){ return m.id == 'SNRsecond'; }).x,
                                         s.source.frameSize
                                     ),
+                                    s.source.samplingRate / 2,
                                     s.source.frameSize
-                                );
-                            }),
-                        })),
-                        mithril('.col-1', mithril('label.form-label', 'Hz'))
-                    ])
-                ] : '')
-            ] : []
+                                )),
+                                oninput: mithril.withAttr('value', function(value) {
+                                    var marker = t.markers.find(function(m){ return m.id == 'SNRsecond'; });
+                                    marker.x = sampleToPercentage(
+                                        frequencyToSample(
+                                            parseInt(value),
+                                            s.source.samplingRate / 2,
+                                            s.source.frameSize
+                                        ),
+                                        s.source.frameSize
+                                    );
+                                }),
+                            })),
+                            mithril('.col-1', mithril('label.form-label', 'Hz'))
+                        ])
+                    ] : '')
+                ] : []
             ])
         ];
     }
@@ -15699,7 +15723,7 @@ const TimeTracePrefPane = {
         return [
             mithril('header.columns', ''),
             mithril('.form-horizontal', [
-                // GUI: Change color and name
+                // GUI: Change color and name and active/export toggle
                 mithril('.form-group',[
                     mithril('.col-2.text-center', mithril('input[type=color]', {
                         value: t.color,
@@ -15720,6 +15744,14 @@ const TimeTracePrefPane = {
                         mithril('input[type="checkbox"][' + (t.active ? 'checked' : '') + ']', {
                             onchange: function(){
                                 t.active = !t.active;
+                                if(!t.active && s.source.activeTrace == t._ctrl.id){
+                                    console.log(s.source.traces.filter(function(obj) {
+                                        return obj.active;
+                                    }));
+                                    s.source.activeTrace = s.source.traces.filter(function(obj) {
+                                        return obj.active;
+                                    })[0]._ctrl.id;
+                                }
                             }
                         }),
                         mithril('i.form-icon'),
@@ -15731,34 +15763,47 @@ const TimeTracePrefPane = {
                         }
                     }, 'Export Data')
                 ]),
-            t.active ? [
-                // GUI: Display Export Data
-                mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
-                    mithril('.modal-overlay'),
-                    mithril('.modal-container', [
-                        mithril('.modal-header', [
-                            mithril('button.btn.btn-clear.float-right', {
-                                onclick: function(){
-                                    vnode.state.exportActive = !vnode.state.exportActive;
-                                }
-                            }),
-                            mithril('.modal-title', 'Time Data')
-                        ]),
-                        mithril('.modal-body', 
-                            mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
-                                vnode.state.exportData
-                            ))
-                        )
-                    ])
-                ]),
-                // GUI: Display Δt, ΔA
-                mithril('.form-group', [
-                    mithril('.col-1', mithril('label.form-label', 'Δt:')),
-                    mithril('.col-5', mithril('label.form-label', secondsToString(t._info.deltat))),
-                    mithril('.col-1', mithril('label.form-label', 'ΔA:')),
-                    mithril('.col-5', mithril('label.form-label', voltsToString(t._info.deltaA)))
-                ])
-            ] : []
+                t.active ? [
+                    // GUI: Display Export Data
+                    mithril('.modal' + (vnode.state.exportActive ? 'active' : ''), [
+                        mithril('.modal-overlay'),
+                        mithril('.modal-container', [
+                            mithril('.modal-header', [
+                                mithril('button.btn.btn-clear.float-right', {
+                                    onclick: function(){
+                                        vnode.state.exportActive = !vnode.state.exportActive;
+                                    }
+                                }),
+                                mithril('.modal-title', 'Time Data')
+                            ]),
+                            mithril('.modal-body', 
+                                mithril('.content', mithril('textarea[style=height:200px;width:100%]', 
+                                    vnode.state.exportData
+                                ))
+                            )
+                        ])
+                    ]),
+                    // GUI: Display Δt, ΔA
+                    mithril('.form-group', [
+                        mithril('.col-1', mithril('label.form-label', 'Δt:')),
+                        mithril('.col-5', mithril('label.form-label', secondsToString(t._info.deltat))),
+                        mithril('.col-1', mithril('label.form-label', 'ΔA:')),
+                        mithril('.col-5', mithril('label.form-label', voltsToString(t._info.deltaA)))
+                    ]), s.source.triggerTrace == t._ctrl.id ? [
+                        mithril('.form-group', [
+                            mithril('.col-3', mithril('label.form-label', 'Trigger Level')),
+                            mithril('.col-8', mithril('input.form-input', {
+                                type: 'number',
+                                value: s.source.trigger.level,
+                                oninput: mithril.withAttr('value', function(value) {
+                                    s.source.trigger.level = parseFloat(value);
+                                    s.source._ctrl.forceTrigger();
+                                }),
+                            })),
+                            mithril('.col-1', mithril('label.form-label', 'Hz'))
+                        ])
+                    ] : [],
+                ] : []
             ])
         ];
     }
@@ -15783,6 +15828,25 @@ const generalPrefPane = {
         return [
             mithril('header.text-center', mithril('h4', s)),
             mithril('.form-horizontal', [
+                // GUI: Select line width
+                mithril('.form-group', [
+                    mithril('.col-10', mithril('label.form-label', 'Select line width (for elder people only!)')),
+                    mithril('input.form-input.col-2[type=number][step=0.1]', {
+                        value: s.lineWidth,
+                        oninput: mithril.withAttr('value', function(value){
+                            value = parseFloat(value);
+                            if(value > 4){
+                                s.lineWidth = 4;
+                                return;
+                            }
+                            if(value > 0){
+                                s.lineWidth = value;
+                                return;
+                            }
+                            s.lineWidth = 1;
+                        })
+                    })
+                ]),
                 // GUI: Select sampling rate
                 mithril('.form-group', [
                     mithril('.col-3', mithril('label.form-label', 'Sampling Rate')),
@@ -15839,8 +15903,8 @@ const generalPrefPane = {
                         }, 'Normal'),
                         mithril('button.btn' + (s.source.mode == 'auto' ? '.active' : ''), {
                             onclick: function(){
-                                s.source._ctrl.getStatus();
-                                //s.source._ctrl.single(0);
+                                console.log(s.source.frameSize / s.source.samplingRate * 1000 + 5);
+                                s.source._ctrl.auto(0, s.source.frameSize / s.source.samplingRate * 1000 + 5);
                             }
                         }, 'Auto'),
                         mithril('button.btn' + (s.source.mode == 'single' ? '.active' : ''), {
@@ -15962,7 +16026,8 @@ Oscilloscope.prototype.draw = function() {
     // Assign new scope properties
     this.canvas.height = this.state.height = height;
     this.canvas.width = this.state.width = width;
-    context.strokeWidth = 1;
+    context.strokeWidth = 3;
+    context.lineWidth = this.state.lineWidth;
 
     // Draw background
     context.fillStyle='#222222';
@@ -16055,6 +16120,7 @@ Oscilloscope.prototype.onMouseUp = function(){
     // End moving triggerlevel
     if(this.triggerMoving){
         this.triggerMoving = false;
+        this.state.source._ctrl.forceTrigger();
         return;
     }
 
@@ -16249,6 +16315,7 @@ const WebsocketSource = function(state) {
     // Remember source state
     this.state = state;
     this.channels = [new Float32Array(0), new Float32Array(0)];
+    this.packetCounter = 0;
 
     // Init socket
     this.socket = new WebSocket(state.location);
@@ -16276,7 +16343,7 @@ const WebsocketSource = function(state) {
         }
         if(me.state.mode == 'auto'){
             // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-            me.auto(0);
+            me.auto(0, me.state.frameSize / me.state.samplingRate * 1000 + 80, me.packetCounter);
         }
         me.channels;
         me.getStatus();
@@ -16289,6 +16356,7 @@ const WebsocketSource = function(state) {
             if (typeof e.data == 'string') {
                 var json = JSON.parse(e.data);
                 if(json.response && json.response.request == 'status' && json.response.status == 'ok'){
+                    console.log(json);
                     if(json.response.data && json.response.data.decimationRate){
                         me.state.samplingRate = 125e6 / json.response.data.decimationRate;
                     }
@@ -16297,6 +16365,7 @@ const WebsocketSource = function(state) {
             } else {
                 // TODO: distinguish between channels
                 // New data from stream
+                me.packetCounter++;
                 var arr = new Uint16Array(e.data);
                 var data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
@@ -16321,7 +16390,7 @@ const WebsocketSource = function(state) {
                 }
                 if(me.state.mode == 'auto'){
                     // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-                    me.auto(0);
+                    me.auto(0, me.state.frameSize / me.state.samplingRate * 1000 + 80, me.packetCounter);
                 }
                 me.state.traces.forEach(function(trace){
                     if(trace.type == 'TimeTrace'){
@@ -16435,7 +16504,7 @@ WebsocketSource.prototype.setNumberOfChannels = function(n) {
     this.sendJSON({ setNumberOfChannels: n });
 };
 
-WebsocketSource.prototype.getStatus = function(n) {
+WebsocketSource.prototype.getStatus = function() {
     this.sendJSON({ status: true });
 };
 
@@ -16471,13 +16540,15 @@ WebsocketSource.prototype.normal = function(channel) {
  * Start auto mode.
  * <timeout> : uint : Milliseconds to wait until forcing triggering
  */
-WebsocketSource.prototype.auto = function(channel, timeout) {
+WebsocketSource.prototype.auto = function(channel, timeout, n) {
     var me = this;
     this.state.mode = 'auto';
     // Wait 5ms until requesting a new frame because otherwise we deadlock
-    setTimeout(function(){ me.requestFrame(); }, 5);
+    setTimeout(function(){ me.requestFrame(channel); }, 5);
     setTimeout(function(){
-        me.forceTrigger();
+        if(me.packetCounter == n){
+            me.forceTrigger();
+        }
     }, timeout);
 };
 
@@ -16843,8 +16914,8 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
             context.fillStyle = '#FFFFFF';
             // Calculate size of the rectangle around the text left and right from the marker
             // (if it is at the border of the screen it's not half/half)
-            var leftFree = Math.min(x, (width / 2 + 6));
-            var rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
+            leftFree = Math.min(x, (width / 2 + 6));
+            rightFree = Math.min(x, scopeState.width - (width / 2 + 6));
             // Fill the rectangle background with white so text will be readable
             context.fillRect(
                 rightFree - leftFree,
@@ -17145,8 +17216,8 @@ FFTrace.prototype.calc = function() {
         var n;
         // Calculate SNR
         if(this.state.SNRmode == 'manual'){
-            var first = this.getMarkerById('SNRfirst')[0].x * ab.length;
-            var second = this.getMarkerById('SNRsecond')[0].x * ab.length;
+            first = this.getMarkerById('SNRfirst')[0].x * ab.length;
+            second = this.getMarkerById('SNRsecond')[0].x * ab.length;
 
             // Sum all values in the bundle around max
             var Ps = power(ab.slice(first, second + 1), true, ab.length);
@@ -17411,6 +17482,7 @@ var appState = {
         name: 'Scope ' + 1,
         top: 250,
         left: 350,
+        lineWidth: 1,
         ui: {
             mover: {
                 width: 50,
@@ -17432,7 +17504,7 @@ var appState = {
             frameSize: 4096,
             samplingRate: 5000000,
             bits: 16,
-            vpp: 2.1, // Volts per bit
+            vpp: 2.1, // Volts peakpeak
             buffer: {
                 upperSize: 4,
                 lowerSize: 1,

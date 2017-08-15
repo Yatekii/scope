@@ -47,11 +47,13 @@ Math.bessi0 = function(x) {
 export const windowFunctions = {
     hann: {
         fn: function (n, points) { return 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (points - 1)); },
-        lines: 3
+        lines: 3,
+        name: 'Hanning'
     },
     hamming: {
         fn: function (n, points) { return 0.54 - 0.46 * Math.cos(2 * Math.PI * n/ (points - 1)); },
-        lines: 3
+        lines: 3,
+        name: 'Hamming'
     },
     // cosine: {
     //     fn: function (n, points) { return Math.sin(Math.PI * n / (points - 1)); },
@@ -85,7 +87,8 @@ export const windowFunctions = {
             return 0.4243801 - 0.4973406 * Math.cos( 2 * Math.PI * n / (points - 1))
                 + 0.0782793 * Math.cos(4 * Math.PI * n / (points - 1));
         },
-        lines: 5
+        lines: 5,
+        name: 'Blackman'
     },
     // kaiser:        function (n, points, alpha) {
     //             if (!alpha) { alpha = 3; }
@@ -113,7 +116,8 @@ export const windowFunctions = {
                 - 0.388 * Math.cos(6 * Math.PI * n / (points - 1))
                 + 0.032 * Math.cos(8 * Math.PI * n / (points - 1));
         },
-        lines: 9
+        lines: 9,
+        name: 'Flat-Top'
     },
 };
 

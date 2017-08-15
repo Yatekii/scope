@@ -19,6 +19,7 @@ var appState = {
         name: 'Scope ' + 1,
         top: 250,
         left: 350,
+        lineWidth: 1,
         ui: {
             mover: {
                 width: 50,
@@ -40,7 +41,7 @@ var appState = {
             frameSize: 4096,
             samplingRate: 5000000,
             bits: 16,
-            vpp: 2.1, // Volts per bit
+            vpp: 2.1, // Volts peakpeak
             buffer: {
                 upperSize: 4,
                 lowerSize: 1,

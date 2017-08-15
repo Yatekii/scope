@@ -10,6 +10,7 @@ export const WebsocketSource = function(state) {
     // Remember source state
     this.state = state;
     this.channels = [new Float32Array(0), new Float32Array(0)];
+    this.packetCounter = 0;
 
     // Init socket
     this.socket = new WebSocket(state.location);
@@ -37,7 +38,7 @@ export const WebsocketSource = function(state) {
         }
         if(me.state.mode == 'auto'){
             // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-            me.auto(0);
+            me.auto(0, me.state.frameSize / me.state.samplingRate * 1000 + 80, me.packetCounter);
         }
         me.channels;
         me.getStatus();
@@ -50,6 +51,7 @@ export const WebsocketSource = function(state) {
             if (typeof e.data == 'string') {
                 var json = JSON.parse(e.data);
                 if(json.response && json.response.request == 'status' && json.response.status == 'ok'){
+                    console.log(json);
                     if(json.response.data && json.response.data.decimationRate){
                         me.state.samplingRate = 125e6 / json.response.data.decimationRate;
                     }
@@ -58,6 +60,7 @@ export const WebsocketSource = function(state) {
             } else {
                 // TODO: distinguish between channels
                 // New data from stream
+                me.packetCounter++;
                 var arr = new Uint16Array(e.data);
                 var data = new Float32Array(arr);
                 for(var i = 0; i < arr.length; i++){
@@ -82,7 +85,7 @@ export const WebsocketSource = function(state) {
                 }
                 if(me.state.mode == 'auto'){
                     // Immediately request a new frame and start a timer to force a trigger (in case none occurs on iself)
-                    me.auto(0);
+                    me.auto(0, me.state.frameSize / me.state.samplingRate * 1000 + 80, me.packetCounter);
                 }
                 me.state.traces.forEach(function(trace){
                     if(trace.type == 'TimeTrace'){
@@ -196,7 +199,7 @@ WebsocketSource.prototype.setNumberOfChannels = function(n) {
     this.sendJSON({ setNumberOfChannels: n });
 };
 
-WebsocketSource.prototype.getStatus = function(n) {
+WebsocketSource.prototype.getStatus = function() {
     this.sendJSON({ status: true });
 };
 
@@ -232,12 +235,14 @@ WebsocketSource.prototype.normal = function(channel) {
  * Start auto mode.
  * <timeout> : uint : Milliseconds to wait until forcing triggering
  */
-WebsocketSource.prototype.auto = function(channel, timeout) {
+WebsocketSource.prototype.auto = function(channel, timeout, n) {
     var me = this;
     this.state.mode = 'auto';
     // Wait 5ms until requesting a new frame because otherwise we deadlock
-    setTimeout(function(){ me.requestFrame(); }, 5);
+    setTimeout(function(){ me.requestFrame(channel); }, 5);
     setTimeout(function(){
-        me.forceTrigger();
+        if(me.packetCounter == n){
+            me.forceTrigger();
+        }
     }, timeout);
 };

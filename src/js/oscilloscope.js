@@ -36,7 +36,8 @@ Oscilloscope.prototype.draw = function() {
     // Assign new scope properties
     this.canvas.height = this.state.height = height;
     this.canvas.width = this.state.width = width;
-    context.strokeWidth = 1;
+    context.strokeWidth = 3;
+    context.lineWidth = this.state.lineWidth;
 
     // Draw background
     context.fillStyle='#222222';
@@ -129,6 +130,7 @@ Oscilloscope.prototype.onMouseUp = function(){
     // End moving triggerlevel
     if(this.triggerMoving){
         this.triggerMoving = false;
+        this.state.source._ctrl.forceTrigger();
         return;
     }
 
