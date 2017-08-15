@@ -250,7 +250,7 @@ FFTrace.prototype.calc = function() {
 
     if(ab.length > 0){
         // Set RMS
-        this.state._info.RMSPower = power(ab, true, ab.length - 1);
+        this.state._info.RMSPower = power(ab, true, ab.length - 1, currentWindow.NG);
         // Set P/f
         this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
         
@@ -258,7 +258,7 @@ FFTrace.prototype.calc = function() {
         var second = this.getMarkerById('PWRsecond')[0].x * ab.length;
 
         // Sum all values in the bundle around max
-        var P = power(ab.slice(first, second + 1), true, ab.length);
+        var P = power(ab.slice(first, second + 1), true, ab.length, currentWindow.NG);
         this.state._info.DeltaRMS = Math.sqrt(P);
 
         var n;

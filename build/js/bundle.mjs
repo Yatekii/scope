@@ -15220,10 +15220,6 @@ const router = {
  */
 
 /*
- * Extend Math.
- */
-
-/*
  * Sinc function:
  *     sin(x)
  * y = ------
@@ -15264,12 +15260,16 @@ const windowFunctions = {
     hann: {
         fn: function (n, points) { return 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (points - 1)); },
         lines: 3,
-        name: 'Hanning'
+        name: 'Hanning',
+        CG: 0.54,
+        NG: 0.3974
     },
     hamming: {
         fn: function (n, points) { return 0.54 - 0.46 * Math.cos(2 * Math.PI * n/ (points - 1)); },
         lines: 3,
-        name: 'Hamming'
+        name: 'Hamming',
+        CG: 0.5,
+        NG: 0.375
     },
     // cosine: {
     //     fn: function (n, points) { return Math.sin(Math.PI * n / (points - 1)); },
@@ -15304,7 +15304,9 @@ const windowFunctions = {
                 + 0.0782793 * Math.cos(4 * Math.PI * n / (points - 1));
         },
         lines: 5,
-        name: 'Blackman'
+        name: 'Blackman',
+        CG: 0.3587,
+        NG: 0.2580
     },
     // kaiser:        function (n, points, alpha) {
     //             if (!alpha) { alpha = 3; }
@@ -15333,7 +15335,9 @@ const windowFunctions = {
                 + 0.032 * Math.cos(8 * Math.PI * n / (points - 1));
         },
         lines: 9,
-        name: 'Flat-Top'
+        name: 'Flat-Top',
+        CG: 0.2156,
+        NG: 0.1752
     },
 };
 
@@ -16368,9 +16372,10 @@ const WebsocketSource = function(state) {
                 me.packetCounter++;
                 var arr = new Uint16Array(e.data);
                 var data = new Float32Array(arr);
+                var correction = me.state.correctionFactors[me.state.samplingRate.toString()];
                 for(var i = 0; i < arr.length; i++){
                     // 16 bit uint to float
-                    data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp;
+                    data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp / correction;
                 }
                 me.channels[me.receivingChannel++] = data;
                 // If we didn't receive all channels yet, receive the next one
@@ -16830,15 +16835,20 @@ const powerDensity = function(arr, fs, half, N){
  * <arr> : int[] : An array-like containing all values to sum up
  * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
  */
-const power = function(arr, half, N){
+const power = function(arr, half, N, NG){
     // If it is the one-sided spectrum, we need a factor of two
     if(half){
         half = 2;
     } else {
         half = 1;
     }
+
+    if(!NG){
+        NG = 1;
+    }
+
     N = N ? N * half : (arr.length * half);
-    return sum(arr) / (half * N * N);
+    return sum(arr) / (half * N * N) / NG;
 };
 
 const draw$1 = function (context, scopeState, markerState, traceState, d, length) {
@@ -17202,7 +17212,7 @@ FFTrace.prototype.calc = function() {
 
     if(ab.length > 0){
         // Set RMS
-        this.state._info.RMSPower = power(ab, true, ab.length - 1);
+        this.state._info.RMSPower = power(ab, true, ab.length - 1, currentWindow.NG);
         // Set P/f
         this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
         
@@ -17210,7 +17220,7 @@ FFTrace.prototype.calc = function() {
         var second = this.getMarkerById('PWRsecond')[0].x * ab.length;
 
         // Sum all values in the bundle around max
-        var P = power(ab.slice(first, second + 1), true, ab.length);
+        var P = power(ab.slice(first, second + 1), true, ab.length, currentWindow.NG);
         this.state._info.DeltaRMS = Math.sqrt(P);
 
         var n;
@@ -17519,8 +17529,16 @@ var appState = {
             triggerTrace: 0,
             triggerPosition: 1 / 8,
             numberOfChannels: 2,
-            mode: 'normal',
+            mode: 'auto',
             activeTrace: 1,
+            correctionFactors: {
+                '25000000': 0.63,
+                '5000000': 0.65,
+                '1000000': 0.74,
+                '200000': 0.77,
+                '100000': 0.87,
+                '50000': 0.87
+            },
             traces: [
                 {
                     id: 3,

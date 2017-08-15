@@ -4,10 +4,6 @@
  */
 
 /*
- * Extend Math.
- */
-
-/*
  * Sinc function:
  *     sin(x)
  * y = ------
@@ -48,12 +44,16 @@ export const windowFunctions = {
     hann: {
         fn: function (n, points) { return 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (points - 1)); },
         lines: 3,
-        name: 'Hanning'
+        name: 'Hanning',
+        CG: 0.54,
+        NG: 0.3974
     },
     hamming: {
         fn: function (n, points) { return 0.54 - 0.46 * Math.cos(2 * Math.PI * n/ (points - 1)); },
         lines: 3,
-        name: 'Hamming'
+        name: 'Hamming',
+        CG: 0.5,
+        NG: 0.375
     },
     // cosine: {
     //     fn: function (n, points) { return Math.sin(Math.PI * n / (points - 1)); },
@@ -88,7 +88,9 @@ export const windowFunctions = {
                 + 0.0782793 * Math.cos(4 * Math.PI * n / (points - 1));
         },
         lines: 5,
-        name: 'Blackman'
+        name: 'Blackman',
+        CG: 0.3587,
+        NG: 0.2580
     },
     // kaiser:        function (n, points, alpha) {
     //             if (!alpha) { alpha = 3; }
@@ -117,7 +119,9 @@ export const windowFunctions = {
                 + 0.032 * Math.cos(8 * Math.PI * n / (points - 1));
         },
         lines: 9,
-        name: 'Flat-Top'
+        name: 'Flat-Top',
+        CG: 0.2156,
+        NG: 0.1752
     },
 };
 

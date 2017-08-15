@@ -56,8 +56,16 @@ var appState = {
             triggerTrace: 0,
             triggerPosition: 1 / 8,
             numberOfChannels: 2,
-            mode: 'normal',
+            mode: 'auto',
             activeTrace: 1,
+            correctionFactors: {
+                '25000000': 0.63,
+                '5000000': 0.65,
+                '1000000': 0.74,
+                '200000': 0.77,
+                '100000': 0.87,
+                '50000': 0.87
+            },
             traces: [
                 {
                     id: 3,

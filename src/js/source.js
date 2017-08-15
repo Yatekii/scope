@@ -63,9 +63,10 @@ export const WebsocketSource = function(state) {
                 me.packetCounter++;
                 var arr = new Uint16Array(e.data);
                 var data = new Float32Array(arr);
+                var correction = me.state.correctionFactors[me.state.samplingRate.toString()];
                 for(var i = 0; i < arr.length; i++){
                     // 16 bit uint to float
-                    data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp;
+                    data[i] = (arr[i] / Math.pow(2, me.state.bits) - 0.5) * me.state.vpp / correction;
                 }
                 me.channels[me.receivingChannel++] = data;
                 // If we didn't receive all channels yet, receive the next one
