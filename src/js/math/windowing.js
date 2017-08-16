@@ -140,3 +140,17 @@ export const applyWindow = function(dataArray, windowing_function, alpha) {
 
     return dataArray;
 };
+
+export const getWindowCorrection = function(windowing_function, windowSize, fs) {
+    // Skalierung berechnen
+    // console.log(windowSize, fs)
+    var s = 0;
+    for (var n = 0; n < windowSize; n++) {
+        var w = windowing_function(n, windowSize);
+        s += w * w;
+    }
+    // console.log(s)
+    var scale = Math.sqrt(1.0 / (2.0 * fs * s));
+    console.log(scale);
+    return scale;
+}

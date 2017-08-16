@@ -1,3 +1,4 @@
+document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>');
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
@@ -15363,6 +15364,20 @@ const applyWindow = function(dataArray, windowing_function, alpha) {
     return dataArray;
 };
 
+const getWindowCorrection = function(windowing_function, windowSize, fs) {
+    // Skalierung berechnen
+    // console.log(windowSize, fs)
+    var s = 0;
+    for (var n = 0; n < windowSize; n++) {
+        var w = windowing_function(n, windowSize);
+        s += w * w;
+    }
+    // console.log(s)
+    var scale = Math.sqrt(1.0 / (2.0 * fs * s));
+    console.log(scale);
+    return scale;
+};
+
 /*
  * This file holds helper functions to convert different unitspaces into one another.
  * It also conatins helpers to display numbers with proper physical units as a string.
@@ -15619,6 +15634,7 @@ const FFTracePrefPane = {
                             value: t.windowFunction,
                             onchange: mithril.withAttr('value', function(value) {
                                 t.windowFunction = value;
+                                t.windowCorrection = getWindowCorrection(windowFunctions[value].fn, s.source.frameSize, s.source.samplingRate);
                             }),
                         }, Object.keys(windowFunctions).map(function(value){
                             return mithril('option', { value: value }, windowFunctions[value].name);
@@ -15804,13 +15820,14 @@ const TimeTracePrefPane = {
                             mithril('.col-3', mithril('label.form-label', 'Trigger Level')),
                             mithril('.col-8', mithril('input.form-input', {
                                 type: 'number',
+                                step: '0.01',
                                 value: s.source.trigger.level,
                                 oninput: mithril.withAttr('value', function(value) {
                                     s.source.trigger.level = parseFloat(value);
                                     s.source._ctrl.forceTrigger();
                                 }),
                             })),
-                            mithril('.col-1', mithril('label.form-label', 'Hz'))
+                            mithril('.col-1', mithril('label.form-label', 'V'))
                         ])
                     ] : [],
                 ] : []
@@ -15865,6 +15882,11 @@ const generalPrefPane = {
                         onchange: mithril.withAttr('value', function(v){
                             s.source.samplingRate = parseInt(v);
                             s.source._ctrl.samplingRate(s.source.samplingRate);
+                            s.source.traces.forEach(function(t){
+                                if(t.type == 'FFTrace'){
+                                    t.windowCorrection = getWindowCorrection(windowFunctions[t.windowFunction].fn, s.source.frameSize, s.source.samplingRate);
+                                }
+                            });
                         })
                     }, samplingRates.map(function(t){
                         return mithril('option', { value: t }, hertzToString(t));
@@ -16319,7 +16341,6 @@ Oscilloscope.prototype.addMarker = function(trace, id, type, xy){
  * communicating to the server and parse it's data.
  */
 
-// Creates a new source
 const WebsocketSource = function(state) {
     var me = this;
     // Remember source state
@@ -16369,6 +16390,11 @@ const WebsocketSource = function(state) {
                     console.log(json);
                     if(json.response.data && json.response.data.decimationRate){
                         me.state.samplingRate = 125e6 / json.response.data.decimationRate;
+                        me.state.traces.forEach(function(t){
+                            if(t.type == 'FFTrace'){
+                                t.windowCorrection = getWindowCorrection(windowFunctions[t.windowFunction].fn, me.state.frameSize, me.state.samplingRate);
+                            }
+                        });
                     }
                 }
                 // console.log('Text message received: ' + e.data);
@@ -16854,7 +16880,7 @@ const power = function(arr, half, N, NG){
     }
 
     N = N ? N * half : (arr.length * half);
-    return sum(arr) / (half * N * N) / NG;
+    return sum(arr) / ( N * N);
 };
 
 const draw$1 = function (context, scopeState, markerState, traceState, d, length) {
@@ -16971,14 +16997,6 @@ const draw$1 = function (context, scopeState, markerState, traceState, d, length
     context.restore();
 };
 
-/*
- * Trace constructor
- * Constructs a new FFTrace
- * An FFTrace is a simple lineplot of all the calculated samples in the frequency domain.
- * A window can be applied and several measurements such as SNR and Signal RMS can be done.
- * <id> : uint : Unique trace id, which is assigned when loading a trace
- * <state> : uint : The state of the trace, which is automatically assigned when loading a trace
- */
 const FFTrace = function(id, state) {
     // Remember trace state
     this.state = state;
@@ -16987,6 +17005,7 @@ const FFTrace = function(id, state) {
     // Init class variables
     this.on = true;
     this._data = [];
+    this.state.windowCorrection = getWindowCorrection(windowFunctions[this.state.windowFunction].fn, this.state._source.frameSize, this.state._source.samplingRate);
 };
 
 /*
@@ -17489,7 +17508,6 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
-//use default routing mode
 mithril.route.mode = 'search';
 
 var appState = {
@@ -17515,7 +17533,7 @@ var appState = {
             name: 'Source ' + 1,
             top: 300,
             left: 50,
-            location: 'ws://10.84.130.54:50090',
+            location: 'ws://10.84.130.55:50090',
             // location: 'ws://localhost:50090',
             frameSize: 4096,
             samplingRate: 5000000,

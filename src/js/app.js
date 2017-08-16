@@ -36,7 +36,7 @@ var appState = {
             name: 'Source ' + 1,
             top: 300,
             left: 50,
-            location: 'ws://10.84.130.54:50090',
+            location: 'ws://10.84.130.55:50090',
             // location: 'ws://localhost:50090',
             frameSize: 4096,
             samplingRate: 5000000,

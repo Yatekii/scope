@@ -4,6 +4,7 @@
 
 import m from 'mithril';
 import * as converting from '../math/converting.js';
+import { windowFunctions, getWindowCorrection } from '../math/windowing.js';
 
 export const generalPrefPane = {
     view: function(vnode){
@@ -47,6 +48,11 @@ export const generalPrefPane = {
                         onchange: m.withAttr('value', function(v){
                             s.source.samplingRate = parseInt(v);
                             s.source._ctrl.samplingRate(s.source.samplingRate);
+                            s.source.traces.forEach(function(t){
+                                if(t.type == 'FFTrace'){
+                                    t.windowCorrection = getWindowCorrection(windowFunctions[t.windowFunction].fn, s.source.frameSize, s.source.samplingRate);
+                                }
+                            });
                         })
                     }, samplingRates.map(function(t){
                         return m('option', { value: t }, converting.hertzToString(t));

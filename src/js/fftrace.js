@@ -1,6 +1,6 @@
 import { miniFFT} from './math/fft.js';
 import { power, powerDensity } from './math/math.js';
-import { applyWindow, windowFunctions } from './math/windowing.js';
+import { applyWindow, windowFunctions, getWindowCorrection } from './math/windowing.js';
 import * as marker from './marker.js';
 
 /*
@@ -19,6 +19,7 @@ export const FFTrace = function(id, state) {
     // Init class variables
     this.on = true;
     this._data = [];
+    this.state.windowCorrection = getWindowCorrection(windowFunctions[this.state.windowFunction].fn, this.state._source.frameSize, this.state._source.samplingRate);
 };
 
 /*

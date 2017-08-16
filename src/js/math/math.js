@@ -70,5 +70,5 @@ export const power = function(arr, half, N, NG){
     }
 
     N = N ? N * half : (arr.length * half);
-    return sum(arr) / (half * N * N) / NG;
+    return sum(arr) / ( N * N);
 };
