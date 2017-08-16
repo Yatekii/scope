@@ -100,7 +100,7 @@ export const FFTracePrefPane = {
                     ]),
                     m('.form-group', [
                         m('.col-2', m('label.form-label', ['ΔV:', m('sub', 'rms')])),
-                        m('.col-4', m('label.form-label', voltsToString(t._info.DeltaRMS)))
+                        m('.col-4', m('label.form-label', t._info.DeltaRMS))
                     ]),
                     // GUI: Select windowing
                     m('.form-group', [

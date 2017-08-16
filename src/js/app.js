@@ -118,7 +118,7 @@ var appState = {
                         {
                             id: 'PWRfirst',
                             type: 'vertical',
-                            x: 0.2,
+                            x: 0,
                             dashed: true,
                             color: 'red',
                             active: true,
@@ -126,7 +126,7 @@ var appState = {
                         {
                             id: 'PWRsecond',
                             type: 'vertical',
-                            x: 0.3,
+                            x: 1,
                             dashed: true,
                             color: 'red',
                             active: true,

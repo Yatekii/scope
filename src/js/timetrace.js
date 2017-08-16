@@ -12,7 +12,7 @@ export const  TimeTrace = function (id, state) {
 
     // Init class variables
     this.on = true;
-    this.data = [];
+    this._data = [];
 };
 
 /*
@@ -27,7 +27,7 @@ TimeTrace.prototype.draw = function (canvas) {
     context.save();
 
     var scope = this.state._source._scope;
-    var data = this.data;
+    var data = this._data;
 
     // Half height of canvas
     var halfHeight = scope.height / 2;
@@ -185,5 +185,5 @@ TimeTrace.prototype.draw = function (canvas) {
 };
 
 TimeTrace.prototype.calc = function(){
-    this.data = this.state._source._ctrl.channels[this.state.channelID].slice(0);
+    this._data = this.state._source._ctrl.channels[this.state.channelID].slice(0);
 };

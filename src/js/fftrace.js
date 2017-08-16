@@ -58,7 +58,7 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Scale data by 100
     for(i = 0; i < data.length; i++){
-        data[i] = data[i] / 100;
+        data[i] = Math.log10(data[i] / this.state.windowCorrection) * 10  / 100;
     }
 
     var n;
@@ -224,7 +224,10 @@ FFTrace.prototype.calc = function() {
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
     if(this.state.windowFunction && currentWindow){
-        real = applyWindow(real, currentWindow.fn);
+        // for(var k=0; k<real.length; k++)
+        //     real[k] = 1;
+        console.log('c:',this.state.windowCorrection)
+        real = applyWindow(real, currentWindow.fn, this.state.windowCorrection);
     }
     // Do an FFT of the signal
     // The results are now stored in the input vectors
@@ -249,9 +252,11 @@ FFTrace.prototype.calc = function() {
         ab[i] = real[i] * real[i] + compl[i] * compl[i];
     }
 
+    this._data = ab.slice(0);
+
     if(ab.length > 0){
         // Set RMS
-        this.state._info.RMSPower = power(ab, true, ab.length - 1, currentWindow.NG);
+        this.state._info.RMSPower = power(ab, ab.length * 2, scope.source.samplingRate);
         // Set P/f
         this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
         
@@ -259,8 +264,9 @@ FFTrace.prototype.calc = function() {
         var second = this.getMarkerById('PWRsecond')[0].x * ab.length;
 
         // Sum all values in the bundle around max
-        var P = power(ab.slice(first, second + 1), true, ab.length, currentWindow.NG);
+        var P = power(ab.slice(first, second + 1), ab.length * 2, scope.source.samplingRate);
         this.state._info.DeltaRMS = Math.sqrt(P);
+        console.log('P:', P)
 
         var n;
         // Calculate SNR
@@ -269,10 +275,10 @@ FFTrace.prototype.calc = function() {
             second = this.getMarkerById('SNRsecond')[0].x * ab.length;
 
             // Sum all values in the bundle around max
-            var Ps = power(ab.slice(first, second + 1), true, ab.length);
+            var Ps = power(ab.slice(first, second + 1), ab.length * 2, scope.source.samplingRate);
             // Sum all the other values except DC
-            var Pn = power(ab.slice((second - first) / 2, first), true, ab.length)
-                   + power(ab.slice(second + 1), true, ab.length);
+            var Pn = power(ab.slice((second - first) / 2, first), ab.length * 2, scope.source.samplingRate)
+                   + power(ab.slice(second + 1), ab.length * 2, scope.source.samplingRate);
             // Sum both sets and calculate their ratio which is the SNR
             var SNR = Math.log10(Ps / Pn) * 10;
             this.state._info.SNR = SNR;
@@ -287,7 +293,7 @@ FFTrace.prototype.calc = function() {
                     maxi = i;
                 }
             }
-            var l = Math.floor(currentWindow.lines / 2);
+            var l = 1;
             var lastSNR = 0;
             var lastPn;
             var lastPs;
@@ -304,10 +310,10 @@ FFTrace.prototype.calc = function() {
                     (maxi + l) / ab.length
                 );
                 // Sum all values in the bundle around max
-                Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
+                Ps = power(ab.slice(maxi - l, maxi + l + 1), ab.length * 2, scope.source.samplingRate);
                 // Sum all the other values except DC
-                Pn = power(ab.slice(l, maxi - l), true, ab.length)
-                    + power(ab.slice(maxi + l + 1), true, ab.length);
+                Pn = power(ab.slice(l, maxi - l), ab.length * 2, scope.source.samplingRate)
+                    + power(ab.slice(maxi + l + 1), ab.length * 2, scope.source.samplingRate);
                 // Sum both sets and calculate their ratio which is the SNR
                 nextSNR = Math.log10(Ps / Pn) * 10;
                 l++;
@@ -315,7 +321,7 @@ FFTrace.prototype.calc = function() {
             SNR = lastSNR;
 
             // Cancel harmonics
-            var N = 10 + 2;
+            var N = 25 + 2;
             this._snrHarmonics = [];
             for(n = 2; n < N; n++){
                 this._snrHarmonics.push(0);
@@ -330,7 +336,7 @@ FFTrace.prototype.calc = function() {
                     // Store main lobe
                     this._snrHarmonics[n - 2] = [m - l, m + l + 1];
                     // Sum all values in the bundle around max
-                    var Pl = power(ab.slice(m - l, m + l + 1), true, ab.length);
+                    var Pl = power(ab.slice(m - l, m + l + 1), ab.length * 2, scope.source.samplingRate);
                     // Sum both sets and calculate their ratio which is the SNR
                     nextSNR = Math.log10(lastPs / (lastPn - Pl)) * 10;
                     l++;
@@ -347,11 +353,6 @@ FFTrace.prototype.calc = function() {
         this.state._info.RMSPower = '\u26A0 No signal';
         this.state._info.powerDensity  = '\u26A0 No signal';
         this.state._info.SNR = '\u26A0 No signal';
-    }
-
-    // Convert spectral density to decibels.
-    for(i = 0; i < ab.length; i++){
-        ab[i] = Math.log10(ab[i])*10;
     }
 
     this._data = ab.slice(0);
