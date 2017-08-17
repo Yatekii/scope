@@ -1,3 +1,5 @@
+var appIP;
+
 function __$styleInject(css, returnValue) {
   if (typeof document === 'undefined') {
     return returnValue;
@@ -17483,6 +17485,8 @@ __$styleInject("html {\n    margin: 0;\n    padding: 0;\n    height: 100%;\n}\n\
 * It holds the app state and initializes the scope.
 */
 
+/* global appIP */
+
 //use default routing mode
 mithril.route.mode = 'search';
 
@@ -17509,7 +17513,7 @@ var appState = {
             name: 'Source ' + 1,
             top: 300,
             left: 50,
-            location: 'ws://10.84.130.54:50090',
+            location: appIP ? appIP : 'ws://' + window.location.host,
             // location: 'ws://localhost:50090',
             frameSize: 4096,
             samplingRate: 5000000,

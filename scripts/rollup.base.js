@@ -40,6 +40,7 @@ export const createConfig = ({ includeDepencies }) => ({
   external: includeDepencies ? [] : external,
   moduleName,
   globals,
+  intro: 'var appIP;',
   plugins: [
     postcss({
       extensions: [ '.css' ],

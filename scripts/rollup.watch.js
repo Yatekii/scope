@@ -19,6 +19,8 @@ if (!serverPort) {
 
 const targetConfig = Object.assign({}, umdConfig);
 
+// Debug IP
+targetConfig.intro = 'var appIP = \'ws://10.84.130.54:50090\';';
 targetConfig.plugins.push(
   serve({
     contentBase: watchDir,
