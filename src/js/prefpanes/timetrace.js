@@ -90,13 +90,14 @@ export const TimeTracePrefPane = {
                             m('.col-3', m('label.form-label', 'Trigger Level')),
                             m('.col-8', m('input.form-input', {
                                 type: 'number',
+                                step: '0.01',
                                 value: s.source.trigger.level,
                                 oninput: m.withAttr('value', function(value) {
                                     s.source.trigger.level = parseFloat(value);
                                     s.source._ctrl.forceTrigger();
                                 }),
                             })),
-                            m('.col-1', m('label.form-label', 'Hz'))
+                            m('.col-1', m('label.form-label', 'V'))
                         ])
                     ] : [],
                 ] : []

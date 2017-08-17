@@ -1,5 +1,5 @@
 import m from 'mithril';
-import { windowFunctions } from '../math/windowing.js';
+import { windowFunctions, getWindowCorrection } from '../math/windowing.js';
 import { withKey } from '../helpers.js';
 import {
     hertzToString,
@@ -110,6 +110,7 @@ export const FFTracePrefPane = {
                             value: t.windowFunction,
                             onchange: m.withAttr('value', function(value) {
                                 t.windowFunction = value;
+                                t.windowCorrection = getWindowCorrection(windowFunctions[value].fn, s.source.frameSize, s.source.samplingRate);
                             }),
                         }, Object.keys(windowFunctions).map(function(value){
                             return m('option', { value: value }, windowFunctions[value].name);

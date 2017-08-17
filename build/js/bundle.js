@@ -15265,6 +15265,13 @@ Math.bessi0 = function(x) {
  * Windowing functions.
  */
 const windowFunctions = {
+    rect: {
+        fn: function (n, points) { return 1; }, // eslint-disable-line no-unused-vars
+        lines: 3,
+        name: 'Boxcar',
+        CG: 1,
+        NG: 1
+    },
     hann: {
         fn: function (n, points) { return 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (points - 1)); },
         lines: 3,
@@ -15353,16 +15360,27 @@ const windowFunctions = {
  * Applies a Windowing Function to an array.
  * <dataArray>
  */
-const applyWindow = function(dataArray, windowing_function, alpha) {
+const applyWindow = function(dataArray, windowing_function, correction) {
     var datapoints = dataArray.length;
 
     /* For each item in the array */
     for (var n=0; n<datapoints; ++n) {
         /* Apply the windowing function */
-        dataArray[n] *= windowing_function(n, datapoints, alpha);
+        dataArray[n] *= windowing_function(n, datapoints) * correction;
     }
 
     return dataArray;
+};
+
+const getWindowCorrection = function(windowing_function, windowSize, fs) {
+    // Skalierung berechnen
+    var s = 0;
+    for (var n = 0; n < windowSize; n++) {
+        var w = windowing_function(n, windowSize);
+        s += w * w;
+    }
+    var scale = Math.sqrt(1.0 / (2.0 * fs * s));
+    return scale;
 };
 
 /*
@@ -15621,6 +15639,7 @@ const FFTracePrefPane = {
                             value: t.windowFunction,
                             onchange: mithril.withAttr('value', function(value) {
                                 t.windowFunction = value;
+                                t.windowCorrection = getWindowCorrection(windowFunctions[value].fn, s.source.frameSize, s.source.samplingRate);
                             }),
                         }, Object.keys(windowFunctions).map(function(value){
                             return mithril('option', { value: value }, windowFunctions[value].name);
@@ -15806,13 +15825,14 @@ const TimeTracePrefPane = {
                             mithril('.col-3', mithril('label.form-label', 'Trigger Level')),
                             mithril('.col-8', mithril('input.form-input', {
                                 type: 'number',
+                                step: '0.01',
                                 value: s.source.trigger.level,
                                 oninput: mithril.withAttr('value', function(value) {
                                     s.source.trigger.level = parseFloat(value);
                                     s.source._ctrl.forceTrigger();
                                 }),
                             })),
-                            mithril('.col-1', mithril('label.form-label', 'Hz'))
+                            mithril('.col-1', mithril('label.form-label', 'V'))
                         ])
                     ] : [],
                 ] : []
@@ -15867,6 +15887,11 @@ const generalPrefPane = {
                         onchange: mithril.withAttr('value', function(v){
                             s.source.samplingRate = parseInt(v);
                             s.source._ctrl.samplingRate(s.source.samplingRate);
+                            s.source.traces.forEach(function(t){
+                                if(t.type == 'FFTrace'){
+                                    t.windowCorrection = getWindowCorrection(windowFunctions[t.windowFunction].fn, s.source.frameSize, s.source.samplingRate);
+                                }
+                            });
                         })
                     }, samplingRates.map(function(t){
                         return mithril('option', { value: t }, hertzToString(t));
@@ -16371,6 +16396,11 @@ const WebsocketSource = function(state) {
                     console.log(json);
                     if(json.response.data && json.response.data.decimationRate){
                         me.state.samplingRate = 125e6 / json.response.data.decimationRate;
+                        me.state.traces.forEach(function(t){
+                            if(t.type == 'FFTrace'){
+                                t.windowCorrection = getWindowCorrection(windowFunctions[t.windowFunction].fn, me.state.frameSize, me.state.samplingRate);
+                            }
+                        });
                     }
                 }
                 // console.log('Text message received: ' + e.data);
@@ -16579,7 +16609,7 @@ const TimeTrace = function (id, state) {
 
     // Init class variables
     this.on = true;
-    this.data = [];
+    this._data = [];
 };
 
 /*
@@ -16594,7 +16624,7 @@ TimeTrace.prototype.draw = function (canvas) {
     context.save();
 
     var scope = this.state._source._scope;
-    var data = this.data;
+    var data = this._data;
 
     // Half height of canvas
     var halfHeight = scope.height / 2;
@@ -16752,7 +16782,7 @@ TimeTrace.prototype.draw = function (canvas) {
 };
 
 TimeTrace.prototype.calc = function(){
-    this.data = this.state._source._ctrl.channels[this.state.channelID].slice(0);
+    this._data = this.state._source._ctrl.channels[this.state.channelID].slice(0);
 };
 
 /*
@@ -16843,20 +16873,12 @@ const powerDensity = function(arr, fs, half, N){
  * <arr> : int[] : An array-like containing all values to sum up
  * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
  */
-const power = function(arr, half, N, NG){
+const power = function(arr, N, fs){
     // If it is the one-sided spectrum, we need a factor of two
-    if(half){
-        half = 2;
-    } else {
-        half = 1;
-    }
 
-    if(!NG){
-        NG = 1;
-    }
-
-    N = N ? N * half : (arr.length * half);
-    return sum(arr) / (half * N * N) / NG;
+    // console.log(sum(arr), fs, N);
+    // console.log('pwr:', sum(arr) * fs / N)
+    return sum(arr) * fs / N;
 };
 
 const draw$1 = function (context, scopeState, markerState, traceState, d, length) {
@@ -16989,6 +17011,7 @@ const FFTrace = function(id, state) {
     // Init class variables
     this.on = true;
     this._data = [];
+    this.state.windowCorrection = getWindowCorrection(windowFunctions[this.state.windowFunction].fn, this.state._source.frameSize, this.state._source.samplingRate);
 };
 
 /*
@@ -17027,7 +17050,7 @@ FFTrace.prototype.draw = function (canvas) {
 
     // Scale data by 100
     for(i = 0; i < data.length; i++){
-        data[i] = data[i] / 100;
+        data[i] = Math.log10(data[i] / this.state.windowCorrection) * 10  / 100;
     }
 
     var n;
@@ -17193,7 +17216,7 @@ FFTrace.prototype.calc = function() {
     // Window data if a valid window was selected
     // TODO: Uncomment again after debug
     if(this.state.windowFunction && currentWindow){
-        real = applyWindow(real, currentWindow.fn);
+        real = applyWindow(real, currentWindow.fn, this.state.windowCorrection);
     }
     // Do an FFT of the signal
     // The results are now stored in the input vectors
@@ -17218,9 +17241,11 @@ FFTrace.prototype.calc = function() {
         ab[i] = real[i] * real[i] + compl[i] * compl[i];
     }
 
+    this._data = ab.slice(0);
+
     if(ab.length > 0){
         // Set RMS
-        this.state._info.RMSPower = power(ab, true, ab.length - 1, currentWindow.NG);
+        this.state._info.RMSPower = power(ab, ab.length * 2, scope.source.samplingRate);
         // Set P/f
         this.state._info.powerDensity = powerDensity(ab, scope.source.samplingRate / 2, true, ab.length - 1);
         
@@ -17228,7 +17253,7 @@ FFTrace.prototype.calc = function() {
         var second = this.getMarkerById('PWRsecond')[0].x * ab.length;
 
         // Sum all values in the bundle around max
-        var P = power(ab.slice(first, second + 1), true, ab.length, currentWindow.NG);
+        var P = power(ab.slice(first, second + 1), ab.length * 2, scope.source.samplingRate);
         this.state._info.DeltaRMS = Math.sqrt(P);
 
         var n;
@@ -17238,10 +17263,10 @@ FFTrace.prototype.calc = function() {
             second = this.getMarkerById('SNRsecond')[0].x * ab.length;
 
             // Sum all values in the bundle around max
-            var Ps = power(ab.slice(first, second + 1), true, ab.length);
+            var Ps = power(ab.slice(first, second + 1), ab.length * 2, scope.source.samplingRate);
             // Sum all the other values except DC
-            var Pn = power(ab.slice((second - first) / 2, first), true, ab.length)
-                   + power(ab.slice(second + 1), true, ab.length);
+            var Pn = power(ab.slice((second - first) / 2, first), ab.length * 2, scope.source.samplingRate)
+                   + power(ab.slice(second + 1), ab.length * 2, scope.source.samplingRate);
             // Sum both sets and calculate their ratio which is the SNR
             var SNR = Math.log10(Ps / Pn) * 10;
             this.state._info.SNR = SNR;
@@ -17256,7 +17281,7 @@ FFTrace.prototype.calc = function() {
                     maxi = i;
                 }
             }
-            var l = Math.floor(currentWindow.lines / 2);
+            var l = 1;
             var lastSNR = 0;
             var lastPn;
             var lastPs;
@@ -17273,10 +17298,10 @@ FFTrace.prototype.calc = function() {
                     (maxi + l) / ab.length
                 );
                 // Sum all values in the bundle around max
-                Ps = power(ab.slice(maxi - l, maxi + l + 1), true, ab.length);
+                Ps = power(ab.slice(maxi - l, maxi + l + 1), ab.length * 2, scope.source.samplingRate);
                 // Sum all the other values except DC
-                Pn = power(ab.slice(l, maxi - l), true, ab.length)
-                    + power(ab.slice(maxi + l + 1), true, ab.length);
+                Pn = power(ab.slice(l, maxi - l), ab.length * 2, scope.source.samplingRate)
+                    + power(ab.slice(maxi + l + 1), ab.length * 2, scope.source.samplingRate);
                 // Sum both sets and calculate their ratio which is the SNR
                 nextSNR = Math.log10(Ps / Pn) * 10;
                 l++;
@@ -17284,7 +17309,7 @@ FFTrace.prototype.calc = function() {
             SNR = lastSNR;
 
             // Cancel harmonics
-            var N = 10 + 2;
+            var N = 25 + 2;
             this._snrHarmonics = [];
             for(n = 2; n < N; n++){
                 this._snrHarmonics.push(0);
@@ -17299,7 +17324,7 @@ FFTrace.prototype.calc = function() {
                     // Store main lobe
                     this._snrHarmonics[n - 2] = [m - l, m + l + 1];
                     // Sum all values in the bundle around max
-                    var Pl = power(ab.slice(m - l, m + l + 1), true, ab.length);
+                    var Pl = power(ab.slice(m - l, m + l + 1), ab.length * 2, scope.source.samplingRate);
                     // Sum both sets and calculate their ratio which is the SNR
                     nextSNR = Math.log10(lastPs / (lastPn - Pl)) * 10;
                     l++;
@@ -17316,11 +17341,6 @@ FFTrace.prototype.calc = function() {
         this.state._info.RMSPower = '\u26A0 No signal';
         this.state._info.powerDensity  = '\u26A0 No signal';
         this.state._info.SNR = '\u26A0 No signal';
-    }
-
-    // Convert spectral density to decibels.
-    for(i = 0; i < ab.length; i++){
-        ab[i] = Math.log10(ab[i])*10;
     }
 
     this._data = ab.slice(0);
@@ -17601,7 +17621,7 @@ var appState = {
                         {
                             id: 'PWRfirst',
                             type: 'vertical',
-                            x: 0.2,
+                            x: 0,
                             dashed: true,
                             color: 'red',
                             active: true,
@@ -17609,7 +17629,7 @@ var appState = {
                         {
                             id: 'PWRsecond',
                             type: 'vertical',
-                            x: 0.3,
+                            x: 1,
                             dashed: true,
                             color: 'red',
                             active: true,

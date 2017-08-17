@@ -57,18 +57,10 @@ export const powerDensity = function(arr, fs, half, N){
  * <arr> : int[] : An array-like containing all values to sum up
  * <half> : bool : Indicates wether <arr> contains the one-sided spectrum
  */
-export const power = function(arr, half, N, NG){
+export const power = function(arr, N, fs){
     // If it is the one-sided spectrum, we need a factor of two
-    if(half){
-        half = 2;
-    } else {
-        half = 1;
-    }
 
-    if(!NG){
-        NG = 1;
-    }
-
-    N = N ? N * half : (arr.length * half);
-    return sum(arr) / (half * N * N) / NG;
+    // console.log(sum(arr), fs, N);
+    // console.log('pwr:', sum(arr) * fs / N)
+    return sum(arr) * fs / N;
 };

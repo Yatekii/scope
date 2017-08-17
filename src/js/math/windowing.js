@@ -41,6 +41,13 @@ Math.bessi0 = function(x) {
  * Windowing functions.
  */
 export const windowFunctions = {
+    rect: {
+        fn: function (n, points) { return 1; }, // eslint-disable-line no-unused-vars
+        lines: 3,
+        name: 'Boxcar',
+        CG: 1,
+        NG: 1
+    },
     hann: {
         fn: function (n, points) { return 0.5 - 0.5 * Math.cos(2 * Math.PI * n / (points - 1)); },
         lines: 3,
@@ -129,14 +136,25 @@ export const windowFunctions = {
  * Applies a Windowing Function to an array.
  * <dataArray>
  */
-export const applyWindow = function(dataArray, windowing_function, alpha) {
+export const applyWindow = function(dataArray, windowing_function, correction) {
     var datapoints = dataArray.length;
 
     /* For each item in the array */
     for (var n=0; n<datapoints; ++n) {
         /* Apply the windowing function */
-        dataArray[n] *= windowing_function(n, datapoints, alpha);
+        dataArray[n] *= windowing_function(n, datapoints) * correction;
     }
 
     return dataArray;
+};
+
+export const getWindowCorrection = function(windowing_function, windowSize, fs) {
+    // Skalierung berechnen
+    var s = 0;
+    for (var n = 0; n < windowSize; n++) {
+        var w = windowing_function(n, windowSize);
+        s += w * w;
+    }
+    var scale = Math.sqrt(1.0 / (2.0 * fs * s));
+    return scale;
 };

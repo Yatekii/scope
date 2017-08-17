@@ -3,6 +3,7 @@
  */
 
 import m from 'mithril';
+import { windowFunctions, getWindowCorrection } from './math/windowing.js';
 
 // Creates a new source
 export const WebsocketSource = function(state) {
@@ -54,6 +55,11 @@ export const WebsocketSource = function(state) {
                     console.log(json);
                     if(json.response.data && json.response.data.decimationRate){
                         me.state.samplingRate = 125e6 / json.response.data.decimationRate;
+                        me.state.traces.forEach(function(t){
+                            if(t.type == 'FFTrace'){
+                                t.windowCorrection = getWindowCorrection(windowFunctions[t.windowFunction].fn, me.state.frameSize, me.state.samplingRate);
+                            }
+                        });
                     }
                 }
                 // console.log('Text message received: ' + e.data);
